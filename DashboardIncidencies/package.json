@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://<EL-TEU-USUARI-DE-GITHUB>.github.io/<EL-NOM-DEL-TEU-REPOSITORI>",
+  "homepage": "https://felipsarroca.github.io/util-apps/DashboardIncidencies/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
