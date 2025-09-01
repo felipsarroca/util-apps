@@ -1,5 +1,0 @@
-{
-  "name": "Dashboard d'Incidències Escolars",
-  "description": "Una aplicació per visualitzar i analitzar les dades d'incidències dels alumnes a partir d'un full de càlcul de Google Sheets. Permet filtrar, agregar i exportar dades per obtenir una visió clara del comportament i les tendències.",
-  "requestFramePermissions": []
-}

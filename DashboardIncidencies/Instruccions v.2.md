@@ -1,6 +1,4 @@
-D’acord, et deixo aquí el redactat complet i finalitzat perquè el puguis copiar i enganxar: conté tota la descripció del comportament de l'aplicació, des de la lectura de la pestanya "Buidat" fins a les visualitzacions i interaccions detallades.
 
----
 
 ## Instruccions de funcionament de l’aplicació
 
@@ -40,7 +38,7 @@ D’acord, et deixo aquí el redactat complet i finalitzat perquè el puguis cop
 L’usuari pot filtrar la vista per:
 
 1. **Alumne** — veure totes les seves incidències (tipus \+ quantitat) i KPIs desglossats.  
-2. **Curs** — seleccionar una classe (1r ESO, 2n ESO, 3r ESO o 4t ESO) i veure l’estat global i comparativa entre classes.  
+2. **Curs** — seleccionar una classe (1r ESO, 2n ESO, 3r ESO o 4t ESO) i veure l’estat global i comparativa entre classes. Adaptar la nomenclatura: Quart d’ESO \= 4t ESO o Tercer d’ESO \= 3r ESO.  
 3. **Tipus** — veure en quina o quines classes i alumnes s’ha concentrat aquesta incidència.  
 * Els filtres són **combinables** (p. ex., Curs \= 2n ESO \+ Tipus \= Retard \+ Alumne \= “X”).
 
