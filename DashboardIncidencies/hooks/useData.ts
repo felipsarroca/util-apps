@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { Incident, DataWarning, RawIncidentData, Curs, IncidentType } from '../types';
-import { CURS_NORMALIZATION_MAP, TIPUS_NORMALIZATION_MAP, OFFICIAL_TYPES, TYPES_DEFAULT_QUANTITY_1 } from '../constants';
-import { parseCSV } from '../utils/helpers';
+import { Incident, DataWarning, RawIncidentData, Curs, IncidentType } from '../types.ts';
+import { CURS_NORMALIZATION_MAP, TIPUS_NORMALIZATION_MAP, OFFICIAL_TYPES, TYPES_DEFAULT_QUANTITY_1 } from '../constants.ts';
+import { parseCSV } from '../utils/helpers.ts';
 
 const SHEET_NAME = 'Buidat';
 

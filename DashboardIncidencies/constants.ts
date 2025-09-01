@@ -1,4 +1,5 @@
-import { Curs, IncidentType } from './types';
+
+import { Curs, IncidentType } from './types.ts';
 
 export const OFFICIAL_TYPES = Object.values(IncidentType);
 export const OFFICIAL_CURSOS = Object.values(Curs);

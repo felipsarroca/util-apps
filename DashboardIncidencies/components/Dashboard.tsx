@@ -1,9 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
-import { Incident, Curs, IncidentType, StudentSummary, DataWarning } from '../types';
-import { OFFICIAL_TYPES, OFFICIAL_CURSOS } from '../constants';
-import { exportToCSV } from '../utils/helpers';
+import { Incident, Curs, IncidentType, StudentSummary, DataWarning } from '../types.ts';
+import { OFFICIAL_TYPES, OFFICIAL_CURSOS } from '../constants.ts';
+import { exportToCSV } from '../utils/helpers.ts';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Label } from 'recharts';
-import { WarningIcon, ChartBarIcon, UsersIcon, TableIcon, CloseIcon, TotalIncidentsIcon, TopTypeIcon, AverageIcon } from './common/Icons';
+import { WarningIcon, ChartBarIcon, UsersIcon, TableIcon, CloseIcon, TotalIncidentsIcon, TopTypeIcon, AverageIcon } from './common/Icons.tsx';
 
 interface DashboardProps {
   data: Incident[];

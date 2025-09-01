@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
-import Onboarding from './components/Onboarding';
-import Dashboard from './components/Dashboard';
-import { useData } from './hooks/useData';
-import { ErrorIcon } from './components/common/Icons';
+import Onboarding from './components/Onboarding.tsx';
+import Dashboard from './components/Dashboard.tsx';
+import { useData } from './hooks/useData.ts';
+import { ErrorIcon } from './components/common/Icons.tsx';
 
 const LOCAL_STORAGE_KEY = 'googleSheetUrl';
 

@@ -1,5 +1,6 @@
 
-import { StudentSummary, IncidentType } from '../types';
+
+import { StudentSummary, IncidentType } from '../types.ts';
 
 export function exportToCSV(data: StudentSummary[], officialTypes: IncidentType[]) {
   const headers = ['Alumne', ...officialTypes, 'Total'];
