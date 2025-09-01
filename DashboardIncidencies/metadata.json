@@ -1,0 +1,5 @@
+{
+  "name": "Analitzador d'Incidències d'Alumnes v.8com",
+  "description": "Una aplicació visual per analitzar les dades d'incidències d'alumnes des d'un Google Sheet, amb filtres, KPIs i gràfics interactius.",
+  "requestFramePermissions": []
+}
