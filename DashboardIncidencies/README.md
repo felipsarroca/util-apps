@@ -102,7 +102,3 @@ Projecte creat per **Felip Sarroca i Gil** per a l’Escola Ramon Pont (Terrassa
 
 ```
 
----
-
-Vols que t’adapti aquest README en **català senzill per a docents no tècnics** (perquè el puguin fer servir sense entendre res de build), o prefereixes deixar-hi també la secció de desenvolupament amb `npm run build`?
-```
