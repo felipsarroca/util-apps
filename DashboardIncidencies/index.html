@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quadre de Comandament d'Incidències</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#1e40af',
+              'brand-secondary': '#3b82f6',
+              'brand-accent': '#10b981',
+              'brand-background': '#f1f5f9',
+              'brand-card': '#ffffff',
+              'brand-text-primary': '#1e293b',
+              'brand-text-secondary': '#475569',
+            },
+            boxShadow: {
+              'soft-3d': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1), inset 0 -2px 0 0 rgba(0, 0, 0, 0.05)',
+              'soft-3d-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.1), inset 0 -3px 0 0 rgba(0, 0, 0, 0.08)',
+            }
+          }
+        }
+      }
+    </script>
+
+  <script type="importmap">
+{
+  "imports": {
+    "recharts": "https://aistudiocdn.com/recharts@^3.1.2",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "papaparse": "https://aistudiocdn.com/papaparse@^5.5.3"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/util-apps/DashboardIncidencies/assets/index-BCkAtcHQ.js"></script>
+</head>
+  <body class="bg-brand-background">
+    <div id="root"></div>
+</body>
+</html>
+
