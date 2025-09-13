@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analitzador de tiquets Bonpreu</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js" crossorigin="anonymous"></script>
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Analitzador de tiquets Bonpreu</h1>
+    </header>
+
+    <main class="container">
+      <section class="uploader">
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Arrossega els JPG aquí o fes clic per seleccionar">
+          <p><strong>Arrossega els tiquets (JPG)</strong> o fes clic per seleccionar</p>
+          <input id="fileInput" type="file" accept=".jpg,.jpeg,image/jpeg,image/jpg" multiple />
+        </div>
+        <div class="controls">
+          <button id="clearDataBtn" class="btn btn-secondary">Neteja dades guardades</button>
+          <button id="exportCsvBtn" class="btn">Exporta CSV</button>
+        </div>
+        <div id="progress" class="progress hidden"></div>
+        <div id="debug" class="progress hidden"></div>
+      </section>
+
+      <section class="stats">
+        <h2>Resum per tiquet</h2>
+        <div id="aggregateCards" class="cards"></div>
+      </section>
+
+      <section class="tickets">
+        <h2>Tiquets processats</h2>
+        <div id="ticketsList" class="tickets-list"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <small>Funciona al navegador. Dades guardades a l'ordinador (localStorage).</small>
+    </footer>
+  </body>
+  </html>
