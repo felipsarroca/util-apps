@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const apps = [
         {
-            name: 'Dashboard d\'incidències',
+            name: "Dashboard d'incidències",
             path: 'DashboardIncidencies/',
-            description: 'Visualitzador de dades d\'incidències del centre educatiu.',
+            description: "Visualitzador de dades d'incidències del centre educatiu.",
             category: 'Eines de gestió'
         },
         {
