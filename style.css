@@ -1,0 +1,83 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --background-color: #f4f7f9;
+    --card-background: #ffffff;
+    --text-color: #34495e;
+    --shadow-color: rgba(0, 0, 0, 0.08);
+    --title-color: #2c3e50;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex-grow: 1;
+}
+
+h1 {
+    color: var(--title-color);
+    font-weight: 600;
+}
+
+.category-title {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+    margin-bottom: 2rem;
+    font-size: 1.75rem;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.card-title {
+    color: var(--title-color);
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+}
+
+.card-text {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    min-height: 50px; /* Evita salts de layout si una card no té descripció */
+}
+
+.card-img-top {
+    width: 56px;
+    height: 56px;
+    margin: 25px auto 0;
+    display: block;
+}
+
+footer {
+    font-size: 0.9rem;
+    color: #95a5a6;
+}
