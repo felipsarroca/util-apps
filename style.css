@@ -28,10 +28,12 @@ h1 {
 
 .category-title {
     color: var(--primary-color);
-    border-bottom: 2px solid var(--primary-color);
+    border-bottom: 2px solid #e0e0e0;
     padding-bottom: 10px;
-    margin-bottom: 2rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
     font-size: 1.75rem;
+    width: 100%;
 }
 
 .card {
@@ -40,6 +42,7 @@ h1 {
     box-shadow: 0 4px 15px var(--shadow-color);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
+    height: 100%;
 }
 
 .card:hover {
@@ -55,6 +58,8 @@ h1 {
 .card-body {
     padding: 1.5rem;
     text-align: center;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-title {
@@ -67,7 +72,7 @@ h1 {
 .card-text {
     font-size: 0.9rem;
     color: #7f8c8d;
-    min-height: 50px; /* Evita salts de layout si una card no té descripció */
+    flex-grow: 1;
 }
 
 .card-img-top {

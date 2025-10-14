@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const apps = [
         {
-            name: 'Dashboard d'incidències',
+            name: 'Dashboard d\'incidències',
             path: 'DashboardIncidencies/',
-            description: 'Visualitzador de dades d'incidències del centre educatiu.',
+            description: 'Visualitzador de dades d\'incidències del centre educatiu.',
             category: 'Eines de gestió'
         },
         {
@@ -20,23 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
-    const appContainer = document.getElementById('apps-container');
+    const appsGrid = document.getElementById('apps-grid');
 
-    if (appContainer) {
+    if (appsGrid) {
         const categories = [...new Set(apps.map(app => app.category))];
 
         categories.forEach(category => {
-            const categorySection = document.createElement('section');
-            categorySection.className = 'mb-5';
+            // Afegeix el títol de la categoria
+            const categoryTitle = document.createElement('div');
+            categoryTitle.className = 'col-12';
+            categoryTitle.innerHTML = `<h2 class="category-title">${category}</h2>`;
+            appsGrid.appendChild(categoryTitle);
 
-            const categoryTitle = document.createElement('h2');
-            categoryTitle.className = 'category-title';
-            categoryTitle.textContent = category;
-            categorySection.appendChild(categoryTitle);
-
-            const grid = document.createElement('div');
-            grid.className = 'row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4';
-
+            // Filtra i afegeix les apps de la categoria
             const appsInCategory = apps.filter(app => app.category === category);
 
             appsInCategory.forEach(app => {
@@ -54,11 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </a>
                 `;
                 col.innerHTML = cardHTML;
-                grid.appendChild(col);
+                appsGrid.appendChild(col);
             });
-
-            categorySection.appendChild(grid);
-            appContainer.appendChild(categorySection);
         });
     }
 });
