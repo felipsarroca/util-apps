@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fallbackIcon = `https://via.placeholder.com/64/005a9c/ffffff?text=${app.name.charAt(0)}`;
 
             col.innerHTML = `
-                <a href="${app.path}" class="card-link">
+                <a href="${app.path}" class="card-link" target="_blank" rel="noopener noreferrer">
                     <div class="card h-100">
                         <img src="${faviconSrc}" class="card-img-top" alt="Icona de ${app.name}" onerror="this.onerror=null;this.src='${fallbackIcon}';">
                         <div class="card-body d-flex flex-column">
