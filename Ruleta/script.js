@@ -32,8 +32,11 @@ function init() {
   drawWheel();
   refreshControls();
   window.addEventListener("resize", handleResize);
-  spinButton.addEventListener("click", handleSpin);
-  canvas.addEventListener("click", handleSpin);
+  registerSpinTarget(spinButton);
+  registerSpinTarget(canvas);
+  canvas.setAttribute("role", "button");
+  canvas.setAttribute("tabindex", "0");
+  canvas.setAttribute("aria-label", "Gira la ruleta");
   updateButton.addEventListener("click", handleUpdate);
   removeButton.addEventListener("click", handleRemoveResult);
   resetButton.addEventListener("click", handleResetCurrent);
@@ -53,6 +56,24 @@ function init() {
   audio.loop = true;
 }
 
+function registerSpinTarget(element) {
+  element.style.touchAction = "manipulation";
+  element.addEventListener(
+    "pointerup",
+    (event) => {
+      event.preventDefault();
+      handleSpin();
+    },
+    { passive: false }
+  );
+  element.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSpin();
+    }
+  });
+}
+
 function handleResize() {
   drawWheel();
 }
@@ -61,7 +82,7 @@ function handleUpdate() {
   const parsed = parseEntries(entriesInput.value);
   if (!parsed.length) {
     statusChip.textContent = "Cal afegir elements";
-    resultText.textContent = "Afegeix com a mínim un element per generar la ruleta.";
+    resultText.textContent = "Afegeix com a m\u00ednim un element per generar la ruleta.";
     entries = [];
     drawWheel();
     refreshControls();
@@ -96,7 +117,7 @@ function handleSpin() {
   const extraTurns = 7 + Math.random() * 3.5;
   const randomOffset = Math.random() * TAU;
   const targetRotation = startRotation + extraTurns * TAU + randomOffset;
-  const duration = 5200 + Math.random() * 1200;
+  const duration = 6500 + Math.random() * 2000;
   const startTime = performance.now();
   audioFadeRequested = false;
 
@@ -105,7 +126,7 @@ function handleSpin() {
   const animate = (now) => {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const eased = easeInOutCubic(progress);
+    const eased = easeOutQuint(progress);
     rotation = startRotation + (targetRotation - startRotation) * eased;
     drawWheel();
 
@@ -260,7 +281,10 @@ function drawWheel() {
 
   const centerX = width / 2;
   const centerY = height / 2;
-  const radius = Math.min(centerX, centerY) - 12 * window.devicePixelRatio;
+  const dpr = window.devicePixelRatio || 1;
+  const baseRadius = Math.min(centerX, centerY) - 12 * dpr;
+  const maxRadius = Math.min(centerX, centerY) - 8 * dpr;
+  const radius = Math.max(Math.min(baseRadius * 1.15, maxRadius), baseRadius * 0.9);
 
   ctx.save();
   ctx.translate(centerX, centerY);
@@ -294,7 +318,7 @@ function drawWheel() {
     const { fontSize, lines } = computeSegmentLabel(ctx, entry, radius);
     ctx.font = `${fontSize}px Montserrat, sans-serif`;
     const lineHeight = fontSize * 1.15;
-    const radialOffset = Math.max(radius * 0.5, radius - Math.max(42, fontSize * 1.6));
+    const radialOffset = Math.max(radius * 0.45, radius - Math.max(68, fontSize * 2.2));
     const totalHeight = lineHeight * (lines.length - 1);
     lines.forEach((line, lineIndex) => {
       ctx.fillText(line, radialOffset, -totalHeight / 2 + lineIndex * lineHeight);
@@ -413,6 +437,10 @@ function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+function easeOutQuint(t) {
+  return 1 - Math.pow(1 - t, 5);
+}
+
 function computeSegmentLabel(context, text, radius) {
   const clean = text.trim();
   const maxLines = 3;
@@ -426,9 +454,14 @@ function computeSegmentLabel(context, text, radius) {
     if (lines) {
       return { fontSize: size, lines };
     }
+    const forced = splitByWidth(context, clean, maxWidth, maxLines);
+    if (forced) {
+      return { fontSize: size, lines: forced };
+    }
   }
 
-  return { fontSize: minFontSize, lines: fallbackSplit(clean) };
+  context.font = `${minFontSize}px Montserrat, sans-serif`;
+  return { fontSize: minFontSize, lines: splitByWidth(context, clean, maxWidth, maxLines) || [""] };
 }
 
 function wrapLabelLines(context, text, maxWidth, maxLines) {
@@ -466,9 +499,37 @@ function wrapLabelLines(context, text, maxWidth, maxLines) {
   return lines;
 }
 
-function fallbackSplit(text) {
+function splitByWidth(context, text, maxWidth, maxLines) {
   if (!text) return [""];
-  return [text];
+  const lines = [];
+  let current = "";
+
+  for (const char of text) {
+    const candidate = current + char;
+    if (context.measureText(candidate).width <= maxWidth) {
+      current = candidate;
+    } else {
+      if (!current) {
+        current = char;
+        continue;
+      }
+      lines.push(current);
+      current = char;
+      if (lines.length === maxLines) {
+        return null;
+      }
+    }
+  }
+
+  if (current) {
+    lines.push(current);
+  }
+
+  if (!lines.length) {
+    lines.push(text);
+  }
+
+  return lines.length <= maxLines ? lines : null;
 }
 
 function showWinnerPopup(name) {
