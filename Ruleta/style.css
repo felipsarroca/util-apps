@@ -86,7 +86,7 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
   gap: 1.75rem;
   min-height: 0;
 }
@@ -101,69 +101,76 @@ body {
   flex-direction: column;
   gap: 1.25rem;
   min-height: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.wheel-panel {
+  width: min(100%, 640px);
+  margin: 0 auto;
+}
+
+.wheel-panel .spin-button,
+.wheel-panel .result-card {
+  align-self: center;
+  width: 100%;
 }
 
 .wheel-wrapper {
   position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.35));
   border-radius: 20px;
-  padding: clamp(0.75rem, 2vw, 1.25rem);
+  padding: clamp(1rem, 3vw, 1.6rem);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-  min-height: 0;
 }
 
 #wheelCanvas {
   width: 100%;
   height: 100%;
-  max-width: 420px;
-  max-height: 420px;
   filter: drop-shadow(0 18px 28px rgba(11, 19, 43, 0.2));
   border-radius: 50%;
 }
 
 .wheel-pointer {
   position: absolute;
-  top: 6%;
+  top: -20px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, 0);
   width: 0;
   height: 0;
   border-left: 16px solid transparent;
   border-right: 16px solid transparent;
-  border-bottom: 28px solid var(--secondary);
+  border-top: 28px solid var(--secondary);
   filter: drop-shadow(0 6px 10px rgba(11, 19, 43, 0.28));
 }
 
 .spin-button {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
+  width: min(100%, 320px);
+  padding: 0.95rem 1.5rem;
+  border-radius: 16px;
   border: none;
   background: linear-gradient(135deg, var(--accent) 0%, var(--secondary) 100%);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transform: translate(-50%, -50%);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
-  box-shadow: 0 18px 36px -16px rgba(255, 95, 109, 0.7);
+  box-shadow: 0 12px 32px -14px rgba(255, 95, 109, 0.7);
 }
 
 .spin-button:hover:not(:disabled) {
-  transform: translate(-50%, -50%) scale(1.05);
-  box-shadow: 0 26px 48px -18px rgba(255, 95, 109, 0.78);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 36px -18px rgba(255, 95, 109, 0.78);
 }
 
 .spin-button:active:not(:disabled) {
-  transform: translate(-50%, -50%) scale(0.97);
+  transform: translateY(0);
 }
 
 .spin-button:disabled {
@@ -173,6 +180,7 @@ body {
 }
 
 .result-card {
+  width: min(100%, 520px);
   background: rgba(255, 255, 255, 0.9);
   border-radius: 18px;
   padding: 1.25rem;
@@ -209,6 +217,9 @@ body {
 
 .controls-panel {
   position: relative;
+  align-items: stretch;
+  width: min(100%, 420px);
+  margin: 0 auto;
 }
 
 .panel-heading {
@@ -216,6 +227,7 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  width: 100%;
 }
 
 .panel-heading h2 {
@@ -249,6 +261,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  width: 100%;
 }
 
 .option-toggle {
@@ -297,32 +310,6 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--neutral-strong);
-}
-
-.quick-reference {
-  background: rgba(255, 255, 255, 0.75);
-  border-radius: 16px;
-  padding: 1rem;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-}
-
-.quick-reference h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--accent-dark);
-}
-
-.quick-reference ul {
-  margin: 0;
-  padding-left: 1.2rem;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.quick-reference li {
-  font-size: 0.92rem;
-  color: var(--neutral-soft);
 }
 
 .primary,
@@ -383,7 +370,7 @@ body {
 }
 
 .app-footer img {
-  width: 42px;
+  width: 60px;
   height: auto;
   filter: drop-shadow(0 4px 8px rgba(11, 19, 43, 0.15));
 }
@@ -398,6 +385,11 @@ body {
   text-decoration: underline;
 }
 
+.app-footer p {
+  margin: 0.25rem 0;
+  line-height: 1.35;
+}
+
 @media (max-width: 1024px) {
   body {
     padding: 1rem;
@@ -410,15 +402,15 @@ body {
 
   .layout {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
   }
 
   .wheel-panel {
-    min-height: 340px;
+    min-height: auto;
   }
 
   .controls-panel {
-    min-height: 320px;
+    min-height: auto;
   }
 
   .result-actions {
@@ -446,18 +438,12 @@ body {
   }
 
   .wheel-wrapper {
-    padding: 0.5rem;
-  }
-
-  #wheelCanvas {
-    max-width: 320px;
-    max-height: 320px;
+    padding: 0.85rem;
   }
 
   .spin-button {
-    width: 130px;
-    height: 130px;
-    font-size: 1rem;
+    width: 100%;
+    font-size: 1.05rem;
   }
 
   .options {
@@ -505,7 +491,7 @@ body {
     font-size: 0.9rem;
   }
 
-  .quick-reference ul {
-    gap: 0.3rem;
+  .app-footer img {
+    width: 44px;
   }
 }

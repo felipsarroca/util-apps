@@ -20,6 +20,7 @@ let lastResult = null;
 let rotation = 0;
 let animationFrameId = null;
 let spinning = false;
+let audioFadeRequested = false;
 
 function init() {
   initialEntries = [...DEFAULT_ENTRIES];
@@ -41,6 +42,7 @@ function init() {
     statusChip.textContent = noRepeatToggle.checked ? "Sense repeticions activat" : "Sense repeticions desactivat";
     refreshControls();
   });
+  audio.loop = true;
 }
 
 function handleResize() {
@@ -80,20 +82,25 @@ function handleSpin() {
   restoreButton.disabled = true;
 
   const startRotation = rotation;
-  const extraTurns = 6 + Math.random() * 3;
+  const extraTurns = 7 + Math.random() * 3.5;
   const randomOffset = Math.random() * TAU;
   const targetRotation = startRotation + extraTurns * TAU + randomOffset;
-  const duration = 4200;
+  const duration = 5200 + Math.random() * 1200;
   const startTime = performance.now();
+  audioFadeRequested = false;
 
   playAudio();
 
   const animate = (now) => {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const eased = easeOutQuart(progress);
+    const eased = easeInOutCubic(progress);
     rotation = startRotation + (targetRotation - startRotation) * eased;
     drawWheel();
+
+    if (!audioFadeRequested && progress >= 0.9) {
+      stopAudioSmooth();
+    }
 
     if (progress < 1) {
       animationFrameId = requestAnimationFrame(animate);
@@ -109,6 +116,8 @@ function handleSpin() {
 function playAudio() {
   try {
     audio.currentTime = 0;
+    audio.volume = 1;
+    audioFadeRequested = false;
     audio.play().catch(() => {
       // Silently ignore autoplay restrictions until user interacts.
     });
@@ -145,8 +154,9 @@ function finishSpin() {
 }
 
 function stopAudioSmooth() {
-  if (audio.paused) return;
-  const fadeDuration = 600;
+  if (audio.paused || audioFadeRequested) return;
+  audioFadeRequested = true;
+  const fadeDuration = 350;
   const startVolume = audio.volume;
   const startTime = performance.now();
 
@@ -170,14 +180,17 @@ function handleRemoveResult() {
   const index = entries.indexOf(lastResult);
   if (index !== -1) {
     entries.splice(index, 1);
+    entriesInput.value = entries.join("\n");
+    resultText.textContent = `S'ha eliminat "${lastResult}" de la ruleta.`;
+    statusChip.textContent = "Element eliminat";
+  } else {
+    resultText.textContent = "L'element ja no és present a la ruleta.";
+    statusChip.textContent = "Sense canvis";
   }
-  entriesInput.value = entries.join("\n");
-  resultText.textContent = `S'ha eliminat "${lastResult}" de la ruleta.`;
   lastResult = null;
   rotation = 0;
   drawWheel();
   refreshControls();
-  statusChip.textContent = "Element eliminat";
 }
 
 function handleResetCurrent() {
@@ -216,7 +229,7 @@ function refreshControls() {
   const hasEntries = entries.length > 0;
   spinButton.disabled = !hasEntries || spinning;
   updateButton.disabled = spinning;
-  removeButton.disabled = !lastResult || spinning || noRepeatToggle.checked;
+  removeButton.disabled = !lastResult || spinning;
   resetButton.disabled = !hasEntries || spinning;
   restoreButton.disabled = spinning;
 }
@@ -374,8 +387,8 @@ function segmentColor(index, total) {
   return `hsl(${hue} ${saturation}% ${lightness}%)`;
 }
 
-function easeOutQuart(t) {
-  return 1 - Math.pow(1 - t, 4);
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
 document.addEventListener("DOMContentLoaded", init);
