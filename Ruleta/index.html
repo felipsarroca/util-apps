@@ -1,42 +1,101 @@
 <!DOCTYPE html>
 <html lang="ca">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruleta Interactiva</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="app-container">
-        <header>
-            <h1>Ruleta Interactiva</h1>
-        </header>
-        <main>
-            <div class="roulette-container">
-                <canvas id="roulette-canvas" width="500" height="500"></canvas>
-                <button id="spin-button">Girar</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ruleta interactiva</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Nunito:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-bar">
+        <div class="headline">
+          <h1>Ruleta interactiva</h1>
+          <p>
+            Introdueix els elements que vulguis al llistat, actualitza la ruleta i fes-la girar per obtenir un resultat aleatori.
+          </p>
+        </div>
+        <div class="status-chip" id="statusChip">Preparada</div>
+      </header>
+
+      <main class="layout">
+        <section class="wheel-panel">
+          <div class="wheel-wrapper">
+            <canvas id="wheelCanvas" width="700" height="700" aria-label="Ruleta de selecció"></canvas>
+            <button id="spinButton" class="spin-button" type="button">
+              Gira la ruleta
+            </button>
+            <div class="wheel-pointer" aria-hidden="true"></div>
+          </div>
+          <div class="result-card">
+            <h2>Resultat</h2>
+            <p id="resultText">Encara no hi ha cap resultat. Prem el botó per fer un gir.</p>
+            <div class="result-actions">
+              <button id="removeButton" type="button" class="secondary" disabled>
+                Elimina el resultat
+              </button>
+              <button id="resetButton" type="button" class="ghost" disabled>
+                Reinicia la llista
+              </button>
             </div>
-            <div class="controls-container">
-                <textarea id="input-textarea" placeholder="Escriu els elements de la ruleta, un per línia..."></textarea>
-                <button id="update-button">Actualitzar Ruleta</button>
-            </div>
-            <div class="results-container">
-                <h2>Resultat:</h2>
-                <p id="result-text">-</p>
-                <button id="remove-button">Elimina aquest element</button>
-                <button id="reset-button">Reiniciar</button>
-            </div>
-        </main>
-        <footer>
-            <div class="footer-content">
-                <img src="CC_BY-NC-SA.svg" alt="Llicència Creative Commons">
-                <div class="footer-text">
-                    <p>Aplicació creada per Felip Sarroca amb l'assistència de la IA</p>
-                    <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
-                </div>
-            </div>
-        </footer>
+          </div>
+        </section>
+
+        <section class="controls-panel">
+          <div class="panel-heading">
+            <h2>Llista d'elements</h2>
+            <button id="updateButton" type="button" class="primary">
+              Actualitza la ruleta
+            </button>
+          </div>
+          <textarea
+            id="entriesInput"
+            placeholder="Escriu un element per línia&#10;Exemple:&#10;Maria&#10;Joan&#10;Arnau&#10;Projecte A"
+          ></textarea>
+          <div class="options">
+            <label class="option-toggle">
+              <input type="checkbox" id="noRepeatToggle" />
+              <span class="slider"></span>
+              <span class="label-text">Mode sense repeticions</span>
+            </label>
+            <button id="restoreButton" type="button" class="ghost">
+              Recupera llista inicial
+            </button>
+          </div>
+          <div class="quick-reference">
+            <h3>Consells ràpids</h3>
+            <ul>
+              <li>Fes servir texts curts per assegurar una lectura clara.</li>
+              <li>Canvia els elements sempre que vulguis i actualitza la ruleta.</li>
+              <li>
+                Comparteix-la amb l'alumnat des de GitHub Pages per utilitzar-la des de qualsevol dispositiu.
+              </li>
+            </ul>
+          </div>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <img src="./CC_BY-NC-SA.svg" alt="Llicència Creative Commons BY-NC-SA" />
+        <div>
+          <p>Aplicació creada per Felip Sarroca amb l'assistència de la IA</p>
+          <p>
+            Obra sota llicència
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noreferrer">
+              CC BY-NC-SA 4.0
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
-    <script src="script.js"></script>
-</body>
+
+    <audio id="rouletteAudio" src="./ruleta.mp3" preload="auto"></audio>
+    <script src="./script.js" type="module"></script>
+  </body>
 </html>

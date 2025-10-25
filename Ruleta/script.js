@@ -1,136 +1,381 @@
-const canvas = document.getElementById('roulette-canvas');
-const ctx = canvas.getContext('2d');
-const spinButton = document.getElementById('spin-button');
-const updateButton = document.getElementById('update-button');
-const inputTextArea = document.getElementById('input-textarea');
-const resultText = document.getElementById('result-text');
-const removeButton = document.getElementById('remove-button');
-const resetButton = document.getElementById('reset-button');
+const TAU = Math.PI * 2;
+const DEFAULT_ENTRIES = ["Projecte Agora", "Projecte Bit", "Projecte Cosmos", "Projecte Delta", "Projecte El.lipse", "Projecte Fenix"];
 
-let items = [];
-let colors = [];
-let startAngle = 0;
-let arc = 0;
-let spinTimeout = null;
-let spinAngleStart = 0;
-let spinTime = 0;
-let spinTimeTotal = 0;
+const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("wheelCanvas"));
+const ctx = canvas.getContext("2d");
+const spinButton = document.getElementById("spinButton");
+const updateButton = document.getElementById("updateButton");
+const removeButton = document.getElementById("removeButton");
+const resetButton = document.getElementById("resetButton");
+const restoreButton = document.getElementById("restoreButton");
+const entriesInput = /** @type {HTMLTextAreaElement} */ (document.getElementById("entriesInput"));
+const resultText = document.getElementById("resultText");
+const statusChip = document.getElementById("statusChip");
+const audio = /** @type {HTMLAudioElement} */ (document.getElementById("rouletteAudio"));
+const noRepeatToggle = /** @type {HTMLInputElement} */ (document.getElementById("noRepeatToggle"));
 
-// IMPORTANT: You need to provide the ruleta.mp3 file for the sound to work.
-const spinSound = new Audio('ruleta.mp3');
+let entries = [];
+let initialEntries = [];
+let lastResult = null;
+let rotation = 0;
+let animationFrameId = null;
+let spinning = false;
 
-function drawRoulette() {
-    arc = Math.PI / (items.length / 2);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#333";
-    ctx.lineWidth = 2;
-
-    for (let i = 0; i < items.length; i++) {
-        const angle = startAngle + i * arc;
-        ctx.fillStyle = colors[i];
-
-        ctx.beginPath();
-        ctx.arc(250, 250, 250, angle, angle + arc, false);
-        ctx.arc(250, 250, 0, angle + arc, angle, true);
-        ctx.stroke();
-        ctx.fill();
-
-        ctx.save();
-        ctx.fillStyle = "white";
-        ctx.translate(250 + Math.cos(angle + arc / 2) * 150, 250 + Math.sin(angle + arc / 2) * 150);
-        ctx.rotate(angle + arc / 2 + Math.PI / 2);
-        const text = items[i];
-        ctx.fillText(text, -ctx.measureText(text).width / 2, 0);
-        ctx.restore();
-    }
+function init() {
+  initialEntries = [...DEFAULT_ENTRIES];
+  entries = [...initialEntries];
+  entriesInput.value = entries.join("\n");
+  drawWheel();
+  refreshControls();
+  window.addEventListener("resize", handleResize);
+  spinButton.addEventListener("click", handleSpin);
+  updateButton.addEventListener("click", handleUpdate);
+  removeButton.addEventListener("click", handleRemoveResult);
+  resetButton.addEventListener("click", handleResetCurrent);
+  restoreButton.addEventListener("click", handleRestoreBase);
+  entriesInput.addEventListener("input", () => {
+    // Enable quick update feedback
+    statusChip.textContent = "Canvis pendents";
+  });
+  noRepeatToggle.addEventListener("change", () => {
+    statusChip.textContent = noRepeatToggle.checked ? "Sense repeticions activat" : "Sense repeticions desactivat";
+    refreshControls();
+  });
 }
 
-function rotate() {
-    spinTime += 30;
-    spinSound.play();
-    if (spinTime >= spinTimeTotal) {
-        stopRotate();
-        return;
-    }
-    const spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
-    startAngle += (spinAngle * Math.PI / 180);
-    drawRoulette();
-    spinTimeout = setTimeout(rotate, 30);
+function handleResize() {
+  drawWheel();
 }
 
-function stopRotate() {
-    clearTimeout(spinTimeout);
-    spinSound.pause();
-    spinSound.currentTime = 0;
-    const degrees = startAngle * 180 / Math.PI + 90;
-    const arcd = arc * 180 / Math.PI;
-    const index = Math.floor((360 - degrees % 360) / arcd);
-    ctx.save();
-    ctx.font = 'bold 30px sans-serif';
-    const text = items[index];
-    resultText.textContent = text;
-    ctx.fillText(text, 250 - ctx.measureText(text).width / 2, 250 + 10);
+function handleUpdate() {
+  const parsed = parseEntries(entriesInput.value);
+  if (!parsed.length) {
+    statusChip.textContent = "Cal afegir elements";
+    resultText.textContent = "Afegeix com a mínim un element per generar la ruleta.";
+    entries = [];
+    drawWheel();
+    refreshControls();
+    return;
+  }
+  entries = [...parsed];
+  initialEntries = [...parsed];
+  lastResult = null;
+  rotation = 0;
+  entriesInput.value = entries.join("\n");
+  drawWheel();
+  refreshControls();
+  statusChip.textContent = "Ruleta actualitzada";
+  resultText.textContent = "Prem el botó central per fer el primer gir.";
+}
+
+function handleSpin() {
+  if (spinning || entries.length === 0) return;
+
+  spinning = true;
+  statusChip.textContent = "Girant...";
+  spinButton.disabled = true;
+  updateButton.disabled = true;
+  removeButton.disabled = true;
+  resetButton.disabled = true;
+  restoreButton.disabled = true;
+
+  const startRotation = rotation;
+  const extraTurns = 6 + Math.random() * 3;
+  const randomOffset = Math.random() * TAU;
+  const targetRotation = startRotation + extraTurns * TAU + randomOffset;
+  const duration = 4200;
+  const startTime = performance.now();
+
+  playAudio();
+
+  const animate = (now) => {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeOutQuart(progress);
+    rotation = startRotation + (targetRotation - startRotation) * eased;
+    drawWheel();
+
+    if (progress < 1) {
+      animationFrameId = requestAnimationFrame(animate);
+    } else {
+      rotation = normalizeAngle(rotation);
+      finishSpin();
+    }
+  };
+
+  animationFrameId = requestAnimationFrame(animate);
+}
+
+function playAudio() {
+  try {
+    audio.currentTime = 0;
+    audio.play().catch(() => {
+      // Silently ignore autoplay restrictions until user interacts.
+    });
+  } catch (error) {
+    console.warn("No s'ha pogut reproduir l'àudio de la ruleta:", error);
+  }
+}
+
+function finishSpin() {
+  cancelAnimationFrame(animationFrameId);
+  animationFrameId = null;
+  spinning = false;
+
+  const winnerIndex = getWinnerIndex();
+  lastResult = entries[winnerIndex] ?? null;
+
+  statusChip.textContent = lastResult ? "Resultat disponible" : "Sense resultat";
+  if (lastResult) {
+    resultText.textContent = `Ha sortit: ${lastResult}`;
+  } else {
+    resultText.textContent = "No hi ha cap element per seleccionar.";
+  }
+
+  if (noRepeatToggle.checked && typeof winnerIndex === "number") {
+    entries.splice(winnerIndex, 1);
+    entriesInput.value = entries.join("\n");
+    statusChip.textContent = entries.length ? "Mode sense repeticions" : "Sense elements";
+    rotation = 0;
+    drawWheel();
+  }
+
+  refreshControls();
+  stopAudioSmooth();
+}
+
+function stopAudioSmooth() {
+  if (audio.paused) return;
+  const fadeDuration = 600;
+  const startVolume = audio.volume;
+  const startTime = performance.now();
+
+  const fade = (now) => {
+    const progress = Math.min((now - startTime) / fadeDuration, 1);
+    audio.volume = startVolume * (1 - progress);
+    if (progress < 1) {
+      requestAnimationFrame(fade);
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = startVolume;
+    }
+  };
+
+  requestAnimationFrame(fade);
+}
+
+function handleRemoveResult() {
+  if (!lastResult) return;
+  const index = entries.indexOf(lastResult);
+  if (index !== -1) {
+    entries.splice(index, 1);
+  }
+  entriesInput.value = entries.join("\n");
+  resultText.textContent = `S'ha eliminat "${lastResult}" de la ruleta.`;
+  lastResult = null;
+  rotation = 0;
+  drawWheel();
+  refreshControls();
+  statusChip.textContent = "Element eliminat";
+}
+
+function handleResetCurrent() {
+  entries = [...initialEntries];
+  entriesInput.value = entries.join("\n");
+  if (!entries.length) {
+    statusChip.textContent = "Llista buida";
+  } else {
+    statusChip.textContent = "Ruleta reiniciada";
+  }
+  lastResult = null;
+  rotation = 0;
+  drawWheel();
+  refreshControls();
+}
+
+function handleRestoreBase() {
+  entries = [...DEFAULT_ENTRIES];
+  initialEntries = [...DEFAULT_ENTRIES];
+  entriesInput.value = entries.join("\n");
+  lastResult = null;
+  rotation = 0;
+  drawWheel();
+  refreshControls();
+  statusChip.textContent = "Llista base restaurada";
+}
+
+function parseEntries(raw) {
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+function refreshControls() {
+  const hasEntries = entries.length > 0;
+  spinButton.disabled = !hasEntries || spinning;
+  updateButton.disabled = spinning;
+  removeButton.disabled = !lastResult || spinning || noRepeatToggle.checked;
+  resetButton.disabled = !hasEntries || spinning;
+  restoreButton.disabled = spinning;
+}
+
+function drawWheel() {
+  resizeCanvasForDisplay();
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(0, 0, width, height);
+
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = Math.min(centerX, centerY) - 12 * window.devicePixelRatio;
+
+  ctx.save();
+  ctx.translate(centerX, centerY);
+
+  if (!entries.length) {
+    drawEmptyState(ctx, radius);
     ctx.restore();
-}
+    return;
+  }
 
-function easeOut(t, b, c, d) {
-    const ts = (t /= d) * t;
-    const tc = ts * t;
-    return b + c * (tc + -3 * ts + 3 * t);
-}
+  const segmentAngle = TAU / entries.length;
+  ctx.rotate(rotation);
 
-function updateRoulette() {
-    items = inputTextArea.value.split('\n').filter(item => item.trim() !== '');
-    if (items.length > 0) {
-        generateColors();
-        drawRoulette();
-        saveItems();
+  entries.forEach((entry, index) => {
+    const startAngle = index * segmentAngle;
+    const endAngle = startAngle + segmentAngle;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, radius, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = segmentColor(index, entries.length);
+    ctx.fill();
+
+    ctx.save();
+    ctx.rotate(startAngle + segmentAngle / 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `${Math.max(18, Math.min(34, radius * 0.12))}px Montserrat, sans-serif`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(11, 19, 43, 0.35)";
+    ctx.shadowBlur = 14;
+    const label = entry.length > 20 ? entry.slice(0, 20) + "…" : entry;
+    ctx.fillText(label, radius - 18, 0);
+    ctx.restore();
+  });
+
+  if (lastResult) {
+    const highlightIndex = entries.indexOf(lastResult);
+    if (highlightIndex !== -1) {
+      ctx.save();
+      ctx.rotate(highlightIndex * segmentAngle + segmentAngle / 2);
+      const highlightGradient = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius);
+      highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.6)");
+      highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, radius, -segmentAngle / 2, segmentAngle / 2);
+      ctx.closePath();
+      ctx.fillStyle = highlightGradient;
+      ctx.fill();
+      ctx.restore();
     }
+  }
+
+  ctx.restore();
+  drawCenterBadge(centerX, centerY, radius);
 }
 
-function generateColors() {
-    colors = [];
-    for (let i = 0; i < items.length; i++) {
-        colors.push(`hsl(${i * (360 / items.length)}, 70%, 50%)`);
+function drawEmptyState(context, radius) {
+  const gradient = context.createRadialGradient(0, 0, radius * 0.1, 0, 0, radius);
+  gradient.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+  gradient.addColorStop(1, "rgba(255, 255, 255, 0.55)");
+  context.beginPath();
+  context.arc(0, 0, radius, 0, TAU);
+  context.fillStyle = gradient;
+  context.fill();
+
+  context.fillStyle = "rgba(11, 19, 43, 0.5)";
+  context.font = `${Math.max(18, radius * 0.16)}px Montserrat, sans-serif`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  wrapText(context, "Afegeix elements i prem «Actualitza la ruleta»", 0, 0, radius * 1.3, 36);
+}
+
+function drawCenterBadge(cx, cy, radius) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.12, 0, TAU);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+  ctx.shadowColor = "rgba(11, 19, 43, 0.25)";
+  ctx.shadowBlur = 18;
+  ctx.fill();
+  ctx.restore();
+}
+
+function resizeCanvasForDisplay() {
+  const { width, height } = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const displayWidth = Math.round(width * dpr);
+  const displayHeight = Math.round(height * dpr);
+
+  if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+  }
+}
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(" ");
+  let line = "";
+  const lines = [];
+
+  words.forEach((word) => {
+    const testLine = `${line}${word} `;
+    const metrics = context.measureText(testLine);
+    if (metrics.width > maxWidth && line !== "") {
+      lines.push(line.trim());
+      line = `${word} `;
+    } else {
+      line = testLine;
     }
+  });
+
+  lines.push(line.trim());
+
+  const totalHeight = lines.length * lineHeight;
+  let offsetY = y - totalHeight / 2 + lineHeight / 2;
+
+  lines.forEach((lineText) => {
+    context.fillText(lineText, x, offsetY);
+    offsetY += lineHeight;
+  });
 }
 
-function saveItems() {
-    localStorage.setItem('rouletteItems', JSON.stringify(items));
+function normalizeAngle(value) {
+  return ((value % TAU) + TAU) % TAU;
 }
 
-function loadItems() {
-    const savedItems = localStorage.getItem('rouletteItems');
-    if (savedItems) {
-        items = JSON.parse(savedItems);
-        inputTextArea.value = items.join('\n');
-        updateRoulette();
-    }
+function getWinnerIndex() {
+  if (!entries.length) return null;
+  const pointerAngle = (3 * Math.PI) / 2; // 270° cap avall
+  const segmentAngle = TAU / entries.length;
+  const normalized = normalizeAngle(pointerAngle - rotation);
+  return Math.floor(normalized / segmentAngle) % entries.length;
 }
 
-spinButton.addEventListener('click', () => {
-    spinAngleStart = Math.random() * 10 + 10;
-    spinTime = 0;
-    spinTimeTotal = Math.random() * 3 + 4 * 1000;
-    rotate();
-});
+function segmentColor(index, total) {
+  const hue = Math.round((360 / total) * index);
+  const saturation = total > 6 ? 82 : 78;
+  const lightness = total > 10 ? 55 : 60;
+  return `hsl(${hue} ${saturation}% ${lightness}%)`;
+}
 
-updateButton.addEventListener('click', updateRoulette);
+function easeOutQuart(t) {
+  return 1 - Math.pow(1 - t, 4);
+}
 
-removeButton.addEventListener('click', () => {
-    const currentResult = resultText.textContent;
-    if (currentResult !== '-' && items.includes(currentResult)) {
-        items = items.filter(item => item !== currentResult);
-        inputTextArea.value = items.join('\n');
-        updateRoulette();
-    }
-});
-
-resetButton.addEventListener('click', () => {
-    loadItems();
-});
-
-window.addEventListener('load', () => {
-    loadItems();
-    drawRoulette();
-});
+document.addEventListener("DOMContentLoaded", init);
