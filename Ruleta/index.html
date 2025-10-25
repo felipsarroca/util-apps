@@ -10,16 +10,20 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Nunito:wght@400;600&display=swap"
       rel="stylesheet"
     />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="top-bar">
         <div class="headline">
-          <h1>Ruleta interactiva</h1>
-          <p>
-            Introdueix els elements que vulguis al llistat, actualitza la ruleta i fes-la girar per obtenir un resultat aleatori.
-          </p>
+          <img src="./ruleta.svg" alt="Icona de la ruleta" class="headline-icon" />
+          <div class="headline-text">
+            <h1>Ruleta interactiva</h1>
+            <p>
+              Introdueix els elements que vulguis al llistat, actualitza la ruleta i fes-la girar per obtenir un resultat aleatori.
+            </p>
+          </div>
         </div>
         <div class="status-chip" id="statusChip">Preparada</div>
       </header>
@@ -27,7 +31,7 @@
       <main class="layout">
         <section class="wheel-panel">
           <div class="wheel-wrapper">
-            <canvas id="wheelCanvas" width="700" height="700" aria-label="Ruleta de selecció"></canvas>
+            <canvas id="wheelCanvas" width="700" height="700" aria-label="Ruleta de selecci&oacute;"></canvas>
             <div class="wheel-pointer" aria-hidden="true"></div>
           </div>
           <button id="spinButton" class="spin-button" type="button">
@@ -44,7 +48,7 @@
           </div>
           <textarea
             id="entriesInput"
-            placeholder="Escriu un element per línia&#10;Exemple:&#10;Maria&#10;Joan&#10;Arnau&#10;Projecte A"
+            placeholder="Escriu un element per l&iacute;nia&#10;Exemple:&#10;Maria&#10;Joan&#10;Arnau&#10;Projecte A"
           ></textarea>
           <div class="options">
             <label class="option-toggle">

@@ -15,7 +15,6 @@ const audio = /** @type {HTMLAudioElement} */ (document.getElementById("roulette
 const noRepeatToggle = /** @type {HTMLInputElement} */ (document.getElementById("noRepeatToggle"));
 const winnerPopup = document.getElementById("winnerPopup");
 const winnerName = document.getElementById("winnerName");
-const wheelCanvas = canvas;
 
 let entries = [];
 let initialEntries = [];
@@ -34,7 +33,7 @@ function init() {
   refreshControls();
   window.addEventListener("resize", handleResize);
   spinButton.addEventListener("click", handleSpin);
-  wheelCanvas.addEventListener("click", handleSpin);
+  canvas.addEventListener("click", handleSpin);
   updateButton.addEventListener("click", handleUpdate);
   removeButton.addEventListener("click", handleRemoveResult);
   resetButton.addEventListener("click", handleResetCurrent);
@@ -47,7 +46,9 @@ function init() {
     statusChip.textContent = noRepeatToggle.checked ? "Sense repeticions activat" : "Sense repeticions desactivat";
     refreshControls();
   });
-  winnerPopup?.addEventListener("click", hideWinnerPopup);
+  if (winnerPopup) {
+    winnerPopup.addEventListener("click", hideWinnerPopup);
+  }
   document.addEventListener("pointerdown", handleGlobalPointerDismiss, { capture: true });
   audio.loop = true;
 }
@@ -75,7 +76,7 @@ function handleUpdate() {
   drawWheel();
   refreshControls();
   statusChip.textContent = "Ruleta actualitzada";
-  resultText.textContent = "Prem el botó per fer el primer gir.";
+  resultText.textContent = "Prem el bot\u00F3 per fer el primer gir.";
   hideWinnerPopup();
 }
 
@@ -217,7 +218,7 @@ function handleResetCurrent() {
   rotation = 0;
   drawWheel();
   hideWinnerPopup();
-  resultText.textContent = "Prem el botó per fer un nou gir amb la llista actual.";
+  resultText.textContent = "Prem el bot\u00F3 per fer un nou gir amb la llista actual.";
   refreshControls();
 }
 
@@ -230,7 +231,7 @@ function handleRestoreBase() {
   drawWheel();
   refreshControls();
   hideWinnerPopup();
-  resultText.textContent = "Llista base restaurada. Prem el botó per començar.";
+  resultText.textContent = "Llista base restaurada. Prem el bot\u00F3 per comen\u00E7ar.";
   statusChip.textContent = "Llista base restaurada";
 }
 
@@ -286,13 +287,18 @@ function drawWheel() {
     ctx.save();
     ctx.rotate(startAngle + segmentAngle / 2);
     ctx.fillStyle = "#ffffff";
-    ctx.font = `${Math.max(18, Math.min(34, radius * 0.12))}px Montserrat, sans-serif`;
-    ctx.textAlign = "right";
+    ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.shadowColor = "rgba(11, 19, 43, 0.35)";
-    ctx.shadowBlur = 14;
-    const label = entry.length > 20 ? entry.slice(0, 20) + "…" : entry;
-    ctx.fillText(label, radius - 18, 0);
+    ctx.shadowColor = "rgba(11, 19, 43, 0.3)";
+    ctx.shadowBlur = 12;
+    const { fontSize, lines } = computeSegmentLabel(ctx, entry, radius);
+    ctx.font = `${fontSize}px Montserrat, sans-serif`;
+    const lineHeight = fontSize * 1.15;
+    const radialOffset = Math.max(radius * 0.52, radius - Math.max(46, fontSize * 1.8));
+    const totalHeight = lineHeight * (lines.length - 1);
+    lines.forEach((line, lineIndex) => {
+      ctx.fillText(line, radialOffset, -totalHeight / 2 + lineIndex * lineHeight);
+    });
     ctx.restore();
   });
 
@@ -331,7 +337,7 @@ function drawEmptyState(context, radius) {
   context.font = `${Math.max(18, radius * 0.16)}px Montserrat, sans-serif`;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  wrapText(context, "Afegeix elements i prem «Actualitza la ruleta»", 0, 0, radius * 1.3, 36);
+  wrapText(context, 'Afegeix elements i prem "Actualitza la ruleta"', 0, 0, radius * 1.3, 36);
 }
 
 function drawCenterBadge(cx, cy, radius) {
@@ -405,6 +411,64 @@ function segmentColor(index, total) {
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function computeSegmentLabel(context, text, radius) {
+  const clean = text.trim();
+  const maxLines = 3;
+  const maxWidth = radius * 0.95;
+  let fontSize = Math.min(36, radius * 0.16);
+  const minFontSize = Math.max(12, radius * 0.08);
+
+  for (let size = fontSize; size >= minFontSize; size -= 1) {
+    context.font = `${size}px Montserrat, sans-serif`;
+    const lines = wrapLabelLines(context, clean, maxWidth, maxLines);
+    if (lines) {
+      return { fontSize: size, lines };
+    }
+  }
+
+  return { fontSize: minFontSize, lines: fallbackSplit(clean) };
+}
+
+function wrapLabelLines(context, text, maxWidth, maxLines) {
+  if (!text) return [""];
+  const words = text.split(/\s+/).filter(Boolean);
+  if (!words.length) return [""];
+
+  for (const word of words) {
+    if (context.measureText(word).width > maxWidth) {
+      return null;
+    }
+  }
+
+  const lines = [];
+  let currentLine = words[0];
+
+  for (let i = 1; i < words.length; i += 1) {
+    const testLine = `${currentLine} ${words[i]}`;
+    if (context.measureText(testLine).width <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      lines.push(currentLine);
+      currentLine = words[i];
+      if (lines.length === maxLines) {
+        return null;
+      }
+    }
+  }
+
+  lines.push(currentLine);
+  if (lines.length > maxLines) {
+    return null;
+  }
+
+  return lines;
+}
+
+function fallbackSplit(text) {
+  if (!text) return [""];
+  return [text];
 }
 
 function showWinnerPopup(name) {
