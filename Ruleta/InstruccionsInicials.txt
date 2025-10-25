@@ -1,0 +1,86 @@
+Sí ✅, **és absolutament possible** fer una aplicació així i penjar-la a **GitHub Pages** perquè funcioni directament des del navegador, sense cap servidor extern.
+De fet, la teva idea es pot implementar amb HTML, CSS i JavaScript (o amb un framework com React si vols més escalabilitat).
+
+Et resumeixo com seria l’**estructura funcional i tècnica** de l’aplicació:
+
+---
+
+## 🌀 **1. Estructura visual (UI/UX)**
+
+* **Ruleta al centre de la pantalla**
+
+  * Es mostrarà com un cercle dividit en tants segments com elements hi hagi a la llista.
+  * Cada segment tindrà un color diferent i el text corresponent (número, paraula, nom...).
+
+* **Panell lateral o inferior d’entrada de dades**
+
+  * Àrea de text tipus textarea 📄 → una línia per cada element.
+  * Botó “🌀 Actualitzar ruleta” per regenerar la ruleta amb els nous valors.
+
+* **Botó invisible (o discret) “Iniciar” al centre de la ruleta**
+
+  * Al fer clic → la ruleta gira amb una animació i so 🎰.
+  * Es para de manera aleatòria en un dels segments.
+
+* **Panell de resultats**
+
+  * Mostra clarament quin element ha sortit.
+  * Botó “❌ Elimina aquest element” → treu-lo de la llista i actualitza la ruleta.
+
+* *(Opcional)* Botó “♻️ Reiniciar” → torna a posar tots els elements inicials sense esborrar res.
+
+---
+
+## 🧠 **2. Lògica i funcionalitats**
+
+| Funció                  | Descripció                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| `Generar ruleta`        | Construeix el canvas de la ruleta segons el nombre d’elements introduïts.                               |
+| `Iniciar gir`           | Gira la ruleta amb un angle aleatori i velocitat decreixent fins a parar.                               |
+| `Aleatorietat`          | Calcula el segment guanyador segons l’angle final.                                                      |
+| `Eliminar element`      | Treu l’element guanyador de la llista i redibuixa la ruleta.                                            |
+| `Efecte de so`          | So típic de ruleta mentre gira (fitxer .mp3 curt).                                                      |
+| `Colors`                | Assigna automàticament colors vius a cada segment.                                                      |
+| `Persistència opcional` | Es poden desar els elements en localStorage si vols mantenir la ruleta després d’actualitzar la pàgina. |
+
+---
+
+## 🧱 **3. Estructura tècnica**
+
+**Fitxers mínims necessaris**:
+
+```
+📁 ruleta-app
+ ├── index.html
+ ├── style.css
+ ├── script.js
+ ├── ruleta.mp3        ← so del gir
+ └── README.md
+```
+
+* `index.html` → estructura de la interfície
+* `style.css` → colors, formes i animacions
+* `script.js` → càlcul de l’angle, dibuix del canvas, aleatorietat i gestió d’esdeveniments
+* `ruleta.mp3` → efecte de so de ruleta
+* Tot plegat es pot penjar a GitHub Pages sense backend.
+
+---
+
+## 🪄 **4. Experiència d’usuari ideal**
+
+* Escrius noms o números a la llista ✍️
+* Prem “🌀 Actualitzar” → es genera la ruleta amb colors
+* Prem damunt la ruleta → comença a girar amb so
+* Es para i mostra clarament el guanyador 🏆
+* Pots eliminar-lo amb un clic si vols que no torni a sortir
+* Torna a girar fins que s’acabin els elements
+
+---
+
+## 🧭 **5. Extres opcionals que podries afegir més endavant**
+
+* Estadístiques de quantes vegades ha sortit cada element 📊
+* Temes de colors personalitzables (clar/fosc) 🎨
+* Confeti o animacions visuals al guanyador 🎉
+* Mode “sense repetir” automàtic
+

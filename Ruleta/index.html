@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta Interactiva</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Ruleta Interactiva</h1>
+        </header>
+        <main>
+            <div class="roulette-container">
+                <canvas id="roulette-canvas" width="500" height="500"></canvas>
+                <button id="spin-button">Girar</button>
+            </div>
+            <div class="controls-container">
+                <textarea id="input-textarea" placeholder="Escriu els elements de la ruleta, un per línia..."></textarea>
+                <button id="update-button">Actualitzar Ruleta</button>
+            </div>
+            <div class="results-container">
+                <h2>Resultat:</h2>
+                <p id="result-text">-</p>
+                <button id="remove-button">Elimina aquest element</button>
+                <button id="reset-button">Reiniciar</button>
+            </div>
+        </main>
+        <footer>
+            <div class="footer-content">
+                <img src="CC_BY-NC-SA.svg" alt="Llicència Creative Commons">
+                <div class="footer-text">
+                    <p>Aplicació creada per Felip Sarroca amb l'assistència de la IA</p>
+                    <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
