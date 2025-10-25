@@ -138,7 +138,7 @@ body {
 
 .wheel-pointer {
   position: absolute;
-  top: -20px;
+  top: clamp(6px, 2vw, 14px);
   left: 50%;
   transform: translate(-50%, 0);
   width: 0;
@@ -147,6 +147,7 @@ body {
   border-right: 16px solid transparent;
   border-top: 28px solid var(--secondary);
   filter: drop-shadow(0 6px 10px rgba(11, 19, 43, 0.28));
+  pointer-events: none;
 }
 
 .spin-button {
@@ -493,5 +494,170 @@ body {
 
   .app-footer img {
     width: 44px;
+  }
+}
+.winner-popup {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.28s ease, transform 0.32s ease;
+  z-index: 20;
+}
+
+.winner-popup.visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.winner-popup::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 15, 35, 0.32);
+  backdrop-filter: blur(6px);
+  animation: fadeBackdrop 0.32s ease forwards;
+}
+
+.popup-content {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+  box-shadow: 0 24px 48px -28px rgba(11, 19, 43, 0.6), 0 18px 36px -22px rgba(255, 95, 109, 0.5);
+  border-radius: 28px;
+  padding: 2rem 2.8rem;
+  text-align: center;
+  overflow: hidden;
+  animation: popIn 0.4s cubic-bezier(0.25, 1.25, 0.5, 1) forwards;
+}
+
+.confetti {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.confetti span {
+  position: absolute;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  animation: confettiFloat 3.4s ease-in-out infinite;
+}
+
+.confetti span:nth-child(1) {
+  top: 12%;
+  left: 18%;
+  animation-delay: 0s;
+}
+
+.confetti span:nth-child(2) {
+  top: 8%;
+  right: 16%;
+  animation-delay: 0.4s;
+}
+
+.confetti span:nth-child(3) {
+  bottom: 16%;
+  left: 24%;
+  animation-delay: 0.8s;
+}
+
+.confetti span:nth-child(4) {
+  bottom: 10%;
+  right: 20%;
+  animation-delay: 1.1s;
+}
+
+.confetti span:nth-child(5) {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 1.5s;
+}
+
+.popup-content::after {
+  content: "";
+  position: absolute;
+  inset: -40% -20%;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 95, 109, 0.25), transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(132, 94, 247, 0.22), transparent 55%),
+    radial-gradient(circle at 40% 60%, rgba(95, 209, 196, 0.18), transparent 60%);
+  filter: blur(0.5px);
+  z-index: 0;
+}
+
+.popup-icon {
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  margin-bottom: 0.6rem;
+  animation: bounceIcon 1.2s ease infinite;
+  position: relative;
+  z-index: 1;
+}
+
+.popup-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--neutral-soft);
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.popup-name {
+  font-family: "Montserrat", sans-serif;
+  font-size: clamp(2rem, 6vw, 2.8rem);
+  font-weight: 700;
+  color: var(--accent-dark);
+  margin: 0.35rem 0 0;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes confettiFloat {
+  0%,
+  100% {
+    transform: translate(-10%, -10%) scale(1) rotate(-8deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(10%, 10%) scale(1.15) rotate(10deg);
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.86) rotate(-4deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.04) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes bounceIcon {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes fadeBackdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

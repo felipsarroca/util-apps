@@ -13,6 +13,8 @@ const resultText = document.getElementById("resultText");
 const statusChip = document.getElementById("statusChip");
 const audio = /** @type {HTMLAudioElement} */ (document.getElementById("rouletteAudio"));
 const noRepeatToggle = /** @type {HTMLInputElement} */ (document.getElementById("noRepeatToggle"));
+const winnerPopup = document.getElementById("winnerPopup");
+const winnerName = document.getElementById("winnerName");
 
 let entries = [];
 let initialEntries = [];
@@ -57,6 +59,7 @@ function handleUpdate() {
     entries = [];
     drawWheel();
     refreshControls();
+    hideWinnerPopup();
     return;
   }
   entries = [...parsed];
@@ -67,12 +70,14 @@ function handleUpdate() {
   drawWheel();
   refreshControls();
   statusChip.textContent = "Ruleta actualitzada";
-  resultText.textContent = "Prem el botó central per fer el primer gir.";
+  resultText.textContent = "Prem el botó per fer el primer gir.";
+  hideWinnerPopup();
 }
 
 function handleSpin() {
   if (spinning || entries.length === 0) return;
 
+  hideWinnerPopup();
   spinning = true;
   statusChip.textContent = "Girant...";
   spinButton.disabled = true;
@@ -136,7 +141,8 @@ function finishSpin() {
 
   statusChip.textContent = lastResult ? "Resultat disponible" : "Sense resultat";
   if (lastResult) {
-    resultText.textContent = `Ha sortit: ${lastResult}`;
+    showWinnerPopup(lastResult);
+    resultText.textContent = "Pots girar de nou o eliminar l'element seleccionat.";
   } else {
     resultText.textContent = "No hi ha cap element per seleccionar.";
   }
@@ -190,6 +196,7 @@ function handleRemoveResult() {
   lastResult = null;
   rotation = 0;
   drawWheel();
+  hideWinnerPopup();
   refreshControls();
 }
 
@@ -204,6 +211,8 @@ function handleResetCurrent() {
   lastResult = null;
   rotation = 0;
   drawWheel();
+  hideWinnerPopup();
+  resultText.textContent = "Prem el botó per fer un nou gir amb la llista actual.";
   refreshControls();
 }
 
@@ -215,6 +224,8 @@ function handleRestoreBase() {
   rotation = 0;
   drawWheel();
   refreshControls();
+  hideWinnerPopup();
+  resultText.textContent = "Llista base restaurada. Prem el botó per començar.";
   statusChip.textContent = "Llista base restaurada";
 }
 
@@ -321,7 +332,7 @@ function drawEmptyState(context, radius) {
 function drawCenterBadge(cx, cy, radius) {
   ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cy, radius * 0.12, 0, TAU);
+  ctx.arc(cx, cy, radius * 0.08, 0, TAU);
   ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
   ctx.shadowColor = "rgba(11, 19, 43, 0.25)";
   ctx.shadowBlur = 18;
@@ -374,7 +385,7 @@ function normalizeAngle(value) {
 
 function getWinnerIndex() {
   if (!entries.length) return null;
-  const pointerAngle = (3 * Math.PI) / 2; // 270° cap avall
+  const pointerAngle = (3 * Math.PI) / 2; // 270 graus cap avall
   const segmentAngle = TAU / entries.length;
   const normalized = normalizeAngle(pointerAngle - rotation);
   return Math.floor(normalized / segmentAngle) % entries.length;
@@ -389,6 +400,17 @@ function segmentColor(index, total) {
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function showWinnerPopup(name) {
+  if (!winnerPopup || !winnerName) return;
+  winnerName.textContent = name;
+  winnerPopup.classList.add("visible");
+}
+
+function hideWinnerPopup() {
+  if (!winnerPopup) return;
+  winnerPopup.classList.remove("visible");
 }
 
 document.addEventListener("DOMContentLoaded", init);
