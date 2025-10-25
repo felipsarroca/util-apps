@@ -144,6 +144,7 @@ function handleSpin() {
     } else {
       updateAudioRate(0);
       rotation = normalizeAngle(rotation);
+      stopAudioSmooth(true);
       finishSpin();
     }
   };
@@ -193,8 +194,17 @@ function finishSpin() {
   stopAudioSmooth();
 }
 
-function stopAudioSmooth() {
-  if (audio.paused || audioFadeRequested) return;
+function stopAudioSmooth(immediate = false) {
+  if (audio.paused) return;
+  if (immediate) {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = 1;
+    audio.playbackRate = 1;
+    audioFadeRequested = false;
+    return;
+  }
+  if (audioFadeRequested) return;
   audioFadeRequested = true;
   const fadeDuration = 350;
   const startVolume = audio.volume;
@@ -208,8 +218,9 @@ function stopAudioSmooth() {
     } else {
       audio.pause();
       audio.currentTime = 0;
-      audio.volume = startVolume;
+      audio.volume = 1;
       audio.playbackRate = 1;
+      audioFadeRequested = false;
     }
   };
 
