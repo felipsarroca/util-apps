@@ -294,7 +294,7 @@ function drawWheel() {
     const { fontSize, lines } = computeSegmentLabel(ctx, entry, radius);
     ctx.font = `${fontSize}px Montserrat, sans-serif`;
     const lineHeight = fontSize * 1.15;
-    const radialOffset = Math.max(radius * 0.52, radius - Math.max(46, fontSize * 1.8));
+    const radialOffset = Math.max(radius * 0.5, radius - Math.max(42, fontSize * 1.6));
     const totalHeight = lineHeight * (lines.length - 1);
     lines.forEach((line, lineIndex) => {
       ctx.fillText(line, radialOffset, -totalHeight / 2 + lineIndex * lineHeight);
@@ -417,8 +417,8 @@ function computeSegmentLabel(context, text, radius) {
   const clean = text.trim();
   const maxLines = 3;
   const maxWidth = radius * 0.95;
-  let fontSize = Math.min(36, radius * 0.16);
-  const minFontSize = Math.max(12, radius * 0.08);
+  let fontSize = Math.min(30, radius * 0.11);
+  const minFontSize = Math.max(10, radius * 0.07);
 
   for (let size = fontSize; size >= minFontSize; size -= 1) {
     context.font = `${size}px Montserrat, sans-serif`;
