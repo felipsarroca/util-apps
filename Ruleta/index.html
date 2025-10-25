@@ -33,18 +33,6 @@
           <button id="spinButton" class="spin-button" type="button">
             Gira la ruleta
           </button>
-          <div class="result-card">
-            <h2>Resultat</h2>
-            <p id="resultText">Prem el bot&oacute; per fer el primer gir.</p>
-            <div class="result-actions">
-              <button id="removeButton" type="button" class="secondary" disabled>
-                Elimina el resultat
-              </button>
-              <button id="resetButton" type="button" class="ghost" disabled>
-                Reinicia la llista
-              </button>
-            </div>
-          </div>
         </section>
 
         <section class="controls-panel">
@@ -68,6 +56,15 @@
               Recupera llista inicial
             </button>
           </div>
+          <div class="controls-actions">
+            <button id="removeButton" type="button" class="secondary" disabled>
+              Elimina el resultat
+            </button>
+            <button id="resetButton" type="button" class="ghost" disabled>
+              Reinicia la llista
+            </button>
+          </div>
+          <p id="resultText" class="info-message">Prem el bot&oacute; per fer el primer gir.</p>
         </section>
       </main>
 
@@ -95,7 +92,6 @@
           <span>🥳</span>
         </div>
         <div class="popup-icon" aria-hidden="true">🎉</div>
-        <p class="popup-label">Ha sortit</p>
         <p class="popup-name" id="winnerName">—</p>
       </div>
     </div>

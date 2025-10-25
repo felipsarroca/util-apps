@@ -106,14 +106,13 @@ body {
 }
 
 .wheel-panel {
-  width: min(100%, 640px);
+  width: min(100%, 620px);
   margin: 0 auto;
+  gap: 1.5rem;
 }
 
-.wheel-panel .spin-button,
-.wheel-panel .result-card {
+.wheel-panel .spin-button {
   align-self: center;
-  width: 100%;
 }
 
 .wheel-wrapper {
@@ -138,14 +137,14 @@ body {
 
 .wheel-pointer {
   position: absolute;
-  top: clamp(6px, 2vw, 14px);
+  top: clamp(28px, 3vw, 42px);
   left: 50%;
-  transform: translate(-50%, 0);
+  transform: translate(-50%, 30%);
   width: 0;
   height: 0;
   border-left: 16px solid transparent;
   border-right: 16px solid transparent;
-  border-top: 28px solid var(--secondary);
+  border-top: 34px solid var(--secondary);
   filter: drop-shadow(0 6px 10px rgba(11, 19, 43, 0.28));
   pointer-events: none;
 }
@@ -178,42 +177,6 @@ body {
   cursor: progress;
   opacity: 0.7;
   box-shadow: none;
-}
-
-.result-card {
-  width: min(100%, 520px);
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 18px;
-  padding: 1.25rem;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.result-card h2 {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--secondary-dark);
-}
-
-#resultText {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--neutral-strong);
-}
-
-.result-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.result-actions button {
-  flex: 1;
-  min-width: 150px;
 }
 
 .controls-panel {
@@ -263,6 +226,27 @@ body {
   justify-content: space-between;
   gap: 1rem;
   width: 100%;
+}
+
+.controls-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.controls-actions button {
+  flex: 1;
+  min-width: 160px;
+}
+
+#resultText {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--neutral-soft);
+  text-align: center;
 }
 
 .option-toggle {
@@ -414,7 +398,7 @@ body {
     min-height: auto;
   }
 
-  .result-actions {
+  .controls-actions {
     flex-direction: column;
   }
 }
@@ -454,6 +438,10 @@ body {
 
   .option-toggle {
     justify-content: center;
+  }
+
+  .controls-actions button {
+    min-width: auto;
   }
 
   .app-footer {
@@ -512,6 +500,7 @@ body {
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
+  cursor: pointer;
 }
 
 .winner-popup::before {
@@ -525,10 +514,10 @@ body {
 
 .popup-content {
   position: relative;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
-  box-shadow: 0 24px 48px -28px rgba(11, 19, 43, 0.6), 0 18px 36px -22px rgba(255, 95, 109, 0.5);
-  border-radius: 28px;
-  padding: 2rem 2.8rem;
+  background: linear-gradient(140deg, rgba(255, 254, 255, 0.96), rgba(242, 229, 255, 0.92));
+  box-shadow: 0 28px 54px -30px rgba(11, 19, 43, 0.55), 0 24px 42px -24px rgba(255, 95, 109, 0.45);
+  border-radius: 32px;
+  padding: clamp(1.8rem, 4vw, 2.6rem) clamp(2rem, 5vw, 3.2rem);
   text-align: center;
   overflow: hidden;
   animation: popIn 0.4s cubic-bezier(0.25, 1.25, 0.5, 1) forwards;
@@ -590,30 +579,22 @@ body {
 }
 
 .popup-icon {
-  font-size: clamp(2.5rem, 6vw, 3.5rem);
-  margin-bottom: 0.6rem;
+  font-size: clamp(2.6rem, 6vw, 3.6rem);
+  margin-bottom: 0.3rem;
   animation: bounceIcon 1.2s ease infinite;
-  position: relative;
-  z-index: 1;
-}
-
-.popup-label {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--neutral-soft);
-  margin: 0;
   position: relative;
   z-index: 1;
 }
 
 .popup-name {
   font-family: "Montserrat", sans-serif;
-  font-size: clamp(2rem, 6vw, 2.8rem);
-  font-weight: 700;
-  color: var(--accent-dark);
-  margin: 0.35rem 0 0;
+  font-size: clamp(2.1rem, 7vw, 3.2rem);
+  font-weight: 800;
+  color: var(--secondary-dark);
+  margin: 0.2rem 0 0;
   position: relative;
   z-index: 1;
+  text-shadow: 0 12px 26px rgba(103, 65, 217, 0.32);
 }
 
 @keyframes confettiFloat {

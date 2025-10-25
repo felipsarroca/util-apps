@@ -15,6 +15,7 @@ const audio = /** @type {HTMLAudioElement} */ (document.getElementById("roulette
 const noRepeatToggle = /** @type {HTMLInputElement} */ (document.getElementById("noRepeatToggle"));
 const winnerPopup = document.getElementById("winnerPopup");
 const winnerName = document.getElementById("winnerName");
+const wheelCanvas = canvas;
 
 let entries = [];
 let initialEntries = [];
@@ -23,6 +24,7 @@ let rotation = 0;
 let animationFrameId = null;
 let spinning = false;
 let audioFadeRequested = false;
+let popupTimeoutId = null;
 
 function init() {
   initialEntries = [...DEFAULT_ENTRIES];
@@ -32,6 +34,7 @@ function init() {
   refreshControls();
   window.addEventListener("resize", handleResize);
   spinButton.addEventListener("click", handleSpin);
+  wheelCanvas.addEventListener("click", handleSpin);
   updateButton.addEventListener("click", handleUpdate);
   removeButton.addEventListener("click", handleRemoveResult);
   resetButton.addEventListener("click", handleResetCurrent);
@@ -44,6 +47,8 @@ function init() {
     statusChip.textContent = noRepeatToggle.checked ? "Sense repeticions activat" : "Sense repeticions desactivat";
     refreshControls();
   });
+  winnerPopup?.addEventListener("click", hideWinnerPopup);
+  document.addEventListener("pointerdown", handleGlobalPointerDismiss, { capture: true });
   audio.loop = true;
 }
 
@@ -406,11 +411,27 @@ function showWinnerPopup(name) {
   if (!winnerPopup || !winnerName) return;
   winnerName.textContent = name;
   winnerPopup.classList.add("visible");
+  clearTimeout(popupTimeoutId);
+  popupTimeoutId = setTimeout(() => {
+    hideWinnerPopup();
+  }, 5000);
 }
 
 function hideWinnerPopup() {
   if (!winnerPopup) return;
+  if (!winnerPopup.classList.contains("visible")) {
+    clearTimeout(popupTimeoutId);
+    popupTimeoutId = null;
+    return;
+  }
   winnerPopup.classList.remove("visible");
+  clearTimeout(popupTimeoutId);
+  popupTimeoutId = null;
+}
+
+function handleGlobalPointerDismiss() {
+  if (!winnerPopup || !winnerPopup.classList.contains("visible")) return;
+  hideWinnerPopup();
 }
 
 document.addEventListener("DOMContentLoaded", init);
