@@ -123,6 +123,9 @@ function handleSpin() {
 
   playAudio();
 
+  let prevRotation = startRotation;
+  let prevTimestamp = startTime;
+
   const animate = (now) => {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
@@ -130,13 +133,16 @@ function handleSpin() {
     rotation = startRotation + (targetRotation - startRotation) * eased;
     drawWheel();
 
-    if (!audioFadeRequested && progress >= 0.9) {
-      stopAudioSmooth();
-    }
+    const frameDelta = Math.max(now - prevTimestamp, 16);
+    const angularVelocity = Math.abs(rotation - prevRotation) / frameDelta;
+    updateAudioRate(angularVelocity);
+    prevRotation = rotation;
+    prevTimestamp = now;
 
     if (progress < 1) {
       animationFrameId = requestAnimationFrame(animate);
     } else {
+      updateAudioRate(0);
       rotation = normalizeAngle(rotation);
       finishSpin();
     }
@@ -150,6 +156,7 @@ function playAudio() {
     audio.currentTime = 0;
     audio.volume = 1;
     audioFadeRequested = false;
+    audio.playbackRate = 1.2;
     audio.play().catch(() => {
       // Silently ignore autoplay restrictions until user interacts.
     });
@@ -202,6 +209,7 @@ function stopAudioSmooth() {
       audio.pause();
       audio.currentTime = 0;
       audio.volume = startVolume;
+      audio.playbackRate = 1;
     }
   };
 
@@ -311,17 +319,17 @@ function drawWheel() {
     ctx.save();
     ctx.rotate(startAngle + segmentAngle / 2);
     ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "center";
+    ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     ctx.shadowColor = "rgba(11, 19, 43, 0.3)";
     ctx.shadowBlur = 12;
     const { fontSize, lines } = computeSegmentLabel(ctx, entry, radius);
     ctx.font = `${fontSize}px Montserrat, sans-serif`;
-    const lineHeight = fontSize * 1.15;
-    const radialOffset = Math.max(radius * 0.45, radius - Math.max(68, fontSize * 2.2));
+    const lineHeight = fontSize * 1.1;
+    const textX = radius - Math.max(radius * 0.12, 26);
     const totalHeight = lineHeight * (lines.length - 1);
     lines.forEach((line, lineIndex) => {
-      ctx.fillText(line, radialOffset, -totalHeight / 2 + lineIndex * lineHeight);
+      ctx.fillText(line, textX, -totalHeight / 2 + lineIndex * lineHeight);
     });
     ctx.restore();
   });
@@ -441,10 +449,19 @@ function easeOutQuint(t) {
   return 1 - Math.pow(1 - t, 5);
 }
 
+function updateAudioRate(angularVelocity) {
+  if (!audio || audio.paused) return;
+  const minRate = 0.6;
+  const maxRate = 1.8;
+  const normalized = Math.max(0, Math.min(angularVelocity / 0.0009, 1));
+  const targetRate = minRate + (maxRate - minRate) * normalized;
+  audio.playbackRate = targetRate;
+}
+
 function computeSegmentLabel(context, text, radius) {
   const clean = text.trim();
   const maxLines = 3;
-  const maxWidth = radius * 0.95;
+  const maxWidth = radius * 0.65;
   let fontSize = Math.min(30, radius * 0.11);
   const minFontSize = Math.max(10, radius * 0.07);
 
@@ -529,7 +546,7 @@ function splitByWidth(context, text, maxWidth, maxLines) {
     lines.push(text);
   }
 
-  return lines.length <= maxLines ? lines : null;
+  return lines.length <= maxLines ? lines : lines.slice(0, maxLines).map((line, idx) => (idx === maxLines - 1 ? `${line}…` : line));
 }
 
 function showWinnerPopup(name) {
