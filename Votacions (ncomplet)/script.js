@@ -26,22 +26,23 @@ function ensureUserId() {
 function initAlumnePage() {
     const activityCode = sessionStorage.getItem('activityCode');
     const container = document.querySelector('.participation-container');
+    const userId = localStorage.getItem('userId');
 
     if (!activityCode || !localStorage.getItem(activityCode)) {
         container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
         return;
     }
 
-    let activity = JSON.parse(localStorage.getItem(activityCode));
-    container.querySelector('#activity-title').textContent = activity.topic;
-
-    // Check if user has already participated
+    const activity = JSON.parse(localStorage.getItem(activityCode));
     const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
-    const userId = localStorage.getItem('userId');
+
+    // Check if user has already voted for this activity
     if (results && results.votedUsers && results.votedUsers.includes(userId)) {
         container.innerHTML = `<h1>${activity.topic}</h1><h2>Gràcies per la teva participació! Ja has votat en aquesta activitat.</h2>`;
-        return;
+        return; // Stop execution if already voted
     }
+
+    container.querySelector('#activity-title').textContent = activity.topic;
 
     updateStudentView(activity, container);
 
