@@ -172,11 +172,12 @@ function generateCode() {
 
 function showDashboard(code, activity) {
     const configContainer = document.querySelector('.config-container');
-    let dashboardHTML = 
-        "<div class=\"dashboard\">";
-    dashboardHTML += `<h1>Codi de l'activitat: <span class="activity-code">${code}</span></h1>`;
-    dashboardHTML += `<h2>${activity.topic}</h2>`;
-    dashboardHTML += `<div id="results"></div>`;
+    let dashboardHTML = `
+        <div class="dashboard">
+            <h1>Codi de l'activitat: <span class="activity-code">${code}</span></h1>
+            <h2>${activity.topic}</h2>
+            <div id="results"></div>
+    `;
 
     if (activity.type === 'brainstorm-voting') {
         dashboardHTML += `<button id="start-voting-btn" class="button">Inicia la votació</button>`;
