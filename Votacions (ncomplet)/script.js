@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const page = window.location.pathname;
 
-    if (page.includes('index.html') || page === '/') {
+    // Handle root path and index.html for home page
+    if (page.endsWith('/') || page.endsWith('index.html')) {
         initHomePage();
     } else if (page.includes('professor.html')) {
         initProfessorPage();
@@ -17,9 +18,11 @@ function initHomePage() {
     const participateBtn = document.getElementById('participate-btn');
     const activityCodeInput = document.getElementById('activity-code');
 
+    if (!participateBtn || !activityCodeInput) return;
+
     participateBtn.addEventListener('click', () => {
         const code = activityCodeInput.value.toUpperCase().trim();
-        if (localStorage.getItem(code)) {
+        if (code && localStorage.getItem(code)) {
             sessionStorage.setItem('activityCode', code);
             window.location.href = 'alumne.html';
         } else {
@@ -48,11 +51,11 @@ function initProfessorPage() {
         return;
     }
 
-    // Show the correct form based on URL
     const formToShow = document.getElementById(`${activityType}-form`);
     if (formToShow) {
         formToShow.style.display = 'block';
-        document.querySelector('.options').style.display = 'none';
+        const optionsDiv = document.querySelector('.options');
+        if(optionsDiv) optionsDiv.style.display = 'none';
     } else {
          configContainer.innerHTML = `<h1>Error: Tipus d\'activitat invàlid.</h1><a href="index.html">Torna a l\'inici</a>`;
          return;
@@ -65,7 +68,6 @@ function initProfessorPage() {
         const activity = createActivityObject(activityType, form);
         
         localStorage.setItem(code, JSON.stringify(activity));
-        // Create an empty results object
         localStorage.setItem(`${code}_results`, JSON.stringify({ ideas: [], votes: {} }));
 
         showDashboard(code, activity, configContainer);
@@ -77,10 +79,12 @@ function createActivityObject(type, form) {
     if (type === 'brainstorm') {
         activity.topic = form.querySelector('#brainstorm-topic').value;
         activity.maxIdeas = form.querySelector('#brainstorm-max-ideas').value;
+        activity.status = 'brainstorming';
     } else if (type === 'voting') {
         activity.topic = form.querySelector('#voting-topic').value;
         activity.options = form.querySelector('#voting-options').value.split('\n').filter(o => o.trim() !== '');
         activity.maxVotes = form.querySelector('#voting-max-votes').value;
+        activity.status = 'voting';
     } else if (type === 'brainstorm-voting') {
         activity.topic = form.querySelector('#bv-topic').value;
         activity.maxIdeas = form.querySelector('#bv-max-ideas').value;
@@ -112,8 +116,9 @@ function showDashboard(code, activity, container) {
     if (activity.type === 'brainstorm-voting') {
         const startVotingBtn = document.getElementById('start-voting-btn');
         startVotingBtn.addEventListener('click', () => {
-            activity.status = 'voting';
-            localStorage.setItem(code, JSON.stringify(activity));
+            let currentActivity = JSON.parse(localStorage.getItem(code));
+            currentActivity.status = 'voting';
+            localStorage.setItem(code, JSON.stringify(currentActivity));
             updateDashboard(code);
             startVotingBtn.style.display = 'none';
         });
@@ -137,7 +142,7 @@ function updateDashboard(code) {
             ideasList.appendChild(li);
         });
         resultsContainer.appendChild(ideasList);
-    } else if (activity.status === 'voting' || activity.type === 'voting') {
+    } else if (activity.status === 'voting') {
         resultsContainer.innerHTML = '<h4>Resultats de la Votació:</h4>';
         const votesContainer = document.createElement('div');
         const options = activity.type === 'voting' ? activity.options : results.ideas;
@@ -173,16 +178,13 @@ function initAlumnePage() {
     }
 
     let activity = JSON.parse(localStorage.getItem(activityCode));
-    document.getElementById('activity-title').textContent = activity.topic;
+    container.querySelector('#activity-title').textContent = activity.topic;
 
-    // Initial view setup
     updateStudentView(activity, container);
 
-    // Listen for changes in the activity status (e.g., professor starts voting)
     window.addEventListener('storage', (e) => {
         if (e.key === activityCode) {
             const updatedActivity = JSON.parse(e.newValue);
-            // Update view only if status changes
             if(updatedActivity.status !== activity.status){
                 activity = updatedActivity;
                 updateStudentView(updatedActivity, container);
@@ -194,24 +196,22 @@ function initAlumnePage() {
 function updateStudentView(activity, container) {
     const activityCode = sessionStorage.getItem('activityCode');
     const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
-
-    // Determine the view to show based on activity type and status
-    let viewToShow = '';
-    if (activity.type === 'brainstorm') {
-        viewToShow = 'brainstorming';
-    } else if (activity.type === 'voting') {
-        viewToShow = 'voting';
-    } else if (activity.type === 'brainstorm-voting') {
-        viewToShow = activity.status; // This will be 'brainstorming' or 'voting'
+    const title = container.querySelector('h1');
+    
+    // Create a new div for the form to avoid touching the title
+    let formContainer = container.querySelector('.form-wrapper');
+    if (!formContainer) {
+        formContainer = document.createElement('div');
+        formContainer.className = 'form-wrapper';
+        container.appendChild(formContainer);
     }
 
-    // Clear previous content except for the title
-    const title = container.querySelector('h1');
-    container.innerHTML = '';
-    container.appendChild(title);
+    let viewToShow = activity.status;
+
+    formContainer.innerHTML = ''; // Clear only the form container
 
     if (viewToShow === 'brainstorming') {
-        container.innerHTML += `
+        formContainer.innerHTML = `
             <form id="idea-form" data-status="brainstorming">
                 <label for="idea-text">Escriu la teva idea:</label>
                 <input type="text" id="idea-text" required autofocus>
@@ -228,19 +228,18 @@ function updateStudentView(activity, container) {
                         <label for="option-${index}">${option}</label>
                     </div>`;
             });
-             container.innerHTML += `
+            formContainer.innerHTML = `
                 <form id="voting-form-alumne" data-status="voting">
                     <h3>Escull les teves opcions preferides:</h3>
                     ${optionsHTML}
                     <button type="submit" class="button">Emet el teu vot</button>
                 </form>`;
         } else {
-            container.innerHTML += '<p>Encara no hi ha idees per votar. Espera que el professor iniciï la votació.</p>';
+            formContainer.innerHTML = '<p>Encara no hi ha idees per votar. Espera que el professor iniciï la votació.</p>';
         }
     }
 
-    // Add event listeners to the new form
-    const newForm = container.querySelector('form');
+    const newForm = formContainer.querySelector('form');
     if (newForm) {
         newForm.addEventListener('submit', handleStudentSubmission);
     }
@@ -263,7 +262,7 @@ function handleStudentSubmission(e) {
             const value = checkbox.value;
             results.votes[value] = (results.votes[value] || 0) + 1;
         });
-        e.target.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
+        e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
     }
 
     localStorage.setItem(`${activityCode}_results`, JSON.stringify(results));
