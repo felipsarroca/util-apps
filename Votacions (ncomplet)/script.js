@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const page = window.location.pathname;
+    ensureUserId(); // Create a unique user ID for the browser session
 
-    // Handle root path and index.html for home page
     if (page.endsWith('/') || page.endsWith('index.html')) {
         initHomePage();
     } else if (page.includes('professor.html')) {
@@ -10,6 +10,96 @@ document.addEventListener('DOMContentLoaded', () => {
         initAlumnePage();
     }
 });
+
+// ====================================================================
+// USER ID MANAGEMENT
+// ====================================================================
+function ensureUserId() {
+    if (!localStorage.getItem('userId')) {
+        localStorage.setItem('userId', 'user_' + Math.random().toString(36).substring(2, 15));
+    }
+}
+
+// ====================================================================
+// ALUMNE PAGE
+// ====================================================================
+function initAlumnePage() {
+    const activityCode = sessionStorage.getItem('activityCode');
+    const container = document.querySelector('.participation-container');
+
+    if (!activityCode || !localStorage.getItem(activityCode)) {
+        container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
+        return;
+    }
+
+    let activity = JSON.parse(localStorage.getItem(activityCode));
+    container.querySelector('#activity-title').textContent = activity.topic;
+
+    // Check if user has already participated
+    const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
+    const userId = localStorage.getItem('userId');
+    if (results && results.votedUsers && results.votedUsers.includes(userId)) {
+        container.innerHTML = `<h1>${activity.topic}</h1><h2>Gràcies per la teva participació! Ja has votat en aquesta activitat.</h2>`;
+        return;
+    }
+
+    updateStudentView(activity, container);
+
+    window.addEventListener('storage', (e) => {
+        if (e.key === activityCode) {
+            const updatedActivity = JSON.parse(e.newValue);
+            if(updatedActivity.status !== activity.status){
+                activity = updatedActivity;
+                updateStudentView(updatedActivity, container);
+            }
+        }
+    });
+}
+
+function handleStudentSubmission(e) {
+    e.preventDefault();
+    const activityCode = sessionStorage.getItem('activityCode');
+    const activity = JSON.parse(localStorage.getItem(activityCode));
+    const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
+    const userId = localStorage.getItem('userId');
+
+    if (e.target.id === 'idea-form') {
+        const ideaText = document.getElementById('idea-text').value.trim();
+        if (ideaText) {
+            results.ideas.push(ideaText);
+            document.getElementById('idea-text').value = '';
+            // Optionally, you could track users who submitted ideas too
+        }
+    } else if (e.target.id === 'voting-form-alumne') {
+        const selectedOptions = e.target.querySelectorAll('input[name="voting-option"]:checked');
+        const maxVotes = activity.maxVotes || 1;
+
+        if (selectedOptions.length === 0) {
+            alert('Has de seleccionar almenys una opció.');
+            return;
+        }
+
+        if (selectedOptions.length > maxVotes) {
+            alert(`Només pots seleccionar un màxim de ${maxVotes} opcions.`);
+            return;
+        }
+
+        selectedOptions.forEach(checkbox => {
+            const value = checkbox.value;
+            results.votes[value] = (results.votes[value] || 0) + 1;
+        });
+        
+        // Mark user as voted
+        if (!results.votedUsers) {
+            results.votedUsers = [];
+        }
+        results.votedUsers.push(userId);
+
+        e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
+    }
+
+    localStorage.setItem(`${activityCode}_results`, JSON.stringify(results));
+}
 
 // ====================================================================
 // HOME PAGE
@@ -198,7 +288,6 @@ function updateStudentView(activity, container) {
     const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
     const title = container.querySelector('h1');
     
-    // Create a new div for the form to avoid touching the title
     let formContainer = container.querySelector('.form-wrapper');
     if (!formContainer) {
         formContainer = document.createElement('div');
@@ -208,7 +297,7 @@ function updateStudentView(activity, container) {
 
     let viewToShow = activity.status;
 
-    formContainer.innerHTML = ''; // Clear only the form container
+    formContainer.innerHTML = '';
 
     if (viewToShow === 'brainstorming') {
         formContainer.innerHTML = `
@@ -221,6 +310,7 @@ function updateStudentView(activity, container) {
         const options = activity.type === 'voting' ? activity.options : (results ? results.ideas : []);
         let optionsHTML = '';
         if(options.length > 0){
+            const maxVotes = activity.maxVotes || 1;
             options.forEach((option, index) => {
                 optionsHTML += `
                     <div class="option">
@@ -230,7 +320,7 @@ function updateStudentView(activity, container) {
             });
             formContainer.innerHTML = `
                 <form id="voting-form-alumne" data-status="voting">
-                    <h3>Escull les teves opcions preferides:</h3>
+                    <h3>Pots votar ${maxVotes} propost${maxVotes > 1 ? 'es' : 'a'}.</h3>
                     ${optionsHTML}
                     <button type="submit" class="button">Emet el teu vot</button>
                 </form>`;
@@ -248,6 +338,7 @@ function updateStudentView(activity, container) {
 function handleStudentSubmission(e) {
     e.preventDefault();
     const activityCode = sessionStorage.getItem('activityCode');
+    const activity = JSON.parse(localStorage.getItem(activityCode));
     const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
 
     if (e.target.id === 'idea-form') {
@@ -258,6 +349,13 @@ function handleStudentSubmission(e) {
         }
     } else if (e.target.id === 'voting-form-alumne') {
         const selectedOptions = e.target.querySelectorAll('input[name="voting-option"]:checked');
+        const maxVotes = activity.maxVotes || 1;
+
+        if (selectedOptions.length > maxVotes) {
+            alert(`Només pots seleccionar un màxim de ${maxVotes} opcions.`);
+            return;
+        }
+
         selectedOptions.forEach(checkbox => {
             const value = checkbox.value;
             results.votes[value] = (results.votes[value] || 0) + 1;
