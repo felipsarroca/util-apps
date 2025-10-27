@@ -167,20 +167,26 @@ function initAlumnePage() {
     const activityCode = sessionStorage.getItem('activityCode');
     const container = document.querySelector('.participation-container');
 
-    if (!activityCode) {
-        container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat.</h1><a href="index.html">Torna a l\'inici</a>';
+    if (!activityCode || !localStorage.getItem(activityCode)) {
+        container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
         return;
     }
 
     let activity = JSON.parse(localStorage.getItem(activityCode));
     document.getElementById('activity-title').textContent = activity.topic;
 
+    // Initial view setup
     updateStudentView(activity, container);
 
+    // Listen for changes in the activity status (e.g., professor starts voting)
     window.addEventListener('storage', (e) => {
         if (e.key === activityCode) {
             const updatedActivity = JSON.parse(e.newValue);
-            updateStudentView(updatedActivity, container);
+            // Update view only if status changes
+            if(updatedActivity.status !== activity.status){
+                activity = updatedActivity;
+                updateStudentView(updatedActivity, container);
+            }
         }
     });
 }
@@ -189,35 +195,48 @@ function updateStudentView(activity, container) {
     const activityCode = sessionStorage.getItem('activityCode');
     const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
 
-    // Evita redibuixar si no cal
-    const currentForm = container.querySelector('form');
-    const newStatus = activity.status;
-    const currentStatus = currentForm ? currentForm.dataset.status : null;
-    if(newStatus === currentStatus) return;
+    // Determine the view to show based on activity type and status
+    let viewToShow = '';
+    if (activity.type === 'brainstorm') {
+        viewToShow = 'brainstorming';
+    } else if (activity.type === 'voting') {
+        viewToShow = 'voting';
+    } else if (activity.type === 'brainstorm-voting') {
+        viewToShow = activity.status; // This will be 'brainstorming' or 'voting'
+    }
 
-    if (newStatus === 'brainstorming') {
+    // Clear previous content except for the title
+    const title = container.querySelector('h1');
+    container.innerHTML = '';
+    container.appendChild(title);
+
+    if (viewToShow === 'brainstorming') {
         container.innerHTML += `
             <form id="idea-form" data-status="brainstorming">
                 <label for="idea-text">Escriu la teva idea:</label>
                 <input type="text" id="idea-text" required autofocus>
                 <button type="submit" class="button">Enviar Idea</button>
             </form>`;
-    } else if (newStatus === 'voting' || activity.type === 'voting') {
-        const options = activity.type === 'voting' ? activity.options : results.ideas;
+    } else if (viewToShow === 'voting') {
+        const options = activity.type === 'voting' ? activity.options : (results ? results.ideas : []);
         let optionsHTML = '';
-        options.forEach((option, index) => {
-            optionsHTML += `
-                <div class="option">
-                    <input type="checkbox" id="option-${index}" name="voting-option" value="${option}">
-                    <label for="option-${index}">${option}</label>
-                </div>`;
-        });
-        container.innerHTML = `<h1 id="activity-title">${activity.topic}</h1>
-            <form id="voting-form-alumne" data-status="voting">
-                <h3>Escull les teves opcions preferides:</h3>
-                ${optionsHTML}
-                <button type="submit" class="button">Emet el teu vot</button>
-            </form>`;
+        if(options.length > 0){
+            options.forEach((option, index) => {
+                optionsHTML += `
+                    <div class="option">
+                        <input type="checkbox" id="option-${index}" name="voting-option" value="${option}">
+                        <label for="option-${index}">${option}</label>
+                    </div>`;
+            });
+             container.innerHTML += `
+                <form id="voting-form-alumne" data-status="voting">
+                    <h3>Escull les teves opcions preferides:</h3>
+                    ${optionsHTML}
+                    <button type="submit" class="button">Emet el teu vot</button>
+                </form>`;
+        } else {
+            container.innerHTML += '<p>Encara no hi ha idees per votar. Espera que el professor iniciï la votació.</p>';
+        }
     }
 
     // Add event listeners to the new form
