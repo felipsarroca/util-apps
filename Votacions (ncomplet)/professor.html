@@ -7,55 +7,54 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="config-container">
+    <div class="content-container" id="config-container">
+        <div class="options">
             <h1>Escull el tipus d'activitat</h1>
-            <div class="options">
-                <button class="option-btn" id="brainstorm-btn">💭 Pluja d’idees</button>
-                <button class="option-btn" id="voting-btn">🗳️ Votació</button>
-                <button class="option-btn" id="brainstorm-voting-btn">💡 Pluja d’idees + votació</button>
+            <!-- Aquest div es mostrarà o ocultarà amb JS -->
+        </div>
+
+        <div id="config-forms" class="form-container">
+            <!-- Formulari Pluja d'idees -->
+            <div id="brainstorm-form" class="config-form" style="display: none;">
+                <h2>Configuració: Pluja d’idees</h2>
+                <form>
+                    <label for="brainstorm-topic">Tema o pregunta:</label>
+                    <input type="text" id="brainstorm-topic" placeholder="Ex: Què podem fer per millorar el pati?" required>
+                    <label for="brainstorm-max-ideas">Aportacions per alumne:</label>
+                    <input type="number" id="brainstorm-max-ideas" value="1" min="1">
+                    <button type="submit" class="button">Generar Codi</button>
+                </form>
             </div>
-        </div>
-    </div>
-    <div id="config-forms">
-        <!-- Formulari Pluja d'idees -->
-        <div id="brainstorm-form" class="config-form" style="display: none;">
-            <h2>Configuració: Pluja d’idees</h2>
-            <form>
-                <label for="brainstorm-topic">Tema o pregunta:</label>
-                <input type="text" id="brainstorm-topic" required>
-                <label for="brainstorm-max-ideas">Aportacions per alumne:</label>
-                <input type="number" id="brainstorm-max-ideas" value="1" min="1">
-                <button type="submit" class="button">Generar Codi</button>
-            </form>
-        </div>
 
-        <!-- Formulari Votació -->
-        <div id="voting-form" class="config-form" style="display: none;">
-            <h2>Configuració: Votació</h2>
-            <form>
-                <label for="voting-topic">Tema de la votació:</label>
-                <input type="text" id="voting-topic" required>
-                <label for="voting-options">Opcions (una per línia):</label>
-                <textarea id="voting-options" rows="5" required></textarea>
-                <label for="voting-max-votes">Vots per alumne:</label>
-                <input type="number" id="voting-max-votes" value="1" min="1">
-                <button type="submit" class="button">Generar Codi</button>
-            </form>
-        </div>
+            <!-- Formulari Votació -->
+            <div id="voting-form" class="config-form" style="display: none;">
+                <h2>Configuració: Votació</h2>
+                <form>
+                    <label for="voting-topic">Tema de la votació:</label>
+                    <input type="text" id="voting-topic" placeholder="Ex: Quin és el vostre color preferit?" required>
+                    <label for="voting-options">Opcions (una per línia):</label>
+                    <textarea id="voting-options" rows="5" placeholder="Blau
+Vermell
+Groc" required></textarea>
+                    <label for="voting-max-votes">Vots per alumne:</label>
+                    <input type="number" id="voting-max-votes" value="1" min="1">
+                    <button type="submit" class="button">Generar Codi</button>
+                </form>
+            </div>
 
-        <!-- Formulari Pluja d'idees + Votació -->
-        <div id="brainstorm-voting-form" class="config-form" style="display: none;">
-            <h2>Configuració: Pluja d’idees + Votació</h2>
-            <form>
-                <label for="bv-topic">Tema:</label>
-                <input type="text" id="bv-topic" required>
-                <label for="bv-max-ideas">Idees per alumne:</label>
-                <input type="number" id="bv-max-ideas" value="1" min="1">
-                <label for="bv-max-votes">Vots per alumne:</label>
-                <input type="number" id="bv-max-votes" value="1" min="1">
-                <button type="submit" class="button">Generar Codi</button>
-            </form>
+            <!-- Formulari Pluja d'idees + Votació -->
+            <div id="brainstorm-voting-form" class="config-form" style="display: none;">
+                <h2>Configuració: Pluja d’idees + Votació</h2>
+                <form>
+                    <label for="bv-topic">Tema:</label>
+                    <input type="text" id="bv-topic" placeholder="Ex: Propostes per a la festa de final de curs" required>
+                    <label for="bv-max-ideas">Idees per alumne:</label>
+                    <input type="number" id="bv-max-ideas" value="1" min="1">
+                    <label for="bv-max-votes">Vots per alumne:</label>
+                    <input type="number" id="bv-max-votes" value="1" min="1">
+                    <button type="submit" class="button">Generar Codi</button>
+                </form>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
