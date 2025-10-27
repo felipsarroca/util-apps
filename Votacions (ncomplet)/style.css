@@ -1,0 +1,294 @@
+:root {
+    --left-bg-color: rgba(83, 109, 254, 0.7);
+    --right-bg-color: rgba(255, 165, 0, 0.7);
+    --left-button-hover-color: rgba(83, 109, 254, 1);
+    --right-button-hover-color: rgba(255, 165, 0, 1);
+    --hover-width: 75%;
+    --other-width: 25%;
+    --speed: 1000ms;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #333;
+}
+
+.split {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.split.left {
+    left: 0;
+    background: url('https://source.unsplash.com/random/1200x900?school,teacher') center center / cover;
+}
+
+.split.left::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: var(--left-bg-color);
+}
+
+.split.right {
+    right: 0;
+    background: url('https://source.unsplash.com/random/1200x900?students,class') center center / cover;
+}
+
+.split.right::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: var(--right-bg-color);
+}
+
+h1 {
+    font-size: 4rem;
+    color: white;
+    position: absolute;
+    left: 50%;
+    top: 20%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.button {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    transform: translateX(-50%);
+    text-decoration: none;
+    color: white;
+    border: white solid 0.2rem;
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    width: 15rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.split.left .button:hover {
+    background-color: var(--left-button-hover-color);
+    border-color: var(--left-button-hover-color);
+}
+
+.split.right .button:hover {
+    background-color: var(--right-button-hover-color);
+    border-color: var(--right-button-hover-color);
+}
+
+#activity-code {
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    transform: translateX(-50%);
+    width: 15rem;
+    padding: 1.5rem;
+    font-size: 1rem;
+    text-align: center;
+    border: white solid 0.2rem;
+    background-color: transparent;
+    color: white;
+}
+
+#activity-code::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#participate-btn {
+    top: 55%;
+}
+
+.hover-left .left {
+    width: var(--hover-width);
+}
+
+.hover-left .right {
+    width: var(--other-width);
+}
+
+.hover-right .right {
+    width: var(--hover-width);
+}
+
+.hover-right .left {
+    width: var(--other-width);
+}
+
+.split.right, .split.left, .split.right::before, .split.left::before {
+    transition: all var(--speed) ease-in-out;
+}
+
+/* Professor page */
+.config-container {
+    padding: 2rem;
+    text-align: center;
+    color: #333;
+}
+
+.options {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.option-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.option-btn:hover {
+    background-color: #45a049;
+}
+
+/* Alumne page */
+.participation-container {
+    padding: 2rem;
+    text-align: center;
+    color: #333;
+}
+
+.config-form {
+    margin-top: 2rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.config-form h2 {
+    margin-top: 0;
+}
+
+.config-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.config-form label {
+    font-weight: bold;
+}
+
+.config-form input,
+.config-form textarea {
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.config-form .button {
+    background-color: #536dfe;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin-top: 1rem;
+}
+
+.dashboard {
+    text-align: center;
+}
+
+.activity-code {
+    color: #ff9800;
+    font-weight: bold;
+}
+
+.participation-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.participation-container label {
+    font-weight: bold;
+}
+
+.participation-container input[type="text"] {
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.participation-container .button {
+    background-color: #ff9800;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin-top: 1rem;
+}
+
+.vote-result {
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+}
+
+.progress {
+    height: 20px;
+    background-color: #4CAF50;
+    border-radius: 5px;
+    transition: width 0.5s ease-in-out;
+}
+
+.participation-container .button:hover {
+    background-color: #f57c00;
+}
+
+#results {
+    margin-top: 2rem;
+    text-align: left;
+}
+
+.config-form .button:hover {
+    background-color: #3d5afe;
+}
+
+@media(max-width: 800px) {
+    h1 {
+        font-size: 2rem;
+    }
+    .button {
+        width: 12rem;
+        padding: 1.2rem;
+    }
+}
