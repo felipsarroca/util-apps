@@ -1,25 +1,3 @@
-const left = document.querySelector('.left');
-const right = document.querySelector('.right');
-const container = document.querySelector('.container');
-
-if (left && right && container) {
-    left.addEventListener('mouseenter', () => {
-        container.classList.add('hover-left');
-    });
-
-    left.addEventListener('mouseleave', () => {
-        container.classList.remove('hover-left');
-    });
-
-    right.addEventListener('mouseenter', () => {
-        container.classList.add('hover-right');
-    });
-
-    right.addEventListener('mouseleave', () => {
-        container.classList.remove('hover-right');
-    });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     // Home page
     const participateBtn = document.getElementById('participate-btn');
@@ -38,32 +16,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Professor page
-    const brainstormBtn = document.getElementById('brainstorm-btn');
-    const votingBtn = document.getElementById('voting-btn');
-    const brainstormVotingBtn = document.getElementById('brainstorm-voting-btn');
+    const urlParams = new URLSearchParams(window.location.search);
+    const activityTypeFromUrl = urlParams.get('activity');
 
     const brainstormForm = document.getElementById('brainstorm-form');
     const votingForm = document.getElementById('voting-form');
     const brainstormVotingForm = document.getElementById('brainstorm-voting-form');
+    const optionsDiv = document.querySelector('.options');
 
-    if (brainstormBtn && votingBtn && brainstormVotingBtn) {
-        brainstormBtn.addEventListener('click', () => {
+    if (activityTypeFromUrl && brainstormForm) {
+        optionsDiv.style.display = 'none';
+        if (activityTypeFromUrl === 'brainstorm') {
             brainstormForm.style.display = 'block';
-            votingForm.style.display = 'none';
-            brainstormVotingForm.style.display = 'none';
-        });
-
-        votingBtn.addEventListener('click', () => {
-            brainstormForm.style.display = 'none';
+        } else if (activityTypeFromUrl === 'voting') {
             votingForm.style.display = 'block';
-            brainstormVotingForm.style.display = 'none';
-        });
-
-        brainstormVotingBtn.addEventListener('click', () => {
-            brainstormForm.style.display = 'none';
-            votingForm.style.display = 'none';
+        } else if (activityTypeFromUrl === 'brainstorm-voting') {
             brainstormVotingForm.style.display = 'block';
-        });
+        }
     }
 
     document.querySelectorAll('.config-form form').forEach(form => {
@@ -78,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activity.maxIdeas = document.getElementById('brainstorm-max-ideas').value;
             } else if (activityType === 'voting') {
                 activity.topic = document.getElementById('voting-topic').value;
-                activity.options = document.getElementById('voting-options').value.split('\n');
+                activity.options = document.getElementById('voting-options').value.split('\n').filter(o => o.trim() !== '');
                 activity.maxVotes = document.getElementById('voting-max-votes').value;
             } else if (activityType === 'brainstorm-voting') {
                 activity.topic = document.getElementById('bv-topic').value;
@@ -97,10 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (activityCode && window.location.pathname.includes('alumne.html')) {
         const activity = JSON.parse(localStorage.getItem(activityCode));
         const participationContainer = document.querySelector('.participation-container');
-        const activityTitle = document.getElementById('activity-title');
 
         if (activity) {
-            activityTitle.textContent = activity.topic;
             updateStudentView(activity, participationContainer);
 
             window.addEventListener('storage', (e) => {
@@ -123,8 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (e.target.id === 'idea-form') {
                 const ideaText = document.getElementById('idea-text').value;
-                results.ideas.push(ideaText);
-                document.getElementById('idea-text').value = '';
+                if(ideaText.trim() !== ''){
+                    results.ideas.push(ideaText);
+                    document.getElementById('idea-text').value = '';
+                }
             } else if (e.target.id === 'voting-form-alumne') {
                 const selectedOptions = document.querySelectorAll('input[name="voting-option"]:checked');
                 selectedOptions.forEach(option => {
@@ -139,7 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Professor dashboard
-    if (document.querySelector('.dashboard')) {
+    const dashboard = document.querySelector('.dashboard');
+    if (dashboard) {
         const activityCode = document.querySelector('.activity-code').textContent;
         updateDashboard(activityCode);
 
@@ -156,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let activity = JSON.parse(localStorage.getItem(activityCode));
                 activity.status = 'voting';
                 localStorage.setItem(activityCode, JSON.stringify(activity));
+                updateDashboard(activityCode);
             });
         }
     }
@@ -184,19 +155,24 @@ function showDashboard(code, activity) {
     }
 
     dashboardHTML += `</div>`;
-    configContainer.innerHTML = dashboardHTML;
+    if(configContainer) {
+        configContainer.innerHTML = dashboardHTML;
+    }
 }
 
 function updateDashboard(activityCode) {
     const activity = JSON.parse(localStorage.getItem(activityCode));
-    const results = JSON.parse(localStorage.getItem(activityCode + '_results'));
+    const resultsJSON = localStorage.getItem(activityCode + '_results');
+    const results = resultsJSON ? JSON.parse(resultsJSON) : { ideas: [], votes: {} };
     const resultsContainer = document.getElementById('results');
 
     if (activity && resultsContainer) {
         resultsContainer.innerHTML = '';
+        const startVotingBtn = document.getElementById('start-voting-btn');
+
         if (activity.type === 'brainstorm' || (activity.type === 'brainstorm-voting' && activity.status === 'brainstorming')) {
             resultsContainer.innerHTML += '<h3>Idees rebudes:</h3>';
-            if(results && results.ideas){
+            if(results.ideas && results.ideas.length > 0){
                 const ideasList = document.createElement('ul');
                 results.ideas.forEach(idea => {
                     const li = document.createElement('li');
@@ -208,67 +184,82 @@ function updateDashboard(activityCode) {
         }
 
         if (activity.type === 'voting' || (activity.type === 'brainstorm-voting' && activity.status === 'voting')) {
-            resultsContainer.innerHTML += '<h3>Resultats de la votació:</h3>';
-            if(results && results.votes){
-                const votesContainer = document.createElement('div');
-                let options = activity.type === 'voting' ? activity.options : results.ideas;
-                let voteCounts = results.votes;
+            if(startVotingBtn) startVotingBtn.style.display = 'none';
+            resultsContainer.innerHTML = '<h3>Resultats de la votació:</h3>';
+            const votesContainer = document.createElement('div');
+            let options = activity.type === 'voting' ? activity.options : results.ideas;
+            let voteCounts = results.votes || {};
 
-                // Initialize votes for all options to 0 if they don't exist
-                options.forEach(option => {
-                    if(!voteCounts[option]){
-                        voteCounts[option] = 0;
-                    }
-                });
-
-                const totalVotes = Object.values(voteCounts).reduce((a, b) => a + b, 0);
-
-                for (const option of options) {
-                    const count = voteCounts[option] || 0;
-                    const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
-                    votesContainer.innerHTML += 
-                        "<div class=\"vote-result\">";
-                    votesContainer.innerHTML += `<p>${option}: ${count} vots</p>`;
-                    votesContainer.innerHTML += 
-                        "<div class=\"progress-bar\">";
-                    votesContainer.innerHTML += `<div class="progress" style="width: ${percentage}%;"></div>`;
-                    votesContainer.innerHTML += `</div>`;
-                    votesContainer.innerHTML += `</div>`;
+            options.forEach(option => {
+                if(!voteCounts[option]){
+                    voteCounts[option] = 0;
                 }
-                resultsContainer.appendChild(votesContainer);
+            });
+
+            const totalVotes = Object.values(voteCounts).reduce((a, b) => a + b, 0);
+
+            for (const option of options) {
+                const count = voteCounts[option] || 0;
+                const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+                votesContainer.innerHTML += `
+                    <div class="vote-result">
+                        <p><strong>${option}:</strong> ${count} vots</p>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: ${percentage}%;"></div>
+                        </div>
+                    </div>
+                `;
             }
+            resultsContainer.appendChild(votesContainer);
         }
     }
 }
 
 function updateStudentView(activity, container) {
-    container.innerHTML = ''; // Clear previous content
-    const activityTitle = document.createElement('h1');
-    activityTitle.id = 'activity-title';
-    activityTitle.textContent = activity.topic;
-    container.appendChild(activityTitle);
+    const activityCode = sessionStorage.getItem('activityCode');
+    const resultsJSON = localStorage.getItem(activityCode + '_results');
+    const results = resultsJSON ? JSON.parse(resultsJSON) : { ideas: [], votes: {} };
+
+    let currentContent = container.querySelector('form') || container.querySelector('p');
 
     if (activity.type === 'brainstorm' || (activity.type === 'brainstorm-voting' && activity.status === 'brainstorming')) {
-        container.innerHTML += 
-            "<form id=\"idea-form\">";
-        container.innerHTML += `<label for=\"idea-text\">La teva idea:</label>`;
-        container.innerHTML += `<input type="text" id="idea-text" required>`;
-        container.innerHTML += `<button type="submit" class="button">Enviar</button>`;
-        container.innerHTML += `</form>`;
+        if(!currentContent || currentContent.id !== 'idea-form'){
+            container.innerHTML = '';
+            const activityTitle = document.createElement('h1');
+            activityTitle.id = 'activity-title';
+            activityTitle.textContent = activity.topic;
+            container.appendChild(activityTitle);
+            container.innerHTML += `
+                <form id="idea-form">
+                    <label for="idea-text">La teva idea:</label>
+                    <input type="text" id="idea-text" required>
+                    <button type="submit" class="button">Enviar</button>
+                </form>
+            `;
+        }
     } else if (activity.type === 'voting' || (activity.type === 'brainstorm-voting' && activity.status === 'voting')) {
-        let options = activity.type === 'voting' ? activity.options : (JSON.parse(localStorage.getItem(sessionStorage.getItem('activityCode')+'_results')) || {}).ideas || [];
-        let optionsHTML = '';
-        options.forEach((option, index) => {
-            optionsHTML += 
-                "<div>";
-            optionsHTML += `<input type="checkbox" id="option-${index}" name="voting-option" value="${option}">`;
-            optionsHTML += `<label for="option-${index}">${option}</label>`;
-            optionsHTML += `</div>`;
-        });
-        container.innerHTML += 
-            "<form id=\"voting-form-alumne\">";
-        container.innerHTML += optionsHTML;
-        container.innerHTML += `<button type="submit" class="button">Votar</button>`;
-        container.innerHTML += `</form>`;
+        if(!currentContent || currentContent.id !== 'voting-form-alumne'){
+            container.innerHTML = '';
+            const activityTitle = document.createElement('h1');
+            activityTitle.id = 'activity-title';
+            activityTitle.textContent = activity.topic;
+            container.appendChild(activityTitle);
+            let options = activity.type === 'voting' ? activity.options : results.ideas || [];
+            let optionsHTML = '';
+            options.forEach((option, index) => {
+                optionsHTML += `
+                    <div class="option">
+                        <input type="checkbox" id="option-${index}" name="voting-option" value="${option}">
+                        <label for="option-${index}">${option}</label>
+                    </div>
+                `;
+            });
+            container.innerHTML += `
+                <form id="voting-form-alumne">
+                    ${optionsHTML}
+                    <button type="submit" class="button">Votar</button>
+                </form>
+            `;
+        }
     }
 }
