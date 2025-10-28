@@ -285,3 +285,71 @@ body {
     .card { width: 100%; }
     .content-container { margin: 1rem; padding: 1.5rem; }
 }
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f7f7f7;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.dashboard-code, .dashboard-topic {
+    text-align: center;
+}
+
+.dashboard-code span, .dashboard-topic span {
+    font-size: 0.9rem;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.dashboard-code p, .dashboard-topic p {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.dashboard-topic p {
+    color: var(--text-color);
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.vote-result {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    transition: transform 0.5s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    position: relative;
+}
+
+.vote-result .option-text {
+    flex-basis: 30%;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.vote-result .progress-bar {
+    flex-grow: 1;
+}
+
+.vote-result .vote-count {
+    flex-basis: 10%;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.progress {
+    /* The text is now in .vote-count */
+    justify-content: flex-start;
+    padding-left: 10px;
+}

@@ -188,9 +188,16 @@ function createActivityObject(type, form) {
 function showDashboard(code, activity, container) {
     let dashboardHTML = `
         <div class="dashboard">
-            <h2>Activitat en curs</h2>
-            <h1>Codi: <span class="activity-code">${code}</span></h1>
-            <h3>Tema: ${activity.topic}</h3>
+            <div class="dashboard-header">
+                <div class="dashboard-code">
+                    <span>Codi de l'activitat</span>
+                    <p>${code}</p>
+                </div>
+                <div class="dashboard-topic">
+                    <span>Tema</span>
+                    <p>${activity.topic}</p>
+                </div>
+            </div>
             ${activity.type === 'brainstorm-voting' ? '<button id="start-voting-btn" class="button">Activar Votació</button>' : ''}
             <div id="results"></div>
         </div>`;
@@ -222,37 +229,58 @@ function updateDashboard(code) {
     const resultsContainer = document.getElementById('results');
     if (!activity || !results || !resultsContainer) return;
 
-    resultsContainer.innerHTML = '';
-
     if (activity.status === 'brainstorming') {
-        resultsContainer.innerHTML = '<h4>Idees rebudes:</h4>';
-        const ideasList = document.createElement('ul');
+        if (!resultsContainer.querySelector('h4')) {
+            resultsContainer.innerHTML = '<h4>Idees rebudes:</h4><ul class="ideas-list"></ul>';
+        }
+        const ideasList = resultsContainer.querySelector('.ideas-list');
+        // Simple update to avoid re-rendering all ideas every time
+        const existingIdeas = [...ideasList.children].map(li => li.textContent);
         results.ideas.forEach(idea => {
-            const li = document.createElement('li');
-            li.textContent = idea;
-            ideasList.appendChild(li);
+            if (!existingIdeas.includes(idea)) {
+                const li = document.createElement('li');
+                li.textContent = idea;
+                ideasList.appendChild(li);
+            }
         });
-        resultsContainer.appendChild(ideasList);
     } else if (activity.status === 'voting') {
-        resultsContainer.innerHTML = '<h4>Resultats de la Votació:</h4>';
-        const votesContainer = document.createElement('div');
+        if (!resultsContainer.querySelector('.results-list')) {
+            resultsContainer.innerHTML = '<h4>Resultats de la Votació:</h4><div class="results-list"></div>';
+        }
+        const votesContainer = resultsContainer.querySelector('.results-list');
+        
         const options = activity.type === 'voting' ? activity.options : results.ideas;
         const voteCounts = results.votes || {};
         const totalVotes = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
 
-        options.forEach(option => {
-            const count = voteCounts[option] || 0;
+        const sortedOptions = options.map(option => ({
+            option,
+            count: voteCounts[option] || 0
+        })).sort((a, b) => b.count - a.count);
+
+        sortedOptions.forEach((item, index) => {
+            const { option, count } = item;
             const percentage = totalVotes > 0 ? ((count / totalVotes) * 100).toFixed(1) : 0;
-            const voteResultHTML = `
-                <div class="vote-result">
-                    <p>${option}</p>
+            
+            let resultElement = votesContainer.querySelector(`.vote-result[data-option="${option}"]`);
+
+            if (!resultElement) {
+                resultElement = document.createElement('div');
+                resultElement.className = 'vote-result';
+                resultElement.setAttribute('data-option', option);
+                resultElement.innerHTML = `
+                    <p class="option-text">${option}</p>
                     <div class="progress-bar">
-                        <div class="progress" style="width: ${percentage}%;">${count} vot${count !== 1 ? 's' : ''} (${percentage}%)</div>
+                        <div class="progress"></div>
                     </div>
-                </div>`;
-            votesContainer.innerHTML += voteResultHTML;
+                    <p class="vote-count"></p>`;
+                votesContainer.appendChild(resultElement);
+            }
+
+            resultElement.style.order = index;
+            resultElement.querySelector('.progress').style.width = `${percentage}%`;
+            resultElement.querySelector('.vote-count').textContent = `${count} vot${count !== 1 ? 's' : ''}`;
         });
-        resultsContainer.appendChild(votesContainer);
     }
 }
 
