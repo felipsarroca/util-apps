@@ -60,6 +60,17 @@
         studentQuestion.classList.toggle('hidden', !hasQuestion);
     };
 
+    const showFatalState = (message) => {
+        activityTitle.textContent = 'Sessio no disponible';
+        if (statusIndicator) statusIndicator.textContent = 'Error';
+        setResultsContainerMode('placeholder-state');
+        if (resultsContainer) {
+            resultsContainer.innerHTML = `<p class="placeholder">${message}</p>`;
+        }
+        activityControls?.classList.add('hidden');
+        studentInteractionZone?.classList.add('hidden');
+    };
+
     // --- INICIALITZACIÓ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
@@ -70,14 +81,34 @@
         resultsContainer.innerHTML = '<p class="placeholder">Preparant la sessió...</p>';
         updatePhaseDescription('waiting');
 
+        if (!sessionId) {
+            showFatalState('No s\'ha indicat cap codi de sessió. Torna a generar l\'activitat.');
+            return;
+        }
+
         sessionCodeDisplay.textContent = sessionId;
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
         closeActivityBtn.addEventListener('click', closeActivity);
         startVotingBtn.addEventListener('click', startVotingPhase);
 
         if (myRole === 'host') {
-            activityConfig = JSON.parse(decodeURIComponent(params.get('config')));
-            activityTitle.textContent = activityConfig.question;
+            const rawConfig = params.get('config');
+            if (!rawConfig) {
+                showFatalState('No s\'ha trobat la configuració de l\'activitat. Torna a generar-la.');
+                return;
+            }
+            try {
+                activityConfig = JSON.parse(decodeURIComponent(rawConfig));
+            } catch (error) {
+                console.error('Error analitzant la configuració:', error);
+                showFatalState('Error carregant la configuració. Torna a iniciar l\'activitat.');
+                return;
+            }
+            if (!activityConfig || typeof activityConfig !== 'object') {
+                showFatalState('La configuració rebuda és buida.');
+                return;
+            }
+            activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             activityControls.classList.remove('hidden');
             document.body.classList.remove('guest-mode');
             sessionData = buildInitialSessionState();
@@ -147,6 +178,10 @@
             hostConnection.on('data', handleTeacherData);
             hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
             hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
+        });
+        peer.on('error', (err) => {
+            console.error('Error de PeerJS:', err);
+            showFatalState('No s\'ha pogut connectar amb la sessió. Comprova el codi o torna-ho a provar.');
         });
     }
 
