@@ -15,13 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const pollOptionsContainer = document.getElementById('poll-options-container');
     const votesLeftInfo = document.getElementById('votes-left-info');
 
-    // --- Estat de l'aplicació ---
+    // --- Estat de l\'aplicació ---
     let peer = null;
     let hostConnection = null;
     let guestConnections = [];
     let activityConfig = {};
     let sessionData = {};
-    let studentState = { submittedIdeas: 0, castVotes: 0 };
+    let studentState = { submittedIdeas: 0, castVotes: 0, pendingVotes: [] };
     let myRole = 'guest';
     let sessionId = null;
 
@@ -70,7 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleStudentData(conn, data) {
         if (data.type === 'new-idea') sessionData.ideas.push({ id: `idea-${Date.now()}`.slice(-6), text: data.payload });
-        else if (data.type === 'vote') sessionData.votes[data.payload.id] = (sessionData.votes[data.payload.id] || 0) + 1;
+        else if (data.type === 'vote-batch') {
+            data.payload.ids.forEach(id => {
+                sessionData.votes[id] = (sessionData.votes[id] || 0) + 1;
+            });
+        }
         broadcastUpdate();
         renderTeacherResults();
     }
@@ -159,23 +163,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (phase === 'brainstorm' && studentState.submittedIdeas < ideasPerStudent) {
             ideasLeftInfo.textContent = `Pots enviar ${ideasPerStudent - studentState.submittedIdeas} idea(es).`;
             ideaForm.classList.remove('hidden');
-        } else if (phase === 'voting' && studentState.castVotes < votesPerStudent) {
-            votesLeftInfo.textContent = `Pots emetre ${votesPerStudent - studentState.castVotes} vot(s).`;
-            pollOptionsContainer.innerHTML = '';
+        } else if (phase === 'voting') {
+            votesLeftInfo.textContent = `Pots triar fins a ${votesPerStudent} opcions.`;
+            const wrapper = document.getElementById('vote-cards-wrapper');
+            wrapper.innerHTML = '';
             const options = type === 'poll' ? activityConfig.pollOptions : ideas;
             options.forEach(option => {
                 const id = typeof option === 'object' ? option.id : option;
                 const text = typeof option === 'object' ? option.text : option;
-                pollOptionsContainer.innerHTML += `<button data-id="${id}">${text}</button>`;
+                wrapper.innerHTML += `<div class="vote-card" data-id="${id}">${text}</div>`;
             });
-            pollOptionsContainer.querySelectorAll('button').forEach(btn => btn.addEventListener('click', handleVoteClick));
+            wrapper.querySelectorAll('.vote-card').forEach(card => card.addEventListener('click', handleVoteCardClick));
+            document.getElementById('submit-votes-btn').classList.remove('hidden');
+            document.getElementById('submit-votes-btn').addEventListener('click', submitVotes, { once: true });
             pollOptionsContainer.classList.remove('hidden');
         } else {
             studentInteractionZone.innerHTML = '<p>Gràcies per participar! Espera instruccions.</p>';
         }
     }
 
-    // --- GESTIÓ D'EVENTS ---
+    // --- GESTIÓ D\'EVENTS ---
     function handleIdeaSubmit(e) {
         e.preventDefault();
         if (ideaInput.value.trim()) {
@@ -186,14 +193,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleVoteClick(e) {
-        const btn = e.target;
-        hostConnection.send({ type: 'vote', payload: { id: btn.dataset.id } });
-        studentState.castVotes++;
-        btn.classList.add('voted');
-        if (studentState.castVotes >= activityConfig.votesPerStudent) {
-            document.querySelectorAll('#poll-options-container button').forEach(b => b.disabled = true);
+    function handleVoteCardClick(e) {
+        const card = e.currentTarget;
+        const id = card.dataset.id;
+        const maxVotes = parseInt(activityConfig.votesPerStudent, 10);
+
+        // Comprova si la targeta ja està seleccionada
+        const index = studentState.pendingVotes.indexOf(id);
+        if (index > -1) {
+            // Desselecciona
+            studentState.pendingVotes.splice(index, 1);
+        } else if (studentState.pendingVotes.length < maxVotes) {
+            // Selecciona si encara no s'ha arribat al límit
+            studentState.pendingVotes.push(id);
         }
+        updateVoteCardsUI();
+    }
+
+    function updateVoteCardsUI() {
+        const maxVotes = parseInt(activityConfig.votesPerStudent, 10);
+        const cards = document.querySelectorAll('.vote-card');
+        const limitReached = studentState.pendingVotes.length >= maxVotes;
+
+        cards.forEach(card => {
+            const id = card.dataset.id;
+            const isSelected = studentState.pendingVotes.includes(id);
+
+            card.classList.toggle('selected', isSelected);
+            card.classList.toggle('disabled', limitReached && !isSelected);
+        });
+        votesLeftInfo.textContent = `Has seleccionat ${studentState.pendingVotes.length} de ${maxVotes}.`;
+    }
+
+    function submitVotes() {
+        if (studentState.pendingVotes.length > 0) {
+            hostConnection.send({ type: 'vote-batch', payload: { ids: studentState.pendingVotes } });
+        }
+        studentInteractionZone.innerHTML = '<p>Vots enviats! Gràcies per participar.</p>';
     }
 
     function closeActivity() {
@@ -206,6 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateParticipantCount = () => participantCount.textContent = guestConnections.length;
 
-    // --- INICI DE L'APLICACIÓ ---
+    // --- INICI DE L\'APLICACIÓ ---
     init();
 });
