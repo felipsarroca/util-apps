@@ -230,7 +230,7 @@
                     </div>`;
 
                 setTimeout(() => {
-                    const element = document.querySelector(`[data-item-id="${id}"]`);
+                    const element = document.querySelector('[data-item-id="' + id + '"]');
                     if (element) element.classList.remove(animationClass);
                 }, 500);
             });
