@@ -14,24 +14,30 @@ document.addEventListener('DOMContentLoaded', () => {
             'brainstorm': 'Configurar pluja d\'idees',
             'brainstorm-poll': 'Configurar activitat combinada'
         };
-        configTitle.textContent = titles[type] || 'Configurar Activitat';
+        configTitle.textContent = titles[type] || 'Configurar activitat';
 
-        let html = '<div class="form-group full-width"><label for="question">Tema o pregunta:</label><input type="text" id="question" name="question" required></div>';
-        
-        let bottomFields = '';
+        let html = '';
+        let rowFields = '';
 
+        // Camp de Tema (sempre present)
+        html += '<div class="form-group"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
+
+        // Camp d\'Opcions (només per a votació simple)
+        if (type === 'poll') {
+            html += '<div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="6" required></textarea></div>';
+        }
+
+        // Camps petits que aniran en una fila
         if (type.includes('brainstorm')) {
-            bottomFields += '<div class="form-group"><label for="ideas-per-student">Aportacions per alumne:</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
+            rowFields += '<div class="form-group"><label for="ideas-per-student">Aportacions / participant</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
         }
         if (type.includes('poll')) {
-            if (type === 'poll') {
-                html += '<div class="form-group full-width" data-type="textarea"><label for="poll-options">Opcions (una per línia):</label><textarea id="poll-options" name="pollOptions" rows="4" required></textarea></div>';
-            }
-            bottomFields += '<div class="form-group"><label for="votes-per-student">Vots per participant:</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
+            rowFields += '<div class="form-group"><label for="votes-per-student">Vots / participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
 
-        if (bottomFields) {
-            html += `<div class="form-row">${bottomFields}</div>`;
+        // Afegeix la fila si conté camps
+        if (rowFields) {
+            html += `<div class="form-row">${rowFields}</div>`;
         }
 
         configFields.innerHTML = html;
@@ -43,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let activityConfig = { type: currentActivityType, ...Object.fromEntries(formData.entries()) };
         activityConfig.pollOptions = activityConfig.pollOptions?.split('\n').filter(opt => opt.trim() !== '') || [];
         launchActivity('host', activityConfig);
-        // Opcional: tancar la pestanya de configuració un cop llançada l'activitat
         setTimeout(() => window.close(), 500);
     });
 
@@ -55,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(url, '_blank');
     }
 
-    // Inicialitza el formulari en carregar la pàgina
     if (activityType) {
         setupConfigForm(activityType);
     } else {

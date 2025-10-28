@@ -3,7 +3,9 @@
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
-    background-color: #f7f8fa;
+    background-color: #eef1f5; /* Fons gris suau */
+    /* Patró SVG subtil per a la textura */
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23dce3ec' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     color: #333;
     display: flex;
     align-items: center;
@@ -15,11 +17,12 @@ body {
 
 .config-container {
     background-color: #ffffff;
-    padding: 3rem;
+    padding: 2.5rem 3rem;
     border-radius: 24px;
     width: 100%;
-    max-width: 800px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    max-width: 700px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid #e5e7eb;
 }
 
 .config-header {
@@ -28,10 +31,10 @@ body {
 }
 
 #config-title {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     margin: 0;
-    font-weight: 600;
-    color: #2c3e50;
+    font-weight: 700;
+    color: #1f2937;
 }
 
 .form-fields {
@@ -40,68 +43,53 @@ body {
     gap: 1.5rem;
 }
 
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
 .form-row {
     display: flex;
     gap: 1.5rem;
 }
 
-.form-group {
+.form-row .form-group {
     flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.form-group.full-width {
-    flex-basis: 100%;
-}
-
-.form-group.full-width[data-type="textarea"] {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
 }
 
 .form-fields label {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #555;
-    flex-basis: 220px;
-    flex-shrink: 0;
-    text-align: right;
-}
-
-.form-group.full-width[data-type="textarea"] label {
-    text-align: left;
-    padding-left: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4b5563;
+    padding-left: 0.25rem;
 }
 
 .form-fields input,
 .form-fields textarea {
-    flex: 1;
-    padding: 1rem;
+    width: 100%;
+    padding: 0.9rem 1rem;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
-    border: 1px solid #ddd;
+    border: 1px solid #d1d5db;
     border-radius: 12px;
-    background-color: #f7f8fa;
-    color: #333;
+    background-color: #f9fafb;
+    color: #1f2937;
     box-sizing: border-box;
     transition: all 0.3s ease;
 }
 
 .form-fields textarea {
-    min-height: 120px; /* Més espai per a les opcions */
+    min-height: 120px;
     resize: vertical;
 }
 
 .form-fields input[type="number"] {
-    flex: 0 1 80px;
+    max-width: 100px; /* Amplada màxima per al camp numèric */
     text-align: center;
     -moz-appearance: textfield; /* Firefox */
 }
 
-/* Amaga les fletxes de l'input de número */
 .form-fields input[type=number]::-webkit-inner-spin-button,
 .form-fields input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -113,7 +101,7 @@ body {
     outline: none;
     border-color: #4a90e2;
     background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
 .launch-button {
@@ -140,24 +128,17 @@ body {
 }
 
 /* Disseny responsiu */
-@media (max-width: 768px) {
-    .form-group {
+@media (max-width: 600px) {
+    .form-row {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-    .form-fields label {
-        text-align: left;
-        flex-basis: auto;
     }
     .form-fields input[type="number"] {
-        width: 100%;
-        flex: 1;
+        max-width: 100%;
     }
     .config-container {
-        padding: 2rem;
+        padding: 2rem 1.5rem;
     }
     #config-title {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
 }
