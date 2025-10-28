@@ -1,0 +1,63 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votació en Temps Real</title>
+    <!-- Link to the new stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- PeerJS for WebRTC connection -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <!-- Library for generating QR Codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="main-container">
+        <div class="student-section">
+            <div id="join-session-form">
+                <h1>Participa en una activitat</h1>
+                <div class="code-input-container">
+                    <input type="text" placeholder="Introdueix el codi" id="activity-code">
+                    <button class="button" id="participate-btn">Participa</button>
+                </div>
+            </div>
+        </div>
+        <div class="professor-section">
+            <div id="professor-initial-view">
+                <h2>Prepara una activitat</h2>
+                <div class="card-container">
+                    <a href="#" onclick="showProfessorActivity('brainstorm')" class="card">
+                        <h3>💭 Pluja d’idees</h3>
+                    </a>
+                    <a href="#" onclick="showProfessorActivity('voting')" class="card">
+                        <h3>🗳️ Votació</h3>
+                    </a>
+                    <a href="#" onclick="showProfessorActivity('brainstorm-voting')" class="card">
+                        <h3>💡 Pluja d’idees + votació</h3>
+                    </a>
+                </div>
+            </div>
+            <div id="presenter-view" class="content-container hidden">
+                <div id="create-session-form"></div>
+                <div id="results-view" class="hidden"></div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="text-center py-4 text-sm text-gray-500">
+        <span data-translate-key="footer_created_by">Aplicación creada por</span> <a href="https://bilateria.org" target="_blank" class="underline hover:text-gray-700">Juan José de Haro</a>
+        <br>
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="license" class="underline hover:text-gray-700" data-translate-key="footer_license">Creative Commons Reconocimiento-CompartirIgual 4.0 Internacional</a>
+    </footer>
+
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

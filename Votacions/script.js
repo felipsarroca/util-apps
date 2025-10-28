@@ -1,333 +1,531 @@
-let activityType = 'voting'; // Default to voting
+document.addEventListener('DOMContentLoaded', () => {
+    const page = window.location.pathname;
+    ensureUserId(); // Create a unique user ID for the browser session
 
-// --- Variables Globales ---
-let peer = null;
-let hostConnection = null;
-let guestConnections = [];
-let sessionData = {};
-let myPeerId = null;
-let voteTimeout = null;
-let countdownInterval = null;
+    if (page.endsWith('/') || page.endsWith('index.html')) {
+        initHomePage();
+    } else if (page.includes('professor.html')) {
+        initProfessorPage();
+    } else if (page.includes('alumne.html')) {
+        initAlumnePage();
+    }
+    
+    // Load WebRTC functionality if available
+    if (typeof initWebRTC === 'function') {
+        initWebRTC();
+    }
+});
 
-// --- LÓGICA DE INICIO ---
-window.onload = function() {
-    checkURLParameters();
-    document.getElementById('participate-btn').addEventListener('click', joinSession);
-};
-
-function checkURLParameters() {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session');
-    if (sessionId) {
-        document.getElementById('activity-code').value = sessionId;
-        joinSession();
+// ====================================================================
+// USER ID MANAGEMENT
+// ====================================================================
+function ensureUserId() {
+    if (!getStoredItem('userId')) {
+        setStoredItem('userId', 'user_' + Math.random().toString(36).substring(2, 15));
     }
 }
 
-function showProfessorActivity(type) {
-    activityType = type;
-    document.getElementById('professor-initial-view').classList.add('hidden');
-    const presenterView = document.getElementById('presenter-view');
-    presenterView.classList.remove('hidden');
+// ====================================================================
+// ALUMNE PAGE
+// ====================================================================
+function initAlumnePage() {
+    const activityCode = sessionStorage.getItem('activityCode');
+    const container = document.querySelector('.participation-container');
+    const userId = getStoredItem('userId');
 
-    let formHTML = `
-        <h2>Configuració: ${type}</h2>
-    `;
-
-    if (type === 'brainstorm' || type === 'brainstorm-voting') {
-        formHTML += `
-            <div class="form-group">
-                <label for="question">Tema o pregunta:</label>
-                <input type="text" id="question" placeholder="Ex: Què podem fer per millorar el pati?">
-            </div>
-        `;
+    if (!activityCode || !getStoredItem(activityCode)) {
+        container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
+        return;
     }
 
-    if (type === 'voting') {
-         formHTML += `
-            <div class="form-group">
-                <label for="question">Tema de la votació:</label>
-                <input type="text" id="question" placeholder="Ex: Quin és el vostre color preferit?">
-            </div>
-            <div class="form-group">
-                <label for="options-container">Opcions (una per línia):</label>
-                <div id="options-container">
-                    <input type="text" name="option" placeholder="Opció 1">
-                    <input type="text" name="option" placeholder="Opció 2">
+    const activity = JSON.parse(getStoredItem(activityCode));
+    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
+
+    // Check if user has already voted for this activity
+    if (results && results.votedUsers && results.votedUsers.includes(userId)) {
+        container.innerHTML = `<h1>${activity.topic}</h1><h2>Gràcies per la teva participació! Ja has votat en aquesta activitat.</h2>`;
+        return; // Stop execution if already voted
+    }
+
+    container.querySelector('#activity-title').textContent = activity.topic;
+
+    updateStudentView(activity, container);
+
+    window.addEventListener('storage', (e) => {
+        if (e.key === activityCode) {
+            const updatedActivity = JSON.parse(e.newValue);
+            if(updatedActivity.status !== activity.status){
+                activity = updatedActivity;
+                updateStudentView(updatedActivity, container);
+            }
+        }
+    });
+}
+
+function handleStudentSubmission(e) {
+    e.preventDefault();
+    const activityCode = sessionStorage.getItem('activityCode');
+    const activity = JSON.parse(getStoredItem(activityCode));
+    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
+    const userId = getStoredItem('userId');
+
+    if (e.target.id === 'idea-form') {
+        const ideaText = document.getElementById('idea-text').value.trim();
+        if (ideaText) {
+            results.ideas.push(ideaText);
+            document.getElementById('idea-text').value = '';
+            // Optionally, you could track users who submitted ideas too
+        }
+    } else if (e.target.id === 'voting-form-alumne') {
+        const selectedOptions = e.target.querySelectorAll('input[name="voting-option"]:checked');
+        const maxVotes = activity.maxVotes || 1;
+
+        if (selectedOptions.length === 0) {
+            alert('Has de seleccionar almenys una opció.');
+            return;
+        }
+
+        if (selectedOptions.length > maxVotes) {
+            alert(`Només pots seleccionar un màxim de ${maxVotes} opcions.`);
+            return;
+        }
+
+        selectedOptions.forEach(checkbox => {
+            const value = checkbox.value;
+            results.votes[value] = (results.votes[value] || 0) + 1;
+        });
+        
+        // Mark user as voted
+        if (!results.votedUsers) {
+            results.votedUsers = [];
+        }
+        results.votedUsers.push(userId);
+
+        e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
+    }
+
+    setStoredItem(`${activityCode}_results`, JSON.stringify(results));
+}
+
+// ====================================================================
+// HOME PAGE
+// ====================================================================
+function initHomePage() {
+    const participateBtn = document.getElementById('participate-btn');
+    const activityCodeInput = document.getElementById('activity-code');
+
+    if (!participateBtn || !activityCodeInput) return;
+
+    participateBtn.addEventListener('click', () => {
+        const code = activityCodeInput.value.toUpperCase().trim();
+        if (code && getStoredItem(code)) {
+            sessionStorage.setItem('activityCode', code);
+            window.location.href = 'alumne.html';
+        } else {
+            alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
+            activityCodeInput.focus();
+        }
+    });
+
+    activityCodeInput.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            participateBtn.click();
+        }
+    });
+}
+
+// ====================================================================
+// PROFESSOR PAGE
+// ====================================================================
+function initProfessorPage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activityType = urlParams.get('activity');
+    const configContainer = document.getElementById('config-container');
+
+    if (!activityType) {
+        configContainer.innerHTML = '<h1>Error: No s\'ha seleccionat cap tipus d\'activitat.</h1><a href="index.html">Torna a l\'inici</a>';
+        return;
+    }
+
+    const formToShow = document.getElementById(`${activityType}-form`);
+    if (formToShow) {
+        formToShow.style.display = 'block';
+        const optionsDiv = document.querySelector('.options');
+        if(optionsDiv) optionsDiv.style.display = 'none';
+    } else {
+         configContainer.innerHTML = `<h1>Error: Tipus d\'activitat invàlid.</h1><a href="index.html">Torna a l\'inici</a>`;
+         return;
+    }
+
+    const form = formToShow.querySelector('form');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const code = generateCode();
+        const activity = createActivityObject(activityType, form);
+        
+        setStoredItem(code, JSON.stringify(activity));
+        setStoredItem(`${code}_results`, JSON.stringify({ ideas: [], votes: {} }));
+
+        showDashboard(code, activity, configContainer);
+        
+        // Create WebRTC offer if WebRTC is available
+        if (typeof webRTCManager !== 'undefined' && webRTCManager) {
+            webRTCManager.createOffer();
+        }
+    });
+}
+
+function createActivityObject(type, form) {
+    const activity = { type, status: 'pending' };
+    if (type === 'brainstorm') {
+        activity.topic = form.querySelector('#brainstorm-topic').value;
+        activity.maxIdeas = form.querySelector('#brainstorm-max-ideas').value;
+        activity.status = 'brainstorming';
+    } else if (type === 'voting') {
+        activity.topic = form.querySelector('#voting-topic').value;
+        activity.options = form.querySelector('#voting-options').value.split('\n').filter(o => o.trim() !== '');
+        activity.maxVotes = form.querySelector('#voting-max-votes').value;
+        activity.status = 'voting';
+    } else if (type === 'brainstorm-voting') {
+        activity.topic = form.querySelector('#bv-topic').value;
+        activity.maxIdeas = form.querySelector('#bv-max-ideas').value;
+        activity.maxVotes = form.querySelector('#bv-max-votes').value;
+        activity.status = 'brainstorming';
+    }
+    return activity;
+}
+
+function showDashboard(code, activity, container) {
+    let dashboardHTML = `
+        <div class="dashboard">
+            <div class="dashboard-header">
+                <div class="dashboard-code">
+                    <span>Codi de l'activitat</span>
+                    <p>${code}</p>
                 </div>
-                <button onclick="addOption()" class="add-option-btn">+ Afegeix una opció</button>
+                <div class="dashboard-topic">
+                    <span>Tema</span>
+                    <p>${activity.topic}</p>
+                </div>
             </div>
-        `;
+            ${activity.type === 'brainstorm-voting' ? '<button id="start-voting-btn" class="button">Activar Votació</button>' : ''}
+            <div id="results"></div>
+        </div>`;
+    container.innerHTML = dashboardHTML;
+
+    updateDashboard(code);
+    
+    window.addEventListener('storage', (e) => {
+        if (e.key === `${code}_results`) {
+            updateDashboard(code);
+        }
+    });
+
+    if (activity.type === 'brainstorm-voting') {
+        const startVotingBtn = document.getElementById('start-voting-btn');
+        startVotingBtn.addEventListener('click', () => {
+            let currentActivity = JSON.parse(getStoredItem(code));
+            currentActivity.status = 'voting';
+            
+            // Send status update via WebRTC if available
+            if (typeof sendStartVoteMessage === 'function') {
+                sendStartVoteMessage('voting');
+            } else {
+                setStoredItem(code, JSON.stringify(currentActivity));
+            }
+            
+            updateDashboard(code);
+            startVotingBtn.style.display = 'none';
+        });
     }
-
-    formHTML += `
-        <div class="button-group">
-            <button onclick="hostSession()" id="host-button" class="button">
-                <span id="host-button-text">Generar Codi</span>
-                <div id="host-loader" class="loader hidden"></div>
-            </button>
-        </div>
-    `;
-
-    document.getElementById('create-session-form').innerHTML = formHTML;
+    
+    // Add event listener for when the activity status changes in localStorage
+    window.addEventListener('storage', (e) => {
+        if (e.key === code) {
+            const updatedActivity = JSON.parse(e.newValue);
+            if (updatedActivity.status !== activity.status) {
+                activity = updatedActivity;
+                updateDashboard(code);
+            }
+        }
+    });
 }
 
+function updateDashboard(code) {
+    const activity = JSON.parse(getStoredItem(code));
+    const results = JSON.parse(getStoredItem(`${code}_results`));
+    const resultsContainer = document.getElementById('results');
+    if (!activity || !results || !resultsContainer) return;
 
-        // --- LÓGICA GENERAL DE LA UI ---
-
-        function addOption() {
-            const container = document.getElementById('options-container');
-            const optionCount = container.children.length + 1;
-            const newOptionInput = document.createElement('input');
-            newOptionInput.type = 'text';
-            newOptionInput.name = 'option';
-            newOptionInput.placeholder = `Opció ${optionCount}`;
-            container.appendChild(newOptionInput);
-        };
-        
-        function copyCode() {
-            const code = document.getElementById('session-code').innerText;
-            navigator.clipboard.writeText(code).then(() => {
-                const toast = document.getElementById('toast');
-                toast.innerText = 'Codi copiat al porta-retalls';
-                toast.style.opacity = 1;
-                setTimeout(() => { toast.style.opacity = 0; }, 2000);
-            });
+    if (activity.status === 'brainstorming') {
+        if (!resultsContainer.querySelector('h4')) {
+            resultsContainer.innerHTML = '<h4>Idees rebudes:</h4><ul class="ideas-list"></ul>';
         }
-
-        function copyUrl(event) {
-            event.preventDefault();
-            const url = event.target.href;
-            navigator.clipboard.writeText(url).then(() => {
-                const toast = document.getElementById('toast');
-                toast.innerText = 'URL copiada al porta-retalls';
-                toast.style.opacity = 1;
-                setTimeout(() => { toast.style.opacity = 0; }, 2000);
-            });
-        }
-
-        function generateQRCode(url) {
-            const container = document.getElementById('qrcode-container');
-            container.innerHTML = '';
-            new QRCode(container, {
-                text: url,
-                width: 200,
-                height: 200,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-        }
-
-
-        // --- LÓGICA DEL PRESENTADOR (ANFITRIÓN) ---
-        
-        function hostSession() {
-            const question = document.getElementById('question').value.trim();
-            const optionInputs = document.querySelectorAll('#options-container input[name="option"]');
-            const options = Array.from(optionInputs)
-                .map(input => input.value.trim())
-                .filter(text => text !== '')
-                .map(text => ({ text: text, votes: 0 }));
-
-            if (!question || (activityType !== 'brainstorm' && options.length < 2)) {
-                alert('Si us plau, introdueix una pregunta i almenys dues opcions.');
-                return;
+        const ideasList = resultsContainer.querySelector('.ideas-list');
+        // Simple update to avoid re-rendering all ideas every time
+        const existingIdeas = [...ideasList.children].map(li => li.textContent);
+        results.ideas.forEach(idea => {
+            if (!existingIdeas.includes(idea)) {
+                const li = document.createElement('li');
+                li.textContent = idea;
+                ideasList.appendChild(li);
             }
-            
-            document.getElementById('create-session-form').classList.add('hidden');
-            document.getElementById('results-view').classList.remove('hidden');
-
-            sessionData = { question, options, activityType };
-            
-            const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
-            peer = new Peer(sessionId); 
-
-            peer.on('open', (id) => {
-                myPeerId = id;
-                const baseUrl = window.location.href.split('?')[0];
-                const sessionUrl = baseUrl + '?session=' + id;
-                
-                generateQRCode(sessionUrl);
-
-                document.getElementById('session-code').innerText = id;
-                document.getElementById('results-question').innerText = question;
-                document.getElementById('direct-session-link').href = sessionUrl;
-                document.getElementById('direct-session-link').innerText = sessionUrl;
-
-                updateResultsView(sessionData);
-            });
-
-            peer.on('connection', (conn) => {
-                guestConnections.push(conn);
-                conn.on('open', () => {
-                    conn.send({ type: 'session-data', payload: sessionData });
-                });
-                conn.on('data', (data) => {
-                    if (data.type === 'vote') {
-                        handleVote(data.payload.optionIndex);
-                        conn.send({ type: 'vote-confirmed' });
-                    }
-                });
-                conn.on('close', () => {
-                    guestConnections = guestConnections.filter(c => c.peer !== conn.peer);
-                });
-            });
-
-             peer.on('error', (err) => {
-                alert('Hi ha hagut un error amb la connexió. Si us plau, recarrega la pàgina.');
-                console.error(err);
-                document.getElementById('host-button-text').classList.remove('hidden');
-                document.getElementById('host-loader').classList.add('hidden');
-            });
+        });
+    } else if (activity.status === 'voting') {
+        if (!resultsContainer.querySelector('.results-list')) {
+            resultsContainer.innerHTML = '<h4>Resultats de la Votació:</h4><div class="results-list"></div>';
         }
+        const votesContainer = resultsContainer.querySelector('.results-list');
+        
+        const options = activity.type === 'voting' ? activity.options : results.ideas;
+        const voteCounts = results.votes || {};
+        const totalVotes = Object.values(voteCounts).reduce((sum, count) => sum + count, 0);
 
-        function handleVote(optionIndex) {
-            sessionData.options[optionIndex].votes++;
-            updateResultsView(sessionData);
-        }
+        const sortedOptions = options.map(option => ({
+            option,
+            count: voteCounts[option] || 0
+        })).sort((a, b) => b.count - a.count);
 
-        function updateResultsView(data) {
-            const resultsContainerEl = document.getElementById('results-container');
-            if(!resultsContainerEl) return;
-            resultsContainerEl.innerHTML = '';
-
-            const totalVotes = data.options.reduce((sum, option) => sum + option.votes, 0);
+        sortedOptions.forEach((item, index) => {
+            const { option, count } = item;
+            const percentage = totalVotes > 0 ? ((count / totalVotes) * 100).toFixed(1) : 0;
             
-            document.getElementById('total-votes').innerText = totalVotes;
+            let resultElement = votesContainer.querySelector(`.vote-result[data-option="${option}"]`);
 
-            const sortedOptions = [...data.options].sort((a,b) => b.votes - a.votes);
-
-            sortedOptions.forEach((option, index) => {
-                const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
-                const resultElement = document.createElement('div');
+            if (!resultElement) {
+                resultElement = document.createElement('div');
                 resultElement.className = 'vote-result';
-                resultElement.style.order = index;
-
+                resultElement.setAttribute('data-option', option);
                 resultElement.innerHTML = `
-                    <p class="option-text">${option.text}</p>
+                    <p class="option-text">${option}</p>
                     <div class="progress-bar">
-                         <div class="progress" style="width: ${percentage}%;"></div>
+                        <div class="progress"></div>
                     </div>
-                    <p class="vote-count">${option.votes}</p>
-                `;
-                resultsContainerEl.appendChild(resultElement);
-            });
+                    <p class="vote-count"></p>`;
+                votesContainer.appendChild(resultElement);
+            }
+
+            resultElement.style.order = index;
+            resultElement.querySelector('.progress').style.width = `${percentage}%`;
+            resultElement.querySelector('.vote-count').textContent = `${count} vot${count !== 1 ? 's' : ''}`;
+        });
+    }
+}
+
+function initAlumnePage() {
+    const activityCode = sessionStorage.getItem('activityCode');
+    const container = document.querySelector('.participation-container');
+
+    if (!activityCode || !getStoredItem(activityCode)) {
+        container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
+        return;
+    }
+
+    let activity = JSON.parse(getStoredItem(activityCode));
+    container.querySelector('#activity-title').textContent = activity.topic;
+
+    updateStudentView(activity, container);
+
+    window.addEventListener('storage', (e) => {
+        if (e.key === activityCode) {
+            const updatedActivity = JSON.parse(e.newValue);
+            if(updatedActivity.status !== activity.status){
+                activity = updatedActivity;
+                updateStudentView(updatedActivity, container);
+            }
         }
+    });
+}
 
-        // --- LÓGICA DEL PARTICIPANTE (INVITADO) ---
+function updateStudentView(activity, container) {
+    const activityCode = sessionStorage.getItem('activityCode');
+    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
+    const title = container.querySelector('h1');
+    
+    let formContainer = container.querySelector('.form-wrapper');
+    if (!formContainer) {
+        formContainer = document.createElement('div');
+        formContainer.className = 'form-wrapper';
+        container.appendChild(formContainer);
+    }
 
-        function joinSession() {
-            const hostId = document.getElementById('activity-code').value.trim().toUpperCase();
-            if (!hostId) return;
-            
-            const joinButton = document.getElementById('participate-btn');
-            joinButton.setAttribute('disabled', true);
-            // Assuming there is a loader element, if not, it should be added to the HTML
-            // const joinLoader = document.getElementById('join-loader');
-            // if(joinLoader) joinLoader.classList.remove('hidden');
+    let viewToShow = activity.status;
 
-            peer = new Peer();
+    formContainer.innerHTML = '';
 
-            peer.on('open', () => {
-                hostConnection = peer.connect(hostId, { reliable: true });
-                
-                hostConnection.on('open', () => {});
+    if (viewToShow === 'brainstorming') {
+        formContainer.innerHTML = `
+            <form id="idea-form" data-status="brainstorming">
+                <label for="idea-text">Escriu la teva idea:</label>
+                <input type="text" id="idea-text" required autofocus>
+                <button type="submit" class="button">Enviar Idea</button>
+            </form>`;
+    } else if (viewToShow === 'voting') {
+        const options = activity.type === 'voting' ? activity.options : (results ? results.ideas : []);
+        let optionsHTML = '';
+        if(options.length > 0){
+            const maxVotes = activity.maxVotes || 1;
+            options.forEach((option, index) => {
+                optionsHTML += `
+                    <div class="option">
+                        <input type="checkbox" id="option-${index}" name="voting-option" value="${option}">
+                        <label for="option-${index}">${option}</label>
+                    </div>`;
+            });
+            formContainer.innerHTML = `
+                <form id="voting-form-alumne" data-status="voting">
+                    <h3>Pots votar ${maxVotes} propost${maxVotes > 1 ? 'es' : 'a'}.</h3>
+                    ${optionsHTML}
+                    <button type="submit" class="button">Emet el teu vot</button>
+                </form>`;
+        } else {
+            formContainer.innerHTML = '<p>Encara no hi ha idees per votar. Espera que el professor iniciï la votació.</p>';
+        }
+    } else {
+        // If the student has already participated, show a thank you message
+        const userId = getStoredItem('userId');
+        if (results && results.votedUsers && results.votedUsers.includes(userId)) {
+            formContainer.innerHTML = '<h2>Gràcies per la teva participació! Ja has votat en aquesta activitat.</h2>';
+        }
+    }
 
-                hostConnection.on('data', (data) => {
-                    if (data.type === 'session-data') {
-                        const hasVoted = localStorage.getItem('voted_in_' + hostConnection.peer);
-                        if (hasVoted) {
-                            showVotedView();
-                        } else {
-                            showVotingView(data.payload);
+    const newForm = formContainer.querySelector('form');
+    if (newForm) {
+        newForm.addEventListener('submit', handleStudentSubmission);
+    }
+
+    // Add logic to limit checkbox selections
+    const votingForm = document.getElementById('voting-form-alumne');
+    if (votingForm) {
+        const checkboxes = votingForm.querySelectorAll('input[type="checkbox"]');
+        const maxVotes = activity.maxVotes || 1;
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const checkedCount = votingForm.querySelectorAll('input[type="checkbox"]:checked').length;
+                if (checkedCount >= maxVotes) {
+                    checkboxes.forEach(cb => {
+                        if (!cb.checked) {
+                            cb.disabled = true;
                         }
-                    } else if (data.type === 'vote-confirmed') {
-                        clearTimeout(voteTimeout);
-                        clearInterval(countdownInterval);
-                        localStorage.setItem('voted_in_' + hostConnection.peer, 'true');
-                        showVotedView();
-                        setTimeout(() => {
-                            if (hostConnection) hostConnection.close();
-                        }, 500);
-                    }
-                });
-                 hostConnection.on('error', (err) => {
-                    console.error('Error en la conexión:', err);
-                    showJoinError();
-                });
-                 hostConnection.on('close', () => {
-                    if (!localStorage.getItem('voted_in_' + hostConnection.peer)) {
-                       showJoinError();
-                    }
-                 });
+                    });
+                } else {
+                    checkboxes.forEach(cb => {
+                        cb.disabled = false;
+                    });
+                }
             });
-            
-            peer.on('error', (err) => {
-                console.error('Error de PeerJS:', err);
-                showJoinError();
-            });
-        }
-        
-        function showJoinError() {
-            const errorP = document.getElementById('join-error');
-            if(errorP) {
-                errorP.innerText = 'Error de connexió. Verifica el codi o que la persona amfitriona estigui connectada.';
-                errorP.classList.remove('hidden');
-            }
-            const joinButton = document.getElementById('participate-btn');
-            if(joinButton) joinButton.removeAttribute('disabled');
-        }
+        });
+    }
+}
 
-        function showVotingView(data) {
-            document.getElementById('join-session-form').classList.add('hidden');
-            const votingView = document.getElementById('voting-view');
-            votingView.classList.remove('hidden');
-            
-            document.getElementById('vote-question').innerText = data.question;
-            const optionsContainer = document.getElementById('vote-options-container');
-            optionsContainer.innerHTML = '';
+function handleStudentSubmission(e) {
+    e.preventDefault();
+    const activityCode = sessionStorage.getItem('activityCode');
+    const activity = JSON.parse(getStoredItem(activityCode));
+    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
+    const userId = getStoredItem('userId');
 
-            if (data.activityType === 'brainstorm') {
-                // Show a simple input for ideas
-                optionsContainer.innerHTML = `
-                    <div class="form-group">
-                        <label for="idea-input">La teva idea:</label>
-                        <input type="text" id="idea-input" class="w-full">
-                        <button onclick="castVote(document.getElementById('idea-input').value)" class="button">Enviar</button>
-                    </div>
-                `;
+    if (e.target.id === 'idea-form') {
+        const ideaText = document.getElementById('idea-text').value.trim();
+        if (ideaText) {
+            // Send idea via WebRTC if available, otherwise store locally
+            if (typeof sendIdeaViaWebRTC === 'function') {
+                sendIdeaViaWebRTC(ideaText);
+                // Show temporary message until we get confirmation from WebRTC
+                document.getElementById('idea-text').value = '';
+                document.getElementById('idea-form').innerHTML = '<h2>Idea enviada! Esperant confirmació...</h2>';
             } else {
-                // Show voting buttons
-                data.options.forEach((option, index) => {
-                    const button = document.createElement('button');
-                    button.className = "button option-button";
-                    button.innerText = option.text;
-                    button.onclick = () => castVote(index);
-                    optionsContainer.appendChild(button);
-                });
+                results.ideas.push(ideaText);
+                document.getElementById('idea-text').value = '';
             }
         }
+    } else if (e.target.id === 'voting-form-alumne') {
+        const selectedOptions = e.target.querySelectorAll('input[name="voting-option"]:checked');
+        const maxVotes = activity.maxVotes || 1;
 
-        function showVotedView() {
-            clearTimeout(voteTimeout);
-            clearInterval(countdownInterval);
-            document.getElementById('join-session-form').classList.add('hidden');
-            document.getElementById('voting-view').classList.add('hidden');
-            document.getElementById('voted-view').classList.remove('hidden');
+        if (selectedOptions.length === 0) {
+            alert('Has de seleccionar almenys una opció.');
+            return;
         }
 
-        function castVote(optionIndex) {
-            if (hostConnection) {
-                // Disable buttons to prevent multiple votes
-                const optionsContainer = document.getElementById('vote-options-container');
-                optionsContainer.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                
-                hostConnection.send({ type: 'vote', payload: { optionIndex } });
+        if (selectedOptions.length > maxVotes) {
+            alert(`Només pots seleccionar un màxim de ${maxVotes} opcions.`);
+            return;
+        }
 
-                // Set a timeout for vote confirmation
-                voteTimeout = setTimeout(() => {
-                    showJoinError(); // Or a more specific error
-                }, 10000); 
+        // Send votes via WebRTC if available, otherwise store locally
+        if (typeof sendVoteViaWebRTC === 'function') {
+            selectedOptions.forEach(checkbox => {
+                const value = checkbox.value;
+                sendVoteViaWebRTC({ option: value, delta: 1 });
+            });
+            // Show temporary message until we get confirmation from WebRTC
+            e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació! Esperant confirmació...</h2>';
+        } else {
+            selectedOptions.forEach(checkbox => {
+                const value = checkbox.value;
+                results.votes[value] = (results.votes[value] || 0) + 1;
+            });
+            
+            // Mark user as voted
+            if (!results.votedUsers) {
+                results.votedUsers = [];
             }
+            results.votedUsers.push(userId);
+            
+            e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
+            
+            // Update local storage with the new results
+            setStoredItem(`${activityCode}_results`, JSON.stringify(results));
         }
+    }
+
+    // Only update local storage if not using WebRTC
+    if (typeof sendIdeaViaWebRTC !== 'function' && typeof sendVoteViaWebRTC !== 'function') {
+        setStoredItem(`${activityCode}_results`, JSON.stringify(results));
+    }
+}
+
+// ====================================================================
+// UTILITY FUNCTIONS
+// ====================================================================
+function generateCode() {
+    return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
+
+// Fallback functions for localStorage
+function getStoredItem(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    console.warn('localStorage not available, using memory storage');
+    // Fallback to memory storage if localStorage is not available
+    if (!window.memoryStorage) {
+      window.memoryStorage = {};
+    }
+    return window.memoryStorage[key];
+  }
+}
+
+function setStoredItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    console.warn('localStorage not available, using memory storage');
+    // Fallback to memory storage if localStorage is not available
+    if (!window.memoryStorage) {
+      window.memoryStorage = {};
+    }
+    window.memoryStorage[key] = value;
+  }
+}
+
+// Replace localStorage calls with our fallback functions
+function getItem(key) {
+  return getStoredItem(key);
+}
+
+function setItem(key, value) {
+  setStoredItem(key, value);
+}
