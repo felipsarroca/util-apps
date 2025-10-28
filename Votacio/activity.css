@@ -400,6 +400,24 @@ header {
     box-shadow: var(--shadow-elevated);
 }
 
+.student-question {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 0;
+}
+
+.student-question.hidden {
+    display: none;
+}
+
+.student-thanks {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin: 0.5rem 0 0;
+}
+
 #vote-cards-wrapper {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -510,4 +528,35 @@ header {
         position: static;
         padding: 1.5rem 1rem 2rem;
     }
+}
+
+body.guest-mode .live-layout,
+body.guest-mode #activity-controls {
+    display: none;
+}
+
+body.guest-mode header {
+    padding-bottom: 1.5rem;
+}
+
+body.guest-mode #student-interaction-zone {
+    position: static;
+    right: auto;
+    bottom: auto;
+    width: min(520px, 92%);
+    margin: 3rem auto;
+    display: flex;
+}
+
+body.guest-mode .student-question {
+    display: block;
+}
+
+body.guest-mode .student-question.hidden {
+    display: none;
+}
+
+body.guest-mode #poll-options-container,
+body.guest-mode #idea-form {
+    align-items: stretch;
 }

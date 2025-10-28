@@ -17,6 +17,7 @@
     const sessionCodeLarge = document.getElementById('session-code-large');
     const sidebarParticipants = document.getElementById('sidebar-participants');
     const phaseDescription = document.getElementById('phase-description');
+    const studentQuestion = document.getElementById('student-question');
 
     // --- Estat de l\'aplicaciÃ³ ---
     let peer = null;
@@ -39,19 +40,27 @@
         resultsContainer.className = classes.join(' ');
     };
 
-        const buildInitialSessionState = () => {
+    const buildInitialSessionState = () => {
         const base = { phase: 'voting', ideas: [], votes: {} };
         if (activityConfig.type === 'brainstorm') {
             base.phase = 'brainstorm';
         } else if (activityConfig.type === 'brainstorm-poll') {
             base.phase = 'brainstorm';
         } else if (activityConfig.type === 'poll') {
-            base.votes = activityConfig.pollOptions.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {});
+            const options = Array.isArray(activityConfig.pollOptions) ? activityConfig.pollOptions : [];
+            base.votes = options.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {});
         }
         return base;
     };
 
-// --- INICIALITZACIÃ“ ---
+    const updateStudentQuestion = () => {
+        if (!studentQuestion) return;
+        const hasQuestion = Boolean(activityConfig.question);
+        studentQuestion.textContent = hasQuestion ? activityConfig.question : '';
+        studentQuestion.classList.toggle('hidden', !hasQuestion);
+    };
+
+    // --- INICIALITZACIÓ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
         sessionId = params.get('session');
@@ -70,13 +79,15 @@
             activityConfig = JSON.parse(decodeURIComponent(params.get('config')));
             activityTitle.textContent = activityConfig.question;
             activityControls.classList.remove('hidden');
+            document.body.classList.remove('guest-mode');
             sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
+            updateStudentQuestion();
             renderTeacherResults();
             hostSession(sessionId);
             updateParticipantCount();
         } else {
-            studentInteractionZone.classList.remove('hidden');
+            document.body.classList.add('guest-mode');
             ideaForm.addEventListener('submit', handleIdeaSubmit);
             joinSession(sessionId);
         }
@@ -86,25 +97,8 @@
     function hostSession(sessionId) {
         peer = new Peer(sessionId);
         peer.on('open', id => {
-            statusIndicator.textContent = 'SessiÃ³ activa';
-            // Determinar la fase inicial basada en el tipus d'activitat
-            let initialPhase = 'voting'; // Per defecte, per a seguretat
-            if (activityConfig.type === 'brainstorm') {
-                initialPhase = 'brainstorm';
-            } else if (activityConfig.type === 'brainstorm-poll') {
-                initialPhase = 'brainstorm'; // ComenÃ§a en brainstorm per a activitats combinades
-            } else if (activityConfig.type === 'poll') {
-                initialPhase = 'voting'; // Per a votacions directes
-            }
-            
-            sessionData = { 
-                phase: initialPhase, 
-                ideas: [], 
-                votes: activityConfig.type === 'poll' ? 
-                    activityConfig.pollOptions.reduce((acc, opt) => ({...acc, [opt]: 0}), {}) : 
-                    (activityConfig.type === 'brainstorm-poll' ? {} : {}) 
-            };
-            
+            statusIndicator.textContent = 'Sessió activa';
+            sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
             renderTeacherResults();
         });
@@ -151,8 +145,8 @@
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat!');
             hostConnection.on('data', handleTeacherData);
-            hostConnection.on('close', () => { alert('ConnexiÃ³ perduda amb el professor.'); window.close(); });
-            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessiÃ³.'); window.close(); });
+            hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
+            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
         });
     }
 
@@ -171,9 +165,11 @@
             }
 
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
+            updateStudentQuestion();
+            studentInteractionZone.classList.remove('hidden');
             renderStudentView();
         } else if (data.type === 'session-closed') {
-            alert('La sessiÃ³ ha estat tancada pel professor.');
+            alert('La sessió ha estat tancada pel professor.');
             window.close();
         }
     }
@@ -184,6 +180,7 @@
         const { phase, ideas, votes } = sessionData;
 
         updatePhaseDescription(phase);
+        updateStudentQuestion();
 
         if (phase === 'brainstorm') {
             statusIndicator.textContent = 'Pluja d\'idees activa';
@@ -250,7 +247,7 @@
                 }, 500);
             });
         } else {
-            statusIndicator.textContent = 'SessiÃ³ en pausa';
+            statusIndicator.textContent = 'Sessió en pausa';
             setResultsContainerMode('placeholder-state');
             resultsContainer.innerHTML = '<p class="placeholder">Esperant actualitzacions...</p>';
         }
@@ -263,29 +260,56 @@
         const { phase, ideas } = sessionData;
 
         updatePhaseDescription(phase);
+        updateStudentQuestion();
+
+        let message = studentInteractionZone.querySelector('.student-thanks');
+        const showMessage = (text) => {
+            if (!message) {
+                message = document.createElement('p');
+                message.className = 'student-thanks hidden';
+                studentInteractionZone.appendChild(message);
+            }
+            message.textContent = text;
+            message.classList.remove('hidden');
+        };
+        if (message) message.classList.add('hidden');
 
         if (phase === 'brainstorm' && studentState.submittedIdeas < ideasPerStudent) {
             ideasLeftInfo.textContent = `Pots enviar ${ideasPerStudent - studentState.submittedIdeas} idea(es).`;
             ideaForm.classList.remove('hidden');
-        } else if (phase === 'voting') {
+            return;
+        }
+
+        if (phase === 'voting') {
+            if (studentState.castVotes > 0) {
+                if (message) {
+                    message.classList.remove('hidden');
+                } else {
+                    showMessage('Vots enviats! Gràcies per participar.');
+                }
+                return;
+            }
             votesLeftInfo.textContent = `Pots triar fins a ${votesPerStudent} opcions.`;
             const wrapper = document.getElementById('vote-cards-wrapper');
             wrapper.innerHTML = '';
-            const options = type === 'poll' ? activityConfig.pollOptions : ideas;
+            const options = type === 'poll' ? (activityConfig.pollOptions || []) : ideas;
             options.forEach(option => {
                 const id = typeof option === 'object' ? option.id : option;
                 const text = typeof option === 'object' ? option.text : option;
                 wrapper.innerHTML += `<div class="vote-card" data-id="${id}">${text}</div>`;
             });
             wrapper.querySelectorAll('.vote-card').forEach(card => card.addEventListener('click', handleVoteCardClick));
-            document.getElementById('submit-votes-btn').classList.remove('hidden');
-            document.getElementById('submit-votes-btn').addEventListener('click', submitVotes, { once: true });
+            const submitButton = document.getElementById('submit-votes-btn');
+            submitButton.classList.remove('hidden');
+            const freshSubmitButton = submitButton.cloneNode(true);
+            submitButton.replaceWith(freshSubmitButton);
+            freshSubmitButton.addEventListener('click', submitVotes, { once: true });
             pollOptionsContainer.classList.remove('hidden');
-        } else {
-            studentInteractionZone.innerHTML = '<p>Gr\u00E0cies per participar! Espera instruccions.</p>';
+            return;
         }
-    }
 
+        showMessage('Gràcies per participar! Espera instruccions.');
+    }
     // --- GESTIÃ“ D\'EVENTS ---
     function handleIdeaSubmit(e) {
         e.preventDefault();
@@ -333,7 +357,18 @@
         if (studentState.pendingVotes.length > 0) {
             hostConnection.send({ type: 'vote-batch', payload: { ids: studentState.pendingVotes } });
         }
-        studentInteractionZone.innerHTML = '<p>Vots enviats! Gr\u00E0cies per participar.</p>';
+        studentState.castVotes = studentState.pendingVotes.length;
+        studentState.pendingVotes = [];
+        let message = studentInteractionZone.querySelector('.student-thanks');
+        if (!message) {
+            message = document.createElement('p');
+            message.className = 'student-thanks hidden';
+            studentInteractionZone.appendChild(message);
+        }
+        message.textContent = 'Vots enviats! Gràcies per participar.';
+        message.classList.remove('hidden');
+        ideaForm.classList.add('hidden');
+        pollOptionsContainer.classList.add('hidden');
     }
 
     function closeActivity() {
@@ -349,9 +384,9 @@
         const messages = {
             brainstorm: 'Els alumnes estan aportant idees en directe.',
             voting: 'Ã‰s moment de votar les propostes pujades per la classe.',
-            closed: 'La sessiÃ³ ha finalitzat. Repassa els resultats.'
+            closed: 'La sessió ha finalitzat. Repassa els resultats.'
         };
-        phaseDescription.textContent = messages[phase] || 'Preparant la sessiÃ³ en directe.';
+        phaseDescription.textContent = messages[phase] || 'Preparant la sessió en directe.';
     };
 
     const updateParticipantCount = () => {
@@ -363,6 +398,7 @@
     // --- INICI DE L\'APLICACIÃ“ ---
     init();
 });
+
 
 
 
