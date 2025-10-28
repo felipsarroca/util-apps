@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     homeScreenActivityCards.forEach(card => {
         card.addEventListener('click', () => {
             const activityType = card.dataset.activity;
-            window.open(`config.html?type=${activityType}`, '_blank');
+            window.location.href = `config.html?type=${activityType}`;
         });
     });
 

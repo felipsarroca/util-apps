@@ -119,9 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (phase === 'brainstorm') {
             statusIndicator.textContent = 'Pluja d\'idees activa';
-            resultsContainer.className = 'idea-grid';
+            resultsContainer.className = 'idea-bubble-container';
             if (ideas.length === 0) { resultsContainer.innerHTML = '<p class="placeholder">Esperant idees...</p>'; return; }
-            ideas.forEach(idea => resultsContainer.innerHTML += `<div class="idea-post-it">${idea.text}</div>`);
+            ideas.forEach(idea => resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`);
         } else if (phase === 'voting') {
             statusIndicator.textContent = 'Votació en directe';
             resultsContainer.className = 'poll-grid';
