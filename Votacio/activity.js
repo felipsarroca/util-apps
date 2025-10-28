@@ -25,6 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let myRole = 'guest';
     let sessionId = null;
 
+    const createIdeaId = () => {
+        if (window.crypto?.randomUUID) return `idea-${window.crypto.randomUUID().slice(-8)}`;
+        return `idea-${Math.random().toString(36).slice(2, 10)}`;
+    };
+
     // --- INICIALITZACIÓ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
@@ -86,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleStudentData(conn, data) {
-        if (data.type === 'new-idea') sessionData.ideas.push({ id: `idea-${Date.now()}`.slice(-6), text: data.payload });
+        if (data.type === 'new-idea') sessionData.ideas.push({ id: createIdeaId(), text: data.payload });
         else if (data.type === 'vote-batch') {
             data.payload.ids.forEach(id => {
                 sessionData.votes[id] = (sessionData.votes[id] || 0) + 1;
@@ -105,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function broadcastUpdate() {
-        guestConnections.forEach(conn => conn.send({ type: 'data-update', payload: sessionData }));
+        const payload = { config: activityConfig, data: sessionData };
+        guestConnections.forEach(conn => conn.send({ type: 'data-update', payload }));
     }
 
     // --- LÒGICA DE PEERJS (ALUMNE) ---
@@ -122,9 +128,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleTeacherData(data) {
         if (data.type === 'session-data' || data.type === 'data-update') {
-            if (data.payload.config) activityConfig = data.payload.config;
-            sessionData = data.payload.data || data.payload;
-            activityTitle.textContent = activityConfig.question;
+            const payload = data.payload || {};
+            const incomingConfig = payload.config;
+            const previousType = activityConfig?.type;
+            if (incomingConfig) activityConfig = incomingConfig;
+            sessionData = payload.data ?? payload;
+
+            if (incomingConfig && incomingConfig.type !== previousType) {
+                studentState = { submittedIdeas: 0, castVotes: 0, pendingVotes: [] };
+                const submitBtn = document.getElementById('submit-votes-btn');
+                if (submitBtn) submitBtn.classList.add('hidden');
+            }
+
+            activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             renderStudentView();
         } else if (data.type === 'session-closed') {
             alert('La sessió ha estat tancada pel professor.');
@@ -136,6 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTeacherResults() {
         const { type } = activityConfig;
         const { phase, ideas, votes } = sessionData;
+
+        resultsContainer.innerHTML = '';
 
         if (phase === 'brainstorm') {
             statusIndicator.textContent = 'Pluja d\'idees activa';
