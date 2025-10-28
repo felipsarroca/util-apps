@@ -62,6 +62,7 @@ body {
     border-radius: 50px;
     background-color: rgba(255,255,255,0.2);
     padding: 0.5rem;
+    max-width: 500px; /* Limit width */
 }
 
 #activity-code {
@@ -96,6 +97,10 @@ body {
 .button:hover {
     transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.button.secondary {
+    background: #aaa;
 }
 
 /* Professor Section */
@@ -174,14 +179,19 @@ body {
     gap: 1.5rem;
 }
 
-.form-container label {
-    font-size: 1.1rem;
-    font-weight: 600;
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
-.form-container input[type="text"], 
-.form-container input[type="number"], 
-.form-container textarea {
+.form-group label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
     padding: 1rem;
     border: 2px solid #ddd;
     border-radius: 10px;
@@ -190,100 +200,42 @@ body {
     transition: border-color 0.3s ease;
 }
 
-.form-container input:focus, .form-container textarea:focus {
+.form-group input:focus {
     outline: none;
     border-color: var(--primary-color);
 }
 
-.form-container .button {
-    margin-top: 1rem;
-    background: var(--gradient);
+.add-option-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.role-switch-link {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.role-switch-link a {
+    color: var(--secondary-color);
+    text-decoration: none;
 }
 
 /* Dashboard */
-.dashboard .activity-code {
-    color: var(--primary-color);
-    background: #e8eaf6;
-    padding: 0.2rem 0.8rem;
-    border-radius: 5px;
-}
-
-#results ul {
-    list-style: none;
-    padding: 0;
-}
-
-#results li {
-    background: #f9f9f9;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
-    border-radius: 5px;
-    font-size: 1.1rem;
-}
-
-.vote-result {
-    margin-bottom: 1.5rem;
-}
-
-.vote-result p {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.progress-bar {
+.dashboard {
     width: 100%;
-    height: 25px;
-    background-color: #e0e0e0;
-    border-radius: 25px;
-    overflow: hidden;
-}
-
-.progress {
-    height: 100%;
-    background: var(--gradient);
-    border-radius: 25px;
-    transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 10px;
-    font-size: 0.9rem;
-}
-
-/* Student voting options */
-#voting-form-alumne .option {
-    background: #f9f9f9;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    transition: background-color 0.3s ease;
-}
-
-#voting-form-alumne .option:hover {
-    background: #f0f0f0;
-}
-
-#voting-form-alumne input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .student-section, .professor-section {
-        flex: 1;
-    }
-    .student-section h1 { font-size: 2.5rem; }
-    .professor-section h2 { font-size: 2rem; }
-    .code-input-container { flex-direction: column; background: transparent; box-shadow: none; }
-    .card-container { flex-direction: column; gap: 1.5rem; width: 90%; }
-    .card { width: 100%; }
-    .content-container { margin: 1rem; padding: 1.5rem; }
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem;
 }
 
 .dashboard-header {
@@ -320,6 +272,30 @@ body {
     margin: 0;
 }
 
+.dashboard-share {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+#qrcode-container {
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#qrcode-container img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
 .results-list {
     display: flex;
     flex-direction: column;
@@ -342,6 +318,23 @@ body {
 
 .vote-result .progress-bar {
     flex-grow: 1;
+    height: 25px;
+    background-color: #e0e0e0;
+    border-radius: 25px;
+    overflow: hidden;
+}
+
+.vote-result .progress {
+    height: 100%;
+    background: var(--gradient);
+    border-radius: 25px;
+    transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    font-size: 0.9rem;
 }
 
 .vote-result .vote-count {
@@ -351,8 +344,163 @@ body {
     text-align: right;
 }
 
-.progress {
-    /* The text is now in .vote-count */
-    justify-content: flex-start;
-    padding-left: 10px;
+.total-votes {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 2rem;
+}
+
+.hidden {
+    display: none;
+}
+
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-message {
+    color: var(--error-color);
+    margin-top: 1rem;
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    padding: 1rem;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.participation-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 3rem;
+    background-color: var(--card-bg-color);
+    border-radius: 15px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+}
+
+.form-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.option-button {
+    background: #f9f9f9;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: background-color 0.3s ease;
+    border: 1px solid #ddd;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.option-button:hover {
+    background: #f0f0f0;
+    border-color: var(--primary-color);
+}
+
+/* Styles for brainstorming ideas */
+.idea-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    position: relative;
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 0;
+    margin-bottom: 0.75rem;
+}
+
+.idea-card p {
+    flex-grow: 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
+}
+
+.idea-card.has-votes {
+    border-left: 5px solid var(--primary-color);
+}
+
+.delete-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    margin-left: 1rem;
+    padding: 0.25rem;
+    border-radius: 99px;
+    line-height: 1;
+}
+
+.delete-btn:hover {
+    color: #ef4444;
+    background-color: #fee2e2;
+}
+
+.voted-idea {
+  background-color: color-mix(in srgb, var(--primary-color) 15%, white);
+  border-color: var(--primary-color);
+}
+
+.voted-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: var(--primary-color);
+  color: white;
+  margin-left: 0.75rem;
+  padding: 0 0.4rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+    }
+    
+    .student-section, .professor-section {
+        width: 100%;
+    }
+    
+    .code-input-container {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    #activity-code {
+        width: 100%;
+    }
 }
