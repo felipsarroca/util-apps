@@ -4,10 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const teacherViews = { choice: document.getElementById('activity-choice'), config: document.getElementById('config-forms'), live: document.getElementById('live-activity-screen') };
     const studentViews = { brainstorm: document.getElementById('student-brainstorm-view'), poll: document.getElementById('student-poll-view'), waiting: document.getElementById('student-waiting-view') };
 
-    const teacherButton = document.getElementById('btn-teacher');
+    const homeScreenActivityCards = document.querySelectorAll('.activity-card');
     const studentJoinForm = document.getElementById('student-join-form');
-    const activityChoiceButtons = document.querySelectorAll('.activity-options button');
-    const backToChoiceButton = document.getElementById('back-to-choice');
+    const backToHomeFromConfig = document.getElementById('back-to-choice'); // Reutilitzat per tornar a home
     const teacherBackToHomeBtn = document.getElementById('teacher-back-to-home');
     const configForm = document.getElementById('config-form');
     const ideaForm = document.getElementById('idea-form');
@@ -19,21 +18,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let { peer, hostConnection, guestConnections, activityConfig, sessionData, studentState } = initialState();
 
     // --- Navegació ---
-    const showScreen = name => Object.values(screens).forEach((s, i) => s.classList.toggle('hidden', Object.keys(screens)[i] !== name));
-    const showTeacherView = name => Object.values(teacherViews).forEach((v, i) => v.classList.toggle('hidden', Object.keys(teacherViews)[i] !== name));
-    const showStudentView = name => Object.values(studentViews).forEach((v, i) => v.classList.toggle('hidden', Object.keys(studentViews)[i] !== name));
+    const showScreen = name => {
+        Object.values(screens).forEach(s => s.classList.add('hidden'));
+        screens[name]?.classList.remove('hidden');
+    };
+    const showTeacherView = name => {
+        Object.values(teacherViews).forEach(v => v.classList.add('hidden'));
+        teacherViews[name]?.classList.remove('hidden');
+    };
+    const showStudentView = name => {
+        Object.values(studentViews).forEach(v => v.classList.add('hidden'));
+        studentViews[name]?.classList.remove('hidden');
+    };
 
     // --- FLUX PRINCIPAL ---
-    teacherButton.addEventListener('click', () => { showScreen('teacher'); showTeacherView('choice'); });
+    homeScreenActivityCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const activityType = card.dataset.activity;
+            setupConfigForm(activityType);
+            showScreen('teacher');
+            showTeacherView('config');
+        });
+    });
+
     teacherBackToHomeBtn.addEventListener('click', () => showScreen('home'));
-    activityChoiceButtons.forEach(btn => btn.addEventListener('click', () => { setupConfigForm(btn.dataset.activity); showTeacherView('config'); }));
-    backToChoiceButton.addEventListener('click', () => showTeacherView('choice'));
+    backToHomeFromConfig.addEventListener('click', () => showScreen('home')); // El botó de tornar del config ara va a home
     startVotingBtn.addEventListener('click', () => startVotingPhase());
     closeActivityBtn.addEventListener('click', () => closeActivity());
 
     // --- FLUX DEL PROFESSOR ---
     function setupConfigForm(type) {
         activityConfig.type = type;
+        teacherViews.choice.classList.add('hidden'); // Amaga la vista de selecció antiga
         const fieldsContainer = document.getElementById('config-fields');
         document.getElementById('config-title').textContent = `Configuració: ${type.replace('-', ' + ')}`;
         let html = '<label for="question">Tema o pregunta:</label><input type="text" id="question" name="question" required>';
@@ -115,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const items = type === 'poll' ? activityConfig.pollOptions : ideas;
             if (items.length === 0) { container.innerHTML = '<p class="placeholder-text">No hi ha opcions per votar.</p>'; return; }
             const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
-            items.forEach(item => {
+            items.sort((a, b) => (votes[b.id] || 0) - (votes[a.id] || 0)).forEach(item => {
                 const id = typeof item === 'object' ? item.id : item;
                 const text = typeof item === 'object' ? item.text : item;
                 const currentVotes = votes[id] || 0;

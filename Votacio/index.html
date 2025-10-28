@@ -4,24 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Participa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <main id="app">
         <!-- Pantalla inicial -->
         <section id="home-screen">
-            <div class="split-panel">
-                <div id="teacher-panel" class="panel">
-                    <h2>Prepara una activitat</h2>
-                    <p>Crea una pluja d'idees, una votació o una activitat combinada per a la teva classe.</p>
-                    <button id="btn-teacher">Començar</button>
+            <div class="home-container">
+                <!-- Secció Professor (1/3) -->
+                <div class="teacher-zone">
+                    <h3>Hola!</h3>
+                    <p>Tria una activitat per començar.</p>
+                    <div class="teacher-cards">
+                        <div class="activity-card" data-activity="brainstorm">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <h4>Pluja d'idees</h4>
+                            <p>Recull aportacions de forma ràpida i visual.</p>
+                        </div>
+                        <div class="activity-card" data-activity="poll">
+                            <i class="fa-solid fa-check-to-slot"></i>
+                            <h4>Votació</h4>
+                            <p>Planteja opcions i obté resultats a l'instant.</p>
+                        </div>
+                        <div class="activity-card" data-activity="brainstorm-poll">
+                            <i class="fa-solid fa-bolt"></i>
+                            <h4>Combinada</h4>
+                            <p>Recull idees i després vota les millors.</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="student-panel" class="panel">
-                    <h2>Participa en una activitat</h2>
-                    <form id="student-join-form">
-                        <input type="text" id="session-code-input" placeholder="Codi de la sessió" required>
-                        <button type="submit">Participa</button>
-                    </form>
+
+                <!-- Secció Alumne (2/3) -->
+                <div class="student-zone">
+                    <div class="student-content">
+                        <h1>Entra i participa</h1>
+                        <p>Introdueix el codi de la sessió per unir-t'hi.</p>
+                        <form id="student-join-form">
+                            <input type="text" id="session-code-input" placeholder="CODI" required autocomplete="off">
+                            <button type="submit">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </section>
