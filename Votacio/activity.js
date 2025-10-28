@@ -52,7 +52,24 @@ document.addEventListener('DOMContentLoaded', () => {
         peer = new Peer(sessionId);
         peer.on('open', id => {
             statusIndicator.textContent = 'Sessió activa';
-            sessionData = { phase: activityConfig.type.includes('brainstorm') ? 'brainstorm' : 'voting', ideas: [], votes: activityConfig.type === 'poll' ? activityConfig.pollOptions.reduce((acc, opt) => ({...acc, [opt]: 0}), {}) : {} };
+            // Determinar la fase inicial basada en el tipus d'activitat
+            let initialPhase = 'voting'; // Per defecte, per a seguretat
+            if (activityConfig.type === 'brainstorm') {
+                initialPhase = 'brainstorm';
+            } else if (activityConfig.type === 'brainstorm-poll') {
+                initialPhase = 'brainstorm'; // Comença en brainstorm per a activitats combinades
+            } else if (activityConfig.type === 'poll') {
+                initialPhase = 'voting'; // Per a votacions directes
+            }
+            
+            sessionData = { 
+                phase: initialPhase, 
+                ideas: [], 
+                votes: activityConfig.type === 'poll' ? 
+                    activityConfig.pollOptions.reduce((acc, opt) => ({...acc, [opt]: 0}), {}) : 
+                    (activityConfig.type === 'brainstorm-poll' ? {} : {}) 
+            };
+            
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
             renderTeacherResults();
         });
