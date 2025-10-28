@@ -362,6 +362,30 @@ function updateStudentView(activity, container) {
     if (newForm) {
         newForm.addEventListener('submit', handleStudentSubmission);
     }
+
+    // Add logic to limit checkbox selections
+    const votingForm = document.getElementById('voting-form-alumne');
+    if (votingForm) {
+        const checkboxes = votingForm.querySelectorAll('input[type="checkbox"]');
+        const maxVotes = activity.maxVotes || 1;
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const checkedCount = votingForm.querySelectorAll('input[type="checkbox"]:checked').length;
+                if (checkedCount >= maxVotes) {
+                    checkboxes.forEach(cb => {
+                        if (!cb.checked) {
+                            cb.disabled = true;
+                        }
+                    });
+                } else {
+                    checkboxes.forEach(cb => {
+                        cb.disabled = false;
+                    });
+                }
+            });
+        });
+    }
 }
 
 function handleStudentSubmission(e) {
