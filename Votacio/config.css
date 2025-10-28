@@ -18,7 +18,7 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     width: 100%;
-    max-width: 600px;
+    max-width: 800px; /* Increased width */
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
@@ -30,6 +30,7 @@ body {
 #config-title {
     font-size: 2.5rem;
     margin: 0;
+    font-weight: 600;
 }
 
 .form-fields {
@@ -46,24 +47,38 @@ body {
 .form-group {
     flex: 1;
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    align-items: center; /* Align label and input on the same line */
+    gap: 1rem;
 }
 
 .form-group.full-width {
     flex-basis: 100%;
 }
 
+/* For textareas, align label at the top */
+.form-group.full-width[data-type="textarea"] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
 .form-fields label {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 400;
     opacity: 0.9;
+    flex-basis: 200px; /* Fixed width for labels */
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.form-group.full-width[data-type="textarea"] label {
+    text-align: left;
     padding-left: 0.5rem;
 }
 
 .form-fields input,
 .form-fields textarea {
-    width: 100%;
+    flex: 1; /* Input takes remaining space */
     padding: 1rem;
     font-size: 1rem;
     border: 1px solid transparent;
@@ -73,6 +88,13 @@ body {
     box-sizing: border-box;
     transition: all 0.3s ease;
 }
+
+/* Specific narrow width for number inputs */
+.form-fields input[type="number"] {
+    flex: 0 1 80px; /* Don't grow, allow shrinking, base width 80px */
+    text-align: center;
+}
+
 
 .form-fields input::placeholder,
 .form-fields textarea::placeholder {
@@ -86,9 +108,18 @@ body {
     background-color: rgba(0, 0, 0, 0.3);
 }
 
-@media (max-width: 600px) {
-    .form-row {
+@media (max-width: 768px) {
+    .form-group {
         flex-direction: column;
+        align-items: flex-start;
+    }
+    .form-fields label {
+        text-align: left;
+        padding-left: 0.5rem;
+    }
+    .form-fields input[type="number"] {
+        width: 100%;
+        flex: 1;
     }
     .config-container {
         padding: 2rem;

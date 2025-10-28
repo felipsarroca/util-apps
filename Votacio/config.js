@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupConfigForm(type) {
         const titles = {
-            'poll': 'Configurar la Votació',
-            'brainstorm': 'Configurar Pluja d\'Idees',
-            'brainstorm-poll': 'Configurar Activitat Combinada'
+            'poll': 'Configurar la votació',
+            'brainstorm': 'Configurar pluja d\'idees',
+            'brainstorm-poll': 'Configurar activitat combinada'
         };
         configTitle.textContent = titles[type] || 'Configurar Activitat';
 
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (type.includes('poll')) {
             if (type === 'poll') {
-                html += '<div class="form-group full-width"><label for="poll-options">Opcions (una per línia):</label><textarea id="poll-options" name="pollOptions" rows="4" required></textarea></div>';
+                html += '<div class="form-group full-width" data-type="textarea"><label for="poll-options">Opcions (una per línia):</label><textarea id="poll-options" name="pollOptions" rows="4" required></textarea></div>';
             }
             bottomFields += '<div class="form-group"><label for="votes-per-student">Vots per participant:</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
