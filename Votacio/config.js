@@ -45,35 +45,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.form-column').style.flexBasis = '100%';
         }
         
-        // Crear el botó de llançament
+        // Afegir el botó "Generar codi" a dins del formulari, després dels camps
         const launchButton = document.createElement('button');
         launchButton.type = 'submit';
         launchButton.className = 'launch-button';
         launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
         
-        if (type.includes('poll')) {
-            // Per a votacions, envoltar els camps amb un contenidor i afegir el botó
-            // dins d'una estructura que permeti alinear-lo amb la columna de dreta
-            const buttonWrap = document.createElement('div');
-            buttonWrap.style.display = 'flex';
-            buttonWrap.style.gap = '2.5rem';
-            buttonWrap.style.marginTop = '1.5rem';
-            
-            const spacer = document.createElement('div');
-            spacer.style.flex = '1';
-            
-            const buttonContainer = document.createElement('div');
-            buttonContainer.style.flex = '1';
-            buttonContainer.appendChild(launchButton);
-            
-            buttonWrap.appendChild(spacer);
-            buttonWrap.appendChild(buttonContainer);
-            
-            configForm.appendChild(buttonWrap);
-        } else {
-            // Per altres tipus, afegir el botó al final
-            configForm.appendChild(launchButton);
-        }
+        // Afegir el botó a dins del formulari
+        configForm.appendChild(launchButton);
     }
 
     configForm.addEventListener('submit', e => {
