@@ -10,9 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
         initAlumnePage();
     }
     
-    // Load WebRTC functionality if available
-    if (typeof initWebRTC === 'function') {
-        initWebRTC();
+    // Iniciar PeerJS si cal
+    if (page.includes('professor.html')) {
+        if (typeof initPeerJS === 'function') {
+            initPeerJS('professor');
+        }
+    } else if (page.includes('alumne.html')) {
+        if (typeof initPeerJS === 'function') {
+            // No inicialitzem aquí, sinó quan entrem a la sessió
+        }
     }
 });
 
@@ -29,42 +35,41 @@ function ensureUserId() {
 // ALUMNE PAGE
 // ====================================================================
 function initAlumnePage() {
-    const activityCode = sessionStorage.getItem('activityCode');
-    const container = document.querySelector('.participation-container');
-    const userId = getStoredItem('userId');
-
-    if (!activityCode || !getStoredItem(activityCode)) {
-        container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
-        return;
-    }
-
-    const activity = JSON.parse(getStoredItem(activityCode));
-    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
-
-    // Check if user has already voted for this activity
-    if (results && results.votedUsers && results.votedUsers.includes(userId)) {
-        container.innerHTML = `<h1>${activity.topic}</h1><h2>Gràcies per la teva participació! Ja has votat en aquesta activitat.</h2>`;
-        return; // Stop execution if already voted
-    }
-
-    container.querySelector('#activity-title').textContent = activity.topic;
-
-    updateStudentView(activity, container);
-
-    window.addEventListener('storage', (e) => {
-        if (e.key === activityCode) {
-            const updatedActivity = JSON.parse(e.newValue);
-            if(updatedActivity.status !== activity.status){
-                activity = updatedActivity;
-                updateStudentView(updatedActivity, container);
-            }
+    // Comprovar si hi ha un codi a la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCode = urlParams.get('code');
+    
+    // Si hi ha codi a la URL, intentar unir-nos a la sessió
+    if (urlCode) {
+        joinSession(urlCode.toUpperCase());
+    } else {
+        // Si no hi ha codi, mostrar missatge d'error
+        const container = document.querySelector('.participation-container');
+        if (container) {
+            container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
         }
-    });
+    }
+}
+
+function joinSession(professorId) {
+    const container = document.querySelector('.participation-container');
+    
+    if (container) {
+        container.innerHTML = '<h1>Connectant a la sessió...</h1><p>Codi: ' + professorId + '</p>';
+    }
+
+    // Iniciar PeerJS per a l'alumne
+    initPeerJS('alumne');
+    
+    // Unir-se a la sessió
+    if (typeof joinAsStudent === 'function') {
+        joinAsStudent(professorId);
+    }
 }
 
 function handleStudentSubmission(e) {
     e.preventDefault();
-    const activityCode = sessionStorage.getItem('activityCode');
+    const activityCode = getStoredItem('activityCode');
     const activity = JSON.parse(getStoredItem(activityCode));
     const results = JSON.parse(getStoredItem(`${activityCode}_results`));
     const userId = getStoredItem('userId');
@@ -72,9 +77,13 @@ function handleStudentSubmission(e) {
     if (e.target.id === 'idea-form') {
         const ideaText = document.getElementById('idea-text').value.trim();
         if (ideaText) {
-            results.ideas.push(ideaText);
-            document.getElementById('idea-text').value = '';
-            // Optionally, you could track users who submitted ideas too
+            // Enviar idea a través de PeerJS
+            if (typeof sendIdeaViaPeerJS === 'function') {
+                sendIdeaViaPeerJS(ideaText);
+                // Mostrar missatge temporal
+                document.getElementById('idea-text').value = '';
+                document.getElementById('idea-form').innerHTML = '<h2>Idea enviada! Esperant confirmació...</h2>';
+            }
         }
     } else if (e.target.id === 'voting-form-alumne') {
         const selectedOptions = e.target.querySelectorAll('input[name="voting-option"]:checked');
@@ -90,21 +99,16 @@ function handleStudentSubmission(e) {
             return;
         }
 
-        selectedOptions.forEach(checkbox => {
-            const value = checkbox.value;
-            results.votes[value] = (results.votes[value] || 0) + 1;
-        });
-        
-        // Mark user as voted
-        if (!results.votedUsers) {
-            results.votedUsers = [];
+        // Enviar vots a través de PeerJS
+        if (typeof sendVoteViaPeerJS === 'function') {
+            selectedOptions.forEach(checkbox => {
+                const value = checkbox.value;
+                sendVoteViaPeerJS({ option: value });
+            });
+            // Mostrar missatge temporal
+            e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació! Esperant confirmació...</h2>';
         }
-        results.votedUsers.push(userId);
-
-        e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
     }
-
-    setStoredItem(`${activityCode}_results`, JSON.stringify(results));
 }
 
 // ====================================================================
@@ -119,8 +123,7 @@ function initHomePage() {
     participateBtn.addEventListener('click', () => {
         const code = activityCodeInput.value.toUpperCase().trim();
         if (code) {
-            // Immediately redirect to the student page with the code in URL
-            // This allows the student page to handle the verification and loading
+            // Redirigir immediatament a alumne.html amb el codi
             window.location.href = `alumne.html?code=${code}`;
         } else {
             alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
@@ -164,26 +167,12 @@ function initProfessorPage() {
         const code = generateCode();
         const activity = createActivityObject(activityType, form);
         
-        // Store locally as before for compatibility
+        // Guardar localment
         setStoredItem(code, JSON.stringify(activity));
         setStoredItem(`${code}_results`, JSON.stringify({ ideas: [], votes: {} }));
-
-        // Register the activity with the server
-        if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
-            window.webRTCManager.ws.send(JSON.stringify({
-                type: 'register-activity',
-                activityCode: code,
-                activityData: activity,
-                results: { ideas: [], votes: {} }
-            }));
-        }
+        setStoredItem('activityCode', code);
 
         showDashboard(code, activity, configContainer);
-        
-        // Create WebRTC offer if WebRTC is available
-        if (typeof webRTCManager !== 'undefined' && webRTCManager) {
-            webRTCManager.createOffer();
-        }
     });
 }
 
@@ -208,19 +197,8 @@ function createActivityObject(type, form) {
 }
 
 function showDashboard(code, activity, container) {
-    // Register the activity with the server
-    if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
-        window.webRTCManager.sendToSignalingServer({
-            type: 'register-activity',
-            activityCode: code,
-            activityData: activity,
-            results: JSON.parse(getStoredItem(`${code}_results`))
-        });
-    }
-    
-    // Create a shareable link for the activity
-    const currentUrl = window.location.origin;
-    const activityLink = `${currentUrl}/alumne.html?code=${code}`;
+    // Obtindre l'ID de PeerJS del professor
+    const professorPeerId = peer ? peer.id : 'esperant connexió...';
     
     let dashboardHTML = `
         <div class="dashboard">
@@ -234,34 +212,26 @@ function showDashboard(code, activity, container) {
                     <p>${activity.topic}</p>
                 </div>
             </div>
-            <div class="share-section">
-                <h3>Comparteix aquesta activitat:</h3>
-                <div class="share-container">
-                    <input type="text" id="activity-link" value="${activityLink}" readonly>
-                    <button id="copy-link-btn" class="button">Copiar Enllaç</button>
-                </div>
+            <div class="peer-info">
+                <span>ID de connexió:</span>
+                <p class="peer-id">${professorPeerId}</p>
             </div>
             ${activity.type === 'brainstorm-voting' ? '<button id="start-voting-btn" class="button">Activar Votació</button>' : ''}
             <div id="results"></div>
         </div>`;
     container.innerHTML = dashboardHTML;
 
-    // Add event listener for copying the link
-    const copyLinkBtn = document.getElementById('copy-link-btn');
-    const activityLinkInput = document.getElementById('activity-link');
+    updateDashboard(code);
     
-    if (copyLinkBtn) {
-        copyLinkBtn.addEventListener('click', () => {
-            activityLinkInput.select();
-            document.execCommand('copy');
-            copyLinkBtn.textContent = 'Copiat!';
-            setTimeout(() => {
-                copyLinkBtn.textContent = 'Copiar Enllaç';
-            }, 2000);
+    // Actualitzar l'ID de PeerJS quan estigui disponible
+    if (peer) {
+        peer.on('open', function(id) {
+            const peerIdElement = document.querySelector('.peer-id');
+            if (peerIdElement) {
+                peerIdElement.textContent = id;
+            }
         });
     }
-
-    updateDashboard(code);
     
     window.addEventListener('storage', (e) => {
         if (e.key === `${code}_results`) {
@@ -275,24 +245,17 @@ function showDashboard(code, activity, container) {
             let currentActivity = JSON.parse(getStoredItem(code));
             currentActivity.status = 'voting';
             
-            // Update local storage
+            // Actualitzar a localStorage
             setStoredItem(code, JSON.stringify(currentActivity));
             
-            // Send status update via WebRTC if available
-            if (typeof sendStartVoteMessage === 'function') {
-                sendStartVoteMessage('voting');
-            }
-            
-            // Also send to server to update shared state
-            if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
-                window.webRTCManager.sendToSignalingServer({
-                    type: 'start-voting',
-                    activityCode: code
-                });
-            }
-            
+            // Actualitzar la vista
             updateDashboard(code);
             startVotingBtn.style.display = 'none';
+            
+            // Enviar actualització a alumnes si cal
+            if (typeof sendActivityUpdate === 'function') {
+                sendActivityUpdate(code, { status: 'voting' });
+            }
         });
     }
     
@@ -303,6 +266,11 @@ function showDashboard(code, activity, container) {
             if (updatedActivity.status !== activity.status) {
                 activity = updatedActivity;
                 updateDashboard(code);
+                
+                // Enviar actualització a alumnes si cal
+                if (typeof sendActivityUpdate === 'function') {
+                    sendActivityUpdate(code, { status: updatedActivity.status });
+                }
             }
         }
     });
@@ -319,14 +287,13 @@ function updateDashboard(code) {
             resultsContainer.innerHTML = '<h4>Idees rebudes:</h4><ul class="ideas-list"></ul>';
         }
         const ideasList = resultsContainer.querySelector('.ideas-list');
-        // Simple update to avoid re-rendering all ideas every time
-        const existingIdeas = [...ideasList.children].map(li => li.textContent);
+        
+        // Netejar i tornar a omplir per actualitzar
+        ideasList.innerHTML = '';
         results.ideas.forEach(idea => {
-            if (!existingIdeas.includes(idea)) {
-                const li = document.createElement('li');
-                li.textContent = idea;
-                ideasList.appendChild(li);
-            }
+            const li = document.createElement('li');
+            li.textContent = idea;
+            ideasList.appendChild(li);
         });
     } else if (activity.status === 'voting') {
         if (!resultsContainer.querySelector('.results-list')) {
@@ -343,127 +310,30 @@ function updateDashboard(code) {
             count: voteCounts[option] || 0
         })).sort((a, b) => b.count - a.count);
 
+        // Netejar el contenidor abans d'actualitzar
+        votesContainer.innerHTML = '';
+        
         sortedOptions.forEach((item, index) => {
             const { option, count } = item;
             const percentage = totalVotes > 0 ? ((count / totalVotes) * 100).toFixed(1) : 0;
             
-            let resultElement = votesContainer.querySelector(`.vote-result[data-option="${option}"]`);
-
-            if (!resultElement) {
-                resultElement = document.createElement('div');
-                resultElement.className = 'vote-result';
-                resultElement.setAttribute('data-option', option);
-                resultElement.innerHTML = `
-                    <p class="option-text">${option}</p>
-                    <div class="progress-bar">
-                        <div class="progress"></div>
-                    </div>
-                    <p class="vote-count"></p>`;
-                votesContainer.appendChild(resultElement);
-            }
-
+            const resultElement = document.createElement('div');
+            resultElement.className = 'vote-result';
+            resultElement.innerHTML = `
+                <p class="option-text">${option}</p>
+                <div class="progress-bar">
+                    <div class="progress" style="width: ${percentage}%"></div>
+                </div>
+                <p class="vote-count">${count} vot${count !== 1 ? 's' : ''} (${percentage}%)</p>`;
+            
             resultElement.style.order = index;
-            resultElement.querySelector('.progress').style.width = `${percentage}%`;
-            resultElement.querySelector('.vote-count').textContent = `${count} vot${count !== 1 ? 's' : ''}`;
-        });
-    }
-}
-
-function initAlumnePage() {
-    // Check if there's a code in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlCode = urlParams.get('code');
-    
-    // Use URL code if available, otherwise fall back to stored code
-    let activityCode = urlCode || getStoredItem('activityCode');
-    
-    const container = document.querySelector('.participation-container');
-
-    if (!activityCode) {
-        container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
-        return;
-    }
-    
-    // If we have a URL code, store it for future use in this session
-    if (urlCode) {
-        setStoredItem('activityCode', urlCode);
-    }
-
-    // Check if we have the activity data locally, otherwise try to get from server
-    let activity = getStoredItem(activityCode) ? JSON.parse(getStoredItem(activityCode)) : null;
-    
-    if (!activity) {
-        // Show a loading message while we wait for the connection
-        container.innerHTML = '<h1>Carregant activitat...</h1>';
-        
-        // Wait for WebRTC manager to be available, then try to get from server
-        const checkAndFetchActivity = () => {
-            if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
-                // Try to get the activity from the server
-                window.webRTCManager.sendToSignalingServer({
-                    type: 'join-activity',
-                    activityCode: activityCode
-                });
-            } else {
-                // If WebRTC is still not ready after some time, show error
-                container.innerHTML = '<h1>Error: No s\'ha pogut accedir a l\'activitat. Connecta\'t a internet i torna-ho a provar.</h1><a href="index.html">Torna a l\'inici</a>';
-            }
-        };
-        
-        // Try immediately
-        checkAndFetchActivity();
-        
-        // If not available, try again after a short delay
-        setTimeout(checkAndFetchActivity, 1000);
-        
-        // Set up an event listener to handle the response when it comes
-        window.addEventListener('activityStateReceived', (e) => {
-            const { activityCode: receivedCode, activity: receivedActivity } = e.detail;
-            if (receivedCode === activityCode) {
-                // Update the container with the actual activity data
-                container.innerHTML = '';
-                const titleElement = document.createElement('h1');
-                titleElement.id = 'activity-title';
-                titleElement.textContent = receivedActivity.topic;
-                container.appendChild(titleElement);
-                
-                updateStudentView(receivedActivity, container);
-                
-                // Set up the storage listener to update the view when activity changes
-                window.addEventListener('storage', (e) => {
-                    if (e.key === activityCode) {
-                        const updatedActivity = JSON.parse(e.newValue);
-                        if(updatedActivity.status !== receivedActivity.status){
-                            updateStudentView(updatedActivity, container);
-                        }
-                    }
-                });
-            }
-        }, { once: true });
-        
-        // Listen for activity not found error
-        window.addEventListener('activityNotFound', () => {
-            container.innerHTML = '<h1>Error: L\'activitat no existeix o ja ha finalitzat.</h1><a href="index.html">Torna a l\'inici</a>';
-        }, { once: true });
-    } else {
-        // We have the activity data locally, so proceed normally
-        container.querySelector('#activity-title').textContent = activity.topic;
-
-        updateStudentView(activity, container);
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === activityCode) {
-                const updatedActivity = JSON.parse(e.newValue);
-                if(updatedActivity.status !== activity.status){
-                    updateStudentView(updatedActivity, container);
-                }
-            }
+            votesContainer.appendChild(resultElement);
         });
     }
 }
 
 function updateStudentView(activity, container) {
-    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
+    const activityCode = getStoredItem('activityCode');
     const results = JSON.parse(getStoredItem(`${activityCode}_results`));
     const title = container.querySelector('h1');
     
@@ -507,11 +377,8 @@ function updateStudentView(activity, container) {
             formContainer.innerHTML = '<p>Encara no hi ha idees per votar. Espera que el professor iniciï la votació.</p>';
         }
     } else {
-        // If the student has already participated, show a thank you message
-        const userId = getStoredItem('userId');
-        if (results && results.votedUsers && results.votedUsers.includes(userId)) {
-            formContainer.innerHTML = '<h2>Gràcies per la teva participació! Ja has votat en aquesta activitat.</h2>';
-        }
+        // Si es rep una actualització després de participar, mostrar agraïment
+        formContainer.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
     }
 
     const newForm = formContainer.querySelector('form');
@@ -541,74 +408,6 @@ function updateStudentView(activity, container) {
                 }
             });
         });
-    }
-}
-
-function handleStudentSubmission(e) {
-    e.preventDefault();
-    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
-    const activity = JSON.parse(getStoredItem(activityCode));
-    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
-    const userId = getStoredItem('userId');
-
-    if (e.target.id === 'idea-form') {
-        const ideaText = document.getElementById('idea-text').value.trim();
-        if (ideaText) {
-            // Send idea via WebRTC if available, otherwise store locally
-            if (typeof sendIdeaViaWebRTC === 'function') {
-                sendIdeaViaWebRTC(ideaText);
-                // Show temporary message until we get confirmation from WebRTC
-                document.getElementById('idea-text').value = '';
-                document.getElementById('idea-form').innerHTML = '<h2>Idea enviada! Esperant confirmació...</h2>';
-            } else {
-                results.ideas.push(ideaText);
-                document.getElementById('idea-text').value = '';
-            }
-        }
-    } else if (e.target.id === 'voting-form-alumne') {
-        const selectedOptions = e.target.querySelectorAll('input[name="voting-option"]:checked');
-        const maxVotes = activity.maxVotes || 1;
-
-        if (selectedOptions.length === 0) {
-            alert('Has de seleccionar almenys una opció.');
-            return;
-        }
-
-        if (selectedOptions.length > maxVotes) {
-            alert(`Només pots seleccionar un màxim de ${maxVotes} opcions.`);
-            return;
-        }
-
-        // Send votes via WebRTC if available, otherwise store locally
-        if (typeof sendVoteViaWebRTC === 'function') {
-            selectedOptions.forEach(checkbox => {
-                const value = checkbox.value;
-                sendVoteViaWebRTC({ option: value, delta: 1 });
-            });
-            // Show temporary message until we get confirmation from WebRTC
-            e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació! Esperant confirmació...</h2>';
-        } else {
-            selectedOptions.forEach(checkbox => {
-                const value = checkbox.value;
-                results.votes[value] = (results.votes[value] || 0) + 1;
-            });
-            
-            // Mark user as voted
-            if (!results.votedUsers) {
-                results.votedUsers = [];
-            }
-            results.votedUsers.push(userId);
-            
-            e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
-            
-            // Update local storage with the new results
-            setStoredItem(`${activityCode}_results`, JSON.stringify(results));
-        }
-    }
-
-    // Only update local storage if not using WebRTC
-    if (typeof sendIdeaViaWebRTC !== 'function' && typeof sendVoteViaWebRTC !== 'function') {
-        setStoredItem(`${activityCode}_results`, JSON.stringify(results));
     }
 }
 
@@ -644,13 +443,4 @@ function setStoredItem(key, value) {
     }
     window.memoryStorage[key] = value;
   }
-}
-
-// Replace localStorage calls with our fallback functions
-function getItem(key) {
-  return getStoredItem(key);
-}
-
-function setItem(key, value) {
-  setStoredItem(key, value);
 }
