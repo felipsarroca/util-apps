@@ -201,8 +201,19 @@ function initProfessorPage() {
         const code = generateCode();
         const activity = createActivityObject(activityType, form);
         
+        // Store locally as before for compatibility
         setStoredItem(code, JSON.stringify(activity));
         setStoredItem(`${code}_results`, JSON.stringify({ ideas: [], votes: {} }));
+
+        // Register the activity with the server
+        if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
+            window.webRTCManager.ws.send(JSON.stringify({
+                type: 'register-activity',
+                activityCode: code,
+                activityData: activity,
+                results: { ideas: [], votes: {} }
+            }));
+        }
 
         showDashboard(code, activity, configContainer);
         
@@ -244,6 +255,10 @@ function showDashboard(code, activity, container) {
         }));
     }
     
+    // Create a shareable link for the activity
+    const currentUrl = window.location.origin;
+    const activityLink = `${currentUrl}/alumne.html?code=${code}`;
+    
     let dashboardHTML = `
         <div class="dashboard">
             <div class="dashboard-header">
@@ -256,10 +271,32 @@ function showDashboard(code, activity, container) {
                     <p>${activity.topic}</p>
                 </div>
             </div>
+            <div class="share-section">
+                <h3>Comparteix aquesta activitat:</h3>
+                <div class="share-container">
+                    <input type="text" id="activity-link" value="${activityLink}" readonly>
+                    <button id="copy-link-btn" class="button">Copiar Enllaç</button>
+                </div>
+            </div>
             ${activity.type === 'brainstorm-voting' ? '<button id="start-voting-btn" class="button">Activar Votació</button>' : ''}
             <div id="results"></div>
         </div>`;
     container.innerHTML = dashboardHTML;
+
+    // Add event listener for copying the link
+    const copyLinkBtn = document.getElementById('copy-link-btn');
+    const activityLinkInput = document.getElementById('activity-link');
+    
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', () => {
+            activityLinkInput.select();
+            document.execCommand('copy');
+            copyLinkBtn.textContent = 'Copiat!';
+            setTimeout(() => {
+                copyLinkBtn.textContent = 'Copiar Enllaç';
+            }, 2000);
+        });
+    }
 
     updateDashboard(code);
     
@@ -370,28 +407,82 @@ function updateDashboard(code) {
 }
 
 function initAlumnePage() {
-    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
+    // Check if there's a code in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCode = urlParams.get('code');
+    
+    // Use URL code if available, otherwise fall back to stored code
+    let activityCode = urlCode || getStoredItem('activityCode');
+    
     const container = document.querySelector('.participation-container');
 
-    if (!activityCode || !getStoredItem(activityCode)) {
+    if (!activityCode) {
         container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
         return;
     }
+    
+    // If we have a URL code, store it for future use in this session
+    if (urlCode) {
+        setStoredItem('activityCode', urlCode);
+    }
 
-    let activity = JSON.parse(getStoredItem(activityCode));
-    container.querySelector('#activity-title').textContent = activity.topic;
-
-    updateStudentView(activity, container);
-
-    window.addEventListener('storage', (e) => {
-        if (e.key === activityCode) {
-            const updatedActivity = JSON.parse(e.newValue);
-            if(updatedActivity.status !== activity.status){
-                activity = updatedActivity;
-                updateStudentView(updatedActivity, container);
-            }
+    // Check if we have the activity data locally, otherwise try to get from server
+    let activity = getStoredItem(activityCode) ? JSON.parse(getStoredItem(activityCode)) : null;
+    
+    if (!activity) {
+        // If no local activity data, try to get it from the server
+        if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
+            window.webRTCManager.ws.send(JSON.stringify({
+                type: 'join-activity',
+                activityCode: activityCode
+            }));
+        } else {
+            container.innerHTML = '<h1>Error: No s\'ha pogut accedir a l\'activitat. Connecta\'t a internet i torna-ho a provar.</h1><a href="index.html">Torna a l\'inici</a>';
+            return;
         }
-    });
+        
+        // For now, we'll show a loading message while we wait for the server response
+        container.innerHTML = '<h1>Carregant activitat...</h1>';
+        
+        // Set up an event listener to handle the response
+        window.addEventListener('activityStateReceived', (e) => {
+            const { activityCode: receivedCode, activity: receivedActivity } = e.detail;
+            if (receivedCode === activityCode) {
+                // Update the container with the actual activity data
+                container.querySelector('#activity-title').textContent = receivedActivity.topic;
+                updateStudentView(receivedActivity, container);
+                
+                // Set up the storage listener to update the view when activity changes
+                window.addEventListener('storage', (e) => {
+                    if (e.key === activityCode) {
+                        const updatedActivity = JSON.parse(e.newValue);
+                        if(updatedActivity.status !== receivedActivity.status){
+                            updateStudentView(updatedActivity, container);
+                        }
+                    }
+                });
+            }
+        }, { once: true });
+        
+        // Listen for activity not found error
+        window.addEventListener('activityNotFound', () => {
+            container.innerHTML = '<h1>Error: L\'activitat no existeix o ja ha finalitzat.</h1><a href="index.html">Torna a l\'inici</a>';
+        }, { once: true });
+    } else {
+        // We have the activity data locally, so proceed normally
+        container.querySelector('#activity-title').textContent = activity.topic;
+
+        updateStudentView(activity, container);
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === activityCode) {
+                const updatedActivity = JSON.parse(e.newValue);
+                if(updatedActivity.status !== activity.status){
+                    updateStudentView(updatedActivity, container);
+                }
+            }
+        });
+    }
 }
 
 function updateStudentView(activity, container) {
