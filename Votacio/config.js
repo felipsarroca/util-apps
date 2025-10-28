@@ -9,17 +9,31 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentActivityType = activityType;
 
     function setupConfigForm(type) {
-        configTitle.textContent = `Configurar ${type.replace('-', ' + ')}`;
-        let html = '<label for="question">Tema o pregunta:</label><input type="text" id="question" name="question" required>';
+        const titles = {
+            'poll': 'Configurar la Votació',
+            'brainstorm': 'Configurar Pluja d\'Idees',
+            'brainstorm-poll': 'Configurar Activitat Combinada'
+        };
+        configTitle.textContent = titles[type] || 'Configurar Activitat';
+
+        let html = '<div class="form-group full-width"><label for="question">Tema o pregunta:</label><input type="text" id="question" name="question" required></div>';
+        
+        let bottomFields = '';
+
         if (type.includes('brainstorm')) {
-            html += '<label for="ideas-per-student">Aportacions per alumne:</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1">';
+            bottomFields += '<div class="form-group"><label for="ideas-per-student">Aportacions per alumne:</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
         }
         if (type.includes('poll')) {
             if (type === 'poll') {
-                html += '<label for="poll-options">Opcions (una per línia):</label><textarea id="poll-options" name="pollOptions" rows="4" required></textarea>';
+                html += '<div class="form-group full-width"><label for="poll-options">Opcions (una per línia):</label><textarea id="poll-options" name="pollOptions" rows="4" required></textarea></div>';
             }
-            html += '<label for="votes-per-student">Vots per alumne:</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1">';
+            bottomFields += '<div class="form-group"><label for="votes-per-student">Vots per participant:</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
+
+        if (bottomFields) {
+            html += `<div class="form-row">${bottomFields}</div>`;
+        }
+
         configFields.innerHTML = html;
     }
 
