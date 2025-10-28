@@ -18,10 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     studentJoinForm.addEventListener('submit', e => {
         e.preventDefault();
         const code = document.getElementById('session-code-input').value.trim().toUpperCase();
-        if (code) {
-            const url = `activity.html?session=${code}&mode=guest`;
-            window.open(url, '_blank');
-            studentJoinForm.reset();
-        }
+        if (!code) return;
+        const url = `activity.html?session=${code}&mode=guest`;
+        window.location.href = url;
     });
 });

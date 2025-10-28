@@ -155,6 +155,7 @@
             const payload = data.payload || {};
             const incomingConfig = payload.config;
             const previousType = activityConfig?.type;
+            const previousPhase = sessionData?.phase;
             if (incomingConfig) activityConfig = incomingConfig;
             sessionData = payload.data ?? payload;
 
@@ -162,6 +163,16 @@
                 studentState = { submittedIdeas: 0, castVotes: 0, pendingVotes: [] };
                 const submitBtn = document.getElementById('submit-votes-btn');
                 if (submitBtn) submitBtn.classList.add('hidden');
+            }
+
+            if (previousPhase && previousPhase !== sessionData.phase) {
+                if (sessionData.phase === 'brainstorm') {
+                    studentState.submittedIdeas = 0;
+                    studentState.pendingVotes = [];
+                } else if (sessionData.phase === 'voting') {
+                    studentState.castVotes = 0;
+                    studentState.pendingVotes = [];
+                }
             }
 
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
