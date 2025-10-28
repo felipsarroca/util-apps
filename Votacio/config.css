@@ -25,26 +25,25 @@ body {
 }
 
 .config-header {
-    text-align: left;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem; /* Reduït per tenir el subtítol més a prop del títol */
 }
 
-.header-content {
+.header-flex {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.2rem;
 }
 
 .header-icon {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     flex-shrink: 0;
 }
 
 #config-title {
-    font-size: 2.8rem;
+    font-size: 2.5rem;
     font-weight: 700;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.3rem 0; /* Reduït per tenir el subtítol més a prop */
     /* Títol colorit amb degradat */
     background: linear-gradient(135deg, #4a90e2 0%, #764ba2 100%);
     -webkit-background-clip: text;
@@ -54,7 +53,7 @@ body {
 }
 
 .config-header p {
-    margin: 0;
+    margin: 0 0 0 0; /* Subtítol més proper al títol */
     font-size: 1.1rem;
     color: #6b7280;
 }
