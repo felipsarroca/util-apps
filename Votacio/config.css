@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
     --font-base: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
@@ -54,8 +54,8 @@ body {
 .config-header {
     display: flex;
     align-items: center;
-    gap: 1.8rem;
-    padding: 1.5rem 1.8rem;
+    gap: 1.25rem;
+    padding: 1rem 1.4rem;
     border-radius: var(--radius-lg);
     background: rgba(15, 23, 42, 0.85);
     color: #ffffff;
@@ -75,11 +75,12 @@ body {
 }
 
 .header-icon {
-    width: 72px;
-    height: 72px;
-    border-radius: 20px;
+    width: 56px;
+    flex-shrink: 0;
+    height: 56px;
+    border-radius: 16px;
     background: rgba(255, 255, 255, 0.18);
-    padding: 1rem;
+    padding: 0.75rem;
 }
 
 #config-title {
@@ -110,6 +111,10 @@ body {
 .form-column {
     display: grid;
     gap: 1.5rem;
+}
+
+.form-column.single-column {
+    grid-column: 1 / -1;
 }
 
 .form-group {
@@ -156,6 +161,8 @@ body {
 .form-group input[type="number"] {
     text-align: center;
     -moz-appearance: textfield;
+    max-width: 90px;
+    justify-self: start;
 }
 
 .form-group input[type="number"]::-webkit-outer-spin-button,
@@ -165,8 +172,14 @@ body {
 }
 
 .button-container {
+    grid-column: 1 / -1;
     display: flex;
     justify-content: flex-end;
+    margin-top: -0.5rem;
+}
+
+.button-container.align-start {
+    justify-content: flex-start;
 }
 
 .launch-button {
@@ -200,8 +213,7 @@ body {
     }
 
     .config-header {
-        flex-direction: column;
-        align-items: flex-start;
+        padding: 0.9rem 1.2rem;
     }
 
     .button-container {
@@ -209,7 +221,18 @@ body {
     }
 }
 
+
 @media (max-width: 640px) {
+    .config-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .button-container {
+        justify-content: center;
+    }
+
     body {
         padding: 2.5rem 1.3rem;
     }

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     const configTitle = document.getElementById('config-title');
     const configFields = document.getElementById('config-fields');
     const configForm = document.getElementById('config-form');
@@ -40,47 +40,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         configFields.innerHTML = leftColumn + rightColumn;
-        // Si no hi ha columna dreta, la columna esquerra hauria d'ocupar tot l'espai
         if (!rightColumn) {
-            const singleColumn = document.querySelector('.form-column');
-            if (singleColumn) singleColumn.style.gridColumn = '1 / -1';
+            const singleColumn = configFields.querySelector('.form-column');
+            if (singleColumn) singleColumn.classList.add('single-column');
         }
-        
-        // Eliminar qualsevol botó existent abans de crear-ne un de nou
-        const existingButtons = configForm.querySelectorAll('.launch-button');
-        existingButtons.forEach(button => button.closest('.button-container').remove());
-        
-        // Crear i afegir el botó "Generar codi" un sol cop
+
+        configForm.querySelectorAll('.button-container').forEach(container => container.remove());
+
         const launchButton = document.createElement('button');
         launchButton.type = 'submit';
         launchButton.className = 'launch-button';
         launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
-        
-        // Crear un contenidor per al botó
+
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'button-container';
         buttonContainer.appendChild(launchButton);
-        
-        // Col·locar el botó en el lloc apropiat depenent del tipus
+
         if (type.includes('poll')) {
-            // Per a votacions, col·locar-lo després del form-row que conté els camps de la part esquerra
-            setTimeout(() => {
-                const formRow = document.querySelector('.form-row');
-                if (formRow) {
-                    // Afegir el botó després del form-row (just sota dels camps com "Vots per participant")
-                    formRow.parentNode.insertBefore(buttonContainer, formRow.nextSibling);
-                } else {
-                    // Si no hi ha form-row, afegir a la columna esquerra
-                    const leftCol = document.querySelector('.form-column');
-                    if (leftCol) {
-                        leftCol.appendChild(buttonContainer);
-                    }
-                }
-            }, 0);
-        } else {
-            // Per altres tipus, afegir al final del formulari
-            configForm.appendChild(buttonContainer);
+            buttonContainer.classList.add('align-start');
         }
+
+        configForm.appendChild(buttonContainer);
     }
 
     configForm.addEventListener('submit', e => {
