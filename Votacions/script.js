@@ -118,9 +118,27 @@ function initHomePage() {
 
     participateBtn.addEventListener('click', () => {
         const code = activityCodeInput.value.toUpperCase().trim();
-        if (code && getStoredItem(code)) {
-            setStoredItem('activityCode', code);  // Change from sessionStorage to localStorage
-            window.location.href = 'alumne.html';
+        // Check if code exists by making a simple request to server
+        if (code) {
+            // Store the code temporarily while we check with server
+            setStoredItem('tempActivityCode', code);
+            
+            // Send join request to server to check if activity exists
+            if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
+                window.webRTCManager.ws.send(JSON.stringify({
+                    type: 'join-activity',
+                    activityCode: code
+                }));
+            } else {
+                // Fallback to local storage if WebRTC not ready (for now)
+                if (getStoredItem(code)) {
+                    setStoredItem('activityCode', code);
+                    window.location.href = 'alumne.html';
+                } else {
+                    alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
+                    activityCodeInput.focus();
+                }
+            }
         } else {
             alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
             activityCodeInput.focus();
@@ -131,6 +149,26 @@ function initHomePage() {
         if (e.key === 'Enter') {
             participateBtn.click();
         }
+    });
+    
+    // Listen for activity state response from server
+    window.addEventListener('activityStateReceived', (e) => {
+        const { activityCode, activity } = e.detail;
+        if (activityCode === getStoredItem('tempActivityCode')) {
+            // Valid activity found, store it and redirect
+            setStoredItem(activityCode, JSON.stringify(activity));
+            setStoredItem(`${activityCode}_results`, JSON.stringify(activity.results));
+            setStoredItem('activityCode', activityCode);
+            // Clear the temporary code
+            setStoredItem('tempActivityCode', null);
+            window.location.href = 'alumne.html';
+        }
+    });
+    
+    // Listen for activity not found error
+    window.addEventListener('activityNotFound', () => {
+        alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
+        activityCodeInput.focus();
     });
 }
 
@@ -196,6 +234,16 @@ function createActivityObject(type, form) {
 }
 
 function showDashboard(code, activity, container) {
+    // Register the activity with the server
+    if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
+        window.webRTCManager.ws.send(JSON.stringify({
+            type: 'register-activity',
+            activityCode: code,
+            activityData: activity,
+            results: JSON.parse(getStoredItem(`${code}_results`))
+        }));
+    }
+    
     let dashboardHTML = `
         <div class="dashboard">
             <div class="dashboard-header">
@@ -227,11 +275,20 @@ function showDashboard(code, activity, container) {
             let currentActivity = JSON.parse(getStoredItem(code));
             currentActivity.status = 'voting';
             
+            // Update local storage
+            setStoredItem(code, JSON.stringify(currentActivity));
+            
             // Send status update via WebRTC if available
             if (typeof sendStartVoteMessage === 'function') {
                 sendStartVoteMessage('voting');
-            } else {
-                setStoredItem(code, JSON.stringify(currentActivity));
+            }
+            
+            // Also send to server to update shared state
+            if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
+                window.webRTCManager.ws.send(JSON.stringify({
+                    type: 'start-voting',
+                    activityCode: code
+                }));
             }
             
             updateDashboard(code);

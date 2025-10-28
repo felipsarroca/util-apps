@@ -223,6 +223,108 @@ class WebRTCManager {
   }
 }
 
+// Handle new idea from server
+function handleNewIdeaMessage(message) {
+  const { activityCode, idea } = message;
+  if (activityCode) {
+    // Update local results with the new idea
+    let results = JSON.parse(getStoredItem(`${activityCode}_results`));
+    if (!results) {
+      results = { ideas: [], votes: {} };
+    }
+    if (!results.ideas) results.ideas = [];
+    results.ideas.push(idea);
+    setStoredItem(`${activityCode}_results`, JSON.stringify(results));
+    
+    // Update UI if on the appropriate page
+    if (document.location.pathname.includes('alumne.html')) {
+      const container = document.querySelector('.participation-container');
+      if (container) {
+        const activity = JSON.parse(getStoredItem(activityCode));
+        updateStudentView(activity, container);
+      }
+    } else if (document.location.pathname.includes('professor.html')) {
+      updateDashboard(activityCode);
+    }
+    
+    // Update local storage event to trigger UI updates on other tabs
+    const event = new StorageEvent('storage', {
+      key: `${activityCode}_results`,
+      newValue: JSON.stringify(results)
+    });
+    window.dispatchEvent(event);
+  }
+}
+
+// Handle new vote from server
+function handleNewVoteMessage(message) {
+  const { activityCode, option, voteCount } = message;
+  if (activityCode) {
+    // Update local results with the new vote count
+    let results = JSON.parse(getStoredItem(`${activityCode}_results`));
+    if (!results) {
+      results = { ideas: [], votes: {} };
+    }
+    if (!results.votes) results.votes = {};
+    results.votes[option] = voteCount;
+    setStoredItem(`${activityCode}_results`, JSON.stringify(results));
+    
+    // Update UI if on the appropriate page
+    if (document.location.pathname.includes('alumne.html')) {
+      // For students, this might be confirmation of their vote or updates from others
+      const formContainer = document.querySelector('.form-wrapper');
+      if (formContainer) {
+        // Check if this is confirmation of their own vote
+        const currentActivity = JSON.parse(getStoredItem(activityCode));
+        if (currentActivity && currentActivity.type === 'voting') {
+          // Show thank you message
+          formContainer.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
+        }
+      }
+    } else if (document.location.pathname.includes('professor.html')) {
+      updateDashboard(activityCode);
+    }
+    
+    // Update local storage event to trigger UI updates on other tabs
+    const event = new StorageEvent('storage', {
+      key: `${activityCode}_results`,
+      newValue: JSON.stringify(results)
+    });
+    window.dispatchEvent(event);
+  }
+}
+
+// Handle voting started message from server
+function handleVotingStartedMessage(message) {
+  const { activityCode } = message;
+  if (activityCode) {
+    // Update the activity status to 'voting'
+    let currentActivity = JSON.parse(getStoredItem(activityCode));
+    if (currentActivity) {
+      currentActivity.status = 'voting';
+      setStoredItem(activityCode, JSON.stringify(currentActivity));
+      
+      // Update UI if on the appropriate page
+      if (document.location.pathname.includes('alumne.html')) {
+        const container = document.querySelector('.participation-container');
+        if (container) {
+          updateStudentView(currentActivity, container);
+        }
+      } else if (document.location.pathname.includes('professor.html')) {
+        updateDashboard(activityCode);
+      }
+      
+      // Update local storage event to trigger UI updates on other tabs
+      const event = new StorageEvent('storage', {
+        key: activityCode,
+        newValue: JSON.stringify(currentActivity)
+      });
+      window.dispatchEvent(event);
+    }
+  }
+}
+}
+
 // Global WebRTC manager instance
 let webRTCManager = null;
 
@@ -267,10 +369,41 @@ function handleWebRTCMessage(message) {
     case 'ready':
       console.log(`Peer ${message.senderId} (${message.role}) is ready`);
       break;
+    case 'activity-state':
+      handleActivityStateMessage(message);
+      break;
+    case 'error':
+      if (message.message === 'Activity not found') {
+        // Dispatch a custom event to notify the UI
+        window.dispatchEvent(new CustomEvent('activityNotFound'));
+      }
+      break;
+    case 'new-idea':
+      handleNewIdeaMessage(message);
+      break;
+    case 'new-vote':
+      handleNewVoteMessage(message);
+      break;
+    case 'voting-started':
+      handleVotingStartedMessage(message);
+      break;
     default:
       console.log('Unknown message type received:', message.type);
       break;
   }
+}
+
+// Handle activity state message from server
+function handleActivityStateMessage(message) {
+  const { activityCode, activity } = message;
+  // Store the activity state received from server
+  setStoredItem(activityCode, JSON.stringify(activity));
+  setStoredItem(`${activityCode}_results`, JSON.stringify(activity.results));
+  
+  // Dispatch a custom event to notify the UI
+  window.dispatchEvent(new CustomEvent('activityStateReceived', {
+    detail: { activityCode, activity }
+  }));
 }
 
 // Handle messages for different activities
@@ -369,6 +502,7 @@ function handleSystemMessage(payload) {
 function sendIdeaViaWebRTC(ideaText) {
   if (webRTCManager) {
     const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
+    // Send via WebRTC for real-time sync with professor
     webRTCManager.sendMessage({
       type: 'idea',
       payload: {
@@ -377,12 +511,22 @@ function sendIdeaViaWebRTC(ideaText) {
       },
       senderId: getStoredItem('userId')  // Change from localStorage to our fallback function
     });
+    
+    // Also send to server for persistence
+    if (webRTCManager.ws && webRTCManager.ws.readyState === WebSocket.OPEN) {
+      webRTCManager.ws.send(JSON.stringify({
+        type: 'student-idea',
+        activityCode: activityCode,
+        idea: ideaText
+      }));
+    }
   }
 }
 
 function sendVoteViaWebRTC(votes) {
   if (webRTCManager) {
     const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
+    // Send via WebRTC for real-time sync with professor
     webRTCManager.sendMessage({
       type: 'vote',
       payload: {
@@ -391,6 +535,16 @@ function sendVoteViaWebRTC(votes) {
       },
       senderId: getStoredItem('userId')  // Change from localStorage to our fallback function
     });
+    
+    // Also send to server for persistence - handling the case where votes is an object with option and delta
+    if (webRTCManager.ws && webRTCManager.ws.readyState === WebSocket.OPEN) {
+      // votes should be an object like {option: value, delta: 1}
+      webRTCManager.ws.send(JSON.stringify({
+        type: 'student-vote',
+        activityCode: activityCode,
+        option: votes.option
+      }));
+    }
   }
 }
 
