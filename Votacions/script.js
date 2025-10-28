@@ -393,26 +393,40 @@ function initAlumnePage() {
     let activity = getStoredItem(activityCode) ? JSON.parse(getStoredItem(activityCode)) : null;
     
     if (!activity) {
-        // If no local activity data, try to get it from the server
-        if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
-            window.webRTCManager.sendToSignalingServer({
-                type: 'join-activity',
-                activityCode: activityCode
-            });
-        } else {
-            container.innerHTML = '<h1>Error: No s\'ha pogut accedir a l\'activitat. Connecta\'t a internet i torna-ho a provar.</h1><a href="index.html">Torna a l\'inici</a>';
-            return;
-        }
-        
-        // For now, we'll show a loading message while we wait for the server response
+        // Show a loading message while we wait for the connection
         container.innerHTML = '<h1>Carregant activitat...</h1>';
         
-        // Set up an event listener to handle the response
+        // Wait for WebRTC manager to be available, then try to get from server
+        const checkAndFetchActivity = () => {
+            if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
+                // Try to get the activity from the server
+                window.webRTCManager.sendToSignalingServer({
+                    type: 'join-activity',
+                    activityCode: activityCode
+                });
+            } else {
+                // If WebRTC is still not ready after some time, show error
+                container.innerHTML = '<h1>Error: No s\'ha pogut accedir a l\'activitat. Connecta\'t a internet i torna-ho a provar.</h1><a href="index.html">Torna a l\'inici</a>';
+            }
+        };
+        
+        // Try immediately
+        checkAndFetchActivity();
+        
+        // If not available, try again after a short delay
+        setTimeout(checkAndFetchActivity, 1000);
+        
+        // Set up an event listener to handle the response when it comes
         window.addEventListener('activityStateReceived', (e) => {
             const { activityCode: receivedCode, activity: receivedActivity } = e.detail;
             if (receivedCode === activityCode) {
                 // Update the container with the actual activity data
-                container.querySelector('#activity-title').textContent = receivedActivity.topic;
+                container.innerHTML = '';
+                const titleElement = document.createElement('h1');
+                titleElement.id = 'activity-title';
+                titleElement.textContent = receivedActivity.topic;
+                container.appendChild(titleElement);
+                
                 updateStudentView(receivedActivity, container);
                 
                 // Set up the storage listener to update the view when activity changes
