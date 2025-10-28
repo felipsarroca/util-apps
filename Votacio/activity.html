@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activitat en directe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="stylesheet" href="activity.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 id="activity-title">Carregant...</h1>
+            <div class="session-details">
+                <div id="status-indicator">Connectant...</div>
+                <div class="detail-box">Codi: <strong id="session-code">----</strong></div>
+                <div class="detail-box">Participants: <strong id="participant-count">0</strong></div>
+            </div>
+        </div>
+    </header>
+
+    <main id="live-results-container">
+        <!-- Els resultats dinàmics aniran aquí -->
+    </main>
+
+    <footer id="activity-controls" class="hidden">
+        <button id="start-voting-btn" class="control-btn hidden"><i class="fa-solid fa-play"></i> Inicia la votació</button>
+        <button id="close-activity-btn" class="control-btn"><i class="fa-solid fa-power-off"></i> Tanca l'activitat</button>
+    </footer>
+
+    <!-- Aquesta secció és per a la interacció de l'alumne -->
+    <div id="student-interaction-zone" class="hidden">
+        <form id="idea-form">
+            <p id="ideas-left-info"></p>
+            <textarea id="idea-input" placeholder="Escriu la teva idea..." required></textarea>
+            <button type="submit">Enviar Idea</button>
+        </form>
+        <div id="poll-options-container">
+            <p id="votes-left-info"></p>
+            <!-- Les opcions de votació de l'alumne aniran aquí -->
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <script src="activity.js"></script>
+</body>
+</html>

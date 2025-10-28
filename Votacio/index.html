@@ -73,51 +73,10 @@
                 </form>
             </div>
 
-            <!-- Pantalla de l'activitat en directe -->
-            <div id="live-activity-screen" class="hidden">
-                <h2 id="live-activity-title"></h2>
-                <div class="session-info">
-                    <span>Codi de la sessió: <strong id="session-code-display"></strong></span>
-                    <span>Participants: <strong id="participant-count">0</strong></span>
-                </div>
-                <div id="live-results">
-                    <!-- Aquí es mostraran les idees o els resultats de la votació -->
-                </div>
-                <div id="activity-controls">
-                    <button id="start-voting-btn" class="hidden">Inicia la votació</button>
-                    <button id="close-activity-btn">Tanca l'activitat</button>
-                </div>
-            </div>
+            
         </section>
 
-        <!-- Pantalla de l'Alumne -->
-        <section id="student-screen" class="hidden">
-            <div id="student-activity-view">
-                <h2 id="student-activity-title"></h2>
-
-                <!-- Vista per Pluja d'idees -->
-                <div id="student-brainstorm-view" class="student-view hidden">
-                    <p id="ideas-left-info"></p>
-                    <form id="idea-form">
-                        <textarea id="idea-input" placeholder="Escriu la teva idea..." required></textarea>
-                        <button type="submit">Enviar Idea</button>
-                    </form>
-                </div>
-
-                <!-- Vista per Votació -->
-                <div id="student-poll-view" class="student-view hidden">
-                    <p id="votes-left-info"></p>
-                    <div id="poll-options-container">
-                        <!-- Les opcions de votació es generaran aquí -->
-                    </div>
-                </div>
-                
-                <!-- Vista d'espera / finalització -->
-                <div id="student-waiting-view" class="student-view">
-                    <p id="student-message">Connectant a la sessió... Si us plau, espera.</p>
-                </div>
-            </div>
-        </section>
+        
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
