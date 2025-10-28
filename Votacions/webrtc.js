@@ -221,6 +221,15 @@ class WebRTCManager {
     // Instead of removing from localStorage, use our fallback function
     setStoredItem('webrtc_message_queue', null);
   }
+  
+  // Method to send messages directly to signaling server (not via WebRTC data channel)
+  sendToSignalingServer(message) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(message));
+    } else {
+      console.warn('Signaling server not ready, could not send message:', message);
+    }
+  }
 }
 
 // Handle new idea from server
@@ -513,13 +522,11 @@ function sendIdeaViaWebRTC(ideaText) {
     });
     
     // Also send to server for persistence
-    if (webRTCManager.ws && webRTCManager.ws.readyState === WebSocket.OPEN) {
-      webRTCManager.ws.send(JSON.stringify({
-        type: 'student-idea',
-        activityCode: activityCode,
-        idea: ideaText
-      }));
-    }
+    webRTCManager.sendToSignalingServer({
+      type: 'student-idea',
+      activityCode: activityCode,
+      idea: ideaText
+    });
   }
 }
 
@@ -537,14 +544,12 @@ function sendVoteViaWebRTC(votes) {
     });
     
     // Also send to server for persistence - handling the case where votes is an object with option and delta
-    if (webRTCManager.ws && webRTCManager.ws.readyState === WebSocket.OPEN) {
-      // votes should be an object like {option: value, delta: 1}
-      webRTCManager.ws.send(JSON.stringify({
-        type: 'student-vote',
-        activityCode: activityCode,
-        option: votes.option
-      }));
-    }
+    // votes should be an object like {option: value, delta: 1}
+    webRTCManager.sendToSignalingServer({
+      type: 'student-vote',
+      activityCode: activityCode,
+      option: votes.option
+    });
   }
 }
 
@@ -558,6 +563,12 @@ function sendStartVoteMessage(status) {
         activityCode: activityCode
       },
       senderId: getStoredItem('userId')  // Change from localStorage to our fallback function
+    });
+    
+    // Also send to server for persistence
+    webRTCManager.sendToSignalingServer({
+      type: 'start-voting',
+      activityCode: activityCode
     });
   }
 }

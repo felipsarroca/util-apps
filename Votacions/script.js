@@ -124,11 +124,11 @@ function initHomePage() {
             setStoredItem('tempActivityCode', code);
             
             // Send join request to server to check if activity exists
-            if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
-                window.webRTCManager.ws.send(JSON.stringify({
+            if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
+                window.webRTCManager.sendToSignalingServer({
                     type: 'join-activity',
                     activityCode: code
-                }));
+                });
             } else {
                 // Fallback to local storage if WebRTC not ready (for now)
                 if (getStoredItem(code)) {
@@ -246,13 +246,13 @@ function createActivityObject(type, form) {
 
 function showDashboard(code, activity, container) {
     // Register the activity with the server
-    if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
-        window.webRTCManager.ws.send(JSON.stringify({
+    if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
+        window.webRTCManager.sendToSignalingServer({
             type: 'register-activity',
             activityCode: code,
             activityData: activity,
             results: JSON.parse(getStoredItem(`${code}_results`))
-        }));
+        });
     }
     
     // Create a shareable link for the activity
@@ -321,11 +321,11 @@ function showDashboard(code, activity, container) {
             }
             
             // Also send to server to update shared state
-            if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
-                window.webRTCManager.ws.send(JSON.stringify({
+            if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
+                window.webRTCManager.sendToSignalingServer({
                     type: 'start-voting',
                     activityCode: code
-                }));
+                });
             }
             
             updateDashboard(code);
@@ -431,11 +431,11 @@ function initAlumnePage() {
     
     if (!activity) {
         // If no local activity data, try to get it from the server
-        if (window.webRTCManager && window.webRTCManager.ws && window.webRTCManager.ws.readyState === WebSocket.OPEN) {
-            window.webRTCManager.ws.send(JSON.stringify({
+        if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
+            window.webRTCManager.sendToSignalingServer({
                 type: 'join-activity',
                 activityCode: activityCode
-            }));
+            });
         } else {
             container.innerHTML = '<h1>Error: No s\'ha pogut accedir a l\'activitat. Connecta\'t a internet i torna-ho a provar.</h1><a href="index.html">Torna a l\'inici</a>';
             return;
