@@ -118,27 +118,10 @@ function initHomePage() {
 
     participateBtn.addEventListener('click', () => {
         const code = activityCodeInput.value.toUpperCase().trim();
-        // Check if code exists by making a simple request to server
         if (code) {
-            // Store the code temporarily while we check with server
-            setStoredItem('tempActivityCode', code);
-            
-            // Send join request to server to check if activity exists
-            if (typeof window.webRTCManager !== 'undefined' && window.webRTCManager) {
-                window.webRTCManager.sendToSignalingServer({
-                    type: 'join-activity',
-                    activityCode: code
-                });
-            } else {
-                // Fallback to local storage if WebRTC not ready (for now)
-                if (getStoredItem(code)) {
-                    setStoredItem('activityCode', code);
-                    window.location.href = `alumne.html?code=${code}`;
-                } else {
-                    alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
-                    activityCodeInput.focus();
-                }
-            }
+            // Immediately redirect to the student page with the code in URL
+            // This allows the student page to handle the verification and loading
+            window.location.href = `alumne.html?code=${code}`;
         } else {
             alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
             activityCodeInput.focus();
@@ -149,26 +132,6 @@ function initHomePage() {
         if (e.key === 'Enter') {
             participateBtn.click();
         }
-    });
-    
-    // Listen for activity state response from server
-    window.addEventListener('activityStateReceived', (e) => {
-        const { activityCode, activity } = e.detail;
-        if (activityCode === getStoredItem('tempActivityCode')) {
-            // Valid activity found, store it and redirect
-            setStoredItem(activityCode, JSON.stringify(activity));
-            setStoredItem(`${activityCode}_results`, JSON.stringify(activity.results));
-            setStoredItem('activityCode', activityCode);
-            // Clear the temporary code
-            setStoredItem('tempActivityCode', null);
-            window.location.href = `alumne.html?code=${activityCode}`;
-        }
-    });
-    
-    // Listen for activity not found error
-    window.addEventListener('activityNotFound', () => {
-        alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
-        activityCodeInput.focus();
     });
 }
 
