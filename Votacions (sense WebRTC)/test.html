@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test WebRTC Integration</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        #messages { height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test WebRTC Integration</h1>
+        
+        <div id="connection-status" class="status disconnected">Disconnected from signaling server</div>
+        
+        <div>
+            <button id="connect-btn">Connect to Server</button>
+            <button id="create-offer-btn">Create Offer</button>
+            <button id="send-message-btn">Send Test Message</button>
+        </div>
+        
+        <div>
+            <h3>Messages:</h3>
+            <div id="messages"></div>
+            <input type="text" id="message-input" placeholder="Enter message to send" style="width: 70%;">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to log messages to the UI
+        function logMessage(message) {
+            const messagesDiv = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            messagesDiv.innerHTML += `<p>[${timestamp}] ${message}</p>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Create a mock WebRTC manager for testing purposes
+        class MockWebRTCManager {
+            constructor() {
+                this.ws = null;
+                this.pc = null;
+                this.dataChannel = null;
+                this.isConnected = false;
+            }
+
+            connectToSignalingServer() {
+                logMessage('Attempting to connect to mock signaling server...');
+                
+                // Simulate connection after a delay
+                setTimeout(() => {
+                    this.isConnected = true;
+                    document.getElementById('connection-status').className = 'status connected';
+                    document.getElementById('connection-status').textContent = 'Connected to signaling server (mock)';
+                    
+                    logMessage('Connected to signaling server (mock connection)');
+                }, 1000);
+            }
+
+            createOffer() {
+                if (!this.isConnected) {
+                    logMessage('Error: Not connected to signaling server');
+                    return;
+                }
+                
+                logMessage('Creating offer (mock)...');
+                
+                // Simulate offer creation after a delay
+                setTimeout(() => {
+                    logMessage('Offer created and sent (mock)');
+                }, 1000);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            logMessage('Page loaded, ready to test WebRTC functionality.');
+        });
+
+        // Connect button functionality
+        document.getElementById('connect-btn').addEventListener('click', () => {
+            const mockRTC = new MockWebRTCManager();
+            mockRTC.connectToSignalingServer();
+        });
+
+        // Create offer button functionality
+        document.getElementById('create-offer-btn').addEventListener('click', () => {
+            const mockRTC = new MockWebRTCManager();
+            mockRTC.createOffer();
+        });
+
+        // Send message functionality
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                logMessage(`Sending message: "${message}"`);
+                messageInput.value = '';
+                
+                // Simulate receiving a message after a delay
+                setTimeout(() => {
+                    logMessage(`Received echo: "${message}"`);
+                }, 1000);
+            } else {
+                logMessage('Please enter a message to send');
+            }
+        }
+
+        // Allow sending message with Enter key
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

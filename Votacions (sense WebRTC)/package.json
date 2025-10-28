@@ -7,7 +7,6 @@
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "type": "module",
   "dependencies": {
     "ws": "^8.18.3"
   }
