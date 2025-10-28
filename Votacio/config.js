@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
         configFields.innerHTML = leftColumn + rightColumn;
         // Si no hi ha columna dreta, la columna esquerra hauria d'ocupar tot l'espai
         if (!rightColumn) {
-            document.querySelector('.form-column').style.flexBasis = '100%';
+            const singleColumn = document.querySelector('.form-column');
+            if (singleColumn) singleColumn.style.gridColumn = '1 / -1';
         }
         
         // Eliminar qualsevol botó existent abans de crear-ne un de nou

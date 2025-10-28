@@ -1,182 +1,225 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+    --font-base: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    --color-primary: #4f46e5;
+    --color-secondary: #f97316;
+    --color-accent: #06b6d4;
+    --text-dark: #1f2344;
+    --text-muted: #6b7280;
+    --radius-xl: 28px;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --shadow-elevated: 0 32px 60px rgba(24, 33, 66, 0.18);
+    --shadow-card: 0 18px 36px rgba(24, 33, 66, 0.16);
+    --gradient-bg: linear-gradient(135deg, rgba(79, 70, 229, 0.95) 0%, rgba(14, 165, 233, 0.88) 45%, rgba(249, 115, 22, 0.82) 100%);
+}
 
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-base);
     margin: 0;
-    background-color: #eef1f5;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23dce3ec' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    color: #333;
+    min-height: 100vh;
+    background: var(--gradient-bg);
+    color: var(--text-dark);
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
-    padding: 1rem;
+    padding: 4vh 2vw;
     box-sizing: border-box;
 }
 
 .config-container {
-    background-color: #ffffff;
-    padding: 3rem 3.5rem;
-    border-radius: 24px;
     width: 100%;
-    max-width: 1100px; /* 40% més ample que 800px aprox */
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    border: 1px solid #e5e7eb;
+    max-width: 1180px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-elevated);
+    padding: 2.5rem 3rem 3rem;
+    display: grid;
+    gap: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.config-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(200px at 15% 20%, rgba(79, 70, 229, 0.15), transparent),
+                radial-gradient(260px at 80% 85%, rgba(249, 115, 22, 0.18), transparent);
+    pointer-events: none;
+    mix-blend-mode: multiply;
 }
 
 .config-header {
-    margin-bottom: 1.5rem;
-}
-
-.header-flex {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.8rem;
+    padding: 1.5rem 1.8rem;
+    border-radius: var(--radius-lg);
+    background: rgba(15, 23, 42, 0.85);
+    color: #ffffff;
+    position: relative;
+    z-index: 1;
+    box-shadow: var(--shadow-card);
+}
+
+.config-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.8), rgba(6, 182, 212, 0.75));
+    opacity: 0.55;
+    border-radius: inherit;
+    z-index: -1;
 }
 
 .header-icon {
-    width: 60px;
-    height: 60px;
-    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.18);
+    padding: 1rem;
 }
 
 #config-title {
-    font-size: 2.8rem;
+    margin: 0;
+    font-size: clamp(2rem, 2.8vw, 2.8rem);
     font-weight: 700;
-    margin: 0 0 0.5rem 0;
-    /* Títol colorit amb degradat */
-    background: linear-gradient(135deg, #4a90e2 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
 }
 
 .config-header p {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #6b7280;
+    margin: 0.35rem 0 0 0;
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 520px;
+}
+
+#config-form {
+    display: grid;
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
 }
 
 #config-fields {
-    display: flex;
-    gap: 2.5rem;
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .form-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+    display: grid;
     gap: 1.5rem;
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    display: grid;
+    gap: 0.6rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-dark);
+    letter-spacing: 0.02em;
+}
+
+.form-group input,
+.form-group textarea {
+    font-family: var(--font-base);
+    font-size: 1rem;
+    border: 1px solid rgba(79, 70, 229, 0.18);
+    border-radius: var(--radius-md);
+    padding: 0.95rem 1.1rem;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: inset 0 1px 2px rgba(24, 33, 66, 0.08);
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group textarea {
+    min-height: 220px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: rgba(79, 70, 229, 0.6);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
 }
 
 .form-row {
-    display: flex;
-    gap: 1.5rem;
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.form-row .form-group {
-    flex: 1;
-}
-
-.form-fields label {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #4a90e2; /* Indicacions acolorides */
-    padding-left: 0.25rem;
-}
-
-.form-fields input,
-.form-fields textarea {
-    width: 100%;
-    padding: 1rem;
-    font-size: 1rem;
-    font-family: 'Poppins', sans-serif;
-    border: 1px solid #d1d5db;
-    border-radius: 12px;
-    background-color: #f9fafb;
-    color: #1f2937;
-    box-sizing: border-box;
-    transition: all 0.3s ease;
-}
-
-.form-fields textarea {
-    flex-grow: 1; /* Fa que el textarea ocupi l'espai vertical disponible */
-    resize: none;
-}
-
-.form-column:last-child {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-column:last-child .form-group {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.form-fields input[type="number"] {
-    max-width: 100px;
+.form-group input[type="number"] {
     text-align: center;
     -moz-appearance: textfield;
 }
 
-.form-fields input[type=number]::-webkit-inner-spin-button,
-.form-fields input[type=number]::-webkit-outer-spin-button {
+.form-group input[type="number"]::-webkit-outer-spin-button,
+.form-group input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.form-fields input:focus,
-.form-fields textarea:focus {
-    outline: none;
-    border-color: #4a90e2;
-    background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-}
-
 .button-container {
-    margin-top: 1.5rem;
-    width: 100%;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .launch-button {
-    padding: 1.2rem;
-    font-size: 1.2rem;
-    font-weight: bold;
     border: none;
-    border-radius: 12px;
-    background-color: #4a90e2;
+    border-radius: 999px;
+    padding: 0.95rem 2.4rem;
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
     color: #ffffff;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: auto; /* Perquè no ocupi tot l'ample */
-    max-width: 200px; /* Limitar l'ample perquè no toqui el quadre de text */
+    gap: 0.65rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .launch-button:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 24px 40px rgba(24, 33, 66, 0.24);
 }
 
-/* Disseny responsiu */
-@media (max-width: 992px) {
-    #config-fields {
-        flex-direction: column;
-        gap: 1.5rem;
+.launch-button i {
+    font-size: 1rem;
+}
+
+@media (max-width: 980px) {
+    .config-container {
+        padding: 2.2rem 2.4rem 2.6rem;
     }
-    .form-fields textarea {
-        min-height: 150px;
+
+    .config-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .button-container {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        padding: 2.5rem 1.3rem;
+    }
+
+    .config-container {
+        padding: 2rem 1.6rem 2.4rem;
+    }
+
+    #config-fields {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 }

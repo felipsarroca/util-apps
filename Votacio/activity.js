@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     // --- Elements del DOM ---
     const activityTitle = document.getElementById('activity-title');
     const statusIndicator = document.getElementById('status-indicator');
@@ -14,8 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const ideasLeftInfo = document.getElementById('ideas-left-info');
     const pollOptionsContainer = document.getElementById('poll-options-container');
     const votesLeftInfo = document.getElementById('votes-left-info');
+    const sessionCodeLarge = document.getElementById('session-code-large');
+    const sidebarParticipants = document.getElementById('sidebar-participants');
+    const phaseDescription = document.getElementById('phase-description');
 
-    // --- Estat de l\'aplicació ---
+    // --- Estat de l\'aplicaciÃ³ ---
     let peer = null;
     let hostConnection = null;
     let guestConnections = [];
@@ -30,13 +33,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return `idea-${Math.random().toString(36).slice(2, 10)}`;
     };
 
-    // --- INICIALITZACIÓ ---
+    const setResultsContainerMode = (modeClass = '') => {
+        const classes = ['live-feed'];
+        if (modeClass) classes.push(modeClass);
+        resultsContainer.className = classes.join(' ');
+    };
+
+    // --- INICIALITZACIÃ“ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
         sessionId = params.get('session');
         myRole = params.get('mode');
-        
+
+        setResultsContainerMode('placeholder-state');
+        resultsContainer.innerHTML = '<p class="placeholder">Preparant la Sessi\u00F3...</p>';
+        updatePhaseDescription('waiting');
+
         sessionCodeDisplay.textContent = sessionId;
+        if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
         closeActivityBtn.addEventListener('click', closeActivity);
         startVotingBtn.addEventListener('click', startVotingPhase);
 
@@ -45,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activityTitle.textContent = activityConfig.question;
             activityControls.classList.remove('hidden');
             hostSession(sessionId);
+            updateParticipantCount();
         } else {
             studentInteractionZone.classList.remove('hidden');
             ideaForm.addEventListener('submit', handleIdeaSubmit);
@@ -52,17 +67,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- LÒGICA DE PEERJS (PROFESSOR) ---
+    // --- LÃ’GICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
         peer = new Peer(sessionId);
         peer.on('open', id => {
-            statusIndicator.textContent = 'Sessió activa';
+            statusIndicator.textContent = 'SessiÃ³ activa';
             // Determinar la fase inicial basada en el tipus d'activitat
             let initialPhase = 'voting'; // Per defecte, per a seguretat
             if (activityConfig.type === 'brainstorm') {
                 initialPhase = 'brainstorm';
             } else if (activityConfig.type === 'brainstorm-poll') {
-                initialPhase = 'brainstorm'; // Comença en brainstorm per a activitats combinades
+                initialPhase = 'brainstorm'; // ComenÃ§a en brainstorm per a activitats combinades
             } else if (activityConfig.type === 'poll') {
                 initialPhase = 'voting'; // Per a votacions directes
             }
@@ -114,15 +129,15 @@ document.addEventListener('DOMContentLoaded', () => {
         guestConnections.forEach(conn => conn.send({ type: 'data-update', payload }));
     }
 
-    // --- LÒGICA DE PEERJS (ALUMNE) ---
+    // --- LÃ’GICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
         peer = new Peer();
         peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat!');
             hostConnection.on('data', handleTeacherData);
-            hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
-            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
+            hostConnection.on('close', () => { alert('ConnexiÃ³ perduda amb el professor.'); window.close(); });
+            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessiÃ³.'); window.close(); });
         });
     }
 
@@ -143,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             renderStudentView();
         } else if (data.type === 'session-closed') {
-            alert('La sessió ha estat tancada pel professor.');
+            alert('La sessiÃ³ ha estat tancada pel professor.');
             window.close();
         }
     }
@@ -153,19 +168,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const { type } = activityConfig;
         const { phase, ideas, votes } = sessionData;
 
-        resultsContainer.innerHTML = '';
+        updatePhaseDescription(phase);
 
         if (phase === 'brainstorm') {
             statusIndicator.textContent = 'Pluja d\'idees activa';
-            resultsContainer.className = 'idea-bubble-container';
-            if (ideas.length === 0) { resultsContainer.innerHTML = '<p class="placeholder">Esperant idees...</p>'; return; }
-            ideas.forEach(idea => resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`);
+            setResultsContainerMode('idea-bubble-container');
+            resultsContainer.innerHTML = '';
+            if (ideas.length === 0) {
+                resultsContainer.innerHTML = '<p class="placeholder">Esperant idees...</p>';
+                return;
+            }
+            ideas.forEach(idea => {
+                resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`;
+            });
         } else if (phase === 'voting') {
-            statusIndicator.textContent = 'Votació en directe';
-            resultsContainer.className = 'poll-grid';
+            statusIndicator.textContent = 'VotaciÃ³ en directe';
+            setResultsContainerMode('poll-grid');
             const items = type === 'poll' ? activityConfig.pollOptions : ideas;
-            if (items.length === 0) { resultsContainer.innerHTML = '<p class="placeholder">No hi ha res a votar.</p>'; return; }
-            
+            if (items.length === 0) {
+                resultsContainer.innerHTML = '<p class="placeholder">No hi ha res a votar.</p>';
+                return;
+            }
+
             const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
             const sortedItems = [...items].sort((a, b) => {
                 const votesA = votes[typeof a === 'object' ? a.id : a] || 0;
@@ -173,50 +197,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 return votesB - votesA;
             });
 
-            // Store previous ranks to detect position changes
             const previousElements = Array.from(resultsContainer.querySelectorAll('[data-item-id]'));
             const previousRanks = {};
             previousElements.forEach(el => {
                 const id = el.dataset.itemId;
-                const rank = parseInt(el.dataset.rank);
+                const rank = parseInt(el.dataset.rank, 10);
                 if (id) previousRanks[id] = rank;
             });
-            
-            resultsContainer.innerHTML = ''; // Clear the container
 
-            // Add rank position to each item for animation purposes
+            resultsContainer.innerHTML = '';
+
             sortedItems.forEach((item, index) => {
                 const id = typeof item === 'object' ? item.id : item;
                 const text = typeof item === 'object' ? item.text : item;
                 const currentVotes = votes[id] || 0;
                 const percentage = totalVotes > 0 ? (currentVotes / totalVotes) * 100 : 0;
-                
-                // Determine if this item changed position
+
                 const previousRank = previousRanks[id];
                 const currentRank = index + 1;
                 let animationClass = '';
-                
+
                 if (previousRank !== undefined) {
-                    if (currentRank < previousRank) {
-                        animationClass = 'rank-up-animation'; // Moved up
-                    } else if (currentRank > previousRank) {
-                        animationClass = 'rank-down-animation'; // Moved down
-                    }
+                    if (currentRank < previousRank) animationClass = 'rank-up-animation';
+                    else if (currentRank > previousRank) animationClass = 'rank-down-animation';
                 }
-                
+
                 resultsContainer.innerHTML += `
                     <div class="poll-result-bar-live ${animationClass}" data-item-id="${id}" data-rank="${currentRank}">
                         <div class="poll-live-label">${text}</div>
                         <div class="poll-live-votes">${currentVotes}</div>
                         <div class="poll-live-bar" style="width: ${percentage}%" data-percentage="${percentage.toFixed(1)}"></div>
                     </div>`;
-                    
-                // Remove animation class after animation completes
+
                 setTimeout(() => {
-                    const element = document.querySelector(`[data-item-id="${id}"]`);
+                    const element = document.querySelector(\`[data-item-id="${id}"]\`);
                     if (element) element.classList.remove(animationClass);
                 }, 500);
             });
+        } else {
+            statusIndicator.textContent = 'SessiÃ³ en pausa';
+            setResultsContainerMode('placeholder-state');
+            resultsContainer.innerHTML = '<p class="placeholder">Esperant actualitzacions...</p>';
         }
     }
 
@@ -225,6 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pollOptionsContainer.classList.add('hidden');
         const { type, ideasPerStudent, votesPerStudent } = activityConfig;
         const { phase, ideas } = sessionData;
+
+        updatePhaseDescription(phase);
 
         if (phase === 'brainstorm' && studentState.submittedIdeas < ideasPerStudent) {
             ideasLeftInfo.textContent = `Pots enviar ${ideasPerStudent - studentState.submittedIdeas} idea(es).`;
@@ -244,11 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('submit-votes-btn').addEventListener('click', submitVotes, { once: true });
             pollOptionsContainer.classList.remove('hidden');
         } else {
-            studentInteractionZone.innerHTML = '<p>Gràcies per participar! Espera instruccions.</p>';
+            studentInteractionZone.innerHTML = '<p>Gr\u00E0cies per participar! Espera instruccions.</p>';
         }
     }
 
-    // --- GESTIÓ D\'EVENTS ---
+    // --- GESTIÃ“ D\'EVENTS ---
     function handleIdeaSubmit(e) {
         e.preventDefault();
         if (ideaInput.value.trim()) {
@@ -264,13 +287,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = card.dataset.id;
         const maxVotes = parseInt(activityConfig.votesPerStudent, 10);
 
-        // Comprova si la targeta ja està seleccionada
+        // Comprova si la targeta ja estÃ  seleccionada
         const index = studentState.pendingVotes.indexOf(id);
         if (index > -1) {
             // Desselecciona
             studentState.pendingVotes.splice(index, 1);
         } else if (studentState.pendingVotes.length < maxVotes) {
-            // Selecciona si encara no s'ha arribat al límit
+            // Selecciona si encara no s'ha arribat al lÃ­mit
             studentState.pendingVotes.push(id);
         }
         updateVoteCardsUI();
@@ -295,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (studentState.pendingVotes.length > 0) {
             hostConnection.send({ type: 'vote-batch', payload: { ids: studentState.pendingVotes } });
         }
-        studentInteractionZone.innerHTML = '<p>Vots enviats! Gràcies per participar.</p>';
+        studentInteractionZone.innerHTML = '<p>Vots enviats! Gr\u00E0cies per participar.</p>';
     }
 
     function closeActivity() {
@@ -306,8 +329,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const updateParticipantCount = () => participantCount.textContent = guestConnections.length;
+    const updatePhaseDescription = (phase) => {
+        if (!phaseDescription) return;
+        const messages = {
+            brainstorm: 'Els alumnes estan aportant idees en directe.',
+            voting: 'Ã‰s moment de votar les propostes pujades per la classe.',
+            closed: 'La sessiÃ³ ha finalitzat. Repassa els resultats.'
+        };
+        phaseDescription.textContent = messages[phase] || 'Preparant la sessiÃ³ en directe.';
+    };
 
-    // --- INICI DE L\'APLICACIÓ ---
+    const updateParticipantCount = () => {
+        const count = guestConnections.length;
+        participantCount.textContent = count;
+        if (sidebarParticipants) sidebarParticipants.textContent = count;
+    };
+
+    // --- INICI DE L\'APLICACIÃ“ ---
     init();
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
