@@ -142,8 +142,12 @@ body {
     box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
-.launch-button {
+.button-container {
+    margin-top: 1.5rem;
     width: 100%;
+}
+
+.launch-button {
     padding: 1.2rem;
     font-size: 1.2rem;
     font-weight: bold;
@@ -152,12 +156,13 @@ body {
     background-color: #4a90e2;
     color: #ffffff;
     cursor: pointer;
-    margin-top: 0; /* Reset margin since it's now positioned differently */
     transition: all 0.3s ease;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    width: auto; /* Perquè no ocupi tot l'ample */
+    max-width: 200px; /* Limitar l'ample perquè no toqui el quadre de text */
 }
 
 .launch-button:hover {

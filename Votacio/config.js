@@ -45,22 +45,56 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.form-column').style.flexBasis = '100%';
         }
         
-        // Afegir el botó "Generar codi" a dins del formulari, després dels camps
-        const launchButton = document.createElement('button');
-        launchButton.type = 'submit';
-        launchButton.className = 'launch-button';
-        launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
-        
-        // Afegir el botó a dins del formulari
-        configForm.appendChild(launchButton);
+        // Crear un botó "Generar codi" i col·locar-lo després del camp "Vots per participant" per a votacions
+        if (type.includes('poll')) {
+            setTimeout(() => {
+                // Trobar el form-row que conté el camp "Vots per participant"
+                const votesInput = document.getElementById('votes-per-student');
+                if (votesInput) {
+                    // Crear el botó
+                    const launchButton = document.createElement('button');
+                    launchButton.type = 'submit';
+                    launchButton.className = 'launch-button';
+                    launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
+                    
+                    // Crear un contenidor per al botó
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'button-container';
+                    buttonContainer.appendChild(launchButton);
+                    
+                    // Afegir el botó després del form-row que conté els camps
+                    const formRow = votesInput.closest('.form-row');
+                    if (formRow) {
+                        formRow.parentNode.insertBefore(buttonContainer, formRow.nextSibling);
+                    } else {
+                        // Si no troba el form-row, afegir al final de la columna esquerra
+                        const leftCol = document.querySelector('.form-column');
+                        if (leftCol) {
+                            leftCol.appendChild(buttonContainer);
+                        }
+                    }
+                }
+            }, 0);
+        } else {
+            // Per altres tipus, afegir el botó al final del formulari
+            const launchButton = document.createElement('button');
+            launchButton.type = 'submit';
+            launchButton.className = 'launch-button';
+            launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
+            
+            configForm.appendChild(launchButton);
+        }
     }
 
     configForm.addEventListener('submit', e => {
         e.preventDefault();
-        const formData = new FormData(configForm);
-        let activityConfig = { type: currentActivityType, ...Object.fromEntries(formData.entries()) };
-        activityConfig.pollOptions = activityConfig.pollOptions?.split('\n').filter(opt => opt.trim() !== '') || [];
-        launchActivity('host', activityConfig);
+        // Comprovar que el submit no vingui d'un botó creat anteriorment per evitar duplicats
+        if (e.submitter && e.submitter.classList.contains('launch-button')) {
+            const formData = new FormData(configForm);
+            let activityConfig = { type: currentActivityType, ...Object.fromEntries(formData.entries()) };
+            activityConfig.pollOptions = activityConfig.pollOptions?.split('\n').filter(opt => opt.trim() !== '') || [];
+            launchActivity('host', activityConfig);
+        }
     });
 
     function launchActivity(mode, config) {
