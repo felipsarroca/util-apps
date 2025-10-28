@@ -39,14 +39,26 @@
         resultsContainer.className = classes.join(' ');
     };
 
-    // --- INICIALITZACIÃ“ ---
+        const buildInitialSessionState = () => {
+        const base = { phase: 'voting', ideas: [], votes: {} };
+        if (activityConfig.type === 'brainstorm') {
+            base.phase = 'brainstorm';
+        } else if (activityConfig.type === 'brainstorm-poll') {
+            base.phase = 'brainstorm';
+        } else if (activityConfig.type === 'poll') {
+            base.votes = activityConfig.pollOptions.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {});
+        }
+        return base;
+    };
+
+// --- INICIALITZACIÃ“ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
         sessionId = params.get('session');
         myRole = params.get('mode');
 
         setResultsContainerMode('placeholder-state');
-        resultsContainer.innerHTML = '<p class="placeholder">Preparant la Sessi\u00F3...</p>';
+        resultsContainer.innerHTML = '<p class="placeholder">Preparant la sessió...</p>';
         updatePhaseDescription('waiting');
 
         sessionCodeDisplay.textContent = sessionId;
@@ -58,6 +70,9 @@
             activityConfig = JSON.parse(decodeURIComponent(params.get('config')));
             activityTitle.textContent = activityConfig.question;
             activityControls.classList.remove('hidden');
+            sessionData = buildInitialSessionState();
+            if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
+            renderTeacherResults();
             hostSession(sessionId);
             updateParticipantCount();
         } else {
