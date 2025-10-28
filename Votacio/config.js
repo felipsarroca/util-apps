@@ -45,56 +45,49 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.form-column').style.flexBasis = '100%';
         }
         
-        // Crear un botó "Generar codi" i col·locar-lo després del camp "Vots per participant" per a votacions
+        // Eliminar qualsevol botó existent abans de crear-ne un de nou
+        const existingButtons = configForm.querySelectorAll('.launch-button');
+        existingButtons.forEach(button => button.closest('.button-container').remove());
+        
+        // Crear i afegir el botó "Generar codi" un sol cop
+        const launchButton = document.createElement('button');
+        launchButton.type = 'submit';
+        launchButton.className = 'launch-button';
+        launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
+        
+        // Crear un contenidor per al botó
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'button-container';
+        buttonContainer.appendChild(launchButton);
+        
+        // Col·locar el botó en el lloc apropiat depenent del tipus
         if (type.includes('poll')) {
+            // Per a votacions, col·locar-lo després del form-row que conté els camps de la part esquerra
             setTimeout(() => {
-                // Trobar el form-row que conté el camp "Vots per participant"
-                const votesInput = document.getElementById('votes-per-student');
-                if (votesInput) {
-                    // Crear el botó
-                    const launchButton = document.createElement('button');
-                    launchButton.type = 'submit';
-                    launchButton.className = 'launch-button';
-                    launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
-                    
-                    // Crear un contenidor per al botó
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'button-container';
-                    buttonContainer.appendChild(launchButton);
-                    
-                    // Afegir el botó després del form-row que conté els camps
-                    const formRow = votesInput.closest('.form-row');
-                    if (formRow) {
-                        formRow.parentNode.insertBefore(buttonContainer, formRow.nextSibling);
-                    } else {
-                        // Si no troba el form-row, afegir al final de la columna esquerra
-                        const leftCol = document.querySelector('.form-column');
-                        if (leftCol) {
-                            leftCol.appendChild(buttonContainer);
-                        }
+                const formRow = document.querySelector('.form-row');
+                if (formRow) {
+                    // Afegir el botó després del form-row (just sota dels camps com "Vots per participant")
+                    formRow.parentNode.insertBefore(buttonContainer, formRow.nextSibling);
+                } else {
+                    // Si no hi ha form-row, afegir a la columna esquerra
+                    const leftCol = document.querySelector('.form-column');
+                    if (leftCol) {
+                        leftCol.appendChild(buttonContainer);
                     }
                 }
             }, 0);
         } else {
-            // Per altres tipus, afegir el botó al final del formulari
-            const launchButton = document.createElement('button');
-            launchButton.type = 'submit';
-            launchButton.className = 'launch-button';
-            launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
-            
-            configForm.appendChild(launchButton);
+            // Per altres tipus, afegir al final del formulari
+            configForm.appendChild(buttonContainer);
         }
     }
 
     configForm.addEventListener('submit', e => {
         e.preventDefault();
-        // Comprovar que el submit no vingui d'un botó creat anteriorment per evitar duplicats
-        if (e.submitter && e.submitter.classList.contains('launch-button')) {
-            const formData = new FormData(configForm);
-            let activityConfig = { type: currentActivityType, ...Object.fromEntries(formData.entries()) };
-            activityConfig.pollOptions = activityConfig.pollOptions?.split('\n').filter(opt => opt.trim() !== '') || [];
-            launchActivity('host', activityConfig);
-        }
+        const formData = new FormData(configForm);
+        let activityConfig = { type: currentActivityType, ...Object.fromEntries(formData.entries()) };
+        activityConfig.pollOptions = activityConfig.pollOptions?.split('\n').filter(opt => opt.trim() !== '') || [];
+        launchActivity('host', activityConfig);
     });
 
     function launchActivity(mode, config) {
