@@ -5,7 +5,7 @@ class WebRTCManager {
     this.dataChannel = null;
     this.ws = null;
     this.isInitiator = false;
-    this.userId = localStorage.getItem('userId');
+    this.userId = this.getStoredItem('userId');
     this.role = null; // 'professor' or 'alumne'
     this.onMessageReceived = null;
   }
@@ -78,8 +78,11 @@ class WebRTCManager {
 
   // Connect to WebSocket signaling server
   connectToSignalingServer() {
-    // Using localhost for development; in production, this would be the server URL
-    this.ws = new WebSocket('ws://localhost:3000');
+    // Determine the WebSocket URL based on the environment
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.hostname}:3000`;
+    
+    this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
       console.log('Connected to signaling server');
@@ -404,9 +407,48 @@ function sendStartVoteMessage(status) {
   }
 }
 
+// Check for WebRTC support
+function checkWebRTCSupport() {
+  return !!(window.RTCPeerConnection && window.RTCSessionDescription && window.RTCIceCandidate);
+}
+
+// Get stored item with fallback
+WebRTCManager.prototype.getStoredItem = function(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    console.warn('localStorage not available, using memory storage');
+    // Fallback to memory storage if localStorage is not available
+    if (!this.memoryStorage) {
+      this.memoryStorage = {};
+    }
+    return this.memoryStorage[key];
+  }
+};
+
+// Set stored item with fallback
+WebRTCManager.prototype.setStoredItem = function(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    console.warn('localStorage not available, using memory storage');
+    // Fallback to memory storage if localStorage is not available
+    if (!this.memoryStorage) {
+      this.memoryStorage = {};
+    }
+    this.memoryStorage[key] = value;
+  }
+};
+
 // Initialize WebRTC when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   // Ensure user ID exists before initializing WebRTC
   ensureUserId();
-  initWebRTC();
+  
+  // Check WebRTC support
+  if (checkWebRTCSupport()) {
+    initWebRTC();
+  } else {
+    console.warn('WebRTC not supported, using fallback mechanisms');
+  }
 });

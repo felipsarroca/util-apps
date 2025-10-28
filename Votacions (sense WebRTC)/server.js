@@ -1,6 +1,14 @@
 const { WebSocketServer } = require('ws');
 
-const wss = new WebSocketServer({ port: 3000 });
+const wss = new WebSocketServer({ 
+  port: 3000,
+  // Add origin check for security (CORS)
+  verifyClient: (info) => {
+    // Allow connections from any origin for testing purposes
+    // In production, you should specify your allowed origins
+    return true;
+  }
+});
 const clients = new Set();
 
 wss.on('connection', (ws) => {

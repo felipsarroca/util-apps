@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // USER ID MANAGEMENT
 // ====================================================================
 function ensureUserId() {
-    if (!localStorage.getItem('userId')) {
-        localStorage.setItem('userId', 'user_' + Math.random().toString(36).substring(2, 15));
+    if (!getStoredItem('userId')) {
+        setStoredItem('userId', 'user_' + Math.random().toString(36).substring(2, 15));
     }
 }
 
@@ -31,15 +31,15 @@ function ensureUserId() {
 function initAlumnePage() {
     const activityCode = sessionStorage.getItem('activityCode');
     const container = document.querySelector('.participation-container');
-    const userId = localStorage.getItem('userId');
+    const userId = getStoredItem('userId');
 
-    if (!activityCode || !localStorage.getItem(activityCode)) {
+    if (!activityCode || !getStoredItem(activityCode)) {
         container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
         return;
     }
 
-    const activity = JSON.parse(localStorage.getItem(activityCode));
-    const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
+    const activity = JSON.parse(getStoredItem(activityCode));
+    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
 
     // Check if user has already voted for this activity
     if (results && results.votedUsers && results.votedUsers.includes(userId)) {
@@ -65,9 +65,9 @@ function initAlumnePage() {
 function handleStudentSubmission(e) {
     e.preventDefault();
     const activityCode = sessionStorage.getItem('activityCode');
-    const activity = JSON.parse(localStorage.getItem(activityCode));
-    const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
-    const userId = localStorage.getItem('userId');
+    const activity = JSON.parse(getStoredItem(activityCode));
+    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
+    const userId = getStoredItem('userId');
 
     if (e.target.id === 'idea-form') {
         const ideaText = document.getElementById('idea-text').value.trim();
@@ -104,7 +104,7 @@ function handleStudentSubmission(e) {
         e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
     }
 
-    localStorage.setItem(`${activityCode}_results`, JSON.stringify(results));
+    setStoredItem(`${activityCode}_results`, JSON.stringify(results));
 }
 
 // ====================================================================
@@ -118,7 +118,7 @@ function initHomePage() {
 
     participateBtn.addEventListener('click', () => {
         const code = activityCodeInput.value.toUpperCase().trim();
-        if (code && localStorage.getItem(code)) {
+        if (code && getStoredItem(code)) {
             sessionStorage.setItem('activityCode', code);
             window.location.href = 'alumne.html';
         } else {
@@ -163,8 +163,8 @@ function initProfessorPage() {
         const code = generateCode();
         const activity = createActivityObject(activityType, form);
         
-        localStorage.setItem(code, JSON.stringify(activity));
-        localStorage.setItem(`${code}_results`, JSON.stringify({ ideas: [], votes: {} }));
+        setStoredItem(code, JSON.stringify(activity));
+        setStoredItem(`${code}_results`, JSON.stringify({ ideas: [], votes: {} }));
 
         showDashboard(code, activity, configContainer);
         
@@ -224,25 +224,36 @@ function showDashboard(code, activity, container) {
     if (activity.type === 'brainstorm-voting') {
         const startVotingBtn = document.getElementById('start-voting-btn');
         startVotingBtn.addEventListener('click', () => {
-            let currentActivity = JSON.parse(localStorage.getItem(code));
+            let currentActivity = JSON.parse(getStoredItem(code));
             currentActivity.status = 'voting';
             
             // Send status update via WebRTC if available
             if (typeof sendStartVoteMessage === 'function') {
                 sendStartVoteMessage('voting');
             } else {
-                localStorage.setItem(code, JSON.stringify(currentActivity));
+                setStoredItem(code, JSON.stringify(currentActivity));
             }
             
             updateDashboard(code);
             startVotingBtn.style.display = 'none';
         });
     }
+    
+    // Add event listener for when the activity status changes in localStorage
+    window.addEventListener('storage', (e) => {
+        if (e.key === code) {
+            const updatedActivity = JSON.parse(e.newValue);
+            if (updatedActivity.status !== activity.status) {
+                activity = updatedActivity;
+                updateDashboard(code);
+            }
+        }
+    });
 }
 
 function updateDashboard(code) {
-    const activity = JSON.parse(localStorage.getItem(code));
-    const results = JSON.parse(localStorage.getItem(`${code}_results`));
+    const activity = JSON.parse(getStoredItem(code));
+    const results = JSON.parse(getStoredItem(`${code}_results`));
     const resultsContainer = document.getElementById('results');
     if (!activity || !results || !resultsContainer) return;
 
@@ -301,19 +312,16 @@ function updateDashboard(code) {
     }
 }
 
-// ====================================================================
-// ALUMNE PAGE
-// ====================================================================
 function initAlumnePage() {
     const activityCode = sessionStorage.getItem('activityCode');
     const container = document.querySelector('.participation-container');
 
-    if (!activityCode || !localStorage.getItem(activityCode)) {
+    if (!activityCode || !getStoredItem(activityCode)) {
         container.innerHTML = '<h1>Error: No s\'ha trobat cap codi d\'activitat vàlid.</h1><a href="index.html">Torna a l\'inici</a>';
         return;
     }
 
-    let activity = JSON.parse(localStorage.getItem(activityCode));
+    let activity = JSON.parse(getStoredItem(activityCode));
     container.querySelector('#activity-title').textContent = activity.topic;
 
     updateStudentView(activity, container);
@@ -331,7 +339,7 @@ function initAlumnePage() {
 
 function updateStudentView(activity, container) {
     const activityCode = sessionStorage.getItem('activityCode');
-    const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
+    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
     const title = container.querySelector('h1');
     
     let formContainer = container.querySelector('.form-wrapper');
@@ -375,7 +383,7 @@ function updateStudentView(activity, container) {
         }
     } else {
         // If the student has already participated, show a thank you message
-        const userId = localStorage.getItem('userId');
+        const userId = getStoredItem('userId');
         if (results && results.votedUsers && results.votedUsers.includes(userId)) {
             formContainer.innerHTML = '<h2>Gràcies per la teva participació! Ja has votat en aquesta activitat.</h2>';
         }
@@ -414,9 +422,9 @@ function updateStudentView(activity, container) {
 function handleStudentSubmission(e) {
     e.preventDefault();
     const activityCode = sessionStorage.getItem('activityCode');
-    const activity = JSON.parse(localStorage.getItem(activityCode));
-    const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
-    const userId = localStorage.getItem('userId');
+    const activity = JSON.parse(getStoredItem(activityCode));
+    const results = JSON.parse(getStoredItem(`${activityCode}_results`));
+    const userId = getStoredItem('userId');
 
     if (e.target.id === 'idea-form') {
         const ideaText = document.getElementById('idea-text').value.trim();
@@ -469,13 +477,13 @@ function handleStudentSubmission(e) {
             e.target.parentElement.innerHTML = '<h2>Gràcies per la teva participació!</h2>';
             
             // Update local storage with the new results
-            localStorage.setItem(`${activityCode}_results`, JSON.stringify(results));
+            setStoredItem(`${activityCode}_results`, JSON.stringify(results));
         }
     }
 
     // Only update local storage if not using WebRTC
     if (typeof sendIdeaViaWebRTC !== 'function' && typeof sendVoteViaWebRTC !== 'function') {
-        localStorage.setItem(`${activityCode}_results`, JSON.stringify(results));
+        setStoredItem(`${activityCode}_results`, JSON.stringify(results));
     }
 }
 
@@ -484,4 +492,40 @@ function handleStudentSubmission(e) {
 // ====================================================================
 function generateCode() {
     return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
+
+// Fallback functions for localStorage
+function getStoredItem(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    console.warn('localStorage not available, using memory storage');
+    // Fallback to memory storage if localStorage is not available
+    if (!window.memoryStorage) {
+      window.memoryStorage = {};
+    }
+    return window.memoryStorage[key];
+  }
+}
+
+function setStoredItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    console.warn('localStorage not available, using memory storage');
+    // Fallback to memory storage if localStorage is not available
+    if (!window.memoryStorage) {
+      window.memoryStorage = {};
+    }
+    window.memoryStorage[key] = value;
+  }
+}
+
+// Replace localStorage calls with our fallback functions
+function getItem(key) {
+  return getStoredItem(key);
+}
+
+function setItem(key, value) {
+  setStoredItem(key, value);
 }
