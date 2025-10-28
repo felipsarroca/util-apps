@@ -16,31 +16,34 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         configTitle.textContent = titles[type] || 'Configurar activitat';
 
-        let html = '';
+        let leftColumn = '';
+        let rightColumn = '';
+
+        // Columna Esquerra
+        let leftContent = '<div class="form-group"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
         let rowFields = '';
 
-        // Camp de Tema (sempre present)
-        html += '<div class="form-group"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
-
-        // Camp d\'Opcions (només per a votació simple)
-        if (type === 'poll') {
-            html += '<div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="6" required></textarea></div>';
-        }
-
-        // Camps petits que aniran en una fila
         if (type.includes('brainstorm')) {
             rowFields += '<div class="form-group"><label for="ideas-per-student">Aportacions / participant</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
         }
         if (type.includes('poll')) {
             rowFields += '<div class="form-group"><label for="votes-per-student">Vots / participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
-
-        // Afegeix la fila si conté camps
         if (rowFields) {
-            html += `<div class="form-row">${rowFields}</div>`;
+            leftContent += `<div class="form-row">${rowFields}</div>`;
         }
+        leftColumn = `<div class="form-column">${leftContent}</div>`;
 
-        configFields.innerHTML = html;
+        // Columna Dreta (només per a votació)
+        if (type.includes('poll')) {
+            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
+        }
+        
+        configFields.innerHTML = leftColumn + rightColumn;
+        // Si no hi ha columna dreta, la columna esquerra hauria d'ocupar tot l'espai
+        if (!rightColumn) {
+            document.querySelector('.form-column').style.flexBasis = '100%';
+        }
     }
 
     configForm.addEventListener('submit', e => {
@@ -49,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let activityConfig = { type: currentActivityType, ...Object.fromEntries(formData.entries()) };
         activityConfig.pollOptions = activityConfig.pollOptions?.split('\n').filter(opt => opt.trim() !== '') || [];
         launchActivity('host', activityConfig);
-        setTimeout(() => window.close(), 500);
     });
 
     function launchActivity(mode, config) {
@@ -57,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let url = `activity.html?session=${sessionId}&mode=${mode}`;
         const encodedConfig = encodeURIComponent(JSON.stringify(config));
         url += `&config=${encodedConfig}`;
-        window.open(url, '_blank');
+        window.location.href = url; // Obre a la mateixa pestanya
     }
 
     if (activityType) {
