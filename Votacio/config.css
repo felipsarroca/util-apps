@@ -3,23 +3,23 @@
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background-color: #f7f8fa;
+    color: #333;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
 .config-container {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: #ffffff;
     padding: 3rem;
     border-radius: 24px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
     width: 100%;
-    max-width: 800px; /* Increased width */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    max-width: 800px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
 
 .config-header {
@@ -31,6 +31,7 @@ body {
     font-size: 2.5rem;
     margin: 0;
     font-weight: 600;
+    color: #2c3e50;
 }
 
 .form-fields {
@@ -47,7 +48,7 @@ body {
 .form-group {
     flex: 1;
     display: flex;
-    align-items: center; /* Align label and input on the same line */
+    align-items: center;
     gap: 1rem;
 }
 
@@ -55,7 +56,6 @@ body {
     flex-basis: 100%;
 }
 
-/* For textareas, align label at the top */
 .form-group.full-width[data-type="textarea"] {
     flex-direction: column;
     align-items: flex-start;
@@ -64,70 +64,56 @@ body {
 
 .form-fields label {
     font-size: 1.1rem;
-    font-weight: 400;
-    opacity: 0.9;
-    flex-basis: 200px; /* Fixed width for labels */
+    font-weight: 500;
+    color: #555;
+    flex-basis: 220px;
     flex-shrink: 0;
     text-align: right;
 }
 
 .form-group.full-width[data-type="textarea"] label {
     text-align: left;
-    padding-left: 0.5rem;
+    padding-left: 0;
 }
 
 .form-fields input,
 .form-fields textarea {
-    flex: 1; /* Input takes remaining space */
+    flex: 1;
     padding: 1rem;
     font-size: 1rem;
-    border: 1px solid transparent;
+    font-family: 'Poppins', sans-serif;
+    border: 1px solid #ddd;
     border-radius: 12px;
-    background-color: rgba(0, 0, 0, 0.2);
-    color: white;
+    background-color: #f7f8fa;
+    color: #333;
     box-sizing: border-box;
     transition: all 0.3s ease;
 }
 
-/* Specific narrow width for number inputs */
-.form-fields input[type="number"] {
-    flex: 0 1 80px; /* Don't grow, allow shrinking, base width 80px */
-    text-align: center;
+.form-fields textarea {
+    min-height: 120px; /* Més espai per a les opcions */
+    resize: vertical;
 }
 
+.form-fields input[type="number"] {
+    flex: 0 1 80px;
+    text-align: center;
+    -moz-appearance: textfield; /* Firefox */
+}
 
-.form-fields input::placeholder,
-.form-fields textarea::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+/* Amaga les fletxes de l'input de número */
+.form-fields input[type=number]::-webkit-inner-spin-button,
+.form-fields input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .form-fields input:focus,
 .form-fields textarea:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.5);
-    background-color: rgba(0, 0, 0, 0.3);
-}
-
-@media (max-width: 768px) {
-    .form-group {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .form-fields label {
-        text-align: left;
-        padding-left: 0.5rem;
-    }
-    .form-fields input[type="number"] {
-        width: 100%;
-        flex: 1;
-    }
-    .config-container {
-        padding: 2rem;
-        margin: 1rem;
-    }
-    #config-title {
-        font-size: 2rem;
-    }
+    border-color: #4a90e2;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
 .launch-button {
@@ -137,8 +123,8 @@ body {
     font-weight: bold;
     border: none;
     border-radius: 12px;
-    background-color: #ffffff;
-    color: #667eea;
+    background-color: #4a90e2;
+    color: #ffffff;
     cursor: pointer;
     margin-top: 2.5rem;
     transition: all 0.3s ease;
@@ -150,5 +136,28 @@ body {
 
 .launch-button:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
+}
+
+/* Disseny responsiu */
+@media (max-width: 768px) {
+    .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .form-fields label {
+        text-align: left;
+        flex-basis: auto;
+    }
+    .form-fields input[type="number"] {
+        width: 100%;
+        flex: 1;
+    }
+    .config-container {
+        padding: 2rem;
+    }
+    #config-title {
+        font-size: 2rem;
+    }
 }
