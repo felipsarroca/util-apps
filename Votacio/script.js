@@ -18,11 +18,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FLUX DEL PROFESSOR ---
+    const configFormsContainer = document.getElementById('config-forms');
+    const activityChoiceContainer = document.getElementById('activity-choice');
+
     homeScreenActivityCards.forEach(card => {
         card.addEventListener('click', () => {
             currentActivityType = card.dataset.activity;
             setupConfigForm(currentActivityType);
-            showScreen('teacher');
+            showScreen('teacher'); // Mostra la secció <section id="teacher-screen">
+            
+            // Mostra el contenidor del formulari i amaga el de la tria antiga
+            configFormsContainer.classList.remove('hidden');
+            activityChoiceContainer.classList.add('hidden');
         });
     });
 
