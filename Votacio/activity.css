@@ -48,29 +48,34 @@ header {
     font-weight: 600;
 }
 
-#session-code-wrapper {
+/* NOU disseny per al codi de sessió */
+#session-code-area {
     text-align: center;
+    padding: 2rem 1rem;
+    background-color: #f0f2f5;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-#session-code-wrapper span {
-    font-size: 1rem;
+#session-code-area span {
+    font-size: 1.2rem;
     font-weight: 600;
     color: #555;
     text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.5rem;
 }
 
 #session-code {
     font-family: 'Poppins', monospace;
     font-weight: 700;
     letter-spacing: 0.1em;
-    font-size: 4rem;
+    font-size: 5rem; /* Molt més gran */
     color: #fff;
     background: linear-gradient(135deg, #4a90e2 0%, #764ba2 100%);
-    padding: 0.25rem 2rem;
-    border-radius: 16px;
-    margin-top: 0.25rem;
+    padding: 0.5rem 3rem;
+    border-radius: 20px;
     display: inline-block;
-    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
+    box-shadow: 0 10px 30px rgba(74, 144, 226, 0.4);
 }
 
 /* Zona de resultats */
