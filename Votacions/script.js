@@ -133,7 +133,7 @@ function initHomePage() {
                 // Fallback to local storage if WebRTC not ready (for now)
                 if (getStoredItem(code)) {
                     setStoredItem('activityCode', code);
-                    window.location.href = 'alumne.html';
+                    window.location.href = `alumne.html?code=${code}`;
                 } else {
                     alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
                     activityCodeInput.focus();
@@ -161,7 +161,7 @@ function initHomePage() {
             setStoredItem('activityCode', activityCode);
             // Clear the temporary code
             setStoredItem('tempActivityCode', null);
-            window.location.href = 'alumne.html';
+            window.location.href = `alumne.html?code=${activityCode}`;
         }
     });
     
