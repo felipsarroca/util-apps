@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="poll-result-bar-live ${animationClass}" data-item-id="${id}" data-rank="${currentRank}">
                         <div class="poll-live-label">${text}</div>
                         <div class="poll-live-votes">${currentVotes}</div>
-                        <div class="poll-live-bar" style="width: ${percentage}%"></div>
+                        <div class="poll-live-bar" style="width: ${percentage}%" data-percentage="${percentage.toFixed(1)}"></div>
                     </div>`;
                     
                 // Remove animation class after animation completes
