@@ -1,0 +1,179 @@
+
+
+## 🧭 **1. Pantalla d’inici: centre de participació**
+
+Quan s’accedeix a l’enllaç principal (per exemple `jaa.cat/participa`), apareix una pantalla inicial **dividida en dues meitats**:
+
+* 📌 **Banda esquerra — “Prepara una activitat”** (per al professor)
+* 🙋 **Banda dreta — “Participa en una activitat”** (per a l’alumnat)
+
+Aquesta és la pantalla més important, ja que **és l’únic enllaç que necessiten tant professor com alumnat**. És estèticament atractiva, minimalista i **totalment responsiva**.
+
+---
+
+## 🧑‍🏫 **2. Opcions per al professor: preparació de l’activitat**
+
+Quan el professor clica la banda esquerra, apareixen **tres grans opcions**:
+
+* 💭 **Pluja d’idees**
+* 🗳️ **Votació**
+* 💡 **Pluja d’idees + votació**
+
+Un cop escollida l’opció, apareix un **formulari de configuració senzill**.
+
+---
+
+### 2.1. 💭 Pluja d’idees
+
+El professor:
+
+* Escriu **el tema o la pregunta**.
+* Defineix **el nombre màxim d’aportacions per alumne**.
+* Fa clic a **“Generar codi”**.
+
+L’aplicació mostra un **codi curt i fàcil de recordar** (p. ex. `B12C`), que el professor pot dir o projectar.
+
+A partir d’aquest moment:
+
+* A la **pantalla del professor**, apareix:
+
+  * El tema.
+  * Una **llista dinàmica** en temps real on s’aniran mostrant automàticament totes les idees que vagin entrant dels alumnes (sense necessitat de refrescar la pàgina).
+  * Un comptador d’alumnes que han participat.
+
+---
+
+### 2.2. 🗳️ Votació
+
+El professor:
+
+* Escriu el **tema de la votació**.
+* Introdueix **les opcions a votar** (una per línia).
+* Defineix **el nombre de vots per alumne**.
+* Fa clic a **“Generar codi”**.
+
+Després:
+
+* A la **pantalla del professor**, apareixen totes les opcions de votació amb un **marc visual (barra, marcador o comptador)**.
+* A mesura que els alumnes voten, els **comptadors de cada opció s’actualitzen en directe** (efecte visual de pujada immediata o animada).
+* El professor pot veure en temps real quantes persones han votat i com evoluciona la votació.
+
+---
+
+### 2.3. 💡 Pluja d’idees + votació
+
+El professor:
+
+* Escriu el **tema**.
+* Defineix **el nombre d’idees per alumne**.
+* Defineix **el nombre de vots per alumne**.
+* Fa clic a **“Generar codi”**.
+
+#### 📍 *Fase 1: Pluja d’idees*
+
+* A mesura que els alumnes introdueixen les seves idees, **totes apareixen en temps real a la pantalla del professor**, ordenades cronològicament o per nombre d’aportacions.
+* El professor veu:
+
+  * Les idees.
+  * Un indicador de quants alumnes han participat.
+  * (Opcionalment) pot **eliminar o editar** alguna idea si cal (per exemple, duplicats, errors ortogràfics…).
+
+#### 🟢 Botó “Inicia la votació”
+
+* Quan el professor considera que ja s’han introduït prou idees, prem **“Inicia la votació”**.
+* Automàticament:
+
+  * A les pantalles dels alumnes apareix **la llista completa d’idees recollides**.
+  * Cada alumne pot **escollir fins al nombre màxim de vots establerts**.
+  * Els vots s’envien i s’actualitzen en temps real.
+
+#### 📍 *Fase 2: Votació en directe*
+
+* A la pantalla del professor:
+
+  * Cada idea mostra un **comptador que augmenta automàticament** quan rep un vot.
+  * Es pot veure visualment com es reparteixen els vots (ex. amb barres de colors que creixen en temps real).
+  * Pot ordenar les idees per nombre de vots.
+
+---
+
+## 🙋 **3. Pantalla de l’alumne: participació simple i directa**
+
+L’alumnat:
+
+1. Accedeix al mateix enllaç que el professor.
+2. A la banda dreta, introdueix el **codi de l’activitat**.
+3. Prem **“Participa”**.
+4. Segons el tipus d’activitat:
+
+   * 💭 Pluja d’idees → veu el tema i introdueix les seves idees (fins al límit permès).
+   * 🗳️ Votació → veu les opcions i vota.
+   * 💡 Pluja + votació → primer aporta idees i, quan el professor activa la votació, veu les idees recopilades i vota.
+
+L’alumne no necessita fer cap recàrrega de pàgina: tot es mostra dinàmicament.
+
+---
+
+## 🧮 **4. Panell de control del professor**
+
+Durant qualsevol activitat, el professor disposa d’un panell clar i dinàmic:
+
+* 📊 Llista d’idees o opcions.
+* 🔸 Nombre de participants connectats i que han respost.
+* 🕒 Actualització en temps real dels vots.
+* 🧹 Opció per **netejar o tancar** l’activitat.
+* 🟢 Botó per **iniciar votació** (en la combinada).
+* 🖼️ Visualització gràfica clara i projectable a la pissarra (gràfics de barres o núvol de paraules).
+
+---
+
+## 📈 **5. Resultats i tancament**
+
+En finalitzar:
+
+* El professor pot mostrar els **resultats finals de manera visual**:
+
+  * Barres ordenades per nombre de vots.
+  * Percentatges i nombre absolut de vots.
+* Pot exportar les dades a CSV o copiar-les al portapapers.
+* (Opcionalment) pot reiniciar la mateixa sessió amb el mateix codi.
+
+---
+
+## 🖼️ **6. Interfície i experiència**
+
+* **Colors vius i agradables**, amb contrast i icones clares.
+* Disseny minimalista, enfocat a **participar ràpid i fàcil**.
+* **Responsiu**: funciona en mòbil, tauleta i ordinador.
+* **Actualització en temps real** per WebSockets o similar (sense F5).
+* Els codis de sessió són **curts i fàcils de dictar/projectar**.
+
+---
+
+## 🚀 **7. Possibles ampliacions futures**
+
+* Identificació opcional de l’alumne (nom/pseudònim).
+* Historial de sessions i resultats guardats per al professor.
+* Mode “anònim” o “identificat”.
+* Gamificació (p. ex. insígnies per participació).
+* Sincronització amb Classroom o altres entorns virtuals.
+
+---
+
+## 🧭 **8. Flux general resumit**
+
+1. Professor → `ja.cat/participa` → prepara activitat → obté codi.
+2. Alumnes → mateix enllaç → introdueixen codi → participen.
+3. Professor veu idees/vots en temps real → inicia votació si cal → mostra resultats.
+4. Opcional: exportar dades / repetir activitat.
+
+---
+
+Si vols, puc passar a crear-te **l’estructura inicial de l’aplicació** amb:
+
+* `index.html` (pantalla inicial dividida en dues meitats),
+* `professor.html` (pantalla de configuració i control),
+* `alumne.html` (pantalla de participació),
+* `script.js` (gestió bàsica del flux),
+* i `style.css` (disseny responsiu i colorit).
+
