@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pollOptionsContainer = document.getElementById('poll-options-container');
     const votesLeftInfo = document.getElementById('votes-left-info');
 
-    // --- Estat de l'aplicació ---
+    // --- Estat de l\'aplicació ---
     let peer = null;
     let hostConnection = null;
     let guestConnections = [];
@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let studentState = { submittedIdeas: 0, castVotes: 0, pendingVotes: [] };
     let myRole = 'guest';
     let sessionId = null;
-    let pollBarElements = {}; // Objecte per guardar els elements de les barres
 
     // --- INICIALITZACIÓ ---
     function init() {
@@ -70,9 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleStudentData(conn, data) {
-        if (data.type === 'new-idea') {
-            sessionData.ideas.push({ id: `idea-${Date.now()}`.slice(-6), text: data.payload });
-        } else if (data.type === 'vote-batch') {
+        if (data.type === 'new-idea') sessionData.ideas.push({ id: `idea-${Date.now()}`.slice(-6), text: data.payload });
+        else if (data.type === 'vote-batch') {
             data.payload.ids.forEach(id => {
                 sessionData.votes[id] = (sessionData.votes[id] || 0) + 1;
             });
@@ -84,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function startVotingPhase() {
         sessionData.phase = 'voting';
         sessionData.votes = sessionData.ideas.reduce((acc, idea) => ({...acc, [idea.id]: 0}), {});
-        pollBarElements = {}; // Reseteja els elements per a la nova fase
         startVotingBtn.classList.add('hidden');
         broadcastUpdate();
         renderTeacherResults();
@@ -120,59 +117,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- RENDERITZAT (VISTES) ---
     function renderTeacherResults() {
+        resultsContainer.innerHTML = '';
         const { type } = activityConfig;
         const { phase, ideas, votes } = sessionData;
 
         if (phase === 'brainstorm') {
             statusIndicator.textContent = 'Pluja d\'idees activa';
             resultsContainer.className = 'idea-bubble-container';
-            resultsContainer.innerHTML = ideas.length === 0 ? '<p class="placeholder">Esperant idees...</p>' : ideas.map(idea => `<div class="idea-bubble">${idea.text}</div>`).join('');
+            if (ideas.length === 0) { resultsContainer.innerHTML = '<p class="placeholder">Esperant idees...</p>'; return; }
+            ideas.forEach(idea => resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`);
         } else if (phase === 'voting') {
             statusIndicator.textContent = 'Votació en directe';
             resultsContainer.className = 'poll-grid';
             const items = type === 'poll' ? activityConfig.pollOptions : ideas;
             if (items.length === 0) { resultsContainer.innerHTML = '<p class="placeholder">No hi ha res a votar.</p>'; return; }
-
+            
             const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
             const sortedItems = [...items].sort((a, b) => {
-                const idA = typeof a === 'object' ? a.id : a;
-                const idB = typeof b === 'object' ? b.id : b;
-                return (votes[idB] || 0) - (votes[idA] || 0);
+                const votesA = votes[typeof a === 'object' ? a.id : a] || 0;
+                const votesB = votes[typeof b === 'object' ? b.id : b] || 0;
+                return votesB - votesA;
             });
 
-            // Creació o actualització de barres
-            items.forEach(item => {
+            sortedItems.forEach(item => {
                 const id = typeof item === 'object' ? item.id : item;
                 const text = typeof item === 'object' ? item.text : item;
                 const currentVotes = votes[id] || 0;
                 const percentage = totalVotes > 0 ? (currentVotes / totalVotes) * 100 : 0;
-
-                if (!pollBarElements[id]) {
-                    const el = document.createElement('div');
-                    el.className = 'poll-result-bar-live';
-                    el.dataset.id = id;
-                    el.innerHTML = "
-                        <div class=\"poll-rank\"></div>
-                        <div class=\"poll-live-label">${text}</div>
-                        <div class=\"poll-live-votes">${currentVotes}</div>
-                        <div class=\"poll-live-bar\" style=\"width: ${percentage}%"></div>
-                    ";
-                    resultsContainer.appendChild(el);
-                    pollBarElements[id] = el;
-                } else {
-                    const elToUpdate = pollBarElements[id];
-                    elToUpdate.querySelector('.poll-live-votes').textContent = currentVotes;
-                    elToUpdate.querySelector('.poll-live-bar').style.width = `${percentage}%`;
-                }
-            });
-
-            // Reordenació
-            sortedItems.forEach((item, index) => {
-                const id = typeof item === 'object' ? item.id : item;
-                if (pollBarElements[id]) {
-                    pollBarElements[id].style.order = index;
-                    pollBarElements[id].querySelector('.poll-rank').textContent = `#${index + 1}`;
-                }
+                resultsContainer.innerHTML += `
+                    <div class="poll-result-bar-live">
+                        <div class="poll-live-label">${text}</div>
+                        <div class="poll-live-votes">${currentVotes}</div>
+                        <div class="poll-live-bar" style="width: ${percentage}%"></div>
+                    </div>`;
             });
         }
     }
@@ -205,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- GESTIÓ D'EVENTS ---
+    // --- GESTIÓ D\'EVENTS ---
     function handleIdeaSubmit(e) {
         e.preventDefault();
         if (ideaInput.value.trim()) {
@@ -220,10 +197,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = e.currentTarget;
         const id = card.dataset.id;
         const maxVotes = parseInt(activityConfig.votesPerStudent, 10);
+
+        // Comprova si la targeta ja està seleccionada
         const index = studentState.pendingVotes.indexOf(id);
         if (index > -1) {
+            // Desselecciona
             studentState.pendingVotes.splice(index, 1);
         } else if (studentState.pendingVotes.length < maxVotes) {
+            // Selecciona si encara no s'ha arribat al límit
             studentState.pendingVotes.push(id);
         }
         updateVoteCardsUI();
@@ -233,9 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxVotes = parseInt(activityConfig.votesPerStudent, 10);
         const cards = document.querySelectorAll('.vote-card');
         const limitReached = studentState.pendingVotes.length >= maxVotes;
+
         cards.forEach(card => {
             const id = card.dataset.id;
             const isSelected = studentState.pendingVotes.includes(id);
+
             card.classList.toggle('selected', isSelected);
             card.classList.toggle('disabled', limitReached && !isSelected);
         });

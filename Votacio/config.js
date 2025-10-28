@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const configTitle = document.getElementById('config-title');
-    const configIcon = document.getElementById('config-icon');
     const configFields = document.getElementById('config-fields');
     const configForm = document.getElementById('config-form');
 
@@ -15,13 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'brainstorm': 'Configurar pluja d\'idees',
             'brainstorm-poll': 'Configurar activitat combinada'
         };
-        const icons = {
-            'poll': 'fa-check-to-slot',
-            'brainstorm': 'fa-lightbulb',
-            'brainstorm-poll': 'fa-bolt'
-        };
         configTitle.textContent = titles[type] || 'Configurar activitat';
-        configIcon.className = `fa-solid ${icons[type] || 'fa-question-circle'}`;
 
         let leftColumn = '';
         let rightColumn = '';
@@ -39,9 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rowFields) {
             leftContent += `<div class="form-row">${rowFields}</div>`;
         }
-
-        // Afegeix el botó al final de la columna esquerra
-        leftContent += '<button type="submit" class="launch-button"><i class="fa-solid fa-rocket"></i> Generar codi</button>';
         leftColumn = `<div class="form-column">${leftContent}</div>`;
 
         // Columna Dreta (només per a votació)
@@ -50,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         configFields.innerHTML = leftColumn + rightColumn;
+        // Si no hi ha columna dreta, la columna esquerra hauria d'ocupar tot l'espai
         if (!rightColumn) {
             document.querySelector('.form-column').style.flexBasis = '100%';
         }
@@ -68,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let url = `activity.html?session=${sessionId}&mode=${mode}`;
         const encodedConfig = encodeURIComponent(JSON.stringify(config));
         url += `&config=${encodedConfig}`;
-        window.location.href = url;
+        window.location.href = url; // Obre a la mateixa pestanya
     }
 
     if (activityType) {

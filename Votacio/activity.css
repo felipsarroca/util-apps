@@ -1,8 +1,8 @@
 /* Estils generals de la pàgina d'activitat */
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: sans-serif;
     margin: 0;
-    background-color: #f7f8fa;
+    background-color: #f0f2f5;
     color: #333;
 }
 
@@ -10,10 +10,10 @@ body {
 
 /* Capçalera */
 header {
-    background: #ffffff;
-    color: #333;
-    padding: 1rem 2rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -29,61 +29,35 @@ header {
 
 #activity-title {
     margin: 0;
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #1f2937;
+    font-size: 2rem;
+    font-weight: bold;
 }
 
 .session-details {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
-#status-indicator {
-    background-color: #eef1f5;
+.detail-box, #status-indicator {
+    background-color: rgba(255,255,255,0.15);
     padding: 0.5rem 1rem;
     border-radius: 8px;
     font-size: 1.1rem;
-    font-weight: 600;
-}
-
-/* NOU disseny per al codi de sessió */
-#session-code-area {
-    text-align: center;
-    padding: 2rem 1rem;
-    background-color: #f0f2f5;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-#session-code-area span {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #555;
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 0.5rem;
 }
 
 #session-code {
-    font-family: 'Poppins', monospace;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    font-size: 5rem; /* Molt més gran */
-    color: #fff;
-    background: linear-gradient(135deg, #4a90e2 0%, #764ba2 100%);
-    padding: 0.5rem 3rem;
-    border-radius: 20px;
-    display: inline-block;
-    box-shadow: 0 10px 30px rgba(74, 144, 226, 0.4);
+    font-family: monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
 }
 
 /* Zona de resultats */
 main {
     padding: 2rem;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: auto;
-    padding-bottom: 150px;
+    padding-bottom: 150px; /* Espai per al footer/zona d'interacció */
 }
 
 .idea-bubble-container {
@@ -105,79 +79,198 @@ main {
     transition: transform 0.2s ease;
 }
 
+.idea-bubble:hover {
+    transform: scale(1.05);
+}
+
 .poll-grid {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
+/* Estil per a les barres de votació (ja estava bé, petits retocs) */
 .poll-result-bar-live {
+    grid-column: 1 / -1;
     background-color: #fff;
-    border-radius: 12px;
-    padding: 1rem;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+    gap: 1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     position: relative;
     overflow: hidden;
-    border: 1px solid #e5e7eb;
-    transition: transform 0.5s ease, box-shadow 0.3s ease;
 }
 
-.poll-result-bar-live:hover {
-    transform: scale(1.02);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.poll-rank {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #adb5bd;
-    width: 30px;
-    text-align: center;
-    z-index: 2;
-}
-
-.poll-live-label {
-    font-size: 1.3rem;
-    font-weight: 600;
-    z-index: 2;
-    color: #343a40;
-}
-
-.poll-live-votes {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-left: auto;
-    z-index: 2;
-    color: #4a90e2;
-    background-color: #fff;
-    padding: 0.25rem 0.75rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
+.poll-live-label { font-size: 1.2rem; font-weight: bold; z-index: 2; }
+.poll-live-votes { font-size: 1.2rem; font-weight: bold; margin-left: auto; z-index: 2; }
 .poll-live-bar {
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    background: linear-gradient(90deg, #d0e0f8, #e8f0fe);
+    background: linear-gradient(90deg, #50c878, #a0e6b3);
     z-index: 1;
     transition: width 0.5s ease;
-    border-radius: 11px;
+    border-radius: 8px;
 }
 
-/* Controls del professor (footer) */
+/* Controls del professor */
 footer {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    background-color: rgba(255,255,255,0.8);
+    background-color: rgba(0,0,0,0.7);
     padding: 1rem;
     display: flex;
     justify-content: center;
     gap: 1rem;
     backdrop-filter: blur(5px);
-    border-top: 1px solid #e5e7eb;
 }
 
-/* ... (resta dels estils) ... */
+.control-btn {
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#start-voting-btn { background-color: #28a745; color: white; }
+#close-activity-btn { background-color: #dc3545; color: white; }
+
+/* --- Zona d'interacció de l'alumne (Redisseny) --- */
+#student-interaction-zone {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #fff;
+    padding: 2rem;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    transform: translateY(100%);
+    animation: slide-up 0.5s ease forwards;
+}
+
+@keyframes slide-up {
+    to { transform: translateY(0); }
+}
+
+#idea-form, #poll-options-container {
+    max-width: 700px;
+    margin: auto;
+    text-align: center;
+}
+
+#idea-form p, #poll-options-container p {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+#idea-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+#idea-form textarea {
+    width: 100%;
+    max-width: 500px;
+    height: 60px;
+    font-size: 1.5rem;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 2px solid #ddd;
+    resize: none;
+    transition: all 0.3s;
+}
+
+#idea-form textarea:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 15px rgba(74, 144, 226, 0.3);
+}
+
+#idea-form button {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 1rem 3rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #4a90e2 0%, #3a7bd5 100%);
+    color: white;
+    transition: transform 0.2s;
+}
+
+#idea-form button:hover {
+    transform: scale(1.05);
+}
+
+#poll-options-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+#vote-cards-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.vote-card {
+    background-color: #fff;
+    border: 2px solid #e9ecef;
+    padding: 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    min-width: 200px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.vote-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.vote-card.selected {
+    background-color: #d0e0f8;
+    border-color: #4a90e2;
+    color: #3a7bd5;
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.2);
+}
+
+.vote-card.disabled {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#submit-votes-btn {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 1rem 3rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #50c878 0%, #28a745 100%);
+    color: white;
+    transition: transform 0.2s;
+}
+
+#submit-votes-btn:hover {
+    transform: scale(1.05);
+}
