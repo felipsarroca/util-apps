@@ -30,25 +30,25 @@
             <!-- Participant Idea Submission Form -->
             <div id="idea-form" class="participation-container hidden">
                 <h2 id="idea-form-title"></h2>
-                <p id="ideas-left" class="text-sm font-medium text-gray-500 mb-2"></p>
+                <p id="ideas-left"></p>
                 <div class="form-wrapper">
-                    <textarea id="idea-input" class="w-full p-3 border border-gray-300 rounded-lg" maxlength="200" placeholder="Escriu la teva idea (max. 200 caracters)" onkeypress="handleIdeaKeyPress(event)"></textarea>
+                    <textarea id="idea-input" maxlength="200" placeholder="Escriu la teva idea (max. 200 caracters)" onkeypress="handleIdeaKeyPress(event)"></textarea>
                     <button id="send-idea-btn" onclick="sendIdea()" class="button">Enviar Idea</button>
-                    <p id="participant-info" class="mt-4 text-green-600"></p>
+                    <p id="participant-info"></p>
                 </div>
             </div>
 
             <!-- Participant Voting Form -->
             <div id="voting-form" class="participation-container hidden">
                 <h2 id="voting-form-title">Vota per les teves idees preferides</h2>
-                <p id="votes-left" class="text-sm font-medium text-gray-500 mb-4"></p>
-                <div id="vote-options-container" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                <p id="votes-left"></p>
+                <div id="vote-options-container"></div>
             </div>
             
             <!-- Completed View -->
-            <div id="completed-view" class="participation-container hidden text-center">
-                <h2 class="text-2xl font-bold mt-4">Gracies per participar!</h2>
-                <p class="text-gray-600">Pots veure els resultats a la pantalla principal.</p>
+            <div id="completed-view" class="participation-container hidden">
+                <h2>Gracies per participar!</h2>
+                <p>Pots veure els resultats a la pantalla principal.</p>
             </div>
         </div>
         
@@ -88,8 +88,8 @@
                             <div id="qrcode-container"></div>
                         </div>
 
-                        <div id="session-url-container" class="mb-4 text-center">
-                            <p id="direct-session-link" onclick="copyUrl(event)" style="cursor: pointer;" class="text-blue-600 hover:underline break-all">Carregant...</p>
+                        <div id="session-url-container">
+                            <p id="direct-session-link" onclick="copyUrl(event)" style="cursor: pointer;">Carregant...</p>
                         </div>
 
                         <div class="button-group" style="justify-content: center; margin: 2rem 0;">
@@ -109,10 +109,10 @@
         </div>
     </div>
     
-    <footer class="text-center py-4 text-sm text-gray-500">
-        <span data-translate-key="footer_created_by">Aplicación creada por</span> <a href="https://bilateria.org" target="_blank" class="underline hover:text-gray-700">Juan José de Haro</a>
+    <footer>
+        <span data-translate-key="footer_created_by">Aplicación creada por</span> <a href="https://bilateria.org" target="_blank">Juan José de Haro</a>
         <br>
-        <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="license" class="underline hover:text-gray-700" data-translate-key="footer_license">Creative Commons Reconocimiento-CompartirIgual 4.0 Internacional</a>
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="license" data-translate-key="footer_license">Creative Commons Reconocimiento-CompartirIgual 4.0 Internacional</a>
     </footer>
 
     <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
