@@ -5,7 +5,7 @@ class WebRTCManager {
     this.dataChannel = null;
     this.ws = null;
     this.isInitiator = false;
-    this.userId = this.getStoredItem('userId');
+    this.userId = getStoredItem('userId');  // Use global function instead of prototype method
     this.role = null; // 'professor' or 'alumne'
     this.onMessageReceived = null;
   }
@@ -207,18 +207,19 @@ class WebRTCManager {
   // Fallback mechanism using localStorage for when WebRTC is not ready
   fallbackSendMessage(message) {
     // Save the message to a temporary queue in localStorage
-    const queue = JSON.parse(localStorage.getItem('webrtc_message_queue') || '[]');
+    const queue = JSON.parse(getStoredItem('webrtc_message_queue') || '[]');
     queue.push(message);
-    localStorage.setItem('webrtc_message_queue', JSON.stringify(queue));
+    setStoredItem('webrtc_message_queue', JSON.stringify(queue));
   }
   
   // Process any queued messages once WebRTC is ready
   processQueuedMessages() {
-    const queue = JSON.parse(localStorage.getItem('webrtc_message_queue') || '[]');
+    const queue = JSON.parse(getStoredItem('webrtc_message_queue') || '[]');
     queue.forEach(message => {
       this.sendMessage(message);
     });
-    localStorage.removeItem('webrtc_message_queue');
+    // Instead of removing from localStorage, use our fallback function
+    setStoredItem('webrtc_message_queue', null);
   }
 }
 
@@ -275,12 +276,12 @@ function handleWebRTCMessage(message) {
 // Handle messages for different activities
 function handleStartVoteMessage(payload) {
   // Update UI when professor starts a voting activity
-  const activityCode = sessionStorage.getItem('activityCode');
+  const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
   if (activityCode) {
-    let currentActivity = JSON.parse(localStorage.getItem(activityCode));
+    let currentActivity = JSON.parse(getStoredItem(activityCode));
     if (currentActivity) {
       currentActivity.status = payload.status || 'voting';
-      localStorage.setItem(activityCode, JSON.stringify(currentActivity));
+      setStoredItem(activityCode, JSON.stringify(currentActivity));
       
       // Update the student view if on the student page
       const container = document.querySelector('.participation-container');
@@ -292,17 +293,17 @@ function handleStartVoteMessage(payload) {
 }
 
 function handleIdeaMessage(payload) {
-  const activityCode = payload.activityCode || sessionStorage.getItem('activityCode');
+  const activityCode = payload.activityCode || getStoredItem('activityCode');  // Change from sessionStorage to localStorage
   if (activityCode) {
     // For students, update the local results with the received idea
     if (document.location.pathname.includes('alumne.html')) {
-      let results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
+      let results = JSON.parse(getStoredItem(`${activityCode}_results`));
       if (!results) {
         results = { ideas: [], votes: {} };
       }
       if (!results.ideas) results.ideas = [];
       results.ideas.push(payload.idea);
-      localStorage.setItem(`${activityCode}_results`, JSON.stringify(results));
+      setStoredItem(`${activityCode}_results`, JSON.stringify(results));
       
       // Update local storage event to trigger UI updates on other tabs
       const event = new StorageEvent('storage', {
@@ -316,7 +317,7 @@ function handleIdeaMessage(payload) {
 }
 
 function handleVoteMessage(payload) {
-  const activityCode = payload.activityCode || sessionStorage.getItem('activityCode');
+  const activityCode = payload.activityCode || getStoredItem('activityCode');  // Change from sessionStorage to localStorage
   if (activityCode) {
     // For students, this would be result confirmation from professor
     if (document.location.pathname.includes('alumne.html')) {
@@ -329,10 +330,10 @@ function handleVoteMessage(payload) {
     } 
     // For professors, update results with the received vote
     else if (document.location.pathname.includes('professor.html')) {
-      const results = JSON.parse(localStorage.getItem(`${activityCode}_results`));
+      const results = JSON.parse(getStoredItem(`${activityCode}_results`));
       if (results && results.votes) {
         results.votes[payload.option] = (results.votes[payload.option] || 0) + 1;
-        localStorage.setItem(`${activityCode}_results`, JSON.stringify(results));
+        setStoredItem(`${activityCode}_results`, JSON.stringify(results));
         
         // Update local storage event to trigger UI updates on other tabs
         const event = new StorageEvent('storage', {
@@ -346,9 +347,9 @@ function handleVoteMessage(payload) {
 }
 
 function handleResultMessage(payload) {
-  const activityCode = sessionStorage.getItem('activityCode');
+  const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
   if (activityCode) {
-    localStorage.setItem(`${activityCode}_results`, JSON.stringify(payload.results));
+    setStoredItem(`${activityCode}_results`, JSON.stringify(payload.results));
     
     // Update local storage event to trigger UI updates on other tabs
     const event = new StorageEvent('storage', {
@@ -367,42 +368,42 @@ function handleSystemMessage(payload) {
 // Integrate with existing UI: Send messages when user interacts
 function sendIdeaViaWebRTC(ideaText) {
   if (webRTCManager) {
-    const activityCode = sessionStorage.getItem('activityCode');
+    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
     webRTCManager.sendMessage({
       type: 'idea',
       payload: {
         idea: ideaText,
         activityCode: activityCode
       },
-      senderId: localStorage.getItem('userId')
+      senderId: getStoredItem('userId')  // Change from localStorage to our fallback function
     });
   }
 }
 
 function sendVoteViaWebRTC(votes) {
   if (webRTCManager) {
-    const activityCode = sessionStorage.getItem('activityCode');
+    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
     webRTCManager.sendMessage({
       type: 'vote',
       payload: {
         votes: votes,
         activityCode: activityCode
       },
-      senderId: localStorage.getItem('userId')
+      senderId: getStoredItem('userId')  // Change from localStorage to our fallback function
     });
   }
 }
 
 function sendStartVoteMessage(status) {
   if (webRTCManager) {
-    const activityCode = sessionStorage.getItem('activityCode');
+    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
     webRTCManager.sendMessage({
       type: 'start-vote',
       payload: {
         status: status,
         activityCode: activityCode
       },
-      senderId: localStorage.getItem('userId')
+      senderId: getStoredItem('userId')  // Change from localStorage to our fallback function
     });
   }
 }
@@ -412,33 +413,7 @@ function checkWebRTCSupport() {
   return !!(window.RTCPeerConnection && window.RTCSessionDescription && window.RTCIceCandidate);
 }
 
-// Get stored item with fallback
-WebRTCManager.prototype.getStoredItem = function(key) {
-  try {
-    return localStorage.getItem(key);
-  } catch (e) {
-    console.warn('localStorage not available, using memory storage');
-    // Fallback to memory storage if localStorage is not available
-    if (!this.memoryStorage) {
-      this.memoryStorage = {};
-    }
-    return this.memoryStorage[key];
-  }
-};
 
-// Set stored item with fallback
-WebRTCManager.prototype.setStoredItem = function(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch (e) {
-    console.warn('localStorage not available, using memory storage');
-    // Fallback to memory storage if localStorage is not available
-    if (!this.memoryStorage) {
-      this.memoryStorage = {};
-    }
-    this.memoryStorage[key] = value;
-  }
-};
 
 // Initialize WebRTC when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

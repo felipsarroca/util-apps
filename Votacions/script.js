@@ -119,7 +119,7 @@ function initHomePage() {
     participateBtn.addEventListener('click', () => {
         const code = activityCodeInput.value.toUpperCase().trim();
         if (code && getStoredItem(code)) {
-            sessionStorage.setItem('activityCode', code);
+            setStoredItem('activityCode', code);  // Change from sessionStorage to localStorage
             window.location.href = 'alumne.html';
         } else {
             alert('El codi de l\'activitat no és vàlid. Si us plau, torna-ho a provar.');
@@ -313,7 +313,7 @@ function updateDashboard(code) {
 }
 
 function initAlumnePage() {
-    const activityCode = sessionStorage.getItem('activityCode');
+    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
     const container = document.querySelector('.participation-container');
 
     if (!activityCode || !getStoredItem(activityCode)) {
@@ -338,7 +338,7 @@ function initAlumnePage() {
 }
 
 function updateStudentView(activity, container) {
-    const activityCode = sessionStorage.getItem('activityCode');
+    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
     const results = JSON.parse(getStoredItem(`${activityCode}_results`));
     const title = container.querySelector('h1');
     
@@ -421,7 +421,7 @@ function updateStudentView(activity, container) {
 
 function handleStudentSubmission(e) {
     e.preventDefault();
-    const activityCode = sessionStorage.getItem('activityCode');
+    const activityCode = getStoredItem('activityCode');  // Change from sessionStorage to localStorage
     const activity = JSON.parse(getStoredItem(activityCode));
     const results = JSON.parse(getStoredItem(`${activityCode}_results`));
     const userId = getStoredItem('userId');
