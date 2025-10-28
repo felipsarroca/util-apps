@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participa</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main id="app">
+        <!-- Pantalla inicial -->
+        <section id="home-screen">
+            <div class="split-panel">
+                <div id="teacher-panel" class="panel">
+                    <h2>Prepara una activitat</h2>
+                    <p>Crea una pluja d'idees, una votació o una activitat combinada per a la teva classe.</p>
+                    <button id="btn-teacher">Començar</button>
+                </div>
+                <div id="student-panel" class="panel">
+                    <h2>Participa en una activitat</h2>
+                    <form id="student-join-form">
+                        <input type="text" id="session-code-input" placeholder="Codi de la sessió" required>
+                        <button type="submit">Participa</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pantalla del Professor -->
+        <section id="teacher-screen" class="hidden">
+            <button class="back-button home-button" id="teacher-back-to-home">🏠 Tornar a l'inici</button>
+            <div id="activity-choice">
+                <h2>Quin tipus d'activitat vols crear?</h2>
+                <div class="activity-options">
+                    <button data-activity="brainstorm">💭 Pluja d’idees</button>
+                    <button data-activity="poll">🗳️ Votació</button>
+                    <button data-activity="brainstorm-poll">💡 Pluja d’idees + Votació</button>
+                </div>
+            </div>
+
+            <!-- Formularis de configuració -->
+            <div id="config-forms" class="hidden">
+                <button class="back-button" id="back-to-choice">← Torna</button>
+                <form id="config-form">
+                    <h3 id="config-title"></h3>
+                    <div id="config-fields"></div>
+                    <button type="submit">Generar Codi</button>
+                </form>
+            </div>
+
+            <!-- Pantalla de l'activitat en directe -->
+            <div id="live-activity-screen" class="hidden">
+                <h2 id="live-activity-title"></h2>
+                <div class="session-info">
+                    <span>Codi de la sessió: <strong id="session-code-display"></strong></span>
+                    <span>Participants: <strong id="participant-count">0</strong></span>
+                </div>
+                <div id="live-results">
+                    <!-- Aquí es mostraran les idees o els resultats de la votació -->
+                </div>
+                <div id="activity-controls">
+                    <button id="start-voting-btn" class="hidden">Inicia la votació</button>
+                    <button id="close-activity-btn">Tanca l'activitat</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pantalla de l'Alumne -->
+        <section id="student-screen" class="hidden">
+            <div id="student-activity-view">
+                <h2 id="student-activity-title"></h2>
+
+                <!-- Vista per Pluja d'idees -->
+                <div id="student-brainstorm-view" class="student-view hidden">
+                    <p id="ideas-left-info"></p>
+                    <form id="idea-form">
+                        <textarea id="idea-input" placeholder="Escriu la teva idea..." required></textarea>
+                        <button type="submit">Enviar Idea</button>
+                    </form>
+                </div>
+
+                <!-- Vista per Votació -->
+                <div id="student-poll-view" class="student-view hidden">
+                    <p id="votes-left-info"></p>
+                    <div id="poll-options-container">
+                        <!-- Les opcions de votació es generaran aquí -->
+                    </div>
+                </div>
+                
+                <!-- Vista d'espera / finalització -->
+                <div id="student-waiting-view" class="student-view">
+                    <p id="student-message">Connectant a la sessió... Si us plau, espera.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

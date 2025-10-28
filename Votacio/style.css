@@ -1,0 +1,404 @@
+/* Estils generals */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+main {
+    width: 100%;
+    max-width: 1200px;
+    padding: 2rem;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Pantalla inicial dividida */
+#home-screen .split-panel {
+    display: flex;
+    gap: 2rem;
+    min-height: 70vh;
+}
+
+#home-screen .panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    border-radius: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+#home-screen .panel h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+#home-screen .panel p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 400px;
+    margin-bottom: 2rem;
+}
+
+/* Panell del professor */
+#teacher-panel {
+    background-color: #4a90e2;
+    color: white;
+}
+
+#teacher-panel:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+#teacher-panel button {
+    background-color: white;
+    color: #4a90e2;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#teacher-panel button:hover {
+    background-color: #e8f0fe;
+}
+
+/* Panell de l'alumne */
+#student-panel {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+}
+
+#student-panel:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+#student-panel input[type="text"] {
+    width: 100%;
+    max-width: 250px;
+    padding: 0.8rem;
+    font-size: 1.2rem;
+    text-align: center;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+#student-panel button {
+    background-color: #50c878;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#student-panel button:hover {
+    background-color: #47b36c;
+}
+
+/* Disseny responsiu */
+@media (max-width: 768px) {
+    #home-screen .split-panel {
+        flex-direction: column;
+    }
+    #home-screen .panel {
+        min-height: 40vh;
+    }
+}
+
+/* --- Pantalla del Professor --- */
+#teacher-screen {
+    position: relative;
+    background-color: white;
+    padding: 2rem 3rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+}
+
+#teacher-screen h2, #teacher-screen h3 {
+    text-align: center;
+    color: #333;
+}
+
+/* Opcions d'activitat */
+.activity-options {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.activity-options button {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 1.5rem;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 200px;
+    text-align: center;
+}
+
+.activity-options button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    border-color: #4a90e2;
+    color: #4a90e2;
+}
+
+/* Botó de tornar enrere */
+.back-button {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: #4a90e2;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.home-button {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    margin-bottom: 0;
+}
+
+/* Formularis de configuració */
+#config-forms {
+    max-width: 600px;
+    margin: 2rem auto 0;
+}
+
+#config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#config-form label {
+    font-weight: bold;
+}
+
+#config-form input, #config-form textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+#config-form button[type="submit"] {
+    background-color: #4a90e2;
+    color: white;
+    font-size: 1.2rem;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+/* Pantalla d'activitat en directe */
+#live-activity-screen {
+    text-align: center;
+}
+
+.session-info {
+    background-color: #e8f0fe;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 2rem 0;
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    font-size: 1.2rem;
+}
+
+#session-code-display {
+    font-family: monospace;
+    background-color: #d0e0f8;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+}
+
+#live-results {
+    min-height: 300px;
+    background-color: #f8f9fa;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+#activity-controls {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+#activity-controls button {
+    font-size: 1rem;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+#start-voting-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+#close-activity-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* --- Pantalla de l'Alumne --- */
+#student-screen {
+    background-color: white;
+    padding: 2rem 3rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+    max-width: 800px;
+    margin: auto;
+}
+
+#student-activity-view h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.student-view p {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+/* Vista d'enviament d'idees */
+#idea-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#idea-form textarea {
+    width: 100%;
+    height: 100px;
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    resize: vertical;
+}
+
+#idea-form button {
+    background-color: #50c878;
+    color: white;
+    font-size: 1.2rem;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Vista de votació */
+#poll-options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#poll-options-container button {
+    width: 100%;
+    padding: 1.2rem;
+    font-size: 1.1rem;
+    text-align: left;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#poll-options-container button:hover {
+    border-color: #4a90e2;
+    background-color: #e8f0fe;
+}
+
+#poll-options-container button.voted {
+    background-color: #d0e0f8;
+    border-color: #4a90e2;
+    font-weight: bold;
+}
+
+/* --- Resultats en directe (Professor) --- */
+
+/* Estil per a les targetes d'idees */
+#live-results .idea-card {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+
+/* Estil per a les barres de resultats de la votació */
+#live-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.poll-result-bar {
+    background-color: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.poll-option-label {
+    padding: 1rem;
+    font-weight: bold;
+    z-index: 2;
+    color: #333;
+    white-space: nowrap;
+}
+
+.poll-bar {
+    background-color: #4a90e2;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    transition: width 0.4s ease;
+    opacity: 0.6;
+}
