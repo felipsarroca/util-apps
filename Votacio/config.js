@@ -36,13 +36,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Columna Dreta (només per a votació)
         if (type.includes('poll')) {
-            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
+            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="10" required placeholder="Escriu cada opció en una línia diferent"></textarea></div></div>';
         }
         
         configFields.innerHTML = leftColumn + rightColumn;
         // Si no hi ha columna dreta, la columna esquerra hauria d'ocupar tot l'espai
         if (!rightColumn) {
             document.querySelector('.form-column').style.flexBasis = '100%';
+        }
+        
+        // Add the launch button after the form fields
+        const launchButton = document.createElement('button');
+        launchButton.type = 'submit';
+        launchButton.className = 'launch-button';
+        launchButton.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
+        
+        if (type.includes('poll')) {
+            // For polls, position the button aligned with the right column
+            // Create a flex container to align the button with the right column
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.display = 'flex';
+            buttonContainer.style.gap = '2.5rem';
+            buttonContainer.style.marginTop = '1.5rem';
+            
+            // Create an empty spacer div to take up space equal to the left column
+            const leftSpacer = document.createElement('div');
+            leftSpacer.style.flex = '1';
+            leftSpacer.style.visibility = 'hidden';
+            
+            // Create a container for the button to take up the right column space
+            const rightButtonContainer = document.createElement('div');
+            rightButtonContainer.style.flex = '1';
+            rightButtonContainer.appendChild(launchButton);
+            
+            buttonContainer.appendChild(leftSpacer);
+            buttonContainer.appendChild(rightButtonContainer);
+            configForm.appendChild(buttonContainer);
+        } else {
+            // For non-poll activities, add the button as before
+            configForm.appendChild(launchButton);
         }
     }
 
