@@ -117,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- RENDERITZAT (VISTES) ---
     function renderTeacherResults() {
-        resultsContainer.innerHTML = '';
         const { type } = activityConfig;
         const { phase, ideas, votes } = sessionData;
 
@@ -139,17 +138,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 return votesB - votesA;
             });
 
-            sortedItems.forEach(item => {
+            // Store previous ranks to detect position changes
+            const previousElements = Array.from(resultsContainer.querySelectorAll('[data-item-id]'));
+            const previousRanks = {};
+            previousElements.forEach(el => {
+                const id = el.dataset.itemId;
+                const rank = parseInt(el.dataset.rank);
+                if (id) previousRanks[id] = rank;
+            });
+            
+            resultsContainer.innerHTML = ''; // Clear the container
+
+            // Add rank position to each item for animation purposes
+            sortedItems.forEach((item, index) => {
                 const id = typeof item === 'object' ? item.id : item;
                 const text = typeof item === 'object' ? item.text : item;
                 const currentVotes = votes[id] || 0;
                 const percentage = totalVotes > 0 ? (currentVotes / totalVotes) * 100 : 0;
+                
+                // Determine if this item changed position
+                const previousRank = previousRanks[id];
+                const currentRank = index + 1;
+                let animationClass = '';
+                
+                if (previousRank !== undefined) {
+                    if (currentRank < previousRank) {
+                        animationClass = 'rank-up-animation'; // Moved up
+                    } else if (currentRank > previousRank) {
+                        animationClass = 'rank-down-animation'; // Moved down
+                    }
+                }
+                
                 resultsContainer.innerHTML += `
-                    <div class="poll-result-bar-live">
+                    <div class="poll-result-bar-live ${animationClass}" data-item-id="${id}" data-rank="${currentRank}">
                         <div class="poll-live-label">${text}</div>
                         <div class="poll-live-votes">${currentVotes}</div>
                         <div class="poll-live-bar" style="width: ${percentage}%"></div>
                     </div>`;
+                    
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    const element = document.querySelector(`[data-item-id="${id}"]`);
+                    if (element) element.classList.remove(animationClass);
+                }, 500);
             });
         }
     }
