@@ -1,35 +1,130 @@
-<!DOCTYPE html>
-<html lang="ca">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Participa</title>
+    <title>Votació en Temps Real</title>
+    <!-- Link to the new stylesheet -->
     <link rel="stylesheet" href="style.css">
+    <!-- PeerJS for WebRTC connection -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <!-- Library for generating QR Codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
-    <div class="main-container">
-        <div class="student-section">
-            <h1>Participa en una activitat</h1>
-            <div class="code-input-container">
-                <input type="text" placeholder="Introdueix el codi" id="activity-code">
-                <button class="button" id="participate-btn">Participa</button>
+
+    <div id="app" class="main-container">
+
+        <!-- Professor View -->
+        <div id="presenter-view" class="professor-section hidden">
+            <div id="create-session-form" class="form-container">
+                <h2 data-translate-key="create_title">Prepara una activitat</h2>
+                <div class="form-group">
+                    <label for="question" data-translate-key="question_label">Tema o pregunta:</label>
+                    <input type="text" id="question" data-translate-key-placeholder="question_placeholder" placeholder="Ex: Què podem fer per millorar el pati?">
+                </div>
+                <div class="form-group">
+                    <label data-translate-key="options_label">Opcions de resposta:</label>
+                    <div id="options-container">
+                        <input type="text" name="option" data-translate-key-placeholder="option_1_placeholder" placeholder="Opció 1">
+                        <input type="text" name="option" data-translate-key-placeholder="option_2_placeholder" placeholder="Opció 2">
+                    </div>
+                    <button onclick="addOption()" class="add-option-btn" data-translate-key="add_option_btn">+ Afegeix una opció</button>
+                </div>
+                <div class="button-group">
+                    <button onclick="generateShareableLink()" id="prepare-button" class="button secondary">
+                        <span data-translate-key="prepare_session_btn">Prepara la sessió</span>
+                    </button>
+                    <button onclick="hostSession()" id="host-button" class="button">
+                        <span id="host-button-text" data-translate-key="start_session_btn">Inicia la Sessió</span>
+                        <div id="host-loader" class="loader hidden"></div>
+                    </button>
+                </div>
+                <div id="shareable-link-container" class="hidden">
+                    <label data-translate-key="shareable_link_title">Enllaç de preparació a punt. Copia'l i desa'l per a més tard:</label>
+                    <input type="text" id="shareable-link-input" readonly>
+                </div>
+                 <p class="role-switch-link">
+                    <a href="#" onclick="event.preventDefault(); switchView('student')" data-translate-key="switch_to_student">Vols participar en una sessió? Fes clic aquí.</a>
+                </p>
+            </div>
+            
+            <div id="results-view" class="dashboard hidden">
+                <div class="dashboard-header">
+                    <div class="dashboard-code">
+                        <span data-translate-key="or_enter_code_label_2">Codi de la sessió:</span>
+                        <p id="session-code" onclick="copyCode()"></p>
+                    </div>
+                    <div class="dashboard-topic">
+                        <span>Tema</span>
+                        <p id="results-question"></p>
+                    </div>
+                </div>
+
+                <div class="dashboard-share">
+                    <div id="qrcode-container"></div>
+                    <a id="direct-session-link" href="#" target="_blank" title="Fes clic per copiar" onclick="copyUrl(event)"></a>
+                </div>
+
+                <div id="results-container" class="results-list"></div>
+                <p class="total-votes">
+                    <span data-translate-key="total_votes_label">Vots totals</span>: <span id="total-votes">0</span>
+                </p>
             </div>
         </div>
-        <div class="professor-section">
-            <h2>Prepara una activitat</h2>
-            <div class="card-container">
-                <a href="professor.html?activity=brainstorm" class="card">
-                    <h3>💭 Pluja d’idees</h3>
-                </a>
-                <a href="professor.html?activity=voting" class="card">
-                    <h3>🗳️ Votació</h3>
-                </a>
-                <a href="professor.html?activity=brainstorm-voting" class="card">
-                    <h3>💡 Pluja d’idees + votació</h3>
-                </a>
+
+        <!-- Student View -->
+        <div id="student-view" class="student-section">
+            <div id="join-session-form">
+                <h1 data-translate-key="join_title">Participa en una activitat</h1>
+                <div class="code-input-container">
+                    <input type="text" id="code-input" data-translate-key-placeholder="code_input_placeholder" placeholder="Introdueix el codi">
+                    <button onclick="joinSession()" id="join-button" class="button">
+                        <span id="join-button-text" data-translate-key="join_btn">Participa</span>
+                        <div id="join-loader" class="loader hidden"></div>
+                    </button>
+                </div>
+                <p id="join-error" class="error-message hidden"></p>
+                <p class="role-switch-link">
+                    <a href="#" onclick="event.preventDefault(); switchView('presenter')" data-translate-key="switch_to_presenter">Ets el professor? Prepara una activitat aquí.</a>
+                </p>
+            </div>
+
+            <div id="voting-view" class="hidden participation-container">
+                <h1 id="vote-question"></h1>
+                <div id="vote-options-container" class="form-wrapper"></div>
+                <div class="text-center mt-4">
+                    <p id="vote-sending" class="hidden">
+                        <span data-translate-key="vote_sending">Enviant vot...</span>
+                        <span id="vote-countdown" class="font-semibold"></span>
+                    </p>
+                    <p id="vote-error" class="error-message hidden"></p>
+                </div>
+            </div>
+
+            <div id="voted-view" class="hidden text-center py-8">
+                 <svg class="mx-auto h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h2 data-translate-key="voted_title">¡Gràcies per la teva participació!</h2>
+                <p data-translate-key="voted_subtitle">Ja pots veure els resultats a la pantalla principal.</p>
             </div>
         </div>
     </div>
+    
+    <footer class="text-center py-4 text-sm text-gray-500">
+        <span data-translate-key="footer_created_by">Aplicación creada por</span> <a href="https://bilateria.org" target="_blank" class="underline hover:text-gray-700">Juan José de Haro</a>
+        <br>
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="license" class="underline hover:text-gray-700" data-translate-key="footer_license">Creative Commons Reconocimiento-CompartirIgual 4.0 Internacional</a>
+    </footer>
+
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
