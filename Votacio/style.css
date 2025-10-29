@@ -90,16 +90,17 @@ main {
 .cc-credit {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.75rem;
+    margin-top: 0.6rem;
 }
 
 .cc-credit img {
-    height: 22px;
+    height: 28px;
     width: auto;
 }
 
 .cc-credit .credit-text {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
 }
 
