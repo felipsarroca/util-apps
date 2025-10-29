@@ -32,6 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type.includes('poll')) {
             rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">M\u00E0xim de vots per participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
+        // Ajust de textos específics per a l'activitat combinada
+        if (type === 'brainstorm-poll') {
+            rowFields = rowFields
+                .replace('Aportacions / participant', 'Aportacions per participant')
+                .replace('M\u00E0xim de vots per participant', 'Vots per participant');
+        }
         if (rowFields) {
             leftContent += `<div class="form-row">${rowFields}</div>`;
         }
