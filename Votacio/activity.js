@@ -182,6 +182,7 @@
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
         closeActivityBtn.addEventListener('click', closeActivity);
         startVotingBtn.addEventListener('click', startVotingPhase);
+        togglePhaseCard(false);
 
         if (myRole === 'host') {
             const rawConfig = params.get('config');
@@ -331,7 +332,7 @@
         updatePhaseDescription(phase);
         updateStudentQuestion();
 
-        togglePhaseCard(phase !== 'voting');
+        togglePhaseCard(false);
 
         if (phase === 'brainstorm') {
             statusIndicator.textContent = 'Connectat';
