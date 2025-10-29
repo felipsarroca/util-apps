@@ -150,25 +150,30 @@ body {
     transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Camps específics més compactes */
-/* Camps específics compactes només per a votació i combinada */
-body.type-poll #question { padding: 0.3rem 0.55rem; }
-body.type-brainstorm-poll #question { padding: 0.45rem 0.75rem; }
-body.type-poll #votes-per-student { padding: 0.25rem 0.5rem; }
-body.type-brainstorm-poll #votes-per-student { padding: 0.35rem 0.6rem; }
+
+/* Custom spacing for poll configuration */
+body.type-poll .form-column:first-child > .form-group:first-child {
+    gap: 0.15rem;
+}
+
+body.type-poll #question {
+    padding-top: 0.475rem;
+    padding-bottom: 0.475rem;
+}
+
+body.type-poll .form-row .form-group {
+    gap: 0.15rem;
+}
+
+body.type-poll #votes-per-student {
+    padding-top: 0.475rem;
+    padding-bottom: 0.475rem;
+}
 
 .form-group textarea {
     min-height: 220px;
     resize: vertical;
 }
-
-/* Inputs més compactes a la columna esquerra (només poll i combinada) */
-
-body.type-poll .form-column:first-child .form-group input { padding: 0.45rem 0.7rem; }
-body.type-brainstorm-poll .form-column:first-child .form-group input { padding: 0.5rem 0.75rem; }
-
-body.type-poll .form-column:first-child .form-row .form-group input[type="number"] { padding: 0.35rem 0.55rem; }
-body.type-brainstorm-poll .form-column:first-child .form-row .form-group input[type="number"] { padding: 0.4rem 0.6rem; }
 
 /* Columna dreta: textarea d'opcions ocupa l'espai disponible (només poll i combinada) */
 body.type-poll .form-column:last-child,
