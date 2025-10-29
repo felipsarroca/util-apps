@@ -130,10 +130,7 @@ body {
     gap: 0.6rem;
 }
 
-/* Tighter spacing for specific fields */
-.form-group.compact-gap {
-    gap: 0.35rem;
-}
+
 
 .form-group label {
     font-weight: 600;
@@ -166,8 +163,7 @@ body.type-brainstorm-poll #votes-per-student { padding: 0.35rem 0.6rem; }
 }
 
 /* Inputs més compactes a la columna esquerra (només poll i combinada) */
-body.type-poll .form-column:first-child .form-group,
-body.type-brainstorm-poll .form-column:first-child .form-group { gap: 0.1rem; }
+
 body.type-poll .form-column:first-child .form-group input { padding: 0.45rem 0.7rem; }
 body.type-brainstorm-poll .form-column:first-child .form-group input { padding: 0.5rem 0.75rem; }
 
@@ -182,20 +178,7 @@ body.type-brainstorm-poll .form-column:last-child .form-group { display: grid; g
 body.type-poll #poll-options,
 body.type-brainstorm-poll #poll-options { min-height: 360px; height: 100%; }
 
-/* Reducció d'interliniats general del formulari només per a poll i combinada */
-body.type-poll #config-form { gap: 1rem; }
-body.type-brainstorm-poll #config-form { gap: 1.5rem; }
-body.type-poll #config-fields { gap: 1rem; align-items: stretch; }
-body.type-brainstorm-poll #config-fields { gap: 1.2rem; align-items: stretch; }
-body.type-poll .form-row { gap: 0.6rem; }
-body.type-poll .form-column { gap: 0.75rem; }
-body.type-brainstorm-poll .form-column { gap: 1rem; }
-body.type-poll .form-group { gap: 0.3rem; }
-body.type-brainstorm-poll .form-group { gap: 0.3rem; }
-body.type-poll .form-group.compact-gap { gap: 0rem; }
-body.type-brainstorm-poll .form-group.compact-gap { gap: 0.1rem; }
-body.type-poll .form-group label { line-height: 1; }
-body.type-brainstorm-poll .form-group label { line-height: 1.15; }
+
 
 .form-group input:focus,
 .form-group textarea:focus {
