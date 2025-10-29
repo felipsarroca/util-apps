@@ -172,10 +172,6 @@ body.type-brainstorm-poll .form-column:last-child .form-group { display: grid; g
 body.type-poll #poll-options,
 body.type-brainstorm-poll #poll-options { min-height: 360px; height: 100%; }
 
-body.type-poll .form-column:first-child > .question-group {
-    margin-top: -0.8rem;
-}
-
 body.type-poll .form-column:first-child {
     gap: 0.4rem;
     margin-top: -1rem;
@@ -187,6 +183,11 @@ body.type-poll .form-column:last-child {
 
 body.type-poll #poll-options {
     margin-top: 0.5rem;
+}
+
+body.type-poll .question-group label {
+    display: inline-block;
+    padding-top: 0.55rem;
 }
 
 
