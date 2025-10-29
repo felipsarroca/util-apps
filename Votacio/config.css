@@ -127,7 +127,11 @@ body {
 
 .form-group {
     display: grid;
-    gap: 0.1rem;
+    gap: 0.18rem;
+}
+
+.form-group.question-group {
+    gap: 0.05rem;
 }
 
 

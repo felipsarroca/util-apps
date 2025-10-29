@@ -24,7 +24,7 @@
         let rightColumn = '';
 
         // Columna Esquerra
-        let leftContent = '<div class="form-group"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
+        let leftContent = '<div class="form-group question-group"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
         let rowFields = '';
 
         if (type.includes('brainstorm')) {
