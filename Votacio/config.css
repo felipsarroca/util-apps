@@ -172,49 +172,42 @@ body.type-brainstorm-poll .form-column:last-child .form-group { display: grid; g
 body.type-poll #poll-options,
 body.type-brainstorm-poll #poll-options { min-height: 360px; height: 100%; }
 
-body.type-poll .form-column:first-child {
-    gap: 0.4rem;
-    margin-top: -1rem;
-}
-
-body.type-poll .form-column:last-child {
-    margin-top: 0.65rem;
-}
-
-body.type-poll #poll-options {
-    margin-top: 0.5rem;
-}
-
-body.type-poll .question-group {
-    gap: 0;
-}
-
-body.type-poll .question-group label {
-    display: inline-block;
-    position: relative;
-    top: 0.55rem;
-    margin-bottom: -0.45rem;
-    padding-top: 0;
-}
-
-/* Compactació global per a la configuració de votació */
+/* Compactació i alineació per al mode votació */
 body.type-poll #config-form {
-    gap: 0.75rem;
+    gap: 0.8rem;
 }
 
 body.type-poll #config-fields {
-    gap: 0.75rem;
+    gap: 0.85rem;
+    grid-template-columns: minmax(320px, 1fr) minmax(280px, 1fr);
+    align-items: start;
 }
 
 body.type-poll .form-column {
-    gap: 0.55rem;
+    gap: 0.52rem;
+    align-self: start;
+}
+
+body.type-poll .form-column:first-child,
+body.type-poll .form-column:last-child {
+    padding-top: 0.35rem;
 }
 
 body.type-poll .form-row {
-    gap: 0.35rem;
+    gap: 0.32rem;
 }
 
-body.type-poll .form-group:not(.question-group) {
+body.type-poll .question-group {
+    gap: 0.12rem;
+}
+
+body.type-poll .question-group label {
+    margin: 0 0 0.12rem 0;
+    display: block;
+    position: static;
+}
+
+body.type-poll .form-group {
     gap: 0.12rem;
 }
 
@@ -230,11 +223,14 @@ body.type-poll .form-group textarea:not(#poll-options) {
 
 body.type-poll #poll-options {
     min-height: 220px;
+    margin-top: 0.15rem;
 }
 
 body.type-poll .button-container {
-    margin-top: -0.2rem;
+    margin-top: 0;
+    padding-top: 0.15rem;
 }
+
 
 
 
