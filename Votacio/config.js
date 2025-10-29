@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     const configTitle = document.getElementById('config-title');
     const configFields = document.getElementById('config-fields');
     const configForm = document.getElementById('config-form');
@@ -9,13 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentActivityType = activityType;
 
     function setupConfigForm(type) {
-        // Marca el tipus a <body> per aplicar interliniats compactes de forma consistent
-        document.body.classList.remove('type-brainstorm', 'type-poll', 'type-brainstorm-poll');
-        document.body.classList.add(`type-${type}`);
-                                const titles = {
-            'poll': 'Configurar la votaci\u00F3',
+        const titles = {
+            'poll': 'Configurar la votació',
             'brainstorm': 'Configurar pluja d\'idees',
-            'brainstorm-poll': 'Configurar la pluja d\'idees i la votaci\u00F3 posterior'
+            'brainstorm-poll': 'Configurar activitat combinada'
         };
         configTitle.textContent = titles[type] || 'Configurar activitat';
 
@@ -23,28 +20,23 @@ document.addEventListener('DOMContentLoaded', () => {
         let rightColumn = '';
 
         // Columna Esquerra
-        let leftContent = (type === 'brainstorm')
-            ? '<div class="form-group"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>'
-            : '<div class="form-group compact-gap"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
+        let leftContent = '<div class="form-group compact-gap"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
         let rowFields = '';
 
         if (type.includes('brainstorm')) {
-            const ideasClass = (type === 'brainstorm-poll') ? 'form-group compact-gap' : 'form-group';
-            const ideasLabel = (type === 'brainstorm-poll') ? 'Aportacions per participant' : 'Aportacions / participant';
-            rowFields += `<div class="${ideasClass}"><label for="ideas-per-student">${ideasLabel}</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>`;
+            rowFields += '<div class="form-group"><label for="ideas-per-student">Aportacions / participant</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
         }
         if (type.includes('poll')) {
-            const votesLabel = (type === 'brainstorm-poll') ? 'Vots per participant' : 'M\u00E0xim de vots per participant';
-            rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">' + votesLabel + '</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
+            rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">Màxim de vots per participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
         if (rowFields) {
             leftContent += `<div class="form-row">${rowFields}</div>`;
         }
         leftColumn = `<div class="form-column">${leftContent}</div>`;
 
-        // Columna Dreta (nomÃ©s per a votaciÃ³)
+        // Columna Dreta (només per a votació)
         if (type.includes('poll')) {
-            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per l\u00EDnia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
+            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
         }
         
         configFields.innerHTML = leftColumn + rightColumn;
@@ -93,5 +85,3 @@ document.addEventListener('DOMContentLoaded', () => {
         configFields.innerHTML = '<p>Error: No s\'ha especificat cap tipus d\'activitat.</p>';
     }
 });
-
-

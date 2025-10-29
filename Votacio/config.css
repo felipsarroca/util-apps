@@ -131,13 +131,7 @@ body {
 
 /* Tighter spacing for specific fields */
 .form-group.compact-gap {
-    gap: 0.14rem;
-}
-
-/* Redueix lleugerament el padding dels camps compactes */
-.form-group.compact-gap input,
-.form-group.compact-gap textarea {
-    padding: 0.72rem 0.9rem;
+    gap: 0.35rem;
 }
 
 .form-group label {
@@ -174,24 +168,6 @@ body {
     display: grid;
     gap: 1.25rem;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-}
-
-/* Interliniats i separacions compactes per pluja d'idees i combinada */
-.type-poll .form-group label,
-.type-brainstorm-poll .form-group label {
-    line-height: 1.1;
-}
-
-.type-poll .form-group input,
-.type-poll .form-group textarea,
-.type-brainstorm-poll .form-group input,
-.type-brainstorm-poll .form-group textarea {
-    line-height: 1.1;
-}
-
-.type-poll .form-row,
-.type-brainstorm-poll .form-row {
-    gap: 0.9rem;
 }
 
 .form-group input[type="number"] {
