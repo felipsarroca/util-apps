@@ -277,11 +277,22 @@ body.type-brainstorm-poll .button-container {
     grid-column: 1 / -1;
     display: flex;
     justify-content: flex-end;
-    margin-top: -1.25rem;
+    margin-top: 0;
 }
 
 .button-container.align-start {
     justify-content: flex-start;
+}
+
+.column-button {
+    grid-column: auto;
+    justify-content: flex-start;
+    margin-top: 0.35rem;
+    align-self: end;
+}
+
+#config-form > .button-container {
+    margin-top: -0.6rem;
 }
 
 .launch-button {
