@@ -9,10 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentActivityType = activityType;
 
     function setupConfigForm(type) {
-        const titles = {
-            'poll': 'Configurar la votació',
+                                const titles = {
+            'poll': 'Configurar la votaci\u00F3',
             'brainstorm': 'Configurar pluja d\'idees',
-            'brainstorm-poll': 'Configurar la pluja d\'idees i la votaci? posterior'
+            'brainstorm-poll': 'Configurar la pluja d\'idees i la votaci\u00F3 posterior'
         };
         configTitle.textContent = titles[type] || 'Configurar activitat';
 
@@ -27,16 +27,16 @@ document.addEventListener('DOMContentLoaded', () => {
             rowFields += '<div class="form-group"><label for="ideas-per-student">Aportacions / participant</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
         }
         if (type.includes('poll')) {
-            rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">Màxim de vots per participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
+            rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">M\u00E0xim de vots per participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
         if (rowFields) {
             leftContent += `<div class="form-row">${rowFields}</div>`;
         }
         leftColumn = `<div class="form-column">${leftContent}</div>`;
 
-        // Columna Dreta (només per a votació)
+        // Columna Dreta (nomÃƒÂ©s per a votaciÃƒÂ³)
         if (type.includes('poll')) {
-            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
+            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per l\u00EDnia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
         }
         
         configFields.innerHTML = leftColumn + rightColumn;
@@ -85,4 +85,5 @@ document.addEventListener('DOMContentLoaded', () => {
         configFields.innerHTML = '<p>Error: No s\'ha especificat cap tipus d\'activitat.</p>';
     }
 });
+
 
