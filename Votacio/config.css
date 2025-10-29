@@ -105,7 +105,9 @@ body {
 
 #config-form {
     display: grid;
-    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.6rem;
+    align-items: start;
     position: relative;
     z-index: 1;
 }
@@ -114,11 +116,21 @@ body {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 1.6rem;
+    grid-column: 1 / 2;
 }
 
 .config-column {
     display: grid;
     gap: 1.2rem;
+}
+
+.card-action-row {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 1.2rem;
+    align-items: end;
+    justify-content: flex-start;
+    justify-items: start;
 }
 
 .primary-column {
@@ -145,6 +157,8 @@ body {
 
 .compact-card {
     padding: 1.2rem 1.5rem;
+    max-width: 320px;
+    justify-self: start;
 }
 
 .field-group {
@@ -186,8 +200,16 @@ body {
 }
 
 .config-actions {
+    grid-column: 2 / 3;
+    align-self: end;
     display: flex;
+    align-items: flex-end;
     justify-content: flex-end;
+    min-width: 0;
+}
+
+#config-actions:empty {
+    display: none;
 }
 
 .config-actions.align-start {
@@ -244,6 +266,14 @@ body.type-brainstorm-poll .button-container {
     justify-content: flex-start;
 }
 
+.card-action-row .button-container {
+    justify-content: flex-start;
+}
+
+.card-action-row .launch-button {
+    white-space: nowrap;
+}
+
 .launch-button {
     border: none;
     border-radius: 999px;
@@ -270,8 +300,14 @@ body.type-brainstorm-poll .button-container {
 }
 
 @media (max-width: 1100px) {
+    #config-form {
+        grid-template-columns: 1fr;
+        gap: 1.4rem;
+    }
+
     .config-grid {
         gap: 1.2rem;
+        grid-column: 1 / -1;
     }
 
     .primary-column,
@@ -280,6 +316,16 @@ body.type-brainstorm-poll .button-container {
     }
 
     .config-actions {
+        justify-content: center;
+        grid-column: 1 / -1;
+    }
+
+    .card-action-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .card-action-row .button-container {
         justify-content: center;
     }
 }
@@ -304,6 +350,10 @@ body.type-brainstorm-poll .button-container {
     .compact-card {
         padding: 1.15rem 1.35rem;
     }
+
+    .card-action-row {
+        gap: 0.9rem;
+    }
 }
 
 @media (max-width: 640px) {
@@ -325,6 +375,10 @@ body.type-brainstorm-poll .button-container {
     }
 
     .config-actions {
+        justify-content: center;
+    }
+
+    .card-action-row .button-container {
         justify-content: center;
     }
 }

@@ -78,8 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function buildActions() {
-        configActions.innerHTML = '';
-
         const button = document.createElement('button');
         button.type = 'submit';
         button.className = 'launch-button';
@@ -89,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.className = 'button-container';
         container.appendChild(button);
 
-        configActions.appendChild(container);
+        return container;
     }
 
     function setupLayout(type) {
@@ -100,7 +98,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         buildPrimaryColumn(type);
         buildSecondaryColumn(type);
-        buildActions();
+
+        const actionContainer = buildActions();
+        const compactCard = primaryColumn.querySelector('.compact-card');
+
+        configActions.innerHTML = '';
+
+        if (compactCard) {
+            const row = document.createElement('div');
+            row.className = 'card-action-row';
+            row.appendChild(compactCard);
+            row.appendChild(actionContainer);
+            primaryColumn.appendChild(row);
+            configActions.classList.remove('align-start');
+        } else {
+            configActions.appendChild(actionContainer);
+            configActions.classList.toggle('align-start', type === 'poll' || type === 'brainstorm-poll');
+        }
     }
 
     configForm.addEventListener('submit', event => {
