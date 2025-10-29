@@ -105,21 +105,20 @@ body {
 
 #config-form {
     display: grid;
-    gap: 1.5rem;
+    gap: 2rem;
     position: relative;
     z-index: 1;
 }
 
 #config-fields {
     display: grid;
-    gap: 1.2rem;
+    gap: 2rem;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    align-items: stretch;
 }
 
 .form-column {
     display: grid;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .form-column.single-column {
@@ -128,19 +127,18 @@ body {
 
 .form-group {
     display: grid;
-    gap: 0.3rem;
+    gap: 0.6rem;
 }
 
 /* Tighter spacing for specific fields */
 .form-group.compact-gap {
-    gap: 0.1rem;
+    gap: 0.35rem;
 }
 
 .form-group label {
     font-weight: 600;
     color: var(--text-dark);
     letter-spacing: 0.02em;
-    line-height: 1.15;
 }
 
 .form-group input,
@@ -149,38 +147,54 @@ body {
     font-size: 1rem;
     border: 1px solid rgba(79, 70, 229, 0.18);
     border-radius: var(--radius-md);
-    padding: 0.9rem 1rem;
+    padding: 0.95rem 1.1rem;
     background: rgba(255, 255, 255, 0.92);
     box-shadow: inset 0 1px 2px rgba(24, 33, 66, 0.08);
     transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Camps específics més compactes */
-#question {
-    padding: 0.45rem 0.75rem;
-}
-
-#votes-per-student {
-    padding: 0.35rem 0.6rem;
-}
+/* Camps específics compactes només per a votació i combinada */
+body.type-poll #question,
+body.type-brainstorm-poll #question { padding: 0.45rem 0.75rem; }
+body.type-poll #votes-per-student,
+body.type-brainstorm-poll #votes-per-student { padding: 0.35rem 0.6rem; }
 
 .form-group textarea {
     min-height: 220px;
     resize: vertical;
 }
 
-/* Inputs més compactes a la columna esquerra */
-.form-column:first-child .form-group { gap: 0.1rem; }
-.form-column:first-child .form-group input { padding: 0.5rem 0.75rem; }
+/* Inputs més compactes a la columna esquerra (només poll i combinada) */
+body.type-poll .form-column:first-child .form-group,
+body.type-brainstorm-poll .form-column:first-child .form-group { gap: 0.1rem; }
+body.type-poll .form-column:first-child .form-group input,
+body.type-brainstorm-poll .form-column:first-child .form-group input { padding: 0.5rem 0.75rem; }
 
-.form-column:first-child .form-row .form-group input[type="number"] {
-    padding: 0.4rem 0.6rem;
-}
+body.type-poll .form-column:first-child .form-row .form-group input[type="number"],
+body.type-brainstorm-poll .form-column:first-child .form-row .form-group input[type="number"] { padding: 0.4rem 0.6rem; }
 
-/* Columna dreta: textarea d'opcions ocupa l'espai disponible */
-.form-column:last-child { grid-template-rows: 1fr; }
-.form-column:last-child .form-group { display: grid; grid-template-rows: auto 1fr; min-height: 100%; }
-#poll-options { min-height: 360px; height: 100%; }
+/* Columna dreta: textarea d'opcions ocupa l'espai disponible (només poll i combinada) */
+body.type-poll .form-column:last-child,
+body.type-brainstorm-poll .form-column:last-child { grid-template-rows: 1fr; }
+body.type-poll .form-column:last-child .form-group,
+body.type-brainstorm-poll .form-column:last-child .form-group { display: grid; grid-template-rows: auto 1fr; min-height: 100%; }
+body.type-poll #poll-options,
+body.type-brainstorm-poll #poll-options { min-height: 360px; height: 100%; }
+
+/* Reducció d'interliniats general del formulari només per a poll i combinada */
+body.type-poll #config-form,
+body.type-brainstorm-poll #config-form { gap: 1.5rem; }
+body.type-poll #config-fields,
+body.type-brainstorm-poll #config-fields { gap: 1.2rem; align-items: stretch; }
+body.type-poll .form-column,
+body.type-brainstorm-poll .form-column { gap: 1rem; }
+body.type-poll .form-group,
+body.type-brainstorm-poll .form-group { gap: 0.3rem; }
+body.type-poll .form-group.compact-gap,
+body.type-brainstorm-poll .form-group.compact-gap { gap: 0.1rem; }
+body.type-poll .form-group label,
+body.type-brainstorm-poll .form-group label { line-height: 1.15; }
 
 .form-group input:focus,
 .form-group textarea:focus {

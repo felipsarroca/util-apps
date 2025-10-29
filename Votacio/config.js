@@ -16,6 +16,10 @@
         };
         configTitle.textContent = titles[type] || 'Configurar activitat';
 
+        // Marca el tipus a <body> per aplicar estils específics
+        document.body.classList.remove('type-poll', 'type-brainstorm', 'type-brainstorm-poll');
+        document.body.classList.add(`type-${type}`);
+
         let leftColumn = '';
         let rightColumn = '';
 
