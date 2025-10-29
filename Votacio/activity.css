@@ -126,21 +126,24 @@ header {
     gap: 1rem;
 }
 
-@media (min-width: 960px) {
-    .idea-bubble-container {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+.idea-bubble-container.idea-bubble-double {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .idea-bubble {
     background: linear-gradient(135deg, rgba(79, 70, 229, 0.85), rgba(14, 165, 233, 0.85));
     color: #ffffff;
-    padding: 1.1rem 1.3rem;
+    padding: 1.05rem 1.25rem;
     border-radius: var(--radius-md);
     font-size: 1.05rem;
     font-weight: 600;
     box-shadow: var(--shadow-card);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 110px;
 }
 
 .idea-bubble:hover {
@@ -154,17 +157,15 @@ header {
     gap: 1.1rem;
 }
 
-@media (min-width: 1100px) {
-    .poll-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+.poll-grid.poll-grid-double {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .poll-result-card {
     background: #f5f6ff;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 0.9rem;
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
@@ -174,7 +175,7 @@ header {
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.55rem;
 }
 
 .poll-card-rank {
@@ -202,7 +203,7 @@ header {
 
 .poll-card-count {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--color-primary);
 }
 
@@ -227,12 +228,12 @@ header {
 }
 
 .live-feed.compact-poll {
-    gap: 1.1rem;
+    gap: 0.9rem;
 }
 
 .live-feed.compact-poll .poll-result-card {
     padding: 0.7rem 0.85rem;
-    gap: 0.55rem;
+    gap: 0.45rem;
 }
 
 .rank-up-animation {
@@ -482,15 +483,19 @@ header {
 
 #vote-cards-wrapper {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.9rem;
+}
+
+#vote-cards-wrapper.multi-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .vote-card {
     background: rgba(79, 70, 229, 0.08);
     border: 1px solid rgba(79, 70, 229, 0.15);
     border-radius: var(--radius-md);
-    padding: 1rem;
+    padding: 0.85rem 1rem;
     text-align: center;
     font-weight: 600;
     cursor: pointer;

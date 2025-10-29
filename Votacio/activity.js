@@ -72,6 +72,7 @@
     };
 
     const voteStorageKey = () => (sessionId ? `votacio-${sessionId}-vot` : null);
+    const ideaStorageKey = () => (sessionId ? `votacio-${sessionId}-idees` : null);
 
     const setSubmitShortcutTarget = (target) => {
         submitShortcutTarget = target;
@@ -103,6 +104,8 @@
         const classes = ['live-feed'];
         if (modeClass) classes.push(modeClass);
         resultsContainer.className = classes.join(' ');
+        resultsContainer.classList.remove('poll-grid-double');
+        resultsContainer.classList.remove('idea-bubble-double');
     };
 
     const togglePhaseCard = (visible = true) => {
@@ -126,6 +129,29 @@
         const key = voteStorageKey();
         if (!key) return;
         safeStorage.set(key, String(studentState.castVotes));
+    };
+
+    const restoreStoredIdeaCount = () => {
+        if (myRole === 'host') return;
+        const key = ideaStorageKey();
+        if (!key) return;
+        const stored = parseInt(safeStorage.get(key) || '0', 10);
+        if (Number.isNaN(stored) || stored <= 0) return;
+        const rawLimit = parseInt(activityConfig?.ideasPerStudent, 10);
+        if (!Number.isNaN(rawLimit) && rawLimit > 0) {
+            const limit = rawLimit;
+            studentState.submittedIdeas = Math.min(stored, limit);
+            if (studentState.submittedIdeas !== stored) persistIdeaCount();
+        } else {
+            studentState.submittedIdeas = stored;
+        }
+    };
+
+    const persistIdeaCount = () => {
+        if (myRole === 'host') return;
+        const key = ideaStorageKey();
+        if (!key) return;
+        safeStorage.set(key, String(studentState.submittedIdeas));
     };
 
     const buildInitialSessionState = () => {
@@ -178,6 +204,7 @@
         }
 
         restoreStoredVoteState();
+        restoreStoredIdeaCount();
         if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionId;
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
         closeActivityBtn.addEventListener('click', closeActivity);
@@ -299,6 +326,7 @@
                 const votesAlreadyCast = studentState.castVotes;
                 studentState = { submittedIdeas: 0, castVotes: votesAlreadyCast, pendingVotes: [] };
                 restoreStoredVoteState();
+                restoreStoredIdeaCount();
                 const submitBtn = document.getElementById('submit-votes-btn');
                 if (submitBtn) submitBtn.classList.add('hidden');
             }
@@ -307,12 +335,15 @@
                 if (sessionData.phase === 'brainstorm') {
                     studentState.submittedIdeas = 0;
                     studentState.pendingVotes = [];
+                    persistIdeaCount();
                 } else if (sessionData.phase === 'voting') {
                     studentState.pendingVotes = [];
                     restoreStoredVoteState();
                 }
                 refreshSubmitShortcutState();
             }
+
+            restoreStoredIdeaCount();
 
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             updateStudentQuestion();
@@ -337,11 +368,14 @@
         if (phase === 'brainstorm') {
             statusIndicator.textContent = 'Connectat';
             setResultsContainerMode('idea-bubble-container');
+            resultsContainer.classList.remove('poll-grid-double');
             resultsContainer.innerHTML = '';
             if (ideas.length === 0) {
                 resultsContainer.innerHTML = '<p class="placeholder">Esperant idees...</p>';
                 return;
             }
+            const useDoubleColumn = ideas.length >= 10 && window.innerWidth >= 1200;
+            resultsContainer.classList.toggle('idea-bubble-double', useDoubleColumn);
             ideas.forEach(idea => {
                 resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`;
             });
@@ -350,6 +384,7 @@
             setResultsContainerMode('poll-grid compact-poll');
             const items = type === 'poll' ? activityConfig.pollOptions : ideas;
             if (items.length === 0) {
+                resultsContainer.classList.remove('poll-grid-double');
                 resultsContainer.innerHTML = '<p class="placeholder">No hi ha res a votar.</p>';
                 return;
             }
@@ -360,6 +395,8 @@
                 const votesB = votes[typeof b === 'object' ? b.id : b] || 0;
                 return votesB - votesA;
             });
+            const useDoubleColumn = sortedItems.length >= 8 && window.innerWidth >= 1200;
+            resultsContainer.classList.toggle('poll-grid-double', useDoubleColumn);
 
             const previousElements = Array.from(resultsContainer.querySelectorAll('[data-item-id]'));
             const previousRanks = {};
@@ -411,6 +448,7 @@
         } else {
             statusIndicator.textContent = 'Connectat';
             setResultsContainerMode('placeholder-state');
+            resultsContainer.classList.remove('poll-grid-double');
             resultsContainer.innerHTML = '<p class="placeholder">Esperant actualitzacions...</p>';
         }
     }
@@ -423,6 +461,13 @@
 
         const { type, ideasPerStudent } = activityConfig;
         const { phase, ideas } = sessionData;
+        const voteCardsWrapper = document.getElementById('vote-cards-wrapper');
+        if (voteCardsWrapper) voteCardsWrapper.classList.remove('multi-column');
+        const maxIdeasAllowed = Math.max(1, parseInt(ideasPerStudent, 10) || 1);
+        if (studentState.submittedIdeas > maxIdeasAllowed) {
+            studentState.submittedIdeas = maxIdeasAllowed;
+            persistIdeaCount();
+        }
 
         updatePhaseDescription(phase);
         updateStudentQuestion();
@@ -439,9 +484,14 @@
         };
         if (message) message.classList.add('hidden');
 
-        if (phase === 'brainstorm' && studentState.submittedIdeas < ideasPerStudent) {
-            ideasLeftInfo.textContent = `Pots enviar ${ideasPerStudent - studentState.submittedIdeas} idea(es).`;
-            ideaForm.classList.remove('hidden');
+        if (phase === 'brainstorm') {
+            if (studentState.submittedIdeas < maxIdeasAllowed) {
+                ideasLeftInfo.textContent = `Pots enviar ${maxIdeasAllowed - studentState.submittedIdeas} idea(es).`;
+                ideaForm.classList.remove('hidden');
+                return;
+            }
+            ideasLeftInfo.textContent = 'Has enviat totes les idees disponibles.';
+            showMessage('Ja has compartit totes les idees. Espera instruccions.');
             return;
         }
 
@@ -451,13 +501,16 @@
                 return;
             }
 
-            const wrapper = document.getElementById('vote-cards-wrapper');
+            const wrapper = voteCardsWrapper || document.getElementById('vote-cards-wrapper');
             wrapper.innerHTML = '';
             const options = type === 'poll' ? (activityConfig.pollOptions || []) : ideas;
             if (options.length === 0) {
+                wrapper.classList.remove('multi-column');
                 showMessage('Encara no hi ha opcions disponibles.');
                 return;
             }
+            const useMultiColumn = options.length >= 6 && window.innerWidth >= 1200;
+            wrapper.classList.toggle('multi-column', useMultiColumn);
 
             options.forEach(option => {
                 const id = typeof option === 'object' ? option.id : option;
@@ -494,6 +547,7 @@
         if (ideaInput.value.trim()) {
             hostConnection.send({ type: 'new-idea', payload: ideaInput.value.trim() });
             studentState.submittedIdeas++;
+            persistIdeaCount();
             ideaInput.value = '';
             renderStudentView();
         }
