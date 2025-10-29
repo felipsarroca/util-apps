@@ -105,8 +105,7 @@
         if (modeClass) classes.push(modeClass);
         resultsContainer.className = classes.join(' ');
         resultsContainer.classList.remove('poll-grid-double');
-        resultsContainer.classList.remove('idea-bubble-double');
-        resultsContainer.classList.remove('idea-bubble-density-medium', 'idea-bubble-density-tight');
+        resultsContainer.classList.remove('idea-bubble-double', 'idea-bubble-compact', 'idea-bubble-compact-tight');
     };
 
     const togglePhaseCard = (visible = true) => {
@@ -376,13 +375,13 @@
                 resultsContainer.innerHTML = '<p class="placeholder">Esperant idees...</p>';
                 return;
             }
-            const densityClass = ideaCount >= 16
-                ? 'idea-bubble-density-tight'
-                : ideaCount >= 8
-                    ? 'idea-bubble-density-medium'
+            const densityClass = ideaCount >= 20
+                ? 'idea-bubble-compact-tight'
+                : ideaCount >= 10
+                    ? 'idea-bubble-compact'
                     : '';
             if (densityClass) resultsContainer.classList.add(densityClass);
-            const useDoubleColumn = ideaCount >= 10 && window.innerWidth >= 1200;
+            const useDoubleColumn = ideaCount >= 14 && window.innerWidth >= 1200;
             resultsContainer.classList.toggle('idea-bubble-double', useDoubleColumn);
             ideas.forEach(idea => {
                 resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`;
