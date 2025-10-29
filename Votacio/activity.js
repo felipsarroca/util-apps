@@ -16,6 +16,7 @@
     const votesLeftInfo = document.getElementById('votes-left-info');
     const sessionCodeLarge = document.getElementById('session-code-large');
     const sidebarParticipants = document.getElementById('sidebar-participants');
+    const phaseCard = document.getElementById('phase-card');
     const phaseDescription = document.getElementById('phase-description');
     const studentQuestion = document.getElementById('student-question');
 
@@ -81,6 +82,11 @@
         const classes = ['live-feed'];
         if (modeClass) classes.push(modeClass);
         resultsContainer.className = classes.join(' ');
+    };
+
+    const togglePhaseCard = (visible = true) => {
+        if (!phaseCard) return;
+        phaseCard.classList.toggle('hidden', !visible);
     };
 
     const restoreStoredVoteState = () => {
@@ -295,6 +301,8 @@
         updatePhaseDescription(phase);
         updateStudentQuestion();
 
+        togglePhaseCard(phase !== 'voting');
+
         if (phase === 'brainstorm') {
             statusIndicator.textContent = 'Connectat';
             setResultsContainerMode('idea-bubble-container');
@@ -308,7 +316,7 @@
             });
         } else if (phase === 'voting') {
             statusIndicator.textContent = 'Votació en directe';
-            setResultsContainerMode('poll-grid');
+            setResultsContainerMode('poll-grid compact-poll');
             const items = type === 'poll' ? activityConfig.pollOptions : ideas;
             if (items.length === 0) {
                 resultsContainer.innerHTML = '<p class="placeholder">No hi ha res a votar.</p>';
