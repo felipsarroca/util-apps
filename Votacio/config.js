@@ -1,4 +1,4 @@
-ï»¿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     const configTitle = document.getElementById('config-title');
     const configFields = document.getElementById('config-fields');
     const configForm = document.getElementById('config-form');
@@ -10,9 +10,9 @@
 
     function setupConfigForm(type) {
         const titles = {
-            'poll': 'Configurar la votaciÃ³',
+            'poll': 'Configurar la votació',
             'brainstorm': 'Configurar pluja d\'idees',
-            'brainstorm-poll': 'Configurar activitat combinada'
+            'brainstorm-poll': 'Configurar la pluja d\'idees i la votaci? posterior'
         };
         configTitle.textContent = titles[type] || 'Configurar activitat';
 
@@ -27,16 +27,16 @@
             rowFields += '<div class="form-group"><label for="ideas-per-student">Aportacions / participant</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
         }
         if (type.includes('poll')) {
-            rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">MÃ xim de vots per participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
+            rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">Màxim de vots per participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
         if (rowFields) {
             leftContent += `<div class="form-row">${rowFields}</div>`;
         }
         leftColumn = `<div class="form-column">${leftContent}</div>`;
 
-        // Columna Dreta (nomÃ©s per a votaciÃ³)
+        // Columna Dreta (només per a votació)
         if (type.includes('poll')) {
-            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per lÃ­nia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
+            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
         }
         
         configFields.innerHTML = leftColumn + rightColumn;
@@ -85,3 +85,4 @@
         configFields.innerHTML = '<p>Error: No s\'ha especificat cap tipus d\'activitat.</p>';
     }
 });
+
