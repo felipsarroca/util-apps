@@ -240,12 +240,16 @@ body.type-brainstorm-poll #poll-options {
 
 body.type-poll .button-container,
 body.type-brainstorm-poll .button-container {
-    margin-top: 0;
-    padding-top: 0.225rem;
+    margin-top: -0.75rem;
+    padding-top: 0;
+    justify-content: flex-start;
+    align-self: start;
 }
 
-
-
+body.type-poll .button-container .launch-button,
+body.type-brainstorm-poll .button-container .launch-button {
+    align-self: start;
+}
 
 .form-group input:focus,
 .form-group textarea:focus {
