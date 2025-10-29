@@ -19,7 +19,7 @@
     const phaseDescription = document.getElementById('phase-description');
     const studentQuestion = document.getElementById('student-question');
 
-    // --- Estat de l\'aplicaciÃ³ ---
+    // --- Estat de l\'aplicació ---
     let peer = null;
     let hostConnection = null;
     let guestConnections = [];
@@ -61,7 +61,7 @@
     };
 
     const showFatalState = (message) => {
-        activityTitle.textContent = 'Sessio no disponible';
+        activityTitle.textContent = 'Sessió no disponible';
         if (statusIndicator) statusIndicator.textContent = 'Error';
         setResultsContainerMode('placeholder-state');
         if (resultsContainer) {
@@ -86,7 +86,7 @@
             return;
         }
 
-        sessionCodeDisplay.textContent = sessionId;
+        if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionId;
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
         closeActivityBtn.addEventListener('click', closeActivity);
         startVotingBtn.addEventListener('click', startVotingPhase);
@@ -124,11 +124,11 @@
         }
     }
 
-    // --- LÃ’GICA DE PEERJS (PROFESSOR) ---
+    // --- LÒGICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
         peer = new Peer(sessionId);
         peer.on('open', id => {
-            statusIndicator.textContent = 'Sessió activa';
+            statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
             renderTeacherResults();
@@ -169,12 +169,12 @@
         guestConnections.forEach(conn => conn.send({ type: 'data-update', payload }));
     }
 
-    // --- LÃ’GICA DE PEERJS (ALUMNE) ---
+    // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
         peer = new Peer();
         peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
-            hostConnection.on('open', () => statusIndicator.textContent = 'Connectat!');
+            hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
             hostConnection.on('data', handleTeacherData);
             hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
             hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
@@ -229,7 +229,7 @@
         updateStudentQuestion();
 
         if (phase === 'brainstorm') {
-            statusIndicator.textContent = 'Pluja d\'idees activa';
+            statusIndicator.textContent = 'Connectat';
             setResultsContainerMode('idea-bubble-container');
             resultsContainer.innerHTML = '';
             if (ideas.length === 0) {
@@ -240,7 +240,7 @@
                 resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`;
             });
         } else if (phase === 'voting') {
-            statusIndicator.textContent = 'VotaciÃ³ en directe';
+            statusIndicator.textContent = 'Votació en directe';
             setResultsContainerMode('poll-grid');
             const items = type === 'poll' ? activityConfig.pollOptions : ideas;
             if (items.length === 0) {
@@ -293,7 +293,7 @@
                 }, 500);
             });
         } else {
-            statusIndicator.textContent = 'Sessió en pausa';
+            statusIndicator.textContent = 'Connectat';
             setResultsContainerMode('placeholder-state');
             resultsContainer.innerHTML = '<p class="placeholder">Esperant actualitzacions...</p>';
         }
@@ -356,7 +356,7 @@
 
         showMessage('Gràcies per participar! Espera instruccions.');
     }
-    // --- GESTIÃ“ D\'EVENTS ---
+    // --- GESTIÓ D\'EVENTS ---
     function handleIdeaSubmit(e) {
         e.preventDefault();
         if (ideaInput.value.trim()) {
@@ -372,13 +372,13 @@
         const id = card.dataset.id;
         const maxVotes = parseInt(activityConfig.votesPerStudent, 10);
 
-        // Comprova si la targeta ja estÃ  seleccionada
+        // Comprova si la targeta ja està seleccionada
         const index = studentState.pendingVotes.indexOf(id);
         if (index > -1) {
             // Desselecciona
             studentState.pendingVotes.splice(index, 1);
         } else if (studentState.pendingVotes.length < maxVotes) {
-            // Selecciona si encara no s'ha arribat al lÃ­mit
+            // Selecciona si encara no s'ha arribat al límit
             studentState.pendingVotes.push(id);
         }
         updateVoteCardsUI();
@@ -429,7 +429,7 @@
         if (!phaseDescription) return;
         const messages = {
             brainstorm: 'Els alumnes estan aportant idees en directe.',
-            voting: 'Ã‰s moment de votar les propostes pujades per la classe.',
+            voting: 'És moment de votar les propostes pujades per la classe.',
             closed: 'La sessió ha finalitzat. Repassa els resultats.'
         };
         phaseDescription.textContent = messages[phase] || 'Preparant la sessió en directe.';
@@ -437,11 +437,11 @@
 
     const updateParticipantCount = () => {
         const count = guestConnections.length;
-        participantCount.textContent = count;
+        if (participantCount) participantCount.textContent = count;
         if (sidebarParticipants) sidebarParticipants.textContent = count;
     };
 
-    // --- INICI DE L\'APLICACIÃ“ ---
+    // --- INICI DE L\'APLICACIÓ ---
     init();
 });
 

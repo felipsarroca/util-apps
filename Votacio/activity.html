@@ -12,11 +12,7 @@
     <header>
         <div class="header-content">
             <h1 id="activity-title">Carregant...</h1>
-            <div class="session-details">
-                <div id="status-indicator">Connectant...</div>
-                <div class="detail-box">Codi: <strong id="session-code">----</strong></div>
-                <div class="detail-box">Participants: <strong id="participant-count">0</strong></div>
-            </div>
+            <div id="status-indicator" class="status-pill">Connectant...</div>
         </div>
     </header>
 
@@ -27,8 +23,8 @@
         <aside class="live-sidebar">
             <div class="sidebar-card">
                 <h2>Panell ràpid</h2>
-                <p>Comparteix aquest codi amb l’alumnat i segueix l’activitat en directe.</p>
-                <div class="sidebar-highlight">
+                <p>Comparteix aquest codi amb l'alumnat i segueix l'activitat en directe.</p>
+                <div class="sidebar-highlight sidebar-code">
                     <span class="label">Codi</span>
                     <span id="session-code-large">----</span>
                 </div>
@@ -55,14 +51,14 @@
         <form id="idea-form">
             <p id="ideas-left-info"></p>
             <textarea id="idea-input" placeholder="Escriu la teva idea..." required></textarea>
-            <button type="submit">Enviar Idea</button>
+            <button type="submit">Envia idea</button>
         </form>
         <div id="poll-options-container">
             <p id="votes-left-info"></p>
             <div id="vote-cards-wrapper">
                 <!-- Les targetes de votació de l'alumne aniran aquí -->
             </div>
-            <button id="submit-votes-btn" class="hidden">Envia Vots</button>
+            <button id="submit-votes-btn" class="hidden">Envia vots</button>
         </div>
     </div>
 

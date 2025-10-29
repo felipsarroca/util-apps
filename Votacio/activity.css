@@ -53,14 +53,7 @@ header {
     font-weight: 700;
 }
 
-.session-details {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    justify-content: flex-end;
-}
-
+.status-pill,
 #status-indicator {
     background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
     color: #ffffff;
@@ -71,24 +64,16 @@ header {
     box-shadow: var(--shadow-card);
 }
 
-.detail-box {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 999px;
-    padding: 0.5rem 1.25rem;
+.status-pill {
     font-size: 1rem;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    color: var(--text-color);
-    box-shadow: var(--shadow-card);
+    justify-content: center;
+    white-space: nowrap;
 }
 
-#session-code {
-    font-family: 'Fira Code', 'Courier New', monospace;
-    font-weight: 700;
-    font-size: 2.4rem;
-    letter-spacing: 0.14em;
-    color: var(--color-secondary);
+#status-indicator {
+    margin-left: auto;
 }
 
 .live-layout {
@@ -264,17 +249,34 @@ header {
 }
 
 #session-code-large {
-    font-family: 'Fira Code', 'Courier New', monospace;
-    font-size: 2.1rem;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    font-size: clamp(2.8rem, 5vw, 3.6rem);
     font-weight: 700;
-    color: var(--color-primary);
-    letter-spacing: 0.12em;
+    color: var(--color-secondary);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    text-align: center;
 }
 
 #sidebar-participants {
     font-size: 1.6rem;
     font-weight: 700;
     color: var(--color-secondary);
+    text-align: center;
+}
+
+.sidebar-code {
+    background: rgba(79, 70, 229, 0.16);
+    border: 2px solid rgba(79, 70, 229, 0.35);
+    align-items: center;
+    padding: 1.2rem 1.4rem;
+    box-shadow: 0 20px 40px rgba(79, 70, 229, 0.18);
+}
+
+.sidebar-code .label {
+    color: rgba(31, 35, 68, 0.72);
+    font-size: 0.85rem;
+    letter-spacing: 0.16em;
 }
 
 #phase-card {
@@ -508,10 +510,6 @@ header {
         align-items: flex-start;
     }
 
-    #session-code {
-        font-size: 2rem;
-    }
-
     .live-feed {
         padding: 1.5rem;
         max-height: none;
@@ -527,6 +525,12 @@ header {
     #activity-controls {
         position: static;
         padding: 1.5rem 1rem 2rem;
+    }
+
+    #status-indicator {
+        margin-left: 0;
+        margin-top: 1rem;
+        align-self: flex-start;
     }
 }
 
