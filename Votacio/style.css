@@ -33,32 +33,6 @@ main {
     max-width: 1440px;
 }
 
-/* Footer credit */
-.page-footer {
-    position: fixed;
-    left: 12px;
-    bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 1000;
-}
-
-.page-footer img {
-    height: 26px;
-    width: auto;
-}
-
-.page-footer .credit-text {
-    font-size: 0.8rem;
-    color: var(--text-dark);
-}
-
-.page-footer .credit-text a {
-    color: var(--color-primary);
-    text-decoration: underline;
-}
-
 #home-screen {
     width: 100%;
 }
@@ -90,7 +64,7 @@ main {
     background: rgba(255, 255, 255, 0.9);
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
     z-index: 1;
 }
 
@@ -109,6 +83,29 @@ main {
 .teacher-cards {
     display: grid;
     gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* Crèdit sota la targeta combinada */
+.cc-credit {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cc-credit img {
+    height: 22px;
+    width: auto;
+}
+
+.cc-credit .credit-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.cc-credit .credit-text a {
+    color: var(--color-primary);
+    text-decoration: underline;
 }
 
 .activity-card {
