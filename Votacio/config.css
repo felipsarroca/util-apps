@@ -105,204 +105,139 @@ body {
 
 #config-form {
     display: grid;
-    gap: 2.4rem;
+    gap: 2rem;
     position: relative;
     z-index: 1;
 }
 
-#config-fields {
+.config-grid {
     display: grid;
-    gap: 1.8rem;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.6rem;
 }
 
-.form-column {
+.config-column {
     display: grid;
-    gap: 1.35rem;
+    gap: 1.2rem;
 }
 
-.form-column.single-column {
-    grid-column: 1 / -1;
+.primary-column {
+    grid-column: span 7;
 }
 
-.form-group {
+.primary-column.full-width {
+    grid-column: span 12;
+}
+
+.secondary-column {
+    grid-column: span 5;
+}
+
+.config-card {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(79, 70, 229, 0.12);
+    border-radius: var(--radius-md);
+    box-shadow: 0 16px 36px rgba(24, 33, 66, 0.1);
+    padding: 1.5rem;
     display: grid;
-    gap: 0.405rem;
+    gap: 1rem;
 }
 
-.form-group.question-group {
-    gap: 0.12rem;
+.compact-card {
+    padding: 1.2rem 1.5rem;
 }
 
+.field-group {
+    display: grid;
+    gap: 0.35rem;
+}
 
+.field-row {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
 
-.form-group label {
+.field-group label {
     font-weight: 600;
     color: var(--text-dark);
-    letter-spacing: 0.02em;
-    line-height: 1.1;
 }
 
-.form-group input,
-.form-group textarea {
+.field-group input,
+.field-group textarea {
     font-family: var(--font-base);
     font-size: 1rem;
     line-height: 1.05;
     border: 1px solid rgba(79, 70, 229, 0.18);
     border-radius: var(--radius-md);
-    padding: 0.25rem 0.75rem;
-    height: 2.25rem;
-    background: rgba(255, 255, 255, 0.92);
+    padding: 0.35rem 0.85rem;
+    background: rgba(255, 255, 255, 0.95);
     box-shadow: inset 0 1px 2px rgba(24, 33, 66, 0.08);
     transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
+.field-group input {
+    height: 2.35rem;
+}
 
-.form-group textarea {
-    min-height: 100px;
-    height: 100px;
+.field-group textarea {
+    min-height: 180px;
     resize: vertical;
 }
 
-/* Columna dreta: textarea d'opcions ocupa l'espai disponible (només poll i combinada) */
-body.type-poll .form-column:last-child,
-body.type-brainstorm-poll .form-column:last-child { grid-template-rows: 1fr; }
-body.type-poll .form-column:last-child .form-group,
-body.type-brainstorm-poll .form-column:last-child .form-group { display: grid; grid-template-rows: auto 1fr; min-height: 100%; }
-body.type-poll #poll-options,
-body.type-brainstorm-poll #poll-options { min-height: 360px; height: 100%; }
-
-/* Compactació i alineació per al mode votació i combinada */
-body.type-poll #config-form,
-body.type-brainstorm-poll #config-form {
-    gap: 1.2rem;
+.config-actions {
+    display: flex;
+    justify-content: flex-end;
 }
 
-body.type-poll #config-fields,
-body.type-brainstorm-poll #config-fields {
-    gap: 1.275rem;
-    grid-template-columns: minmax(320px, 1fr) minmax(280px, 1fr);
-    align-items: start;
-}
-
-body.type-poll .form-column,
-body.type-brainstorm-poll .form-column {
-    gap: 0.78rem;
-    align-self: start;
-}
-
-body.type-poll .form-column:first-child,
-body.type-poll .form-column:last-child,
-body.type-brainstorm-poll .form-column:first-child,
-body.type-brainstorm-poll .form-column:last-child {
-    padding-top: 0.525rem;
-}
-
-body.type-poll .form-row,
-body.type-brainstorm-poll .form-row {
-    gap: 0.48rem;
-}
-
-body.type-poll .question-group,
-body.type-brainstorm-poll .question-group {
-    gap: 0.18rem;
-}
-
-body.type-poll .question-group label,
-body.type-brainstorm-poll .question-group label {
-    margin: 0 0 0.18rem 0;
-    display: block;
-    position: static;
-}
-
-body.type-poll .form-group,
-body.type-brainstorm-poll .form-group {
-    gap: 0.18rem;
-}
-
-body.type-poll .form-group input,
-body.type-brainstorm-poll .form-group input {
-    height: 2.25rem;
-    padding: 0.3rem 0.75rem;
-}
-
-body.type-poll .form-group textarea:not(#poll-options),
-body.type-brainstorm-poll .form-group textarea:not(#poll-options) {
-    min-height: 135px;
-    height: 135px;
-}
-
-body.type-poll #poll-options,
-body.type-brainstorm-poll #poll-options {
-    min-height: 330px;
-    margin-top: 0.225rem;
-}
-
-body.type-poll .form-column:last-child,
-body.type-brainstorm-poll .form-column:last-child {
-    display: grid;
-    gap: 0.9rem;
-    align-content: start;
-}
-
-body.type-poll .form-column:last-child .form-group,
-body.type-brainstorm-poll .form-column:last-child .form-group {
-    align-self: stretch;
-}
-
-body.type-poll .button-container,
-body.type-brainstorm-poll .button-container {
-    margin-top: 0;
-    padding-top: 0.35rem;
+.config-actions.align-start {
     justify-content: flex-start;
-    align-self: start;
 }
 
-body.type-poll .config-container,
-body.type-brainstorm-poll .config-container {
-    padding-bottom: 2.25rem;
+.button-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
 }
 
-body.type-poll .button-container .launch-button,
-body.type-brainstorm-poll .button-container .launch-button {
-    align-self: start;
+.hidden-column {
+    display: none;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
+.field-group input[type="number"] {
+    text-align: center;
+}
+
+.field-group input:focus,
+.field-group textarea:focus {
     outline: none;
     border-color: rgba(79, 70, 229, 0.6);
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
 }
 
-.form-row {
-    display: grid;
-    gap: 0.8rem;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-}
-
-.form-group input[type="number"] {
-    text-align: center;
-    -moz-appearance: textfield;
-    max-width: 84px;
-    justify-self: start;
-}
-
-.form-group input[type="number"]::-webkit-outer-spin-button,
-.form-group input[type="number"]::-webkit-inner-spin-button {
+.field-group input[type="number"]::-webkit-outer-spin-button,
+.field-group input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.button-container {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: flex-end;
-    margin-top: -1.4rem;
-    align-self: start;
+body.type-poll .secondary-column,
+body.type-brainstorm-poll .secondary-column {
+    display: grid;
 }
 
-.button-container.align-start {
+body.type-poll .config-card textarea,
+body.type-brainstorm-poll .config-card textarea {
+    min-height: 220px;
+}
+
+body.type-poll .config-actions,
+body.type-brainstorm-poll .config-actions {
+    justify-content: flex-start;
+}
+
+body.type-poll .button-container,
+body.type-brainstorm-poll .button-container {
     justify-content: flex-start;
 }
 
@@ -331,44 +266,62 @@ body.type-brainstorm-poll .button-container .launch-button {
     font-size: 1rem;
 }
 
-@media (max-width: 980px) {
-    .config-container {
-        padding: 2.2rem 2.4rem 2.6rem;
+@media (max-width: 1100px) {
+    .config-grid {
+        gap: 1.2rem;
     }
 
-    .config-header {
-        padding: 0.9rem 1.2rem;
+    .primary-column,
+    .secondary-column {
+        grid-column: span 12;
     }
 
-    .button-container {
+    .config-actions {
         justify-content: center;
     }
 }
 
+@media (max-width: 820px) {
+    .config-container {
+        padding: 2.1rem 1.9rem 2.3rem;
+    }
+
+    .config-header {
+        padding: 0.9rem 1.3rem;
+    }
+
+    .config-grid {
+        gap: 1.1rem;
+    }
+
+    .config-card {
+        padding: 1.35rem;
+    }
+
+    .compact-card {
+        padding: 1.15rem 1.35rem;
+    }
+}
 
 @media (max-width: 640px) {
-    .config-header {
-        flex-direction: column;
-        align-items: flex-start;
+    body {
+        padding: 2.3rem 1.2rem;
+    }
+
+    .config-container {
+        padding: 1.9rem 1.2rem 2.1rem;
+    }
+
+    .config-grid {
+        grid-template-columns: 1fr;
+        gap: 1.2rem;
+    }
+
+    .config-column {
         gap: 1rem;
     }
 
-    .button-container {
+    .config-actions {
         justify-content: center;
     }
-
-    body {
-        padding: 2.5rem 1.3rem;
-    }
-
-    .config-container {
-        padding: 2rem 1.6rem 2.4rem;
-    }
-
-    #config-fields {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
 }
-
-
