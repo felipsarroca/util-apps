@@ -9,9 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const activityType = params.get('type') || 'brainstorm';
 
     const titles = {
-        poll: 'Configurar la votació',
-        brainstorm: 'Configurar pluja d\'idees',
-        'brainstorm-poll': 'Configurar activitat combinada'
+        poll: 'Configura la votació',
+        brainstorm: 'Configura la pluja d\'idees',
+        'brainstorm-poll': 'Configura la pluja d\'idees i la votació'
     };
 
     function buildPrimaryColumn(type) {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type.includes('brainstorm')) {
             extras.push(`
                 <div class="field-group">
-                    <label for="ideas-per-student">Màxim d'aportacions per participant</label>
+                    <label for="ideas-per-student">Aportacions per participant</label>
                     <input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1">
                 </div>
             `);
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type.includes('poll')) {
             extras.push(`
                 <div class="field-group">
-                    <label for="votes-per-student">Màxim de vots per participant</label>
+                    <label for="votes-per-student">Vots per participant</label>
                     <input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1">
                 </div>
             `);
