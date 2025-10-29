@@ -133,13 +133,14 @@ body {
 
 /* Tighter spacing for specific fields */
 .form-group.compact-gap {
-    gap: 0.2rem;
+    gap: 0.1rem;
 }
 
 .form-group label {
     font-weight: 600;
     color: var(--text-dark);
     letter-spacing: 0.02em;
+    line-height: 1.15;
 }
 
 .form-group input,
@@ -156,11 +157,11 @@ body {
 
 /* Camps específics més compactes */
 #question {
-    padding: 0.55rem 0.85rem;
+    padding: 0.45rem 0.75rem;
 }
 
 #votes-per-student {
-    padding: 0.45rem 0.65rem;
+    padding: 0.35rem 0.6rem;
 }
 
 .form-group textarea {
@@ -169,11 +170,11 @@ body {
 }
 
 /* Inputs més compactes a la columna esquerra */
-.form-column:first-child .form-group { gap: 0.2rem; }
-.form-column:first-child .form-group input { padding: 0.55rem 0.85rem; }
+.form-column:first-child .form-group { gap: 0.1rem; }
+.form-column:first-child .form-group input { padding: 0.5rem 0.75rem; }
 
 .form-column:first-child .form-row .form-group input[type="number"] {
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.6rem;
 }
 
 /* Columna dreta: textarea d'opcions ocupa l'espai disponible */
@@ -282,3 +283,6 @@ body {
         gap: 1.5rem;
     }
 }
+
+
+
