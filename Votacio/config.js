@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type.includes('brainstorm')) {
             extras.push(`
                 <div class="field-group">
-                    <label for="ideas-per-student">Aportacions / participant</label>
+                    <label for="ideas-per-student">Màxim d'aportacions per participant</label>
                     <input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1">
                 </div>
             `);

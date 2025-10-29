@@ -206,6 +206,9 @@ body {
 
 .field-group input[type="number"] {
     text-align: center;
+    width: 5ch;
+    min-width: 5ch;
+    justify-self: start;
 }
 
 .field-group input:focus,

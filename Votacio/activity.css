@@ -392,13 +392,22 @@ header {
     touch-action: manipulation;
 }
 
-.control-btn i {
-    font-size: 1rem;
+.live-sidebar .control-btn {
+    width: 100%;
+    justify-content: center;
 }
 
 #start-voting-btn {
     background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
     color: #ffffff;
+}
+
+#start-voting-btn:not(.hidden) {
+    margin-top: 0.75rem;
+}
+
+.control-btn i {
+    font-size: 1rem;
 }
 
 .control-btn.danger-btn {
