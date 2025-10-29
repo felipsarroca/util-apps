@@ -41,7 +41,7 @@
 
         // Columna Dreta (només per a votació)
         if (type.includes('poll')) {
-            rightColumn = '<div class="form-column form-column-right"><div class="form-group"><label for="poll-options">Opcions (una per linia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
+            rightColumn = '<div class="form-column form-column-right"><div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
         }
         
         configFields.innerHTML = leftColumn + rightColumn;

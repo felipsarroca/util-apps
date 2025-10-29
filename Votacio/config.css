@@ -156,49 +156,6 @@ body {
     resize: vertical;
 }
 
-/* Ajustos compactes per a la columna esquerra en configuració de votació */
-body.type-poll #config-form {
-    gap: 1.25rem;
-}
-
-body.type-poll #config-fields {
-    gap: 1rem;
-}
-
-body.type-poll .form-column-left {
-    gap: 0.25rem;
-}
-
-body.type-poll .form-column-left .form-group {
-    gap: 0.12rem;
-}
-
-body.type-poll .form-column-left .form-group label {
-    font-size: 0.95rem;
-    line-height: 1.1;
-}
-
-body.type-poll .form-column-left input,
-body.type-poll .form-column-left textarea {
-    padding: 0.25rem 0.75rem;
-    line-height: 1.05;
-    min-height: 1.05rem;
-}
-
-body.type-poll .form-column-left .form-group textarea {
-    min-height: 60px;
-}
-
-body.type-poll .form-column-left .form-row {
-    gap: 0.25rem;
-}
-
-body.type-poll .form-column-left .form-row .form-group input {
-    max-width: 72px;
-    padding: 0.25rem 0.6rem;
-    min-height: 1.9rem;
-}
-
 /* Columna dreta: textarea d'opcions ocupa l'espai disponible (només poll i combinada) */
 body.type-poll .form-column:last-child,
 body.type-brainstorm-poll .form-column:last-child { grid-template-rows: 1fr; }
