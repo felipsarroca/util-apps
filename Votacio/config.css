@@ -156,6 +156,24 @@ body {
     resize: vertical;
 }
 
+/* Ajustos compactes per a la columna esquerra en configuració de votació */
+body.type-poll .form-column:first-child {
+    gap: 0.75rem;
+}
+
+body.type-poll .form-column:first-child .form-group {
+    gap: 0.25rem;
+}
+
+body.type-poll .form-row {
+    gap: 0.45rem;
+}
+
+body.type-poll .form-column:first-child input,
+body.type-poll .form-column:first-child textarea {
+    padding: 0.5rem 0.9rem;
+}
+
 /* Columna dreta: textarea d'opcions ocupa l'espai disponible (només poll i combinada) */
 body.type-poll .form-column:last-child,
 body.type-brainstorm-poll .form-column:last-child { grid-template-rows: 1fr; }
