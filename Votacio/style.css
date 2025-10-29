@@ -91,7 +91,7 @@ main {
     align-items: center;
     gap: 1.1rem;
     padding: 1.15rem 1.35rem;
-    min-height: 120px;
+    min-height: 102px;
     border-radius: var(--radius-md);
     background: rgba(79, 70, 229, 0.08);
     border: 1px solid rgba(79, 70, 229, 0.15);

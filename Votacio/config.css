@@ -64,6 +64,13 @@ body {
     box-shadow: var(--shadow-card);
 }
 
+/* Ensure icon sits to the left of title + subtitle */
+.header-flex {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .config-header::after {
     content: '';
     position: absolute;
@@ -120,6 +127,11 @@ body {
 .form-group {
     display: grid;
     gap: 0.6rem;
+}
+
+/* Tighter spacing for specific fields */
+.form-group.compact-gap {
+    gap: 0.35rem;
 }
 
 .form-group label {

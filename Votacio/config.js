@@ -20,14 +20,14 @@
         let rightColumn = '';
 
         // Columna Esquerra
-        let leftContent = '<div class="form-group"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
+        let leftContent = '<div class="form-group compact-gap"><label for="question">Tema o pregunta</label><input type="text" id="question" name="question" required></div>';
         let rowFields = '';
 
         if (type.includes('brainstorm')) {
             rowFields += '<div class="form-group"><label for="ideas-per-student">Aportacions / participant</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
         }
         if (type.includes('poll')) {
-            rowFields += '<div class="form-group"><label for="votes-per-student">Vots / participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
+            rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">Màxim de vots per participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';
         }
         if (rowFields) {
             leftContent += `<div class="form-row">${rowFields}</div>`;
