@@ -130,6 +130,14 @@ header {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.idea-bubble-container.idea-bubble-density-medium {
+    gap: 0.75rem;
+}
+
+.idea-bubble-container.idea-bubble-density-tight {
+    gap: 0.6rem;
+}
+
 .idea-bubble {
     background: linear-gradient(135deg, rgba(79, 70, 229, 0.85), rgba(14, 165, 233, 0.85));
     color: #ffffff;
@@ -144,6 +152,18 @@ header {
     justify-content: center;
     text-align: center;
     min-height: 110px;
+}
+
+.idea-bubble-container.idea-bubble-density-medium .idea-bubble {
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+    min-height: 90px;
+}
+
+.idea-bubble-container.idea-bubble-density-tight .idea-bubble {
+    padding: 0.7rem 0.85rem;
+    font-size: 0.85rem;
+    min-height: 70px;
 }
 
 .idea-bubble:hover {

@@ -106,6 +106,7 @@
         resultsContainer.className = classes.join(' ');
         resultsContainer.classList.remove('poll-grid-double');
         resultsContainer.classList.remove('idea-bubble-double');
+        resultsContainer.classList.remove('idea-bubble-density-medium', 'idea-bubble-density-tight');
     };
 
     const togglePhaseCard = (visible = true) => {
@@ -370,11 +371,18 @@
             setResultsContainerMode('idea-bubble-container');
             resultsContainer.classList.remove('poll-grid-double');
             resultsContainer.innerHTML = '';
-            if (ideas.length === 0) {
+            const ideaCount = ideas.length;
+            if (ideaCount === 0) {
                 resultsContainer.innerHTML = '<p class="placeholder">Esperant idees...</p>';
                 return;
             }
-            const useDoubleColumn = ideas.length >= 10 && window.innerWidth >= 1200;
+            const densityClass = ideaCount >= 16
+                ? 'idea-bubble-density-tight'
+                : ideaCount >= 8
+                    ? 'idea-bubble-density-medium'
+                    : '';
+            if (densityClass) resultsContainer.classList.add(densityClass);
+            const useDoubleColumn = ideaCount >= 10 && window.innerWidth >= 1200;
             resultsContainer.classList.toggle('idea-bubble-double', useDoubleColumn);
             ideas.forEach(idea => {
                 resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`;
