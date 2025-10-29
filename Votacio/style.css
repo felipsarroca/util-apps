@@ -33,6 +33,32 @@ main {
     max-width: 1440px;
 }
 
+/* Footer credit */
+.page-footer {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.page-footer img {
+    height: 26px;
+    width: auto;
+}
+
+.page-footer .credit-text {
+    font-size: 0.8rem;
+    color: var(--text-dark);
+}
+
+.page-footer .credit-text a {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
 #home-screen {
     width: 100%;
 }
@@ -90,8 +116,8 @@ main {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.95rem 1.1rem;
-    min-height: 102px;
+    padding: 0.7rem 0.9rem;
+    min-height: 80px;
     border-radius: var(--radius-md);
     background: rgba(79, 70, 229, 0.08);
     border: 1px solid rgba(79, 70, 229, 0.15);
@@ -100,9 +126,9 @@ main {
 }
 
 .activity-illustration {
-    flex: 0 0 3.8rem;
-    width: 3.8rem;
-    height: 3.8rem;
+    flex: 0 0 3.2rem;
+    width: 3.2rem;
+    height: 3.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -113,7 +139,7 @@ main {
 }
 
 .activity-illustration i {
-    font-size: 1.9rem;
+    font-size: 1.6rem;
     color: var(--color-primary);
 }
 
@@ -126,7 +152,7 @@ main {
 
 .activity-info h4 {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
