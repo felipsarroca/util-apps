@@ -50,6 +50,27 @@
         }
     };
 
+    const normalizeActivityConfig = (config = {}) => {
+        const normalized = { ...config };
+        if (normalized.ideasPerStudent !== undefined) {
+            const parsedIdeas = parseInt(normalized.ideasPerStudent, 10);
+            normalized.ideasPerStudent = Number.isFinite(parsedIdeas) && parsedIdeas > 0 ? parsedIdeas : 1;
+        }
+        const votesValue = normalized.votesPerStudent ?? normalized.votesPerPerson;
+        if (votesValue !== undefined) {
+            const parsedVotes = parseInt(votesValue, 10);
+            normalized.votesPerStudent = Number.isFinite(parsedVotes) && parsedVotes > 0 ? parsedVotes : 1;
+        } else {
+            normalized.votesPerStudent = 1;
+        }
+        return normalized;
+    };
+
+    const getVotesPerStudent = () => {
+        const votes = parseInt(activityConfig?.votesPerStudent, 10);
+        return Number.isFinite(votes) && votes > 0 ? votes : 1;
+    };
+
     const voteStorageKey = () => (sessionId ? `votacio-${sessionId}-vot` : null);
 
     const setSubmitShortcutTarget = (target) => {
@@ -176,6 +197,7 @@
                 showFatalState('La configuració rebuda és buida.');
                 return;
             }
+            activityConfig = normalizeActivityConfig(activityConfig);
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             activityControls.classList.remove('hidden');
             closeActivityBtn.classList.remove('hidden');
@@ -258,10 +280,10 @@
     function handleTeacherData(data) {
         if (data.type === 'session-data' || data.type === 'data-update') {
             const payload = data.payload || {};
-            const incomingConfig = payload.config;
-            const previousType = activityConfig?.type;
-            const previousPhase = sessionData?.phase;
-            if (incomingConfig) activityConfig = incomingConfig;
+        const incomingConfig = payload.config;
+        const previousType = activityConfig?.type;
+        const previousPhase = sessionData?.phase;
+        if (incomingConfig) activityConfig = normalizeActivityConfig(incomingConfig);
             sessionData = payload.data ?? payload;
 
             if (incomingConfig && incomingConfig.type !== previousType) {
@@ -345,6 +367,8 @@
                 const text = typeof item === 'object' ? item.text : item;
                 const currentVotes = votes[id] || 0;
                 const percentage = totalVotes > 0 ? (currentVotes / totalVotes) * 100 : 0;
+                const percentageText = percentage.toFixed(1);
+                const percentageDisplay = percentageText.replace('.', ',');
 
                 const previousRank = previousRanks[id];
                 const currentRank = index + 1;
@@ -354,13 +378,20 @@
                     if (currentRank < previousRank) animationClass = 'rank-up-animation';
                     else if (currentRank > previousRank) animationClass = 'rank-down-animation';
                 }
-
                 resultsContainer.innerHTML += `
-                    <div class="poll-result-bar-live ${animationClass}" data-item-id="${id}" data-rank="${currentRank}">
-                        <div class="poll-live-label">${text}</div>
-                        <div class="poll-live-votes">${currentVotes}</div>
-                        <div class="poll-live-bar" style="width: ${percentage}%" data-percentage="${percentage.toFixed(1)}"></div>
-                    </div>`;
+                    <article class="poll-result-card ${animationClass}" data-item-id="${id}" data-rank="${currentRank}">
+                        <div class="poll-card-top">
+                            <span class="poll-card-rank">${currentRank}.</span>
+                            <span class="poll-card-title">${text}</span>
+                            <span class="poll-card-metrics">
+                                <span class="poll-card-count" aria-label="Vots">${currentVotes}</span>
+                                <span class="poll-card-percent">${percentageDisplay}%</span>
+                            </span>
+                        </div>
+                        <div class="poll-card-progress" role="progressbar" aria-valuenow="${percentageText}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="poll-card-progress-bar" style="width: ${percentage}%" data-percentage="${percentageText}"></div>
+                        </div>
+                    </article>`;
 
                 setTimeout(() => {
                     const element = document.querySelector('[data-item-id="' + id + '"]');
@@ -418,7 +449,6 @@
                 return;
             }
 
-            votesLeftInfo.textContent = 'Pots triar una sola opció.';
             options.forEach(option => {
                 const id = typeof option === 'object' ? option.id : option;
                 const textValue = typeof option === 'object' ? option.text : option;
@@ -431,6 +461,8 @@
                 card.addEventListener('click', handleVoteCardClick);
                 wrapper.appendChild(card);
             });
+
+            updateVoteCardsUI();
 
             const submitButton = document.getElementById('submit-votes-btn');
             submitButton.classList.remove('hidden');
@@ -462,20 +494,29 @@
 
         const card = event.currentTarget;
         const id = card.dataset.id;
+        const votesPerStudent = getVotesPerStudent();
 
         const index = studentState.pendingVotes.indexOf(id);
         if (index > -1) {
             studentState.pendingVotes.splice(index, 1);
-        } else {
-            studentState.pendingVotes = [id];
+            updateVoteCardsUI();
+            return;
         }
+
+        if (studentState.pendingVotes.length >= votesPerStudent) {
+            updateVoteCardsUI();
+            return;
+        }
+
+        studentState.pendingVotes.push(id);
         updateVoteCardsUI();
     }
 
 
     function updateVoteCardsUI() {
         const cards = document.querySelectorAll('.vote-card');
-        const hasSelection = studentState.pendingVotes.length > 0;
+        const votesPerStudent = getVotesPerStudent();
+        const selectedCount = studentState.pendingVotes.length;
 
         cards.forEach(card => {
             const isSelected = studentState.pendingVotes.includes(card.dataset.id);
@@ -483,9 +524,28 @@
             card.setAttribute('aria-pressed', String(isSelected));
         });
 
-        votesLeftInfo.textContent = hasSelection
-            ? 'Has seleccionat la teva opció.'
-            : 'Encara no has seleccionat cap opció.';
+        if (votesLeftInfo) {
+            let message = '';
+            if (selectedCount === 0) {
+                message = votesPerStudent === 1
+                    ? 'Selecciona una opció per continuar.'
+                    : `Pots seleccionar fins a ${votesPerStudent} opcions.`;
+            } else if (selectedCount < votesPerStudent) {
+                if (votesPerStudent === 1) {
+                    message = 'Has seleccionat la teva opció.';
+                } else {
+                    const remaining = votesPerStudent - selectedCount;
+                    message = remaining === 1
+                        ? 'Pots seleccionar una opció més.'
+                        : `Pots seleccionar ${remaining} opcions més.`;
+                }
+            } else {
+                message = votesPerStudent === 1
+                    ? 'Has seleccionat la teva opció.'
+                    : 'Ja has seleccionat el màxim d\'opcions.';
+            }
+            votesLeftInfo.textContent = message;
+        }
 
         refreshSubmitShortcutState();
     }
@@ -498,7 +558,7 @@
         }
 
         if (hostConnection) {
-            hostConnection.send({ type: 'vote-batch', payload: { ids: studentState.pendingVotes } });
+            hostConnection.send({ type: 'vote-batch', payload: { ids: [...studentState.pendingVotes] } });
         }
         studentState.castVotes = studentState.pendingVotes.length;
         persistVoteState();

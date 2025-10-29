@@ -148,61 +148,79 @@ header {
     gap: 1rem;
 }
 
-.poll-result-bar-live {
-    position: relative;
+.poll-result-card {
     background: #f5f6ff;
     border-radius: var(--radius-md);
-    padding: 1.1rem 1.3rem;
-    overflow: hidden;
     box-shadow: var(--shadow-card);
+    padding: 0.75rem 0.95rem;
     display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.poll-card-top {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    gap: 0.65rem;
+}
+
+.poll-card-rank {
+    font-weight: 700;
+    color: var(--color-primary);
+    font-size: 0.95rem;
+}
+
+.poll-card-title {
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.2;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.poll-card-metrics {
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.poll-card-count {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--color-primary);
+}
+
+.poll-card-percent {
+    font-size: 0.8rem;
+}
+
+.poll-card-progress {
+    position: relative;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: rgba(79, 70, 229, 0.16);
+    overflow: hidden;
+}
+
+.poll-card-progress-bar {
+    position: absolute;
+    inset: 0;
+    width: 0;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.6), rgba(14, 165, 233, 0.45));
+    transition: width 0.45s ease;
 }
 
 .live-feed.compact-poll {
-    gap: 0.75rem;
+    gap: 0.7rem;
 }
 
-.live-feed.compact-poll .poll-result-bar-live {
-    padding: 0.55rem 1rem;
-    min-height: 3.1rem;
-    gap: 0.6rem;
-}
-
-.live-feed.compact-poll .poll-live-label {
-    font-size: 0.95rem;
-    line-height: 1.3;
-}
-
-.live-feed.compact-poll .poll-live-votes {
-    font-size: 1rem;
-}
-
-.poll-live-label {
-    font-weight: 600;
-    flex: 1 1 auto;
-    color: var(--text-color);
-    z-index: 1;
-}
-
-.poll-live-votes {
-    font-weight: 700;
-    font-size: 1.1rem;
-    z-index: 1;
-    color: var(--color-primary);
-    min-width: 2.5rem;
-    text-align: right;
-}
-
-.poll-live-bar {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(14, 165, 233, 0.25));
-    transform-origin: left center;
-    transition: width 0.45s ease, background 0.3s ease;
-    border-radius: inherit;
+.live-feed.compact-poll .poll-result-card {
+    padding: 0.6rem 0.8rem;
+    gap: 0.45rem;
 }
 
 .rank-up-animation {
