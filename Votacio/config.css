@@ -151,25 +151,6 @@ body {
 }
 
 
-/* Custom spacing for poll configuration */
-body.type-poll .form-column:first-child > .form-group:first-child {
-    gap: 0.15rem;
-}
-
-body.type-poll #question {
-    padding-top: 0.475rem;
-    padding-bottom: 0.475rem;
-}
-
-body.type-poll .form-row .form-group {
-    gap: 0.15rem;
-}
-
-body.type-poll #votes-per-student {
-    padding-top: 0.475rem;
-    padding-bottom: 0.475rem;
-}
-
 .form-group textarea {
     min-height: 220px;
     resize: vertical;
