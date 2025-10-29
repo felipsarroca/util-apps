@@ -39,7 +39,7 @@ main {
 
 .home-container {
     display: grid;
-    grid-template-columns: minmax(280px, 1fr) minmax(420px, 1.4fr);
+    grid-template-columns: minmax(260px, 0.9fr) minmax(480px, 1.6fr);
     gap: 0;
     background: var(--color-surface);
     border-radius: var(--radius-lg);
@@ -60,11 +60,11 @@ main {
 
 .teacher-zone {
     position: relative;
-    padding: 3rem 2.75rem;
+    padding: 2.6rem 2.5rem;
     background: rgba(255, 255, 255, 0.9);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.75rem;
     z-index: 1;
 }
 
@@ -86,11 +86,13 @@ main {
 }
 
 .activity-card {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 1.2rem;
-    padding: 1.3rem 1.5rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.4rem 1.5rem;
+    min-height: 230px;
     border-radius: var(--radius-md);
     background: rgba(79, 70, 229, 0.08);
     border: 1px solid rgba(79, 70, 229, 0.15);
@@ -98,25 +100,37 @@ main {
     transition: transform 0.25s ease, box-shadow 0.25s ease, border 0.25s ease;
 }
 
-.activity-card i {
-    font-size: 1.8rem;
-    color: var(--color-primary);
-    background: rgba(79, 70, 229, 0.15);
-    width: 3.2rem;
-    height: 3.2rem;
-    border-radius: 16px;
-    display: grid;
-    place-items: center;
+.activity-illustration {
+    flex: 0 0 66%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: rgba(79, 70, 229, 0.12);
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    overflow: hidden;
 }
 
-.activity-card h4 {
+.activity-illustration i {
+    font-size: 3.4rem;
+    color: var(--color-primary);
+}
+
+.activity-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1 1 auto;
+}
+
+.activity-info h4 {
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
 }
 
-.activity-card p {
-    margin: 0.25rem 0 0 0;
+.activity-info p {
+    margin: 0;
     color: var(--text-muted);
     font-size: 0.95rem;
 }
