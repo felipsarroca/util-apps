@@ -172,61 +172,74 @@ body.type-brainstorm-poll .form-column:last-child .form-group { display: grid; g
 body.type-poll #poll-options,
 body.type-brainstorm-poll #poll-options { min-height: 360px; height: 100%; }
 
-/* Compactació i alineació per al mode votació */
-body.type-poll #config-form {
+/* Compactació i alineació per al mode votació i combinada */
+body.type-poll #config-form,
+body.type-brainstorm-poll #config-form {
     gap: 0.8rem;
 }
 
-body.type-poll #config-fields {
+body.type-poll #config-fields,
+body.type-brainstorm-poll #config-fields {
     gap: 0.85rem;
     grid-template-columns: minmax(320px, 1fr) minmax(280px, 1fr);
     align-items: start;
 }
 
-body.type-poll .form-column {
+body.type-poll .form-column,
+body.type-brainstorm-poll .form-column {
     gap: 0.52rem;
     align-self: start;
 }
 
 body.type-poll .form-column:first-child,
-body.type-poll .form-column:last-child {
+body.type-poll .form-column:last-child,
+body.type-brainstorm-poll .form-column:first-child,
+body.type-brainstorm-poll .form-column:last-child {
     padding-top: 0.35rem;
 }
 
-body.type-poll .form-row {
+body.type-poll .form-row,
+body.type-brainstorm-poll .form-row {
     gap: 0.32rem;
 }
 
-body.type-poll .question-group {
+body.type-poll .question-group,
+body.type-brainstorm-poll .question-group {
     gap: 0.12rem;
 }
 
-body.type-poll .question-group label {
+body.type-poll .question-group label,
+body.type-brainstorm-poll .question-group label {
     margin: 0 0 0.12rem 0;
     display: block;
     position: static;
 }
 
-body.type-poll .form-group {
+body.type-poll .form-group,
+body.type-brainstorm-poll .form-group {
     gap: 0.12rem;
 }
 
-body.type-poll .form-group input {
+body.type-poll .form-group input,
+body.type-brainstorm-poll .form-group input {
     height: 2rem;
     padding: 0.2rem 0.65rem;
 }
 
-body.type-poll .form-group textarea:not(#poll-options) {
+body.type-poll .form-group textarea:not(#poll-options),
+body.type-brainstorm-poll .form-group textarea:not(#poll-options) {
     min-height: 90px;
     height: 90px;
 }
 
-body.type-poll #poll-options {
+body.type-poll #poll-options,
+body.type-brainstorm-poll #poll-options {
     min-height: 220px;
     margin-top: 0.15rem;
 }
 
-body.type-poll .button-container {
+body.type-poll .button-container,
+body.type-brainstorm-poll .button-container {
     margin-top: 0;
     padding-top: 0.15rem;
 }
