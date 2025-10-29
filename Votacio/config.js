@@ -45,8 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (extras.length) {
+            const hasDouble = extras.length > 1;
+            const cardClasses = ['config-card', 'compact-card'];
+            if (hasDouble) cardClasses.push('compact-card-double');
+
             blocks.push(`
-                <div class="config-card compact-card">
+                <div class="${cardClasses.join(' ')}">
                     <div class="field-row">
                         ${extras.join('')}
                     </div>

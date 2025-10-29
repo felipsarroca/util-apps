@@ -161,6 +161,14 @@ body {
     justify-self: start;
 }
 
+.compact-card-double {
+    max-width: 460px;
+}
+
+.compact-card-double .field-row {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+}
+
 .field-group {
     display: grid;
     gap: 0.35rem;
