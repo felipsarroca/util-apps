@@ -54,8 +54,8 @@ body {
 .config-header {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    padding: 1rem 1.4rem;
+    gap: 1rem;
+    padding: 0.85rem 1.2rem;
     border-radius: var(--radius-lg);
     background: rgba(15, 23, 42, 0.85);
     color: #ffffff;
@@ -82,9 +82,9 @@ body {
 }
 
 .header-icon {
-    width: 56px;
+    width: 48px;
     flex-shrink: 0;
-    height: 56px;
+    height: 48px;
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.18);
     padding: 0.75rem;
@@ -92,12 +92,12 @@ body {
 
 #config-title {
     margin: 0;
-    font-size: clamp(2rem, 2.8vw, 2.8rem);
+    font-size: clamp(1.8rem, 2.5vw, 2.5rem);
     font-weight: 700;
 }
 
 .config-header p {
-    margin: 0.35rem 0 0 0;
+    margin: 0.25rem 0 0 0;
     color: rgba(255, 255, 255, 0.78);
     max-width: 520px;
 }

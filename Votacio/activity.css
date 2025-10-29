@@ -31,25 +31,25 @@ body {
 }
 
 header {
-    padding: 2.5rem 2.5rem 0;
+    padding: 1.6rem 1.6rem 0;
 }
 
 .header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 2rem;
+    gap: 1rem;
     background: var(--color-surface-alt);
     backdrop-filter: blur(10px);
     border-radius: var(--radius-lg);
-    padding: 1.75rem 2rem;
+    padding: 1.1rem 1.4rem;
     box-shadow: var(--shadow-soft);
     border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 #activity-title {
     margin: 0;
-    font-size: clamp(1.8rem, 2.5vw, 2.8rem);
+    font-size: clamp(1.6rem, 2vw, 2.4rem);
     font-weight: 700;
 }
 
@@ -59,13 +59,13 @@ header {
     color: #ffffff;
     font-weight: 600;
     letter-spacing: 0.02em;
-    padding: 0.5rem 1.25rem;
+    padding: 0.4rem 1rem;
     border-radius: 999px;
     box-shadow: var(--shadow-card);
 }
 
 .status-pill {
-    font-size: 1rem;
+    font-size: 0.95rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -79,24 +79,24 @@ header {
 .live-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
-    gap: 2rem;
+    gap: 1.5rem;
     max-width: 1400px;
-    margin: 2.5rem auto 2rem;
-    padding: 0 2.5rem 2.5rem;
+    margin: 1.8rem auto 1.6rem;
+    padding: 0 2rem 2rem;
     box-sizing: border-box;
 }
 
 .live-feed {
     background: rgba(255, 255, 255, 0.94);
     border-radius: var(--radius-lg);
-    padding: 2rem;
+    padding: 1.6rem;
     box-shadow: var(--shadow-elevated);
     min-height: 60vh;
     max-height: calc(100vh - 260px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.1rem;
 }
 
 .live-feed.placeholder-state {
@@ -276,22 +276,22 @@ header {
 .live-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.2rem;
     align-items: stretch;
 }
 
 .sidebar-card {
     background: rgba(255, 255, 255, 0.9);
     border-radius: var(--radius-lg);
-    padding: 1.6rem 1.8rem;
+    padding: 1.2rem 1.4rem;
     box-shadow: var(--shadow-elevated);
     border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .sidebar-card h2,
 .sidebar-card h3 {
-    margin: 0 0 0.6rem 0;
-    font-size: 1.3rem;
+    margin: 0 0 0.4rem 0;
+    font-size: 1.2rem;
 }
 
 .sidebar-card p {
@@ -301,11 +301,11 @@ header {
 }
 
 .sidebar-highlight {
-    margin-top: 1.2rem;
+    margin-top: 0.9rem;
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
-    padding: 0.9rem 1rem;
+    padding: 0.7rem 0.85rem;
     border-radius: var(--radius-md);
     background: rgba(79, 70, 229, 0.08);
 }
@@ -320,7 +320,7 @@ header {
 
 #session-code-large {
     font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
-    font-size: clamp(2.8rem, 5vw, 3.6rem);
+    font-size: clamp(2.6rem, 4.5vw, 3.2rem);
     font-weight: 700;
     color: var(--color-secondary);
     letter-spacing: 0.18em;
@@ -340,7 +340,7 @@ header {
     background: rgba(79, 70, 229, 0.16);
     border: 2px solid rgba(79, 70, 229, 0.35);
     align-items: center;
-    padding: 1.2rem 1.4rem;
+    padding: 1rem 1.2rem;
     box-shadow: 0 20px 40px rgba(79, 70, 229, 0.18);
 }
 
