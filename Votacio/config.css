@@ -246,6 +246,11 @@ body.type-brainstorm-poll .button-container {
     align-self: start;
 }
 
+body.type-poll .config-container,
+body.type-brainstorm-poll .config-container {
+    padding-bottom: 2.25rem;
+}
+
 body.type-poll .button-container .launch-button,
 body.type-brainstorm-poll .button-container .launch-button {
     align-self: start;
