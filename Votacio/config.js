@@ -36,11 +36,12 @@
         if (rowFields) {
             leftContent += `<div class="form-row">${rowFields}</div>`;
         }
-        leftColumn = `<div class="form-column">${leftContent}</div>`;
+        const leftColumnClasses = ['form-column', 'form-column-left'];
+        leftColumn = `<div class="${leftColumnClasses.join(' ')}">${leftContent}</div>`;
 
         // Columna Dreta (només per a votació)
         if (type.includes('poll')) {
-            rightColumn = '<div class="form-column"><div class="form-group"><label for="poll-options">Opcions (una per línia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
+            rightColumn = '<div class="form-column form-column-right"><div class="form-group"><label for="poll-options">Opcions (una per linia)</label><textarea id="poll-options" name="pollOptions" rows="10" required></textarea></div></div>';
         }
         
         configFields.innerHTML = leftColumn + rightColumn;

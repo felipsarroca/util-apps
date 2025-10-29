@@ -157,20 +157,20 @@ body {
 }
 
 /* Ajustos compactes per a la columna esquerra en configuració de votació */
-body.type-poll .form-column:first-child {
+body.type-poll .form-column-left {
     gap: 0.75rem;
 }
 
-body.type-poll .form-column:first-child .form-group {
+body.type-poll .form-column-left .form-group {
     gap: 0.25rem;
 }
 
-body.type-poll .form-row {
+body.type-poll .form-column-left .form-row {
     gap: 0.45rem;
 }
 
-body.type-poll .form-column:first-child input,
-body.type-poll .form-column:first-child textarea {
+body.type-poll .form-column-left input,
+body.type-poll .form-column-left textarea {
     padding: 0.5rem 0.9rem;
 }
 
