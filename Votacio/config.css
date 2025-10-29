@@ -132,7 +132,7 @@ body {
 
 /* Tighter spacing for specific fields */
 .form-group.compact-gap {
-    gap: 0.25rem;
+    gap: 0.2rem;
 }
 
 .form-group label {
@@ -151,6 +151,15 @@ body {
     background: rgba(255, 255, 255, 0.92);
     box-shadow: inset 0 1px 2px rgba(24, 33, 66, 0.08);
     transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Camps específics més compactes */
+#question {
+    padding: 0.55rem 0.85rem;
+}
+
+#votes-per-student {
+    padding: 0.45rem 0.65rem;
 }
 
 .form-group textarea {
