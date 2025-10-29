@@ -197,6 +197,45 @@ body.type-poll .question-group label {
     padding-top: 0;
 }
 
+/* Compactació global per a la configuració de votació */
+body.type-poll #config-form {
+    gap: 0.75rem;
+}
+
+body.type-poll #config-fields {
+    gap: 0.75rem;
+}
+
+body.type-poll .form-column {
+    gap: 0.55rem;
+}
+
+body.type-poll .form-row {
+    gap: 0.35rem;
+}
+
+body.type-poll .form-group:not(.question-group) {
+    gap: 0.12rem;
+}
+
+body.type-poll .form-group input {
+    height: 2rem;
+    padding: 0.2rem 0.65rem;
+}
+
+body.type-poll .form-group textarea:not(#poll-options) {
+    min-height: 90px;
+    height: 90px;
+}
+
+body.type-poll #poll-options {
+    min-height: 220px;
+}
+
+body.type-poll .button-container {
+    margin-top: -0.2rem;
+}
+
 
 
 .form-group input:focus,
