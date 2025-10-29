@@ -78,7 +78,7 @@ header {
 
 .live-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
     gap: 2rem;
     max-width: 1400px;
     margin: 2.5rem auto 2rem;
@@ -208,6 +208,7 @@ header {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    align-items: stretch;
 }
 
 .sidebar-card {
@@ -253,9 +254,10 @@ header {
     font-size: clamp(2.8rem, 5vw, 3.6rem);
     font-weight: 700;
     color: var(--color-secondary);
-    letter-spacing: 0.24em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     text-align: center;
+    white-space: nowrap;
 }
 
 #sidebar-participants {
@@ -280,8 +282,9 @@ header {
 }
 
 #phase-card {
-    background: rgba(15, 23, 42, 0.72);
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.95), rgba(239, 68, 68, 0.95));
     color: #ffffff;
+    box-shadow: 0 24px 48px rgba(239, 68, 68, 0.25);
 }
 
 #phase-card h3 {
@@ -291,6 +294,7 @@ header {
 #phase-description {
     margin: 0;
     line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 #activity-controls {
@@ -316,6 +320,7 @@ header {
     gap: 0.6rem;
     box-shadow: var(--shadow-card);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    touch-action: manipulation;
 }
 
 .control-btn i {
@@ -327,9 +332,15 @@ header {
     color: #ffffff;
 }
 
-#close-activity-btn {
-    background: #ffffff;
-    color: var(--text-color);
+.control-btn.danger-btn {
+    background: #dc2626;
+    color: #ffffff;
+    border: 2px solid #b91c1c;
+}
+
+.control-btn.danger-btn:hover {
+    background: #b91c1c;
+    border-color: #991b1b;
 }
 
 .control-btn:hover {
@@ -563,4 +574,21 @@ body.guest-mode .student-question.hidden {
 body.guest-mode #poll-options-container,
 body.guest-mode #idea-form {
     align-items: stretch;
+}
+#close-activity-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.6rem;
+    align-self: stretch;
+}
+
+.vote-card {
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+}
+
+.vote-card:focus-visible {
+    outline: 3px solid rgba(79, 70, 229, 0.5);
+    outline-offset: 4px;
 }

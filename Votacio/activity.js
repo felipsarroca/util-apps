@@ -28,6 +28,49 @@
     let studentState = { submittedIdeas: 0, castVotes: 0, pendingVotes: [] };
     let myRole = 'guest';
     let sessionId = null;
+    let submitShortcutTarget = null;
+    let submitShortcutActive = false;
+
+    const safeStorage = {
+        get(key) {
+            try {
+                return window.localStorage?.getItem(key) ?? null;
+            } catch (error) {
+                console.warn('No es pot accedir a localStorage:', error);
+                return null;
+            }
+        },
+        set(key, value) {
+            try {
+                window.localStorage?.setItem(key, value);
+            } catch (error) {
+                console.warn('No es pot escriure a localStorage:', error);
+            }
+        }
+    };
+
+    const voteStorageKey = () => (sessionId ? `votacio-${sessionId}-vot` : null);
+
+    const setSubmitShortcutTarget = (target) => {
+        submitShortcutTarget = target;
+    };
+
+    const refreshSubmitShortcutState = () => {
+        submitShortcutActive = Boolean(
+            sessionData?.phase === 'voting' &&
+            submitShortcutTarget &&
+            studentState.pendingVotes.length > 0 &&
+            studentState.castVotes === 0
+        );
+    };
+
+    const handleSubmitShortcut = (event) => {
+        if (event.key === 'Enter' && !event.repeat && submitShortcutActive && submitShortcutTarget && !submitShortcutTarget.classList.contains('hidden')) {
+            event.preventDefault();
+            submitShortcutTarget.click();
+        }
+    };
+    document.addEventListener('keydown', handleSubmitShortcut);
 
     const createIdeaId = () => {
         if (window.crypto?.randomUUID) return `idea-${window.crypto.randomUUID().slice(-8)}`;
@@ -38,6 +81,24 @@
         const classes = ['live-feed'];
         if (modeClass) classes.push(modeClass);
         resultsContainer.className = classes.join(' ');
+    };
+
+    const restoreStoredVoteState = () => {
+        if (myRole === 'host') return;
+        const key = voteStorageKey();
+        if (!key) return;
+        const stored = parseInt(safeStorage.get(key) || '0', 10);
+        if (!Number.isNaN(stored) && stored > 0) {
+            studentState.castVotes = stored;
+        }
+        refreshSubmitShortcutState();
+    };
+
+    const persistVoteState = () => {
+        if (myRole === 'host') return;
+        const key = voteStorageKey();
+        if (!key) return;
+        safeStorage.set(key, String(studentState.castVotes));
     };
 
     const buildInitialSessionState = () => {
@@ -86,6 +147,7 @@
             return;
         }
 
+        restoreStoredVoteState();
         if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionId;
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
         closeActivityBtn.addEventListener('click', closeActivity);
@@ -110,6 +172,7 @@
             }
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             activityControls.classList.remove('hidden');
+            closeActivityBtn.classList.remove('hidden');
             document.body.classList.remove('guest-mode');
             sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
@@ -119,6 +182,7 @@
             updateParticipantCount();
         } else {
             document.body.classList.add('guest-mode');
+            closeActivityBtn.classList.add('hidden');
             ideaForm.addEventListener('submit', handleIdeaSubmit);
             joinSession(sessionId);
         }
@@ -195,7 +259,9 @@
             sessionData = payload.data ?? payload;
 
             if (incomingConfig && incomingConfig.type !== previousType) {
-                studentState = { submittedIdeas: 0, castVotes: 0, pendingVotes: [] };
+                const votesAlreadyCast = studentState.castVotes;
+                studentState = { submittedIdeas: 0, castVotes: votesAlreadyCast, pendingVotes: [] };
+                restoreStoredVoteState();
                 const submitBtn = document.getElementById('submit-votes-btn');
                 if (submitBtn) submitBtn.classList.add('hidden');
             }
@@ -205,9 +271,10 @@
                     studentState.submittedIdeas = 0;
                     studentState.pendingVotes = [];
                 } else if (sessionData.phase === 'voting') {
-                    studentState.castVotes = 0;
                     studentState.pendingVotes = [];
+                    restoreStoredVoteState();
                 }
+                refreshSubmitShortcutState();
             }
 
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
@@ -302,7 +369,10 @@
     function renderStudentView() {
         ideaForm.classList.add('hidden');
         pollOptionsContainer.classList.add('hidden');
-        const { type, ideasPerStudent, votesPerStudent } = activityConfig;
+        setSubmitShortcutTarget(null);
+        refreshSubmitShortcutState();
+
+        const { type, ideasPerStudent } = activityConfig;
         const { phase, ideas } = sessionData;
 
         updatePhaseDescription(phase);
@@ -328,34 +398,46 @@
 
         if (phase === 'voting') {
             if (studentState.castVotes > 0) {
-                if (message) {
-                    message.classList.remove('hidden');
-                } else {
-                    showMessage('Vots enviats! Gràcies per participar.');
-                }
+                showMessage('Vots enviats! Gràcies per participar.');
                 return;
             }
-            votesLeftInfo.textContent = `Pots triar fins a ${votesPerStudent} opcions.`;
+
             const wrapper = document.getElementById('vote-cards-wrapper');
             wrapper.innerHTML = '';
             const options = type === 'poll' ? (activityConfig.pollOptions || []) : ideas;
+            if (options.length === 0) {
+                showMessage('Encara no hi ha opcions disponibles.');
+                return;
+            }
+
+            votesLeftInfo.textContent = 'Pots triar una sola opció.';
             options.forEach(option => {
                 const id = typeof option === 'object' ? option.id : option;
-                const text = typeof option === 'object' ? option.text : option;
-                wrapper.innerHTML += `<div class="vote-card" data-id="${id}">${text}</div>`;
+                const textValue = typeof option === 'object' ? option.text : option;
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'vote-card';
+                card.dataset.id = id;
+                card.textContent = textValue;
+                card.setAttribute('aria-pressed', 'false');
+                card.addEventListener('click', handleVoteCardClick);
+                wrapper.appendChild(card);
             });
-            wrapper.querySelectorAll('.vote-card').forEach(card => card.addEventListener('click', handleVoteCardClick));
+
             const submitButton = document.getElementById('submit-votes-btn');
             submitButton.classList.remove('hidden');
             const freshSubmitButton = submitButton.cloneNode(true);
             submitButton.replaceWith(freshSubmitButton);
             freshSubmitButton.addEventListener('click', submitVotes, { once: true });
+            setSubmitShortcutTarget(freshSubmitButton);
             pollOptionsContainer.classList.remove('hidden');
+            refreshSubmitShortcutState();
             return;
         }
 
         showMessage('Gràcies per participar! Espera instruccions.');
     }
+
     // --- GESTIÓ D\'EVENTS ---
     function handleIdeaSubmit(e) {
         e.preventDefault();
@@ -367,44 +449,53 @@
         }
     }
 
-    function handleVoteCardClick(e) {
-        const card = e.currentTarget;
-        const id = card.dataset.id;
-        const maxVotes = parseInt(activityConfig.votesPerStudent, 10);
+    function handleVoteCardClick(event) {
+        if (studentState.castVotes > 0) return;
 
-        // Comprova si la targeta ja està seleccionada
+        const card = event.currentTarget;
+        const id = card.dataset.id;
+
         const index = studentState.pendingVotes.indexOf(id);
         if (index > -1) {
-            // Desselecciona
             studentState.pendingVotes.splice(index, 1);
-        } else if (studentState.pendingVotes.length < maxVotes) {
-            // Selecciona si encara no s'ha arribat al límit
-            studentState.pendingVotes.push(id);
+        } else {
+            studentState.pendingVotes = [id];
         }
         updateVoteCardsUI();
     }
 
+
     function updateVoteCardsUI() {
-        const maxVotes = parseInt(activityConfig.votesPerStudent, 10);
         const cards = document.querySelectorAll('.vote-card');
-        const limitReached = studentState.pendingVotes.length >= maxVotes;
+        const hasSelection = studentState.pendingVotes.length > 0;
 
         cards.forEach(card => {
-            const id = card.dataset.id;
-            const isSelected = studentState.pendingVotes.includes(id);
-
+            const isSelected = studentState.pendingVotes.includes(card.dataset.id);
             card.classList.toggle('selected', isSelected);
-            card.classList.toggle('disabled', limitReached && !isSelected);
+            card.setAttribute('aria-pressed', String(isSelected));
         });
-        votesLeftInfo.textContent = `Has seleccionat ${studentState.pendingVotes.length} de ${maxVotes}.`;
+
+        votesLeftInfo.textContent = hasSelection
+            ? 'Has seleccionat la teva opció.'
+            : 'Encara no has seleccionat cap opció.';
+
+        refreshSubmitShortcutState();
     }
 
+
     function submitVotes() {
-        if (studentState.pendingVotes.length > 0) {
+        if (studentState.castVotes > 0 || studentState.pendingVotes.length === 0) {
+            refreshSubmitShortcutState();
+            return;
+        }
+
+        if (hostConnection) {
             hostConnection.send({ type: 'vote-batch', payload: { ids: studentState.pendingVotes } });
         }
         studentState.castVotes = studentState.pendingVotes.length;
+        persistVoteState();
         studentState.pendingVotes = [];
+
         let message = studentInteractionZone.querySelector('.student-thanks');
         if (!message) {
             message = document.createElement('p');
@@ -413,9 +504,15 @@
         }
         message.textContent = 'Vots enviats! Gràcies per participar.';
         message.classList.remove('hidden');
+
         ideaForm.classList.add('hidden');
         pollOptionsContainer.classList.add('hidden');
+        const submitBtn = document.getElementById('submit-votes-btn');
+        if (submitBtn) submitBtn.classList.add('hidden');
+        setSubmitShortcutTarget(null);
+        refreshSubmitShortcutState();
     }
+
 
     function closeActivity() {
         if (confirm('Vols tancar l\'activitat per a tothom?')) {
