@@ -238,10 +238,22 @@ body.type-brainstorm-poll #poll-options {
     margin-top: 0.225rem;
 }
 
+body.type-poll .form-column:last-child,
+body.type-brainstorm-poll .form-column:last-child {
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+}
+
+body.type-poll .form-column:last-child .form-group,
+body.type-brainstorm-poll .form-column:last-child .form-group {
+    align-self: stretch;
+}
+
 body.type-poll .button-container,
 body.type-brainstorm-poll .button-container {
-    margin-top: -0.75rem;
-    padding-top: 0;
+    margin-top: 0;
+    padding-top: 0.35rem;
     justify-content: flex-start;
     align-self: start;
 }
