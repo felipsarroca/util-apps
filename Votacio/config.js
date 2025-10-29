@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentActivityType = activityType;
 
     function setupConfigForm(type) {
+        // Marca el tipus a <body> per aplicar interliniats compactes de forma consistent
+        document.body.classList.remove('type-brainstorm', 'type-poll', 'type-brainstorm-poll');
+        document.body.classList.add(`type-${type}`);
                                 const titles = {
             'poll': 'Configurar la votaci\u00F3',
             'brainstorm': 'Configurar pluja d\'idees',
@@ -24,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let rowFields = '';
 
         if (type.includes('brainstorm')) {
-            rowFields += '<div class="form-group"><label for="ideas-per-student">Aportacions / participant</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
+            rowFields += '<div class="form-group compact-gap"><label for="ideas-per-student">Aportacions / participant</label><input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1"></div>';
         }
         if (type.includes('poll')) {
             rowFields += '<div class="form-group compact-gap"><label for="votes-per-student">M\u00E0xim de vots per participant</label><input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1"></div>';

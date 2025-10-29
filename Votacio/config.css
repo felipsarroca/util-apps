@@ -176,6 +176,24 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
+/* Interliniats i separacions compactes per pluja d'idees i combinada */
+.type-brainstorm .form-group label,
+.type-brainstorm-poll .form-group label {
+    line-height: 1.1;
+}
+
+.type-brainstorm .form-group input,
+.type-brainstorm .form-group textarea,
+.type-brainstorm-poll .form-group input,
+.type-brainstorm-poll .form-group textarea {
+    line-height: 1.1;
+}
+
+.type-brainstorm .form-row,
+.type-brainstorm-poll .form-row {
+    gap: 0.9rem;
+}
+
 .form-group input[type="number"] {
     text-align: center;
     -moz-appearance: textfield;
