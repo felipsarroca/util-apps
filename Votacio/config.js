@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function buildSecondaryColumn(type) {
-        if (!type.includes('poll')) {
+        if (type !== 'poll') {
             secondaryColumn.innerHTML = '';
             secondaryColumn.classList.add('hidden-column');
             primaryColumn.classList.add('full-width');
