@@ -60,19 +60,11 @@
         buttonContainer.className = 'button-container';
         buttonContainer.appendChild(launchButton);
 
-        const placeInsideRightColumn = type?.includes('poll');
-        if (placeInsideRightColumn) {
+        if (type?.includes('poll')) {
             buttonContainer.classList.add('align-start');
-            const targetColumn = configFields.querySelector('.form-column:last-child');
-            if (targetColumn) {
-                buttonContainer.classList.add('column-button');
-                targetColumn.appendChild(buttonContainer);
-            } else {
-                configForm.appendChild(buttonContainer);
-            }
-        } else {
-            configForm.appendChild(buttonContainer);
         }
+
+        configForm.appendChild(buttonContainer);
     }
 
     configForm.addEventListener('submit', e => {
