@@ -134,6 +134,10 @@ header {
 
 .idea-bubble-container.idea-bubble-double .idea-bubble {
     margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .idea-bubble {
@@ -146,6 +150,9 @@ header {
     box-shadow: var(--shadow-card);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     line-height: 1.35;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .idea-bubble-container.idea-bubble-compact .idea-bubble {
