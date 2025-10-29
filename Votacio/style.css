@@ -88,11 +88,10 @@ main {
 .activity-card {
     position: relative;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.4rem 1.5rem;
-    min-height: 230px;
+    align-items: center;
+    gap: 1.1rem;
+    padding: 1.15rem 1.35rem;
+    min-height: 120px;
     border-radius: var(--radius-md);
     background: rgba(79, 70, 229, 0.08);
     border: 1px solid rgba(79, 70, 229, 0.15);
@@ -101,7 +100,9 @@ main {
 }
 
 .activity-illustration {
-    flex: 0 0 66%;
+    flex: 0 0 4.5rem;
+    width: 4.5rem;
+    height: 4.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -112,14 +113,14 @@ main {
 }
 
 .activity-illustration i {
-    font-size: 3.4rem;
+    font-size: 2.2rem;
     color: var(--color-primary);
 }
 
 .activity-info {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.3rem;
     flex: 1 1 auto;
 }
 

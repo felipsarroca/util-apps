@@ -128,51 +128,8 @@
         safeStorage.set(key, String(studentState.castVotes));
     };
 
-    const MAX_TIMELINE_POINTS = 40;
-
-    const ensureVoteTimelineEntry = (id, initialValue = 0) => {
-        if (!sessionData.voteTimeline) sessionData.voteTimeline = {};
-        if (!sessionData.voteTimeline[id]) {
-            sessionData.voteTimeline[id] = [initialValue];
-        }
-    };
-
-    const recordVoteSnapshot = () => {
-        if (!sessionData?.votes) return;
-        sessionData.voteTimeline = sessionData.voteTimeline || {};
-        Object.entries(sessionData.votes).forEach(([id, value]) => {
-            ensureVoteTimelineEntry(id, value);
-            const history = sessionData.voteTimeline[id];
-            const lastValue = history[history.length - 1];
-            if (lastValue !== value) {
-                history.push(value);
-                if (history.length > MAX_TIMELINE_POINTS) history.shift();
-            }
-        });
-    };
-
-    const buildSparkline = (history = []) => {
-        if (!Array.isArray(history) || history.length < 2) return '';
-        const width = 100;
-        const height = 40;
-        const maxValue = Math.max(...history, 1);
-        const step = history.length > 1 ? width / (history.length - 1) : width;
-        const points = history.map((value, index) => {
-            const x = (index * step).toFixed(2);
-            const y = (height - (value / maxValue) * height).toFixed(2);
-            return `${x},${y}`;
-        });
-        const linePoints = points.join(' ');
-        const areaPoints = ['0,' + height, ...points, `${width},${height}`].join(' ');
-        return `
-            <svg class="poll-card-sparkline" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
-                <polygon class="sparkline-area" points="${areaPoints}"></polygon>
-                <polyline class="sparkline-line" points="${linePoints}"></polyline>
-            </svg>`;
-    };
-
     const buildInitialSessionState = () => {
-        const base = { phase: 'voting', ideas: [], votes: {}, voteTimeline: {} };
+        const base = { phase: 'voting', ideas: [], votes: {} };
         if (activityConfig.type === 'brainstorm') {
             base.phase = 'brainstorm';
         } else if (activityConfig.type === 'brainstorm-poll') {
@@ -182,11 +139,6 @@
             base.votes = options.reduce((acc, opt) => {
                 const id = typeof opt === 'object' ? opt.id : opt;
                 return { ...acc, [id]: 0 };
-            }, {});
-            base.voteTimeline = options.reduce((acc, opt) => {
-                const id = typeof opt === 'object' ? opt.id : opt;
-                acc[id] = [0];
-                return acc;
             }, {});
         }
         return base;
@@ -254,7 +206,6 @@
             closeActivityBtn.classList.remove('hidden');
             document.body.classList.remove('guest-mode');
             sessionData = buildInitialSessionState();
-            recordVoteSnapshot();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
             updateStudentQuestion();
             renderTeacherResults();
@@ -274,7 +225,6 @@
         peer.on('open', id => {
             statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
-            recordVoteSnapshot();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
             renderTeacherResults();
         });
@@ -296,13 +246,11 @@
             sessionData.ideas.push(idea);
             if (sessionData.phase !== 'brainstorm') {
                 sessionData.votes[idea.id] = 0;
-                ensureVoteTimelineEntry(idea.id, 0);
             }
         } else if (data.type === 'vote-batch') {
             data.payload.ids.forEach(id => {
                 sessionData.votes[id] = (sessionData.votes[id] || 0) + 1;
             });
-            recordVoteSnapshot();
         }
         broadcastUpdate();
         renderTeacherResults();
@@ -311,11 +259,6 @@
     function startVotingPhase() {
         sessionData.phase = 'voting';
         sessionData.votes = sessionData.ideas.reduce((acc, idea) => ({ ...acc, [idea.id]: 0 }), {});
-        sessionData.voteTimeline = sessionData.ideas.reduce((acc, idea) => {
-            acc[idea.id] = [0];
-            return acc;
-        }, {});
-        recordVoteSnapshot();
         startVotingBtn.classList.add('hidden');
         broadcastUpdate();
         renderTeacherResults();
@@ -383,7 +326,7 @@
     // --- RENDERITZAT (VISTES) ---
     function renderTeacherResults() {
         const { type } = activityConfig;
-        const { phase, ideas, votes, voteTimeline = {} } = sessionData;
+        const { phase, ideas, votes } = sessionData;
 
         updatePhaseDescription(phase);
         updateStudentQuestion();
@@ -434,8 +377,6 @@
                 const percentage = totalVotes > 0 ? (currentVotes / totalVotes) * 100 : 0;
                 const percentageText = percentage.toFixed(1);
                 const percentageDisplay = percentageText.replace('.', ',');
-                const history = Array.isArray(voteTimeline[id]) ? voteTimeline[id] : [];
-                const sparklineMarkup = buildSparkline(history);
 
                 const previousRank = previousRanks[id];
                 const currentRank = index + 1;
@@ -456,11 +397,8 @@
                                 <span class="poll-card-percent">${percentageDisplay}%</span>
                             </span>
                         </div>
-                        <div class="poll-card-graph">
-                            ${sparklineMarkup}
-                            <div class="poll-card-progress" role="progressbar" aria-valuenow="${percentageText}" aria-valuemin="0" aria-valuemax="100">
-                                <div class="poll-card-progress-bar" style="width: ${percentage}%" data-percentage="${percentageText}"></div>
-                            </div>
+                        <div class="poll-card-progress" role="progressbar" aria-valuenow="${percentageText}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="poll-card-progress-bar" style="width: ${percentage}%" data-percentage="${percentageText}"></div>
                         </div>
                     </article>`;
 
