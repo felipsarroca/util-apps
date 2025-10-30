@@ -14,6 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
         'brainstorm-poll': 'Configura la pluja d\'idees i la votació'
     };
 
+    const generateSessionId = (length = 4) => {
+        let id = '';
+        while (id.length < length) {
+            id += Math.random().toString(36).slice(2).toUpperCase();
+        }
+        return id.slice(0, length);
+    };
+
     function buildPrimaryColumn(type) {
         const blocks = [];
 
@@ -134,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function launchActivity(mode, config) {
-        const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const sessionId = generateSessionId();
         let url = `activity.html?session=${sessionId}&mode=${mode}`;
         const encodedConfig = encodeURIComponent(JSON.stringify(config));
         url += `&config=${encodedConfig}`;
