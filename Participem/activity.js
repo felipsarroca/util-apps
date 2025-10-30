@@ -99,7 +99,7 @@
 
     const explainPeerError = (error, role = 'guest') => {
         if (!error) {
-            return 'No s\'ha pogut establir la connexió amb la sessió. Revisa la xarxa i torna-ho a provar.';
+            return "No s'ha pogut establir la connexió amb la sessió. Revisa la xarxa i torna-ho a provar.";
         }
 
         const type = error.type || '';
@@ -108,31 +108,31 @@
 
         if (type === 'peer-unavailable') {
             return role === 'host'
-                ? 'Ja hi ha una sessió activa amb aquest codi. Tanca la pestanya anterior o genera un codi nou.'
-                : 'No hi ha cap activitat oberta amb aquest codi. Comprova que el professor ja hagi iniciat la sessió.';
+                ? "Ja hi ha una sessió activa amb aquest codi. Tanca la pestanya anterior o genera un codi nou."
+                : "No hi ha cap activitat oberta amb aquest codi. Comprova que el professor ja hagi iniciat la sessió.";
         }
         if (type === 'invalid-id') {
-            return 'El codi de sessió no és vàlid. Torna a generar l\'activitat.';
+            return "El codi de sessió no és vàlid. Torna a generar l'activitat.";
         }
         if (type === 'browser-incompatible') {
-            return 'Aquest navegador no suporta WebRTC. Prova-ho amb la darrera versió de Chrome, Edge o Firefox.';
+            return "Aquest navegador no suporta WebRTC. Prova-ho amb la darrera versió de Chrome, Edge o Firefox.";
         }
         if (type === 'network') {
             if (lowered.includes('lost') || lowered.includes('closed')) {
-                return 'S\'ha perdut la connexió amb el servidor de senyalització. Comprova la connexió a Internet i que la xarxa permeti WebRTC.';
+                return "S'ha perdut la connexió amb el servidor de senyalització. Comprova la connexió a Internet i que la xarxa permeti WebRTC.";
             }
-            return 'No s\'ha pogut contactar amb el servidor de senyalització (PeerJS). Verifica que els ports 80 i 443 i les connexions WebSocket no estiguin bloquejades.';
+            return "No s'ha pogut contactar amb el servidor de senyalització (PeerJS). Verifica que els ports 80 i 443 i les connexions WebSocket no estiguin bloquejades.";
         }
         if (type === 'socket-error' || type === 'socket-closed') {
-            return 'La comunicació amb el servidor de senyalització s\'ha tancat. Torna-ho a provar en uns segons.';
+            return "La comunicació amb el servidor de senyalització s'ha tancat. Torna-ho a provar en uns segons.";
         }
         if (type === 'disconnected') {
-            return 'La sessió s\'ha desconnectat. Refresca la pàgina per tornar a intentar-ho.';
+            return "La sessió s'ha desconnectat. Refresca la pàgina per tornar a intentar-ho.";
         }
         if (lowered.includes('ice connection') || lowered.includes('ice failed')) {
-            return 'No s\'ha pogut establir el canal de dades (ICE). Revisa que la xarxa permeti WebRTC o prova una altra connexió.';
+            return "No s'ha pogut establir el canal de dades (ICE). Revisa que la xarxa permeti WebRTC o prova una altra connexió.";
         }
-        return 'No s\'ha pogut connectar amb la sessió. Torna-ho a provar i, si persisteix, revisa la configuració de la xarxa.';
+        return "No s'ha pogut connectar amb la sessió. Torna-ho a provar i, si persisteix, revisa la configuració de la xarxa.";
     };
 
     const removeIdea = (ideaId) => {
@@ -426,10 +426,10 @@
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
             hostConnection.on('data', handleTeacherData);
             hostConnection.on('close', () => {
-                showFatalState('Has perdut la connexió amb l'organitzador. Torna a introduir el codi quan el professor reobri la sessió.');
+                showFatalState("Has perdut la connexió amb l'organitzador. Torna a introduir el codi quan el professor reobri la sessió.");
             });
             hostConnection.on('error', (connError) => {
-                handlePeerError(connError || { type: 'network', message: 'No s\'ha pogut connectar a la sessió.' }, 'guest');
+                handlePeerError(connError || { type: 'network', message: "No s'ha pogut connectar a la sessió." }, 'guest');
             });
         });
         peer.on('error', (err) => {
