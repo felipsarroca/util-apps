@@ -87,6 +87,7 @@
         port: 443,
         secure: true,
         path: '/',
+        key: 'peerjs',
         debug: 1,
         config: {
             iceServers: baseIceServers.map(server => ({
