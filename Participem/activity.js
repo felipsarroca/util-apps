@@ -541,6 +541,7 @@
                     </article>`;
 
                 setTimeout(() => {
+                    if (!animationClass) return;
                     const element = document.querySelector('[data-item-id="' + id + '"]');
                     if (element) element.classList.remove(animationClass);
                 }, 500);
