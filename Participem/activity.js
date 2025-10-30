@@ -1,4 +1,38 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
+    const addPressListener = (element, handler, options = {}) => {
+        if (!element) return;
+
+        if (window.PointerEvent) {
+            const pointerHandler = (event) => {
+                if (event.pointerType === 'mouse' && event.button !== 0) return;
+                if (event.isPrimary === false) return;
+                handler.call(element, event);
+            };
+            element.addEventListener('pointerup', pointerHandler, options);
+            return;
+        }
+
+        let touchTriggered = false;
+        const clickHandler = (event) => {
+            if (touchTriggered) {
+                touchTriggered = false;
+                return;
+            }
+            handler.call(element, event);
+        };
+        const touchHandler = (event) => {
+            touchTriggered = true;
+            event.preventDefault();
+            handler.call(element, event);
+        };
+
+        element.addEventListener('click', clickHandler, options);
+        const touchOptions = { passive: false };
+        if (options.capture) touchOptions.capture = true;
+        if (options.once) touchOptions.once = true;
+        element.addEventListener('touchend', touchHandler, touchOptions);
+    };
+
     // --- Elements del DOM ---
     const activityTitle = document.getElementById('activity-title');
     const statusIndicator = document.getElementById('status-indicator');
@@ -31,6 +65,18 @@
     let sessionId = null;
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
+
+    const removeIdea = (ideaId) => {
+        if (myRole !== 'host') return;
+        const index = sessionData?.ideas?.findIndex(idea => idea.id === ideaId);
+        if (index === undefined || index === -1) return;
+        sessionData.ideas.splice(index, 1);
+        if (sessionData.votes) {
+            delete sessionData.votes[ideaId];
+        }
+        broadcastUpdate();
+        renderTeacherResults();
+    };
 
     const safeStorage = {
         get(key) {
@@ -207,8 +253,8 @@
         restoreStoredIdeaCount();
         if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionId;
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
-        closeActivityBtn.addEventListener('click', closeActivity);
-        startVotingBtn.addEventListener('click', startVotingPhase);
+        if (closeActivityBtn) addPressListener(closeActivityBtn, closeActivity);
+        addPressListener(startVotingBtn, startVotingPhase);
         togglePhaseCard(false);
 
         if (myRole === 'host') {
@@ -231,7 +277,7 @@
             activityConfig = normalizeActivityConfig(activityConfig);
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             activityControls.classList.remove('hidden');
-            closeActivityBtn.classList.remove('hidden');
+            if (closeActivityBtn) closeActivityBtn.classList.remove('hidden');
             document.body.classList.remove('guest-mode');
             sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
@@ -241,7 +287,7 @@
             updateParticipantCount();
         } else {
             document.body.classList.add('guest-mode');
-            closeActivityBtn.classList.add('hidden');
+            if (closeActivityBtn) closeActivityBtn.classList.add('hidden');
             ideaForm.addEventListener('submit', handleIdeaSubmit);
             joinSession(sessionId);
         }
@@ -383,9 +429,34 @@
             if (densityClass) resultsContainer.classList.add(densityClass);
             const useDoubleColumn = ideaCount >= 14 && window.innerWidth >= 1200;
             resultsContainer.classList.toggle('idea-bubble-double', useDoubleColumn);
+            const fragment = document.createDocumentFragment();
             ideas.forEach(idea => {
-                resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`;
+                const bubble = document.createElement('div');
+                bubble.className = 'idea-bubble';
+                bubble.dataset.id = idea.id;
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'idea-bubble-text';
+                textSpan.textContent = idea.text;
+                bubble.appendChild(textSpan);
+
+                if (myRole === 'host') {
+                    bubble.classList.add('idea-bubble--host');
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'idea-delete-btn';
+                    deleteBtn.setAttribute('aria-label', 'Esborra la idea');
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                    addPressListener(deleteBtn, (event) => {
+                        event.stopPropagation();
+                        removeIdea(idea.id);
+                    });
+                    bubble.appendChild(deleteBtn);
+                }
+
+                fragment.appendChild(bubble);
             });
+            resultsContainer.appendChild(fragment);
         } else if (phase === 'voting') {
             statusIndicator.textContent = 'Votació en directe';
             setResultsContainerMode('poll-grid compact-poll');
@@ -528,7 +599,7 @@
                 card.dataset.id = id;
                 card.textContent = textValue;
                 card.setAttribute('aria-pressed', 'false');
-                card.addEventListener('click', handleVoteCardClick);
+                addPressListener(card, handleVoteCardClick);
                 wrapper.appendChild(card);
             });
 
@@ -538,7 +609,7 @@
             submitButton.classList.remove('hidden');
             const freshSubmitButton = submitButton.cloneNode(true);
             submitButton.replaceWith(freshSubmitButton);
-            freshSubmitButton.addEventListener('click', submitVotes, { once: true });
+            addPressListener(freshSubmitButton, submitVotes, { once: true });
             setSubmitShortcutTarget(freshSubmitButton);
             pollOptionsContainer.classList.remove('hidden');
             refreshSubmitShortcutState();

@@ -153,6 +153,28 @@ header {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    gap: 0.5rem;
+}
+
+.idea-bubble-text {
+    flex: 1;
+    word-break: break-word;
+}
+
+.idea-bubble:not(.idea-bubble--host) {
+    justify-content: center;
+}
+
+.idea-bubble:not(.idea-bubble--host) .idea-bubble-text {
+    text-align: center;
+}
+
+.idea-bubble--host {
+    justify-content: space-between;
+}
+
+.idea-bubble--host .idea-bubble-text {
+    text-align: left;
 }
 
 .idea-bubble-container.idea-bubble-compact .idea-bubble {
@@ -168,6 +190,29 @@ header {
 .idea-bubble:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-elevated);
+}
+
+.idea-delete-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.15rem 0.25rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.idea-delete-btn:hover,
+.idea-delete-btn:focus-visible {
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.idea-delete-btn i {
+    pointer-events: none;
 }
 
 .poll-grid {
@@ -375,6 +420,10 @@ header {
     padding: 1rem 2.5rem 2rem;
     max-width: 1400px;
     margin: 0 auto;
+}
+
+#activity-controls:empty {
+    display: none;
 }
 
 .control-btn {
