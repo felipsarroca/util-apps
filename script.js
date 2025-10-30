@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
+            name: "Participem",
+            path: 'Participem/',
+            description: "Eina per gestionar la participació de l'alumnat a classe.",
+            category: 'Eines de gestió'
+        },
+        {
             name: 'Rentabilitat Híbrid',
             path: 'RentabilitatHibrid/',
             description: 'Calculadora per comparar el cost entre combustible i electricitat.',
