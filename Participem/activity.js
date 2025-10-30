@@ -1,38 +1,4 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
-    const addPressListener = (element, handler, options = {}) => {
-        if (!element) return;
-
-        if (window.PointerEvent) {
-            const pointerHandler = (event) => {
-                if (event.pointerType === 'mouse' && event.button !== 0) return;
-                if (event.isPrimary === false) return;
-                handler.call(element, event);
-            };
-            element.addEventListener('pointerup', pointerHandler, options);
-            return;
-        }
-
-        let touchTriggered = false;
-        const clickHandler = (event) => {
-            if (touchTriggered) {
-                touchTriggered = false;
-                return;
-            }
-            handler.call(element, event);
-        };
-        const touchHandler = (event) => {
-            touchTriggered = true;
-            event.preventDefault();
-            handler.call(element, event);
-        };
-
-        element.addEventListener('click', clickHandler, options);
-        const touchOptions = { passive: false };
-        if (options.capture) touchOptions.capture = true;
-        if (options.once) touchOptions.once = true;
-        element.addEventListener('touchend', touchHandler, touchOptions);
-    };
-
     // --- Elements del DOM ---
     const activityTitle = document.getElementById('activity-title');
     const statusIndicator = document.getElementById('status-indicator');
@@ -65,84 +31,6 @@
     let sessionId = null;
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
-
-    const baseIceServers = [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        {
-            urls: [
-                'turn:openrelay.metered.ca:80',
-                'turn:openrelay.metered.ca:443',
-                'turn:openrelay.metered.ca:443?transport=tcp'
-            ],
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
-        }
-    ];
-
-    const createIceConfig = () => ({
-        iceServers: baseIceServers.map(server => ({
-            ...server,
-            urls: Array.isArray(server.urls) ? [...server.urls] : server.urls
-        }))
-    });
-
-    const peerBaseOptions = () => ({
-        debug: 1,
-        config: createIceConfig()
-    });
-
-    const explainPeerError = (error, role = 'guest') => {
-        if (!error) {
-            return "No s'ha pogut establir la connexió amb la sessió. Revisa la xarxa i torna-ho a provar.";
-        }
-
-        const type = error.type || '';
-        const message = typeof error.message === 'string' ? error.message : '';
-        const lowered = message.toLowerCase();
-
-        if (type === 'peer-unavailable') {
-            return role === 'host'
-                ? "Ja hi ha una sessió activa amb aquest codi. Tanca la pestanya anterior o genera un codi nou."
-                : "No hi ha cap activitat oberta amb aquest codi. Comprova que el professor ja hagi iniciat la sessió.";
-        }
-        if (type === 'invalid-id') {
-            return "El codi de sessió no és vàlid. Torna a generar l'activitat.";
-        }
-        if (type === 'browser-incompatible') {
-            return "Aquest navegador no suporta WebRTC. Prova-ho amb la darrera versió de Chrome, Edge o Firefox.";
-        }
-        if (type === 'network') {
-            if (lowered.includes('lost') || lowered.includes('closed')) {
-                return "S'ha perdut la connexió amb el servidor de senyalització. Comprova la connexió a Internet i que la xarxa permeti WebRTC.";
-            }
-            return "No s'ha pogut contactar amb el servidor de senyalització (PeerJS). Verifica que els ports 80 i 443 i les connexions WebSocket no estiguin bloquejades.";
-        }
-        if (type === 'socket-error' || type === 'socket-closed') {
-            return "La comunicació amb el servidor de senyalització s'ha tancat. Torna-ho a provar en uns segons.";
-        }
-        if (type === 'disconnected') {
-            return "La sessió s'ha desconnectat. Refresca la pàgina per tornar a intentar-ho.";
-        }
-        if (lowered.includes('ice connection') || lowered.includes('ice failed')) {
-            return "No s'ha pogut establir el canal de dades (ICE). Revisa que la xarxa permeti WebRTC o prova una altra connexió.";
-        }
-        return "No s'ha pogut connectar amb la sessió. Torna-ho a provar i, si persisteix, revisa la configuració de la xarxa.";
-    };
-
-    const removeIdea = (ideaId) => {
-        if (myRole !== 'host') return;
-        const index = sessionData?.ideas?.findIndex(idea => idea.id === ideaId);
-        if (index === undefined || index === -1) return;
-        sessionData.ideas.splice(index, 1);
-        if (sessionData.votes) {
-            delete sessionData.votes[ideaId];
-        }
-        broadcastUpdate();
-        renderTeacherResults();
-    };
 
     const safeStorage = {
         get(key) {
@@ -300,12 +188,6 @@
         studentInteractionZone?.classList.add('hidden');
     };
 
-    function handlePeerError(error, role = 'guest') {
-        const explanation = explainPeerError(error, role);
-        console.error('Error de PeerJS:', error);
-        showFatalState(explanation);
-    }
-
     // --- INICIALITZACIÓ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
@@ -325,8 +207,8 @@
         restoreStoredIdeaCount();
         if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionId;
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
-        if (closeActivityBtn) addPressListener(closeActivityBtn, closeActivity);
-        addPressListener(startVotingBtn, startVotingPhase);
+        closeActivityBtn.addEventListener('click', closeActivity);
+        startVotingBtn.addEventListener('click', startVotingPhase);
         togglePhaseCard(false);
 
         if (myRole === 'host') {
@@ -349,7 +231,7 @@
             activityConfig = normalizeActivityConfig(activityConfig);
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             activityControls.classList.remove('hidden');
-            if (closeActivityBtn) closeActivityBtn.classList.remove('hidden');
+            closeActivityBtn.classList.remove('hidden');
             document.body.classList.remove('guest-mode');
             sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
@@ -359,7 +241,7 @@
             updateParticipantCount();
         } else {
             document.body.classList.add('guest-mode');
-            if (closeActivityBtn) closeActivityBtn.classList.add('hidden');
+            closeActivityBtn.classList.add('hidden');
             ideaForm.addEventListener('submit', handleIdeaSubmit);
             joinSession(sessionId);
         }
@@ -367,15 +249,15 @@
 
     // --- LÒGICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
-        peer = new Peer(sessionId, peerBaseOptions());
-        peer.on('open', () => {
+        peer = new Peer(sessionId);
+        peer.on('open', id => {
             statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
             renderTeacherResults();
         });
         peer.on('connection', handleNewConnection);
-        peer.on('error', (err) => handlePeerError(err, 'host'));
+        peer.on('error', (err) => console.error('Error de PeerJS:', err));
     }
 
     function handleNewConnection(conn) {
@@ -417,20 +299,17 @@
 
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
-        peer = new Peer(undefined, peerBaseOptions());
+        peer = new Peer();
         peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
             hostConnection.on('data', handleTeacherData);
-            hostConnection.on('close', () => {
-                showFatalState("Has perdut la connexió amb l'organitzador. Torna a introduir el codi quan el professor reobri la sessió.");
-            });
-            hostConnection.on('error', (connError) => {
-                handlePeerError(connError || { type: 'network', message: "No s'ha pogut connectar a la sessió." }, 'guest');
-            });
+            hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
+            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
         });
         peer.on('error', (err) => {
-            handlePeerError(err, 'guest');
+            console.error('Error de PeerJS:', err);
+            showFatalState('No s\'ha pogut connectar amb la sessió. Comprova el codi o torna-ho a provar.');
         });
     }
 
@@ -504,34 +383,9 @@
             if (densityClass) resultsContainer.classList.add(densityClass);
             const useDoubleColumn = ideaCount >= 14 && window.innerWidth >= 1200;
             resultsContainer.classList.toggle('idea-bubble-double', useDoubleColumn);
-            const fragment = document.createDocumentFragment();
             ideas.forEach(idea => {
-                const bubble = document.createElement('div');
-                bubble.className = 'idea-bubble';
-                bubble.dataset.id = idea.id;
-
-                const textSpan = document.createElement('span');
-                textSpan.className = 'idea-bubble-text';
-                textSpan.textContent = idea.text;
-                bubble.appendChild(textSpan);
-
-                if (myRole === 'host') {
-                    bubble.classList.add('idea-bubble--host');
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.type = 'button';
-                    deleteBtn.className = 'idea-delete-btn';
-                    deleteBtn.setAttribute('aria-label', 'Esborra la idea');
-                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-                    addPressListener(deleteBtn, (event) => {
-                        event.stopPropagation();
-                        removeIdea(idea.id);
-                    });
-                    bubble.appendChild(deleteBtn);
-                }
-
-                fragment.appendChild(bubble);
+                resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`;
             });
-            resultsContainer.appendChild(fragment);
         } else if (phase === 'voting') {
             statusIndicator.textContent = 'Votació en directe';
             setResultsContainerMode('poll-grid compact-poll');
@@ -639,9 +493,7 @@
 
         if (phase === 'brainstorm') {
             if (studentState.submittedIdeas < maxIdeasAllowed) {
-                const remainingIdeas = Math.max(0, maxIdeasAllowed - studentState.submittedIdeas);
-                const noun = remainingIdeas <= 1 ? 'idea' : 'idees';
-                ideasLeftInfo.textContent = `Pots escriure ${remainingIdeas} ${noun}.`;
+                ideasLeftInfo.textContent = `Pots enviar ${maxIdeasAllowed - studentState.submittedIdeas} idea(es).`;
                 ideaForm.classList.remove('hidden');
                 return;
             }
@@ -676,7 +528,7 @@
                 card.dataset.id = id;
                 card.textContent = textValue;
                 card.setAttribute('aria-pressed', 'false');
-                addPressListener(card, handleVoteCardClick);
+                card.addEventListener('click', handleVoteCardClick);
                 wrapper.appendChild(card);
             });
 
@@ -686,7 +538,7 @@
             submitButton.classList.remove('hidden');
             const freshSubmitButton = submitButton.cloneNode(true);
             submitButton.replaceWith(freshSubmitButton);
-            addPressListener(freshSubmitButton, submitVotes, { once: true });
+            freshSubmitButton.addEventListener('click', submitVotes, { once: true });
             setSubmitShortcutTarget(freshSubmitButton);
             pollOptionsContainer.classList.remove('hidden');
             refreshSubmitShortcutState();
@@ -828,3 +680,18 @@
     // --- INICI DE L\'APLICACIÓ ---
     init();
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

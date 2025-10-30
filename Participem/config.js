@@ -9,17 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const activityType = params.get('type') || 'brainstorm';
 
     const titles = {
-        poll: 'Configura la votació',
-        brainstorm: 'Configura la pluja d\'idees',
-        'brainstorm-poll': 'Configura la pluja d\'idees i la votació'
-    };
-
-    const generateSessionId = (length = 4) => {
-        let id = '';
-        while (id.length < length) {
-            id += Math.random().toString(36).slice(2).toUpperCase();
-        }
-        return id.slice(0, length);
+        poll: 'Configurar la votació',
+        brainstorm: 'Configurar pluja d\'idees',
+        'brainstorm-poll': 'Configurar activitat combinada'
     };
 
     function buildPrimaryColumn(type) {
@@ -38,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type.includes('brainstorm')) {
             extras.push(`
                 <div class="field-group">
-                    <label for="ideas-per-student">Aportacions per participant</label>
+                    <label for="ideas-per-student">Màxim d'aportacions per participant</label>
                     <input type="number" id="ideas-per-student" name="ideasPerStudent" value="1" min="1">
                 </div>
             `);
@@ -46,19 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type.includes('poll')) {
             extras.push(`
                 <div class="field-group">
-                    <label for="votes-per-student">Vots per participant</label>
+                    <label for="votes-per-student">Màxim de vots per participant</label>
                     <input type="number" id="votes-per-student" name="votesPerStudent" value="1" min="1">
                 </div>
             `);
         }
 
         if (extras.length) {
-            const hasDouble = extras.length > 1;
-            const cardClasses = ['config-card', 'compact-card'];
-            if (hasDouble) cardClasses.push('compact-card-double');
-
             blocks.push(`
-                <div class="${cardClasses.join(' ')}">
+                <div class="config-card compact-card">
                     <div class="field-row">
                         ${extras.join('')}
                     </div>
@@ -90,6 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function buildActions() {
+        configActions.innerHTML = '';
+
         const button = document.createElement('button');
         button.type = 'submit';
         button.className = 'launch-button';
@@ -99,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.className = 'button-container';
         container.appendChild(button);
 
-        return container;
+        configActions.appendChild(container);
     }
 
     function setupLayout(type) {
@@ -110,23 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         buildPrimaryColumn(type);
         buildSecondaryColumn(type);
-
-        const actionContainer = buildActions();
-        const compactCard = primaryColumn.querySelector('.compact-card');
-
-        configActions.innerHTML = '';
-
-        if (compactCard) {
-            const row = document.createElement('div');
-            row.className = 'card-action-row';
-            row.appendChild(compactCard);
-            row.appendChild(actionContainer);
-            primaryColumn.appendChild(row);
-            configActions.classList.remove('align-start');
-        } else {
-            configActions.appendChild(actionContainer);
-            configActions.classList.toggle('align-start', type === 'poll' || type === 'brainstorm-poll');
-        }
+        buildActions();
     }
 
     configForm.addEventListener('submit', event => {
@@ -142,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function launchActivity(mode, config) {
-        const sessionId = generateSessionId();
+        const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
         let url = `activity.html?session=${sessionId}&mode=${mode}`;
         const encodedConfig = encodeURIComponent(JSON.stringify(config));
         url += `&config=${encodedConfig}`;
