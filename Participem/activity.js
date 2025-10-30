@@ -66,10 +66,44 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
+    const defaultPeerOptions = Object.freeze({
+        host: '0.peerjs.com',
+        port: 443,
+        secure: true,
+        path: '/',
+        key: 'peerjs',
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' }
+            ]
+        }
+    });
+
     const resolvePeerOptions = () => {
         const globalOptions = window.peerCommonOptions || window.peerBaseOptions;
-        if (globalOptions && typeof globalOptions === 'object') return globalOptions;
-        return undefined;
+        if (!globalOptions || typeof globalOptions !== 'object') {
+            return { ...defaultPeerOptions, config: { ...defaultPeerOptions.config } };
+        }
+
+        const merged = { ...defaultPeerOptions, ...globalOptions };
+        const defaultConfig = defaultPeerOptions.config || {};
+        const globalConfig = globalOptions.config || {};
+        merged.config = { ...defaultConfig, ...globalConfig };
+        if (globalConfig.iceServers) {
+            merged.config.iceServers = globalConfig.iceServers;
+        } else if (!merged.config.iceServers) {
+            merged.config.iceServers = defaultConfig.iceServers;
+        }
+        return merged;
+    };
+
+    const createPeerInstance = (id = null) => {
+        const options = resolvePeerOptions();
+        return id ? new Peer(id, options) : new Peer(options);
     };
 
     const removeIdea = (ideaId) => {
@@ -301,8 +335,7 @@
 
     // --- LÒGICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
-        const peerOptions = resolvePeerOptions();
-        peer = peerOptions ? new Peer(sessionId, peerOptions) : new Peer(sessionId);
+        peer = createPeerInstance(sessionId);
         peer.on('open', id => {
             statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
@@ -352,8 +385,7 @@
 
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
-        const peerOptions = resolvePeerOptions();
-        peer = peerOptions ? new Peer(peerOptions) : new Peer();
+        peer = createPeerInstance();
         peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
