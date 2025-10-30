@@ -66,18 +66,37 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
-    const peerOptions = {
-        host: '0.peerjs.com',
-        port: 443,
-        secure: true,
-        path: '/peerjs',
-        config: {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ]
+    const baseIceServers = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' }
+    ];
+
+    const shouldForcePublicPeerServer = (() => {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        if (protocol === 'https:') return true;
+        if (protocol === 'file:') return true;
+        if (!hostname || hostname === '127.0.0.1' || hostname === 'localhost') return false;
+        return true;
+    })();
+
+    const buildPeerOptions = () => {
+        const options = {
+            debug: 1,
+            config: { iceServers: baseIceServers.map(server => ({ ...server })) }
+        };
+
+        if (shouldForcePublicPeerServer) {
+            options.host = '0.peerjs.com';
+            options.port = 443;
+            options.secure = true;
+            options.path = '/';
+            options.key = 'peerjs';
         }
+
+        return options;
     };
 
     const removeIdea = (ideaId) => {
@@ -309,7 +328,7 @@
 
     // --- LÒGICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
-        peer = new Peer(sessionId, peerOptions);
+        peer = new Peer(sessionId, buildPeerOptions());
         peer.on('open', id => {
             statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
@@ -359,7 +378,7 @@
 
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
-        peer = new Peer(undefined, peerOptions);
+        peer = new Peer(undefined, buildPeerOptions());
         peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
