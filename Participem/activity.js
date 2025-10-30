@@ -66,26 +66,11 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
-    const peerCommonOptions = {
-        host: '0.peerjs.com',
-        port: 443,
-        secure: true,
-        path: '/myapp',
-        key: 'peerjs',
-        config: {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun4.l.google.com:19302' }
-            ]
-        }
+    const resolvePeerOptions = () => {
+        const globalOptions = window.peerCommonOptions || window.peerBaseOptions;
+        if (globalOptions && typeof globalOptions === 'object') return globalOptions;
+        return undefined;
     };
-
-    const createPeerInstance = (id = null) => (
-        id ? new Peer(id, peerCommonOptions) : new Peer(peerCommonOptions)
-    );
 
     const removeIdea = (ideaId) => {
         if (myRole !== 'host') return;
@@ -316,7 +301,8 @@
 
     // --- LÒGICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
-        peer = createPeerInstance(sessionId);
+        const peerOptions = resolvePeerOptions();
+        peer = peerOptions ? new Peer(sessionId, peerOptions) : new Peer(sessionId);
         peer.on('open', id => {
             statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
@@ -366,7 +352,8 @@
 
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
-        peer = createPeerInstance();
+        const peerOptions = resolvePeerOptions();
+        peer = peerOptions ? new Peer(peerOptions) : new Peer();
         peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
