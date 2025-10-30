@@ -1,4 +1,38 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
+    const addPressListener = (element, handler, options = {}) => {
+        if (!element) return;
+
+        if (window.PointerEvent) {
+            const pointerHandler = (event) => {
+                if (event.pointerType === 'mouse' && event.button !== 0) return;
+                if (event.isPrimary === false) return;
+                handler.call(element, event);
+            };
+            element.addEventListener('pointerup', pointerHandler, options);
+            return;
+        }
+
+        let touchTriggered = false;
+        const clickHandler = (event) => {
+            if (touchTriggered) {
+                touchTriggered = false;
+                return;
+            }
+            handler.call(element, event);
+        };
+        const touchHandler = (event) => {
+            touchTriggered = true;
+            event.preventDefault();
+            handler.call(element, event);
+        };
+
+        element.addEventListener('click', clickHandler, options);
+        const touchOptions = { passive: false };
+        if (options.capture) touchOptions.capture = true;
+        if (options.once) touchOptions.once = true;
+        element.addEventListener('touchend', touchHandler, touchOptions);
+    };
+
     // --- Elements del DOM ---
     const activityTitle = document.getElementById('activity-title');
     const statusIndicator = document.getElementById('status-indicator');
@@ -207,8 +241,8 @@
         restoreStoredIdeaCount();
         if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionId;
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
-        closeActivityBtn.addEventListener('click', closeActivity);
-        startVotingBtn.addEventListener('click', startVotingPhase);
+        addPressListener(closeActivityBtn, closeActivity);
+        addPressListener(startVotingBtn, startVotingPhase);
         togglePhaseCard(false);
 
         if (myRole === 'host') {
@@ -528,7 +562,7 @@
                 card.dataset.id = id;
                 card.textContent = textValue;
                 card.setAttribute('aria-pressed', 'false');
-                card.addEventListener('click', handleVoteCardClick);
+                addPressListener(card, handleVoteCardClick);
                 wrapper.appendChild(card);
             });
 
@@ -538,7 +572,7 @@
             submitButton.classList.remove('hidden');
             const freshSubmitButton = submitButton.cloneNode(true);
             submitButton.replaceWith(freshSubmitButton);
-            freshSubmitButton.addEventListener('click', submitVotes, { once: true });
+            addPressListener(freshSubmitButton, submitVotes, { once: true });
             setSubmitShortcutTarget(freshSubmitButton);
             pollOptionsContainer.classList.remove('hidden');
             refreshSubmitShortcutState();
