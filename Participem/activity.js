@@ -103,7 +103,10 @@
 
     const createPeerInstance = (id = null) => {
         const options = resolvePeerOptions();
-        return id ? new Peer(id, options) : new Peer(options);
+        if (id !== null && id !== undefined && id !== '') {
+            return new Peer(String(id), options);
+        }
+        return new Peer(undefined, options);
     };
 
     const removeIdea = (ideaId) => {
