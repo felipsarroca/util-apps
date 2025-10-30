@@ -541,9 +541,10 @@
                     </article>`;
 
                 setTimeout(() => {
-                    if (!animationClass) return;
                     const element = document.querySelector('[data-item-id="' + id + '"]');
-                    if (element) element.classList.remove(animationClass);
+                    if (!element) return;
+                    const tokens = (animationClass || '').split(/\s+/).filter(Boolean);
+                    if (tokens.length) element.classList.remove(...tokens);
                 }, 500);
             });
         } else {
