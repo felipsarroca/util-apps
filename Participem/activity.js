@@ -66,6 +66,20 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
+    const peerOptions = {
+        host: '0.peerjs.com',
+        port: 443,
+        secure: true,
+        path: '/',
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        }
+    };
+
     const removeIdea = (ideaId) => {
         if (myRole !== 'host') return;
         const index = sessionData?.ideas?.findIndex(idea => idea.id === ideaId);
@@ -295,7 +309,7 @@
 
     // --- LÒGICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
-        peer = new Peer(sessionId);
+        peer = new Peer(sessionId, peerOptions);
         peer.on('open', id => {
             statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
@@ -345,7 +359,7 @@
 
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
-        peer = new Peer();
+        peer = new Peer(undefined, peerOptions);
         peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
