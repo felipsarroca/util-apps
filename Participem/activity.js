@@ -241,7 +241,7 @@
         restoreStoredIdeaCount();
         if (sessionCodeDisplay) sessionCodeDisplay.textContent = sessionId;
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
-        addPressListener(closeActivityBtn, closeActivity);
+        if (closeActivityBtn) addPressListener(closeActivityBtn, closeActivity);
         addPressListener(startVotingBtn, startVotingPhase);
         togglePhaseCard(false);
 
@@ -265,7 +265,7 @@
             activityConfig = normalizeActivityConfig(activityConfig);
             activityTitle.textContent = activityConfig.question || 'Activitat en directe';
             activityControls.classList.remove('hidden');
-            closeActivityBtn.classList.remove('hidden');
+            if (closeActivityBtn) closeActivityBtn.classList.remove('hidden');
             document.body.classList.remove('guest-mode');
             sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
@@ -275,7 +275,7 @@
             updateParticipantCount();
         } else {
             document.body.classList.add('guest-mode');
-            closeActivityBtn.classList.add('hidden');
+            if (closeActivityBtn) closeActivityBtn.classList.add('hidden');
             ideaForm.addEventListener('submit', handleIdeaSubmit);
             joinSession(sessionId);
         }
