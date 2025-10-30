@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+ï»¿document.addEventListener('DOMContentLoaded', () => {
     const addPressListener = (element, handler, options = {}) => {
         if (!element) return;
 
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const phaseDescription = document.getElementById('phase-description');
     const studentQuestion = document.getElementById('student-question');
 
-    // --- Estat de l\'aplicació ---
+    // --- Estat de l\'aplicaciÃ³ ---
     let peer = null;
     let hostConnection = null;
     let guestConnections = [];
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const showFatalState = (message) => {
-        activityTitle.textContent = 'Sessió no disponible';
+        activityTitle.textContent = 'SessiÃ³ no disponible';
         if (statusIndicator) statusIndicator.textContent = 'Error';
         setResultsContainerMode('placeholder-state');
         if (resultsContainer) {
@@ -234,18 +234,18 @@ document.addEventListener('DOMContentLoaded', () => {
         studentInteractionZone?.classList.add('hidden');
     };
 
-    // --- INICIALITZACIÓ ---
+    // --- INICIALITZACIÃ“ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
         sessionId = params.get('session');
         myRole = params.get('mode');
 
         setResultsContainerMode('placeholder-state');
-        resultsContainer.innerHTML = '<p class="placeholder">Preparant la sessió...</p>';
+        resultsContainer.innerHTML = '<p class="placeholder">Preparant la sessiÃ³...</p>';
         updatePhaseDescription('waiting');
 
         if (!sessionId) {
-            showFatalState('No s\'ha indicat cap codi de sessió. Torna a generar l\'activitat.');
+            showFatalState('No s\'ha indicat cap codi de sessiÃ³. Torna a generar l\'activitat.');
             return;
         }
 
@@ -260,18 +260,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (myRole === 'host') {
             const rawConfig = params.get('config');
             if (!rawConfig) {
-                showFatalState('No s\'ha trobat la configuració de l\'activitat. Torna a generar-la.');
+                showFatalState('No s\'ha trobat la configuraciÃ³ de l\'activitat. Torna a generar-la.');
                 return;
             }
             try {
                 activityConfig = JSON.parse(decodeURIComponent(rawConfig));
             } catch (error) {
-                console.error('Error analitzant la configuració:', error);
-                showFatalState('Error carregant la configuració. Torna a iniciar l\'activitat.');
+                console.error('Error analitzant la configuraciÃ³:', error);
+                showFatalState('Error carregant la configuraciÃ³. Torna a iniciar l\'activitat.');
                 return;
             }
             if (!activityConfig || typeof activityConfig !== 'object') {
-                showFatalState('La configuració rebuda és buida.');
+                showFatalState('La configuraciÃ³ rebuda Ã©s buida.');
                 return;
             }
             activityConfig = normalizeActivityConfig(activityConfig);
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- LÒGICA DE PEERJS (PROFESSOR) ---
+    // --- LÃ’GICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
         peer = new Peer(sessionId);
         peer.on('open', id => {
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
         guestConnections.forEach(conn => conn.send({ type: 'data-update', payload }));
     }
 
-    // --- LÒGICA DE PEERJS (ALUMNE) ---
+    // --- LÃ’GICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
         peer = new Peer();
         peer.on('open', () => {
@@ -351,14 +351,14 @@ document.addEventListener('DOMContentLoaded', () => {
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
             hostConnection.on('data', handleTeacherData);
             hostConnection.on('close', () => {
-                alert('Has perdut la connexió amb l''organitzador.');
+                alert("Has perdut la connexiÃ³ amb l'organitzador.");
                 window.location.href = 'https://ja.cat/participem';
             });
-            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
+            hostConnection.on('error', () => { alert("No s'ha pogut connectar a la sessiÃ³."); window.close(); });
         });
         peer.on('error', (err) => {
             console.error('Error de PeerJS:', err);
-            showFatalState('No s\'ha pogut connectar amb la sessió. Comprova el codi o torna-ho a provar.');
+            showFatalState('No s\'ha pogut connectar amb la sessiÃ³. Comprova el codi o torna-ho a provar.');
         });
     }
 
@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
             studentInteractionZone.classList.remove('hidden');
             renderStudentView();
         } else if (data.type === 'session-closed') {
-            alert('La sessió ha estat tancada pel professor.');
+            alert('La sessiÃ³ ha estat tancada pel professor.');
             window.close();
         }
     }
@@ -461,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             resultsContainer.appendChild(fragment);
         } else if (phase === 'voting') {
-            statusIndicator.textContent = 'Votació en directe';
+            statusIndicator.textContent = 'VotaciÃ³ en directe';
             setResultsContainerMode('poll-grid compact-poll');
             const items = type === 'poll' ? activityConfig.pollOptions : ideas;
             if (items.length === 0) {
@@ -580,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (phase === 'voting') {
             if (studentState.castVotes > 0) {
-                showMessage('Vots enviats! Gràcies per participar.');
+                showMessage('Vots enviats! GrÃ cies per participar.');
                 return;
             }
 
@@ -621,10 +621,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        showMessage('Gràcies per participar! Espera instruccions.');
+        showMessage('GrÃ cies per participar! Espera instruccions.');
     }
 
-    // --- GESTIÓ D\'EVENTS ---
+    // --- GESTIÃ“ D\'EVENTS ---
     function handleIdeaSubmit(e) {
         e.preventDefault();
         if (ideaInput.value.trim()) {
@@ -675,21 +675,21 @@ document.addEventListener('DOMContentLoaded', () => {
             let message = '';
             if (selectedCount === 0) {
                 message = votesPerStudent === 1
-                    ? 'Selecciona una opció per continuar.'
+                    ? 'Selecciona una opciÃ³ per continuar.'
                     : `Pots seleccionar fins a ${votesPerStudent} opcions.`;
             } else if (selectedCount < votesPerStudent) {
                 if (votesPerStudent === 1) {
-                    message = 'Has seleccionat la teva opció.';
+                    message = 'Has seleccionat la teva opciÃ³.';
                 } else {
                     const remaining = votesPerStudent - selectedCount;
                     message = remaining === 1
-                        ? 'Pots seleccionar una opció més.'
-                        : `Pots seleccionar ${remaining} opcions més.`;
+                        ? 'Pots seleccionar una opciÃ³ mÃ©s.'
+                        : `Pots seleccionar ${remaining} opcions mÃ©s.`;
                 }
             } else {
                 message = votesPerStudent === 1
-                    ? 'Has seleccionat la teva opció.'
-                    : 'Ja has seleccionat el màxim d\'opcions.';
+                    ? 'Has seleccionat la teva opciÃ³.'
+                    : 'Ja has seleccionat el mÃ xim d\'opcions.';
             }
             votesLeftInfo.textContent = message;
         }
@@ -717,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
             message.className = 'student-thanks hidden';
             studentInteractionZone.appendChild(message);
         }
-        message.textContent = 'Vots enviats! Gràcies per participar.';
+        message.textContent = 'Vots enviats! GrÃ cies per participar.';
         message.classList.remove('hidden');
 
         ideaForm.classList.add('hidden');
@@ -741,10 +741,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!phaseDescription) return;
         const messages = {
             brainstorm: 'Els alumnes estan aportant idees en directe.',
-            voting: 'És moment de votar les propostes pujades per la classe.',
-            closed: 'La sessió ha finalitzat. Repassa els resultats.'
+            voting: 'Ã‰s moment de votar les propostes pujades per la classe.',
+            closed: 'La sessiÃ³ ha finalitzat. Repassa els resultats.'
         };
-        phaseDescription.textContent = messages[phase] || 'Preparant la sessió en directe.';
+        phaseDescription.textContent = messages[phase] || 'Preparant la sessiÃ³ en directe.';
     };
 
     const updateParticipantCount = () => {
@@ -753,9 +753,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sidebarParticipants) sidebarParticipants.textContent = count;
     };
 
-    // --- INICI DE L\'APLICACIÓ ---
+    // --- INICI DE L\'APLICACIÃ“ ---
     init();
 });
+
 
 
 
