@@ -89,63 +89,10 @@
         }))
     });
 
-    const peerOptionFactories = [
-        () => ({
-            host: '0.peerjs.com',
-            port: 443,
-            secure: true,
-            path: '/',
-            key: 'peerjs',
-            debug: 1,
-            config: createIceConfig()
-        }),
-        () => ({
-            host: '0.peerjs.com',
-            port: 443,
-            secure: true,
-            path: '/peerjs',
-            key: 'peerjs',
-            debug: 1,
-            config: createIceConfig()
-        }),
-        () => ({
-            host: '0.peerjs.com',
-            port: 80,
-            secure: false,
-            path: '/',
-            key: 'peerjs',
-            debug: 1,
-            config: createIceConfig()
-        }),
-        () => ({
-            debug: 1,
-            config: createIceConfig()
-        })
-    ];
-
-    let selectedPeerOptions = null;
-
-    const duplicatePeerOptions = (options = {}) => {
-        const cloned = { ...options };
-        if (cloned.config?.iceServers) {
-            cloned.config = {
-                ...cloned.config,
-                iceServers: cloned.config.iceServers.map(server => ({
-                    ...server,
-                    urls: Array.isArray(server.urls) ? [...server.urls] : server.urls
-                }))
-            };
-        }
-        return cloned;
-    };
-
-    const describePeerOption = (options = {}) => {
-        if (!options || !options.host) return 'Servidor per defecte (núvol PeerJS)';
-        const protocol = options.secure ? 'wss' : 'ws';
-        const port = options.port ?? (options.secure ? 443 : 80);
-        const path = options.path || '/';
-        return `${protocol}://${options.host}:${port}${path}`;
-    };
+    const peerBaseOptions = () => ({
+        debug: 1,
+        config: createIceConfig()
+    });
 
     const explainPeerError = (error, role = 'guest') => {
         if (!error) {
@@ -359,69 +306,6 @@
         showFatalState(explanation);
     }
 
-    function createPeerWithFallback(peerId, role, onReady) {
-        const baseCandidates = selectedPeerOptions
-            ? [selectedPeerOptions]
-            : peerOptionFactories.map(factory => factory());
-        const candidates = (baseCandidates.length ? baseCandidates : [{}]).map(duplicatePeerOptions);
-        let attemptIndex = 0;
-        let lastFailure = null;
-
-        const attempt = () => {
-            if (attemptIndex >= candidates.length) {
-                handlePeerError(lastFailure, role);
-                return;
-            }
-
-            const candidate = candidates[attemptIndex];
-            let resolved = false;
-            let peerInstance;
-            console.info(`[PeerJS] Intent ${attemptIndex + 1}: ${describePeerOption(candidate)}`);
-            try {
-                peerInstance = new Peer(peerId, candidate);
-            } catch (creationError) {
-                lastFailure = creationError;
-                attemptIndex += 1;
-                attempt();
-                return;
-            }
-
-            const onOpen = () => {
-                if (resolved) return;
-                resolved = true;
-                peerInstance.off?.('error', onError);
-                peerInstance.removeListener?.('error', onError);
-                peerInstance.removeEventListener?.('error', onError);
-                if (!selectedPeerOptions) {
-                    selectedPeerOptions = duplicatePeerOptions(candidate);
-                }
-                console.info(`[PeerJS] Connectat amb la configuració ${describePeerOption(candidate)}`);
-                peerInstance.on('error', (err) => handlePeerError(err, role));
-                onReady(peerInstance);
-            };
-
-            const onError = (error) => {
-                if (!resolved) {
-                    console.warn(`[PeerJS] La configuració ${describePeerOption(candidate)} ha fallat. Provant-ne una altra...`, error);
-                    lastFailure = error;
-                    peerInstance.off?.('open', onOpen);
-                    peerInstance.removeListener?.('open', onOpen);
-                    peerInstance.removeEventListener?.('open', onOpen);
-                    peerInstance.destroy();
-                    attemptIndex += 1;
-                    attempt();
-                } else {
-                    handlePeerError(error, role);
-                }
-            };
-
-            peerInstance.on('open', onOpen);
-            peerInstance.on('error', onError);
-        };
-
-        attempt();
-    }
-
     // --- INICIALITZACIÓ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
@@ -483,14 +367,15 @@
 
     // --- LÒGICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
-        createPeerWithFallback(sessionId, 'host', (instance) => {
-            peer = instance;
+        peer = new Peer(sessionId, peerBaseOptions());
+        peer.on('open', () => {
             statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
             if (activityConfig.type === 'brainstorm-poll') startVotingBtn.classList.remove('hidden');
             renderTeacherResults();
-            peer.on('connection', handleNewConnection);
         });
+        peer.on('connection', handleNewConnection);
+        peer.on('error', (err) => handlePeerError(err, 'host'));
     }
 
     function handleNewConnection(conn) {
@@ -532,8 +417,8 @@
 
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
-        createPeerWithFallback(undefined, 'guest', (instance) => {
-            peer = instance;
+        peer = new Peer(undefined, peerBaseOptions());
+        peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
             hostConnection.on('data', handleTeacherData);
@@ -543,6 +428,9 @@
             hostConnection.on('error', (connError) => {
                 handlePeerError(connError || { type: 'network', message: "No s'ha pogut connectar a la sessió." }, 'guest');
             });
+        });
+        peer.on('error', (err) => {
+            handlePeerError(err, 'guest');
         });
     }
 
