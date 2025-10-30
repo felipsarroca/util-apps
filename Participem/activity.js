@@ -66,6 +66,18 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
+    const removeIdea = (ideaId) => {
+        if (myRole !== 'host') return;
+        const index = sessionData?.ideas?.findIndex(idea => idea.id === ideaId);
+        if (index === undefined || index === -1) return;
+        sessionData.ideas.splice(index, 1);
+        if (sessionData.votes) {
+            delete sessionData.votes[ideaId];
+        }
+        broadcastUpdate();
+        renderTeacherResults();
+    };
+
     const safeStorage = {
         get(key) {
             try {
@@ -417,9 +429,34 @@
             if (densityClass) resultsContainer.classList.add(densityClass);
             const useDoubleColumn = ideaCount >= 14 && window.innerWidth >= 1200;
             resultsContainer.classList.toggle('idea-bubble-double', useDoubleColumn);
+            const fragment = document.createDocumentFragment();
             ideas.forEach(idea => {
-                resultsContainer.innerHTML += `<div class="idea-bubble">${idea.text}</div>`;
+                const bubble = document.createElement('div');
+                bubble.className = 'idea-bubble';
+                bubble.dataset.id = idea.id;
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'idea-bubble-text';
+                textSpan.textContent = idea.text;
+                bubble.appendChild(textSpan);
+
+                if (myRole === 'host') {
+                    bubble.classList.add('idea-bubble--host');
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'idea-delete-btn';
+                    deleteBtn.setAttribute('aria-label', 'Esborra la idea');
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                    addPressListener(deleteBtn, (event) => {
+                        event.stopPropagation();
+                        removeIdea(idea.id);
+                    });
+                    bubble.appendChild(deleteBtn);
+                }
+
+                fragment.appendChild(bubble);
             });
+            resultsContainer.appendChild(fragment);
         } else if (phase === 'voting') {
             statusIndicator.textContent = 'Votació en directe';
             setResultsContainerMode('poll-grid compact-poll');
