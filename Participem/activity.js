@@ -70,9 +70,8 @@
         host: '0.peerjs.com',
         port: 443,
         secure: true,
-        path: '/',
+        path: '/myapp',
         key: 'peerjs',
-        debug: 2,
         config: {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
