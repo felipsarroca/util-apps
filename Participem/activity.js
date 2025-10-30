@@ -70,33 +70,68 @@
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' }
+        { urls: 'stun:stun3.l.google.com:19302' },
+        {
+            urls: [
+                'turn:openrelay.metered.ca:80',
+                'turn:openrelay.metered.ca:443',
+                'turn:openrelay.metered.ca:443?transport=tcp'
+            ],
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+        }
     ];
 
-    const shouldForcePublicPeerServer = (() => {
-        const protocol = window.location.protocol;
-        const hostname = window.location.hostname;
-        if (protocol === 'https:') return true;
-        if (protocol === 'file:') return true;
-        if (!hostname || hostname === '127.0.0.1' || hostname === 'localhost') return false;
-        return true;
-    })();
+    const clonePeerOptions = () => ({
+        host: '0.peerjs.com',
+        port: 443,
+        secure: true,
+        path: '/',
+        debug: 1,
+        config: {
+            iceServers: baseIceServers.map(server => ({
+                ...server,
+                urls: Array.isArray(server.urls) ? [...server.urls] : server.urls
+            }))
+        }
+    });
 
-    const buildPeerOptions = () => {
-        const options = {
-            debug: 1,
-            config: { iceServers: baseIceServers.map(server => ({ ...server })) }
-        };
-
-        if (shouldForcePublicPeerServer) {
-            options.host = '0.peerjs.com';
-            options.port = 443;
-            options.secure = true;
-            options.path = '/';
-            options.key = 'peerjs';
+    const explainPeerError = (error, role = 'guest') => {
+        if (!error) {
+            return 'No s\'ha pogut establir la connexió amb la sessió. Revisa la xarxa i torna-ho a provar.';
         }
 
-        return options;
+        const type = error.type || '';
+        const message = typeof error.message === 'string' ? error.message : '';
+        const lowered = message.toLowerCase();
+
+        if (type === 'peer-unavailable') {
+            return role === 'host'
+                ? 'Ja hi ha una sessió activa amb aquest codi. Tanca la pestanya anterior o genera un codi nou.'
+                : 'No hi ha cap activitat oberta amb aquest codi. Comprova que el professor ja hagi iniciat la sessió.';
+        }
+        if (type === 'invalid-id') {
+            return 'El codi de sessió no és vàlid. Torna a generar l\'activitat.';
+        }
+        if (type === 'browser-incompatible') {
+            return 'Aquest navegador no suporta WebRTC. Prova-ho amb la darrera versió de Chrome, Edge o Firefox.';
+        }
+        if (type === 'network') {
+            if (lowered.includes('lost') || lowered.includes('closed')) {
+                return 'S\'ha perdut la connexió amb el servidor de senyalització. Comprova la connexió a Internet i que la xarxa permeti WebRTC.';
+            }
+            return 'No s\'ha pogut contactar amb el servidor de senyalització (PeerJS). Verifica que els ports 80 i 443 i les connexions WebSocket no estiguin bloquejades.';
+        }
+        if (type === 'socket-error' || type === 'socket-closed') {
+            return 'La comunicació amb el servidor de senyalització s\'ha tancat. Torna-ho a provar en uns segons.';
+        }
+        if (type === 'disconnected') {
+            return 'La sessió s\'ha desconnectat. Refresca la pàgina per tornar a intentar-ho.';
+        }
+        if (lowered.includes('ice connection') || lowered.includes('ice failed')) {
+            return 'No s\'ha pogut establir el canal de dades (ICE). Revisa que la xarxa permeti WebRTC o prova una altra connexió.';
+        }
+        return 'No s\'ha pogut connectar amb la sessió. Torna-ho a provar i, si persisteix, revisa la configuració de la xarxa.';
     };
 
     const removeIdea = (ideaId) => {
@@ -267,6 +302,12 @@
         studentInteractionZone?.classList.add('hidden');
     };
 
+    function handlePeerError(error, role = 'guest') {
+        const explanation = explainPeerError(error, role);
+        console.error('Error de PeerJS:', error);
+        showFatalState(explanation);
+    }
+
     // --- INICIALITZACIÓ ---
     function init() {
         const params = new URLSearchParams(window.location.search);
@@ -328,7 +369,7 @@
 
     // --- LÒGICA DE PEERJS (PROFESSOR) ---
     function hostSession(sessionId) {
-        peer = new Peer(sessionId, buildPeerOptions());
+        peer = new Peer(sessionId, clonePeerOptions());
         peer.on('open', id => {
             statusIndicator.textContent = 'Connectat';
             sessionData = buildInitialSessionState();
@@ -336,7 +377,7 @@
             renderTeacherResults();
         });
         peer.on('connection', handleNewConnection);
-        peer.on('error', (err) => console.error('Error de PeerJS:', err));
+        peer.on('error', (err) => handlePeerError(err, 'host'));
     }
 
     function handleNewConnection(conn) {
@@ -378,20 +419,20 @@
 
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
-        peer = new Peer(undefined, buildPeerOptions());
+        peer = new Peer(undefined, clonePeerOptions());
         peer.on('open', () => {
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
             hostConnection.on('data', handleTeacherData);
             hostConnection.on('close', () => {
-                alert("Has perdut la connexió amb l'organitzador.");
-                window.location.href = 'https://ja.cat/participem';
+                showFatalState('Has perdut la connexió amb l'organitzador. Torna a introduir el codi quan el professor reobri la sessió.');
             });
-            hostConnection.on('error', () => { alert("No s'ha pogut connectar a la sessió."); window.close(); });
+            hostConnection.on('error', (connError) => {
+                handlePeerError(connError || { type: 'network', message: 'No s\'ha pogut connectar a la sessió.' }, 'guest');
+            });
         });
         peer.on('error', (err) => {
-            console.error('Error de PeerJS:', err);
-            showFatalState('No s\'ha pogut connectar amb la sessió. Comprova el codi o torna-ho a provar.');
+            handlePeerError(err, 'guest');
         });
     }
 
@@ -789,23 +830,3 @@
     // --- INICI DE L\'APLICACIÓ ---
     init();
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
