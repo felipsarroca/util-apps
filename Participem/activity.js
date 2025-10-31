@@ -66,6 +66,8 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
+    const HOME_URL = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
+
     const peerServerConfig = {
         host: '0.peerjs.com',
         port: 443,
@@ -73,24 +75,17 @@
         path: '/',
         debug: 2,
         config: {
-            iceTransportPolicy: 'all',
+            iceTransportPolicy: 'relay',
             iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
                 {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
+                    urls: 'turn:relay1.expressturn.com:443?transport=tcp',
+                    username: 'efK9D2zGMvAem6Cyh',
+                    credential: 'qv7EtbVHYZbJ4k8B'
                 },
                 {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
+                    urls: 'turn:relay2.expressturn.com:443?transport=tcp',
+                    username: 'efK9D2zGMvAem6Cyh',
+                    credential: 'qv7EtbVHYZbJ4k8B'
                 }
             ]
         }
@@ -410,12 +405,12 @@
                 hostConnection.on('error', () => {
                     if (!opened) return;
                     alert('S\'ha perdut la connexió amb l\'organitzador.');
-                    window.location.href = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
+                    window.location.href = HOME_URL;
                 });
                 hostConnection.on('close', () => {
                     if (!opened) return;
                     alert('Connexió tancada per l\'organitzador.');
-                    window.location.href = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
+                    window.location.href = HOME_URL;
                 });
             };
 
@@ -464,8 +459,8 @@
             studentInteractionZone.classList.remove('hidden');
             renderStudentView();
         } else if (data.type === 'session-closed') {
-            alert('La sessió ha estat tancada pel professor.');
-            window.close();
+            alert('L\'organitzador de l\'activitat ha tancat la sessió.');
+            window.location.href = HOME_URL;
         }
     }
 
@@ -798,7 +793,7 @@
         if (confirm('Vols tancar l\'activitat per a tothom?')) {
             guestConnections.forEach(conn => conn.send({ type: 'session-closed' }));
             if (peer) peer.destroy();
-            window.close();
+            window.location.href = HOME_URL;
         }
     }
 
