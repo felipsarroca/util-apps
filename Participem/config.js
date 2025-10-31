@@ -127,8 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
             categories.forEach((category, index) => {
                 const title = category.querySelector('.stars-category-title');
                 if (title) title.textContent = 'Categoria ' + (index + 1);
-                const indentValue = Math.min(index * 1.1, 3.3);
-                category.style.setProperty('--indent', indentValue + 'rem');
 
                 const removeBtn = category.querySelector('.remove-category-btn');
                 if (removeBtn) removeBtn.disabled = categories.length === 1;
@@ -182,14 +180,17 @@ document.addEventListener('DOMContentLoaded', () => {
             '        <input type="text" id="question" name="question" placeholder="Valoració amb estrelles" required>',
             '    </div>',
             '</div>',
-            '<div class="config-card compact-card range-card stars-range-card">',
+            '<div class="config-card compact-card stars-range-card">',
+            '    <div class="stars-range-heading">',
+            '        <h3>Puntuacions</h3>',
+            '    </div>',
             '    <div class="field-row stars-range-row">',
             '        <div class="field-group">',
-            '            <label for="min-score">Puntuació mínima</label>',
+            '            <label for="min-score">Mínima</label>',
             '            <input type="number" id="min-score" name="minScore" value="1" min="0" step="1" required>',
             '        </div>',
             '        <div class="field-group">',
-            '            <label for="max-score">Puntuació màxima</label>',
+            '            <label for="max-score">Màxima</label>',
             '            <input type="number" id="max-score" name="maxScore" value="5" min="1" step="1" required>',
             '        </div>',
             '    </div>',

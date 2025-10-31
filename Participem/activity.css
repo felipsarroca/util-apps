@@ -574,12 +574,13 @@ header {
 #stars-score-container {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1rem;
 }
 
 .stars-category-wrapper {
     display: grid;
-    gap: 1.1rem;
+    gap: 0.9rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .star-category-block {
@@ -587,22 +588,22 @@ header {
     border-radius: var(--radius-md);
     border: 1px solid rgba(79, 70, 229, 0.18);
     box-shadow: 0 14px 32px rgba(15, 23, 42, 0.15);
-    padding: 1rem 1.1rem;
+    padding: 0.85rem 1rem;
     display: grid;
-    gap: 0.9rem;
+    gap: 0.75rem;
 }
 
 .star-category-block h3 {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: #1f2937;
 }
 
 .star-rating-item {
     display: grid;
-    gap: 0.5rem;
-    padding: 0.75rem 0.9rem;
+    gap: 0.4rem;
+    padding: 0.65rem 0.8rem;
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.85);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
@@ -616,24 +617,25 @@ header {
 }
 
 .star-rating-label {
-    font-weight: 500;
+    font-weight: 600;
     color: #1f2937;
+    font-size: 0.95rem;
 }
 
 .star-rating-hint {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: #6b7280;
 }
 
 .star-buttons {
     display: inline-flex;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 
 .star-button {
     border: none;
     background: transparent;
-    font-size: 1.6rem;
+    font-size: 1.95rem;
     line-height: 1;
     color: #d1d5db;
     cursor: pointer;
