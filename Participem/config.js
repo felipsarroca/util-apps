@@ -172,9 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
         createCategory();
     };
 
+    
+
     const buildStarsLayout = () => {
         primaryColumn.innerHTML = [
-            '<div class="config-card compact-card">',
+            '<div class="config-card compact-card stars-primary-card">',
             '    <div class="field-group">',
             '        <label for="question">Nom de l\'activitat</label>',
             '        <input type="text" id="question" name="question" placeholder="Valoració amb estrelles" required>',
@@ -208,9 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
         secondaryColumn.classList.remove('hidden-column');
         primaryColumn.classList.remove('full-width');
 
+        const actionsWrapper = document.createElement('div');
+        actionsWrapper.className = 'stars-actions';
+        actionsWrapper.appendChild(buildActions());
+        primaryColumn.appendChild(actionsWrapper);
+
         configActions.innerHTML = '';
-        configActions.appendChild(buildActions());
-        configActions.classList.add('align-start');
+        configActions.classList.remove('align-start');
 
         initializeStarsCategoryEditor();
     };
