@@ -66,36 +66,24 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
-    const HOME_URL = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
-
     const peerServerConfig = {
         host: '0.peerjs.com',
         port: 443,
         secure: true,
         path: '/',
-        debug: 2,
         config: {
-            iceTransportPolicy: 'relay',
             iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
                 {
-                    urls: 'turn:relay1.expressturn.com:3478',
-                    username: 'efK9D2zGMvAem6Cyh',
-                    credential: 'qv7EtbVHYZbJ4k8B'
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
                 },
                 {
-                    urls: 'turn:relay2.expressturn.com:3478',
-                    username: 'efK9D2zGMvAem6Cyh',
-                    credential: 'qv7EtbVHYZbJ4k8B'
-                },
-                {
-                    urls: 'turn:relay1.expressturn.com:443?transport=tcp',
-                    username: 'efK9D2zGMvAem6Cyh',
-                    credential: 'qv7EtbVHYZbJ4k8B'
-                },
-                {
-                    urls: 'turn:relay2.expressturn.com:443?transport=tcp',
-                    username: 'efK9D2zGMvAem6Cyh',
-                    credential: 'qv7EtbVHYZbJ4k8B'
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
                 }
             ]
         }
@@ -384,82 +372,12 @@
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
         peer = createGuestPeer();
-        let hostConnectionAttempts = 0;
-        const maxAttempts = 3;
-        let connecting = false;
-
-        const attemptConnection = (retry = false) => {
-            if (connecting) return;
-            if (hostConnection && hostConnection.open) return;
-
-            if (retry) hostConnectionAttempts += 1;
-            else hostConnectionAttempts = 1;
-
-            if (hostConnectionAttempts > maxAttempts) {
-                showFatalState('No s\'ha pogut establir la connexió P2P. Revisa la xarxa o torna-ho a provar.');
-                return;
-            }
-
-            connecting = true;
-            statusIndicator.textContent = hostConnectionAttempts === 1
-                ? 'Connectant...'
-                : `Reconnectant (int ${hostConnectionAttempts})...`;
-
-            const connection = peer.connect(sessionId, { serialization: 'json' });
-            hostConnection = connection;
-
-            let opened = false;
-            const timeout = setTimeout(() => {
-                if (!opened) {
-                    try {
-                        connection.close();
-                    } catch (error) {
-                        console.warn('Error tancant connexió fallida:', error);
-                    }
-                    connecting = false;
-                    attemptConnection(true);
-                }
-            }, 10000);
-
-            connection.on('data', handleTeacherData);
-            connection.on('open', () => {
-                opened = true;
-                clearTimeout(timeout);
-                connecting = false;
-                statusIndicator.textContent = 'Connectat';
-            });
-            connection.on('error', () => {
-                clearTimeout(timeout);
-                connecting = false;
-                if (!opened) {
-                    attemptConnection(true);
-                    return;
-                }
-                alert('S\'ha perdut la connexió amb l\'organitzador.');
-                window.location.href = HOME_URL;
-            });
-            connection.on('close', () => {
-                clearTimeout(timeout);
-                connecting = false;
-                if (!opened) {
-                    attemptConnection(true);
-                    return;
-                }
-                alert('Connexió tancada per l\'organitzador.');
-                window.location.href = HOME_URL;
-            });
-        };
-
-        attemptConnection(false);
-        peer.on('open', () => attemptConnection(false));
-        peer.on('disconnected', () => {
-            connecting = false;
-            try {
-                peer.reconnect();
-            } catch (error) {
-                console.warn('No s\'ha pogut demanar reconnect al peer:', error);
-            }
-            setTimeout(() => attemptConnection(true), 300);
+        peer.on('open', () => {
+            hostConnection = peer.connect(sessionId, { reliable: true });
+            hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
+            hostConnection.on('data', handleTeacherData);
+            hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
+            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
         });
         peer.on('error', (err) => {
             console.error('Error de PeerJS:', err);
@@ -504,8 +422,8 @@
             studentInteractionZone.classList.remove('hidden');
             renderStudentView();
         } else if (data.type === 'session-closed') {
-            alert('L\'organitzador de l\'activitat ha tancat la sessió.');
-            window.location.href = HOME_URL;
+            alert('La sessió ha estat tancada pel professor.');
+            window.close();
         }
     }
 
@@ -838,7 +756,7 @@
         if (confirm('Vols tancar l\'activitat per a tothom?')) {
             guestConnections.forEach(conn => conn.send({ type: 'session-closed' }));
             if (peer) peer.destroy();
-            window.location.href = HOME_URL;
+            window.close();
         }
     }
 
