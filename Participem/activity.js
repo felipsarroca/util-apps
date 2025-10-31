@@ -75,22 +75,13 @@
         path: '/',
         debug: 2,
         config: {
-            iceTransportPolicy: 'all',
+            iceTransportPolicy: 'relay',
             iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
                 {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443',
+                    urls: [
+                        'turn:openrelay.metered.ca:80?transport=tcp',
+                        'turn:openrelay.metered.ca:443?transport=tcp'
+                    ],
                     username: 'openrelayproject',
                     credential: 'openrelayproject'
                 }
@@ -413,7 +404,7 @@
     function joinSession(sessionId) {
         peer = createGuestPeer();
         let attempts = 0;
-        const maxAttempts = 3;
+        const maxAttempts = 8;
         let connecting = false;
         let slowNoticeTimer = null;
 
@@ -457,7 +448,7 @@
                     hostConnection = null;
                     startConnection(true);
                 }
-            }, 10000);
+            }, 25000);
 
             scheduleSlowNotice();
 
