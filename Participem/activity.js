@@ -66,24 +66,24 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
-    const HOME_URL = 'https://felipsarroca.github.io/util-apps/Participem/';
-    const redirectToHome = () => {
-        window.location.href = HOME_URL;
-    };
-
     const peerServerConfig = {
         host: '0.peerjs.com',
         port: 443,
         secure: true,
-        debug: 2,
+        path: '/',
         config: {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
                 {
-                    urls: 'turn:relay1.expressturn.com:3478',
-                    username: 'efK9D2zGMvAem6Cyh',
-                    credential: 'qv7EtbVHYZbJ4k8B'
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
                 }
             ]
         }
@@ -335,15 +335,7 @@
     function handleNewConnection(conn) {
         guestConnections.push(conn);
         updateParticipantCount();
-        const sendSnapshot = (type = 'data-update') => {
-            const payload = { config: activityConfig, data: sessionData };
-            conn.send({ type, payload });
-        };
-        conn.on('open', () => {
-            sendSnapshot('session-data');
-            setTimeout(() => sendSnapshot(), 250);
-            setTimeout(() => sendSnapshot(), 1000);
-        });
+        conn.on('open', () => conn.send({ type: 'session-data', payload: { config: activityConfig, data: sessionData } }));
         conn.on('data', data => handleStudentData(conn, data));
         conn.on('close', () => { guestConnections = guestConnections.filter(c => c.peer !== conn.peer); updateParticipantCount(); });
     }
@@ -380,56 +372,17 @@
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
         peer = createGuestPeer();
-        let isAttemptingConnection = false;
-
-        const attachHostHandlers = (connection) => {
-            if (!connection) return;
-            connection.on('open', () => {
-                isAttemptingConnection = false;
-                statusIndicator.textContent = 'Connectat';
-            });
-            connection.on('data', handleTeacherData);
-            connection.on('close', () => {
-                isAttemptingConnection = false;
-                alert('Connexió perduda amb l\'organitzador de l\'activitat. Seràs redirigit a la pàgina inicial.');
-                redirectToHome();
-            });
-            connection.on('error', () => {
-                isAttemptingConnection = false;
-                alert('No s\'ha pogut connectar a la sessió. Et redirigirem a la pàgina inicial.');
-                redirectToHome();
-            });
-        };
-
-        const startConnect = () => {
-            if (hostConnection && hostConnection.open) return;
-            if (isAttemptingConnection) return;
-            isAttemptingConnection = true;
-            hostConnection = peer.connect(sessionId, { serialization: 'json' });
-            attachHostHandlers(hostConnection);
-        };
-
-        startConnect();
-        peer.on('open', startConnect);
-        peer.on('disconnected', () => {
-            isAttemptingConnection = false;
-            try {
-                peer.reconnect();
-            } catch (error) {
-                console.warn('Error reintentant la connexió PeerJS:', error);
-            }
-            setTimeout(startConnect, 300);
+        peer.on('open', () => {
+            hostConnection = peer.connect(sessionId, { reliable: true });
+            hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
+            hostConnection.on('data', handleTeacherData);
+            hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
+            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
         });
         peer.on('error', (err) => {
             console.error('Error de PeerJS:', err);
             showFatalState('No s\'ha pogut connectar amb la sessió. Comprova el codi o torna-ho a provar.');
         });
-
-        setTimeout(() => {
-            if (!hostConnection || !hostConnection.open) {
-                statusIndicator.textContent = 'Connectant (lent)';
-            }
-        }, 5000);
     }
 
     function handleTeacherData(data) {
@@ -469,8 +422,8 @@
             studentInteractionZone.classList.remove('hidden');
             renderStudentView();
         } else if (data.type === 'session-closed') {
-            alert('L\'organitzador de l\'activitat ha tancat la sessió. Seràs redirigit a la pàgina inicial.');
-            redirectToHome();
+            alert('La sessió ha estat tancada pel professor.');
+            window.close();
         }
     }
 
@@ -803,7 +756,7 @@
         if (confirm('Vols tancar l\'activitat per a tothom?')) {
             guestConnections.forEach(conn => conn.send({ type: 'session-closed' }));
             if (peer) peer.destroy();
-            redirectToHome();
+            window.close();
         }
     }
 
