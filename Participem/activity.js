@@ -66,6 +66,11 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
+    const HOME_URL = 'https://felipsarroca.github.io/util-apps/Participem/';
+    const redirectToHome = () => {
+        window.location.href = HOME_URL;
+    };
+
     const peerServerConfig = {
         host: '0.peerjs.com',
         port: 443,
@@ -376,8 +381,14 @@
             hostConnection = peer.connect(sessionId, { reliable: true });
             hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
             hostConnection.on('data', handleTeacherData);
-            hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
-            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
+            hostConnection.on('close', () => {
+                alert('Connexió perduda amb l\'organitzador de l\'activitat. Seràs redirigit a la pàgina inicial.');
+                redirectToHome();
+            });
+            hostConnection.on('error', () => {
+                alert('No s\'ha pogut connectar a la sessió. Et redirigirem a la pàgina inicial.');
+                redirectToHome();
+            });
         });
         peer.on('error', (err) => {
             console.error('Error de PeerJS:', err);
@@ -422,8 +433,8 @@
             studentInteractionZone.classList.remove('hidden');
             renderStudentView();
         } else if (data.type === 'session-closed') {
-            alert('La sessió ha estat tancada pel professor.');
-            window.close();
+            alert('L\'organitzador de l\'activitat ha tancat la sessió. Seràs redirigit a la pàgina inicial.');
+            redirectToHome();
         }
     }
 
@@ -756,7 +767,7 @@
         if (confirm('Vols tancar l\'activitat per a tothom?')) {
             guestConnections.forEach(conn => conn.send({ type: 'session-closed' }));
             if (peer) peer.destroy();
-            window.close();
+            redirectToHome();
         }
     }
 
