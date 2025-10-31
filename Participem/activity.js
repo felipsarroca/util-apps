@@ -71,33 +71,8 @@
         window.location.href = HOME_URL;
     };
 
-    const peerServerConfig = {
-        host: '0.peerjs.com',
-        port: 443,
-        secure: true,
-        path: '/',
-        key: 'peerjs',
-        debug: 2,
-        config: {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                }
-            ]
-        }
-    };
-
-    const createHostPeer = (id) => new Peer(String(id), peerServerConfig);
-    const createGuestPeer = () => new Peer(undefined, peerServerConfig);
+    const createHostPeer = (id) => new Peer(String(id));
+    const createGuestPeer = () => new Peer();
 
     const removeIdea = (ideaId) => {
         if (myRole !== 'host') return;
