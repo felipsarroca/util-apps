@@ -133,31 +133,66 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
 
-        const createCategory = () => {
-            const wrapper = document.createElement('div');
+        const createCategory = (prefill = {}) => {
+            const wrapper = document.createElement('section');
             wrapper.className = 'stars-category';
             wrapper.dataset.index = String(counter++);
-            wrapper.innerHTML = [
-                '<div class="stars-category-header">',
-                '    <span class="stars-category-title">Categoria</span>',
-                '    <button type="button" class="remove-category-btn" aria-label="Elimina la categoria">',
-                '        <i class="fa-solid fa-trash"></i>',
-                '    </button>',
-                '</div>',
-                '<div class="field-group">',
-                '    <label>Nom</label>',
-                '    <input type="text" class="category-name" placeholder="Expressió oral" required>',
-                '</div>',
-                '<div class="field-group">',
-                '    <label>Ítems (un per línia)</label>',
-                '    <textarea class="category-items" rows="3" placeholder="Claredat de la veu&#10;Contacte visual&#10;Fluïdesa" required></textarea>',
-                '</div>'
-            ].join('');
+
+            const header = document.createElement('div');
+            header.className = 'stars-category-header';
+
+            const title = document.createElement('span');
+            title.className = 'stars-category-title';
+            header.appendChild(title);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-category-btn';
+            removeBtn.setAttribute('aria-label', 'Elimina la categoria');
+            removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+            header.appendChild(removeBtn);
+
+            const nameGroup = document.createElement('div');
+            nameGroup.className = 'field-group';
+            const nameLabel = document.createElement('label');
+            nameLabel.textContent = 'Nom';
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.className = 'category-name';
+            nameInput.placeholder = 'Expressió oral';
+            if (prefill.name) nameInput.value = prefill.name;
+            nameGroup.appendChild(nameLabel);
+            nameGroup.appendChild(nameInput);
+
+            const itemsGroup = document.createElement('div');
+            itemsGroup.className = 'field-group';
+            const itemsLabel = document.createElement('label');
+            itemsLabel.textContent = 'Ítems (un per línia)';
+            const itemsTextarea = document.createElement('textarea');
+            itemsTextarea.className = 'category-items';
+            itemsTextarea.rows = 5;
+            itemsTextarea.placeholder = ['Claredat de la veu', 'Contacte visual', 'Fluïdesa'].join('\n');
+            if (Array.isArray(prefill.items)) {
+                itemsTextarea.value = prefill.items.join('\n');
+            } else if (typeof prefill.items === 'string') {
+                itemsTextarea.value = prefill.items;
+            }
+            if (itemsTextarea.value) {
+                const lineCount = itemsTextarea.value.split('\n').length;
+                itemsTextarea.rows = Math.max(5, lineCount);
+            }
+            itemsGroup.appendChild(itemsLabel);
+            itemsGroup.appendChild(itemsTextarea);
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(nameGroup);
+            wrapper.appendChild(itemsGroup);
+
             categoryList.appendChild(wrapper);
             refreshHeaders();
         };
 
-        addCategoryBtn.addEventListener('click', createCategory);
+        addCategoryBtn.addEventListener('click', () => createCategory());
 
         categoryList.addEventListener('click', event => {
             const button = event.target.closest('.remove-category-btn');
@@ -169,10 +204,10 @@ document.addEventListener('DOMContentLoaded', () => {
             refreshHeaders();
         });
 
-        createCategory();
+        for (let i = 0; i < 3; i += 1) {
+            createCategory();
+        }
     };
-
-    
 
     const buildStarsLayout = () => {
         primaryColumn.innerHTML = [
@@ -236,27 +271,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
 
-        const categories = Array.from(categoryList.querySelectorAll('.stars-category')).map(category => {
+        const rawCategories = Array.from(categoryList.querySelectorAll('.stars-category')).map(category => {
             const nameInput = category.querySelector('.category-name');
             const itemsInput = category.querySelector('.category-items');
             const name = nameInput.value.trim();
-            const items = itemsInput.value.split('\n').map(line => line.trim()).filter(Boolean);
-            return { name, items, nameInput, itemsInput };
+            const rawItems = itemsInput.value.split('\n').map(line => line.trim());
+            const items = rawItems.filter(Boolean);
+            return { name, items, nameInput, itemsInput, rawItems };
         });
 
-        if (!categories.length) {
-            alert('Afegeix com a mínim una categoria.');
+        const filledCategories = rawCategories.filter(({ name, rawItems }) => name || rawItems.some(Boolean));
+
+        if (!filledCategories.length) {
+            alert('Omple com a mínim una categoria amb nom i ítems.');
             return null;
         }
 
-        for (const { name, items, nameInput, itemsInput } of categories) {
+        for (const { name, items, nameInput, itemsInput } of filledCategories) {
             if (!name) {
-                alert('Introdueix un nom per a cada categoria.');
+                alert('Introdueix un nom per a cada categoria amb contingut.');
                 nameInput.focus();
                 return null;
             }
             if (!items.length) {
-                alert(`La categoria "${name || 'sense nom'}" necessita com a mínim un ítem.`);
+                alert(`La categoria "${name}" necessita com a mínim un ítem.`);
                 itemsInput.focus();
                 return null;
             }
@@ -267,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
             question: questionInput.value.trim(),
             minScore,
             maxScore,
-            categories: categories.map(({ name, items }) => ({ name, items }))
+            categories: filledCategories.map(({ name, items }) => ({ name, items }))
         };
     };
 
