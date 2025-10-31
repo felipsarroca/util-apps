@@ -75,23 +75,13 @@
         host: '0.peerjs.com',
         port: 443,
         secure: true,
-        path: '/',
-        key: 'peerjs',
+        debug: 2,
         config: {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
                 {
                     urls: 'turn:relay1.expressturn.com:3478',
-                    username: 'efK9D2zGMvAem6Cyh',
-                    credential: 'qv7EtbVHYZbJ4k8B'
-                },
-                {
-                    urls: 'turn:relay2.expressturn.com:3478',
-                    username: 'efK9D2zGMvAem6Cyh',
-                    credential: 'qv7EtbVHYZbJ4k8B'
-                },
-                {
-                    urls: 'turn:relay1.expressturn.com:443?transport=tcp',
                     username: 'efK9D2zGMvAem6Cyh',
                     credential: 'qv7EtbVHYZbJ4k8B'
                 }
@@ -100,7 +90,7 @@
     };
 
     const createHostPeer = (id) => new Peer(String(id), peerServerConfig);
-    const createGuestPeer = () => new Peer(undefined, peerServerConfig);
+    const createGuestPeer = () => new Peer(peerServerConfig);
 
     const removeIdea = (ideaId) => {
         if (myRole !== 'host') return;
