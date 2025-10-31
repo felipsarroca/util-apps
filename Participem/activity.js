@@ -66,23 +66,31 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
-    const getGlobalPeerOptions = () => {
-        const base = window.peerCommonOptions || window.peerBaseOptions;
-        if (!base || typeof base !== 'object') return null;
-        const cloned = { ...base };
-        if (base.config) cloned.config = { ...base.config };
-        return Object.keys(cloned).length ? cloned : null;
+    const peerServerConfig = {
+        host: '0.peerjs.com',
+        port: 443,
+        secure: true,
+        path: '/',
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                {
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                }
+            ]
+        }
     };
 
-    const createHostPeer = (id) => {
-        const options = getGlobalPeerOptions();
-        return options ? new Peer(String(id), options) : new Peer(String(id));
-    };
-
-    const createGuestPeer = () => {
-        const options = getGlobalPeerOptions();
-        return options ? new Peer(options) : new Peer();
-    };
+    const createHostPeer = (id) => new Peer(String(id), peerServerConfig);
+    const createGuestPeer = () => new Peer(peerServerConfig);
 
     const removeIdea = (ideaId) => {
         if (myRole !== 'host') return;
