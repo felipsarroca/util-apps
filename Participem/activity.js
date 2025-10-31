@@ -77,20 +77,16 @@
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
                 {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
+                    urls: [
+                        'turn:global.relay.metered.ca:80',
+                        'turn:global.relay.metered.ca:80?transport=tcp',
+                        'turn:global.relay.metered.ca:443',
+                        'turns:global.relay.metered.ca:443?transport=tcp'
+                    ],
+                    username: 'f716e7c11a7d132cdda3bc34',
+                    credential: 'V7BV5QvEY7s718zv'
                 }
             ]
         }
@@ -821,6 +817,7 @@
     // --- INICI DE L\'APLICACIÓ ---
     init();
 });
+
 
 
 
