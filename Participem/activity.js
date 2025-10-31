@@ -76,6 +76,8 @@
         port: 443,
         secure: true,
         path: '/',
+        key: 'peerjs',
+        debug: 2,
         config: {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -95,7 +97,7 @@
     };
 
     const createHostPeer = (id) => new Peer(String(id), peerServerConfig);
-    const createGuestPeer = () => new Peer(peerServerConfig);
+    const createGuestPeer = () => new Peer(undefined, peerServerConfig);
 
     const removeIdea = (ideaId) => {
         if (myRole !== 'host') return;
