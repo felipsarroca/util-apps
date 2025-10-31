@@ -122,14 +122,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!categoryList || !addCategoryBtn) return;
         let counter = 0;
 
+        const ordinalLabel = (index) => {
+            const ordinals = ['1ª', '2ª', '3ª', '4ª', '5ª', '6ª'];
+            return ordinals[index] || `${index + 1}ª`;
+        };
+
         const refreshHeaders = () => {
             const categories = categoryList.querySelectorAll('.stars-category');
             categories.forEach((category, index) => {
                 const title = category.querySelector('.stars-category-title');
-                if (title) title.textContent = 'Categoria ' + (index + 1);
+                if (title) title.textContent = `Nom de la ${ordinalLabel(index)} categoria`;
 
                 const removeBtn = category.querySelector('.remove-category-btn');
-                if (removeBtn) removeBtn.disabled = categories.length === 1;
+                if (removeBtn) removeBtn.disabled = categories.length <= 3 || index < 3;
             });
         };
 
@@ -153,25 +158,27 @@ document.addEventListener('DOMContentLoaded', () => {
             header.appendChild(removeBtn);
 
             const nameGroup = document.createElement('div');
-            nameGroup.className = 'field-group';
+            nameGroup.className = 'field-group stars-name-group';
             const nameLabel = document.createElement('label');
-            nameLabel.textContent = 'Nom';
+            nameLabel.className = 'sr-only';
+            nameLabel.textContent = 'Nom de la categoria';
             const nameInput = document.createElement('input');
             nameInput.type = 'text';
             nameInput.className = 'category-name';
-            nameInput.placeholder = 'Expressió oral';
+            nameInput.placeholder = 'Escriu el nom aquí';
             if (prefill.name) nameInput.value = prefill.name;
             nameGroup.appendChild(nameLabel);
             nameGroup.appendChild(nameInput);
 
             const itemsGroup = document.createElement('div');
-            itemsGroup.className = 'field-group';
+            itemsGroup.className = 'field-group stars-items-group';
             const itemsLabel = document.createElement('label');
             itemsLabel.textContent = 'Ítems (un per línia)';
             const itemsTextarea = document.createElement('textarea');
             itemsTextarea.className = 'category-items';
             itemsTextarea.rows = 5;
-            itemsTextarea.placeholder = ['Claredat de la veu', 'Contacte visual', 'Fluïdesa'].join('\n');
+            const defaultItems = ['Claredat de la veu', 'Contacte visual', 'Fluïdesa'];
+            itemsTextarea.placeholder = defaultItems.join('\n');
             if (Array.isArray(prefill.items)) {
                 itemsTextarea.value = prefill.items.join('\n');
             } else if (typeof prefill.items === 'string') {
@@ -199,7 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!button) return;
             const category = button.closest('.stars-category');
             if (!category) return;
-            if (categoryList.children.length === 1) return;
+            const index = parseInt(category.dataset.index, 10);
+            if (!Number.isFinite(index)) return;
+            if ((categoryList.children.length <= 3) || index < 3) return;
             category.remove();
             refreshHeaders();
         });
@@ -208,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             createCategory();
         }
     };
+
 
     const buildStarsLayout = () => {
         primaryColumn.innerHTML = [
