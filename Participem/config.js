@@ -119,13 +119,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const initializeStarsCategoryEditor = () => {
         const categoryList = document.getElementById('stars-category-list');
         const addCategoryBtn = document.getElementById('add-category-btn');
+        if (!categoryList || !addCategoryBtn) return;
         let counter = 0;
 
         const refreshHeaders = () => {
             const categories = categoryList.querySelectorAll('.stars-category');
             categories.forEach((category, index) => {
                 const title = category.querySelector('.stars-category-title');
-                if (title) title.textContent = `Categoria ${index + 1}`;
+                if (title) title.textContent = 'Categoria ' + (index + 1);
+                const indentValue = Math.min(index * 1.1, 3.3);
+                category.style.setProperty('--indent', indentValue + 'rem');
 
                 const removeBtn = category.querySelector('.remove-category-btn');
                 if (removeBtn) removeBtn.disabled = categories.length === 1;
@@ -136,29 +139,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const wrapper = document.createElement('div');
             wrapper.className = 'stars-category';
             wrapper.dataset.index = String(counter++);
-            wrapper.innerHTML = `
-                <div class="stars-category-header">
-                    <h3 class="stars-category-title">Categoria ${counter}</h3>
-                    <button type="button" class="remove-category-btn" aria-label="Elimina la categoria">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-                <div class="field-group">
-                    <label>Nom de la categoria</label>
-                    <input type="text" class="category-name" placeholder="Expressió oral" required>
-                </div>
-                <div class="field-group">
-                    <label>Ítems (un per línia)</label>
-                    <textarea class="category-items" rows="4" placeholder="Claredat de la veu&#10;Contacte visual&#10;Fluïdesa" required></textarea>
-                </div>
-            `;
+            wrapper.innerHTML = [
+                '<div class="stars-category-header">',
+                '    <span class="stars-category-title">Categoria</span>',
+                '    <button type="button" class="remove-category-btn" aria-label="Elimina la categoria">',
+                '        <i class="fa-solid fa-trash"></i>',
+                '    </button>',
+                '</div>',
+                '<div class="field-group">',
+                '    <label>Nom</label>',
+                '    <input type="text" class="category-name" placeholder="Expressió oral" required>',
+                '</div>',
+                '<div class="field-group">',
+                '    <label>Ítems (un per línia)</label>',
+                '    <textarea class="category-items" rows="3" placeholder="Claredat de la veu&#10;Contacte visual&#10;Fluïdesa" required></textarea>',
+                '</div>'
+            ].join('');
             categoryList.appendChild(wrapper);
             refreshHeaders();
         };
 
-        addCategoryBtn.addEventListener('click', () => {
-            createCategory();
-        });
+        addCategoryBtn.addEventListener('click', createCategory);
 
         categoryList.addEventListener('click', event => {
             const button = event.target.closest('.remove-category-btn');
@@ -174,43 +175,39 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const buildStarsLayout = () => {
-        primaryColumn.innerHTML = `
-            <div class="config-card">
-                <div class="field-group">
-                    <label for="question">Nom de l'activitat</label>
-                    <input type="text" id="question" name="question" placeholder="Valoració amb estrelles" required>
-                </div>
-            </div>
-            <div class="config-card stars-config-card">
-                <div class="stars-config-heading">
-                    <h2>Categories i ítems</h2>
-                    <p>Escriviu el nom de la categoria i els ítems que l'alumnat puntuarà (un per línia).</p>
-                </div>
-                <div id="stars-category-list" class="stars-category-list"></div>
-                <button type="button" id="add-category-btn" class="add-category-btn">
-                    <i class="fa-solid fa-plus"></i> Afegir categoria
-                </button>
-            </div>
-        `;
+        primaryColumn.innerHTML = [
+            '<div class="config-card compact-card">',
+            '    <div class="field-group">',
+            '        <label for="question">Nom de l\'activitat</label>',
+            '        <input type="text" id="question" name="question" placeholder="Valoració amb estrelles" required>',
+            '    </div>',
+            '</div>',
+            '<div class="config-card compact-card range-card stars-range-card">',
+            '    <div class="field-row stars-range-row">',
+            '        <div class="field-group">',
+            '            <label for="min-score">Puntuació mínima</label>',
+            '            <input type="number" id="min-score" name="minScore" value="1" min="0" step="1" required>',
+            '        </div>',
+            '        <div class="field-group">',
+            '            <label for="max-score">Puntuació màxima</label>',
+            '            <input type="number" id="max-score" name="maxScore" value="5" min="1" step="1" required>',
+            '        </div>',
+            '    </div>',
+            '</div>'
+        ].join('');
 
-        secondaryColumn.innerHTML = '';
-        secondaryColumn.classList.add('hidden-column');
+        secondaryColumn.innerHTML = [
+            '<div class="config-card compact-card stars-panel">',
+            '    <div id="stars-category-list" class="stars-category-list"></div>',
+            '    <button type="button" id="add-category-btn" class="add-category-btn">',
+            '        <i class="fa-solid fa-plus"></i> Afegir categoria',
+            '    </button>',
+            '</div>'
+        ].join('');
+        secondaryColumn.classList.remove('hidden-column');
         primaryColumn.classList.remove('full-width');
 
-        configActions.innerHTML = `
-            <div class="config-card compact-card range-card">
-                <div class="field-row stars-range-row">
-                    <div class="field-group">
-                        <label for="min-score">Puntuació mínima</label>
-                        <input type="number" id="min-score" name="minScore" value="1" min="0" step="1" required>
-                    </div>
-                    <div class="field-group">
-                        <label for="max-score">Puntuació màxima</label>
-                        <input type="number" id="max-score" name="maxScore" value="5" min="1" step="1" required>
-                    </div>
-                </div>
-            </div>
-        `;
+        configActions.innerHTML = '';
         configActions.appendChild(buildActions());
         configActions.classList.add('align-start');
 

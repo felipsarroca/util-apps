@@ -602,6 +602,10 @@ header {
 .star-rating-item {
     display: grid;
     gap: 0.5rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
 }
 
 .star-rating-topline {
@@ -634,6 +638,11 @@ header {
     color: #d1d5db;
     cursor: pointer;
     transition: transform 0.15s ease, color 0.2s ease;
+}
+
+.star-button::before {
+    content: '★';
+    display: block;
 }
 
 .star-button:hover,

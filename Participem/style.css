@@ -70,7 +70,7 @@ main {
 
 .teacher-zone h3 {
     margin: 0;
-    font-size: 2rem;
+    font-size: 1.85rem;
     font-weight: 700;
     color: var(--color-primary);
 }
@@ -78,11 +78,13 @@ main {
 .teacher-zone p {
     margin: 0;
     color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
 .teacher-cards {
     display: grid;
-    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
     margin-top: 0.5rem;
 }
 
@@ -109,13 +111,17 @@ main {
     text-decoration: underline;
 }
 
+.teacher-cards .cc-credit {
+    grid-column: 1 / -1;
+}
+
 .activity-card {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.7rem 0.9rem;
-    min-height: 80px;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    min-height: 72px;
     border-radius: var(--radius-md);
     background: rgba(79, 70, 229, 0.08);
     border: 1px solid rgba(79, 70, 229, 0.15);
@@ -124,9 +130,9 @@ main {
 }
 
 .activity-illustration {
-    flex: 0 0 3.2rem;
-    width: 3.2rem;
-    height: 3.2rem;
+    flex: 0 0 2.8rem;
+    width: 2.8rem;
+    height: 2.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -137,7 +143,7 @@ main {
 }
 
 .activity-illustration i {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     color: var(--color-primary);
 }
 
@@ -150,14 +156,14 @@ main {
 
 .activity-info h4 {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
 }
 
 .activity-info p {
     margin: 0;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.82rem;
 }
 
 .activity-card:hover {
@@ -285,6 +291,10 @@ main {
 
     .teacher-zone {
         padding: 2.5rem;
+    }
+
+    .teacher-cards {
+        grid-template-columns: 1fr;
     }
 
     .student-zone {
