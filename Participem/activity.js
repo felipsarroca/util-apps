@@ -409,13 +409,13 @@
                 hostConnection.on('data', handleTeacherData);
                 hostConnection.on('error', () => {
                     if (!opened) return;
-                    alert('S\'ha perdut la connexió amb el professor.');
-                    window.close();
+                    alert('S\'ha perdut la connexió amb l\'organitzador.');
+                    window.location.href = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
                 });
                 hostConnection.on('close', () => {
                     if (!opened) return;
-                    alert('Connexió tancada pel professor.');
-                    window.close();
+                    alert('Connexió tancada per l\'organitzador.');
+                    window.location.href = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
                 });
             };
 
