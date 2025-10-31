@@ -1,0 +1,9 @@
+*** Begin Patch
+*** Update File: style.css
+@@
+-.activity-card {
++.activity-card {
+@@
+-    min-height: 120px;
++    min-height: 102px;
+*** End Patch

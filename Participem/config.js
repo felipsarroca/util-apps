@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const titles = {
         poll: 'Configura la votació',
         brainstorm: 'Configura la pluja d\'idees',
-        'brainstorm-poll': 'Configura la pluja d\'idees i la votació'
+        'brainstorm-poll': 'Configura la pluja d\'idees i la votació',
+        stars: 'Configura la puntuació amb estrelles'
     };
 
     const generateSessionId = (length = 4) => {
@@ -22,10 +23,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return id.slice(0, length);
     };
 
-    function buildPrimaryColumn(type) {
-        const blocks = [];
+    const buildActions = () => {
+        const button = document.createElement('button');
+        button.type = 'submit';
+        button.className = 'launch-button';
+        button.innerHTML = '<i class="fa-solid fa-rocket"></i> Crear activitat';
 
-        blocks.push(`
+        const container = document.createElement('div');
+        container.className = 'button-container';
+        container.appendChild(button);
+
+        return container;
+    };
+
+    const buildStandardLayout = (type) => {
+        const cards = [];
+
+        cards.push(`
             <div class="config-card">
                 <div class="field-group">
                     <label for="question">Tema o pregunta</label>
@@ -57,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const cardClasses = ['config-card', 'compact-card'];
             if (hasDouble) cardClasses.push('compact-card-double');
 
-            blocks.push(`
+            cards.push(`
                 <div class="${cardClasses.join(' ')}">
                     <div class="field-row">
                         ${extras.join('')}
@@ -66,55 +80,28 @@ document.addEventListener('DOMContentLoaded', () => {
             `);
         }
 
-        primaryColumn.innerHTML = blocks.join('');
-    }
+        primaryColumn.innerHTML = cards.join('');
 
-    function buildSecondaryColumn(type) {
-        if (type !== 'poll') {
+        if (type === 'poll') {
+            secondaryColumn.classList.remove('hidden-column');
+            primaryColumn.classList.remove('full-width');
+            secondaryColumn.innerHTML = `
+                <div class="config-card">
+                    <div class="field-group">
+                        <label for="poll-options">Opcions (una per línia)</label>
+                        <textarea id="poll-options" name="pollOptions" rows="10" required></textarea>
+                    </div>
+                </div>
+            `;
+        } else {
             secondaryColumn.innerHTML = '';
             secondaryColumn.classList.add('hidden-column');
             primaryColumn.classList.add('full-width');
-            return;
         }
 
-        secondaryColumn.classList.remove('hidden-column');
-        primaryColumn.classList.remove('full-width');
-        secondaryColumn.innerHTML = `
-            <div class="config-card">
-                <div class="field-group">
-                    <label for="poll-options">Opcions (una per línia)</label>
-                    <textarea id="poll-options" name="pollOptions" rows="10" required></textarea>
-                </div>
-            </div>
-        `;
-    }
-
-    function buildActions() {
-        const button = document.createElement('button');
-        button.type = 'submit';
-        button.className = 'launch-button';
-        button.innerHTML = '<i class="fa-solid fa-rocket"></i> Generar codi';
-
-        const container = document.createElement('div');
-        container.className = 'button-container';
-        container.appendChild(button);
-
-        return container;
-    }
-
-    function setupLayout(type) {
-        configTitle.textContent = titles[type] || 'Configurar activitat';
-
-        document.body.classList.remove('type-poll', 'type-brainstorm', 'type-brainstorm-poll');
-        document.body.classList.add(`type-${type}`);
-
-        buildPrimaryColumn(type);
-        buildSecondaryColumn(type);
-
+        configActions.innerHTML = '';
         const actionContainer = buildActions();
         const compactCard = primaryColumn.querySelector('.compact-card');
-
-        configActions.innerHTML = '';
 
         if (compactCard) {
             const row = document.createElement('div');
@@ -127,27 +114,197 @@ document.addEventListener('DOMContentLoaded', () => {
             configActions.appendChild(actionContainer);
             configActions.classList.toggle('align-start', type === 'poll' || type === 'brainstorm-poll');
         }
-    }
+    };
+
+    const initializeStarsCategoryEditor = () => {
+        const categoryList = document.getElementById('stars-category-list');
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        let counter = 0;
+
+        const refreshHeaders = () => {
+            const categories = categoryList.querySelectorAll('.stars-category');
+            categories.forEach((category, index) => {
+                const title = category.querySelector('.stars-category-title');
+                if (title) title.textContent = `Categoria ${index + 1}`;
+
+                const removeBtn = category.querySelector('.remove-category-btn');
+                if (removeBtn) removeBtn.disabled = categories.length === 1;
+            });
+        };
+
+        const createCategory = () => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'stars-category';
+            wrapper.dataset.index = String(counter++);
+            wrapper.innerHTML = `
+                <div class="stars-category-header">
+                    <h3 class="stars-category-title">Categoria ${counter}</h3>
+                    <button type="button" class="remove-category-btn" aria-label="Elimina la categoria">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+                <div class="field-group">
+                    <label>Nom de la categoria</label>
+                    <input type="text" class="category-name" placeholder="Expressió oral" required>
+                </div>
+                <div class="field-group">
+                    <label>Ítems (un per línia)</label>
+                    <textarea class="category-items" rows="4" placeholder="Claredat de la veu&#10;Contacte visual&#10;Fluïdesa" required></textarea>
+                </div>
+            `;
+            categoryList.appendChild(wrapper);
+            refreshHeaders();
+        };
+
+        addCategoryBtn.addEventListener('click', () => {
+            createCategory();
+        });
+
+        categoryList.addEventListener('click', event => {
+            const button = event.target.closest('.remove-category-btn');
+            if (!button) return;
+            const category = button.closest('.stars-category');
+            if (!category) return;
+            if (categoryList.children.length === 1) return;
+            category.remove();
+            refreshHeaders();
+        });
+
+        createCategory();
+    };
+
+    const buildStarsLayout = () => {
+        primaryColumn.innerHTML = `
+            <div class="config-card">
+                <div class="field-group">
+                    <label for="question">Nom de l'activitat</label>
+                    <input type="text" id="question" name="question" placeholder="Valoració amb estrelles" required>
+                </div>
+            </div>
+            <div class="config-card stars-config-card">
+                <div class="stars-config-heading">
+                    <h2>Categories i ítems</h2>
+                    <p>Escriviu el nom de la categoria i els ítems que l'alumnat puntuarà (un per línia).</p>
+                </div>
+                <div id="stars-category-list" class="stars-category-list"></div>
+                <button type="button" id="add-category-btn" class="add-category-btn">
+                    <i class="fa-solid fa-plus"></i> Afegir categoria
+                </button>
+            </div>
+        `;
+
+        secondaryColumn.innerHTML = '';
+        secondaryColumn.classList.add('hidden-column');
+        primaryColumn.classList.remove('full-width');
+
+        configActions.innerHTML = `
+            <div class="config-card compact-card range-card">
+                <div class="field-row stars-range-row">
+                    <div class="field-group">
+                        <label for="min-score">Puntuació mínima</label>
+                        <input type="number" id="min-score" name="minScore" value="1" min="0" step="1" required>
+                    </div>
+                    <div class="field-group">
+                        <label for="max-score">Puntuació màxima</label>
+                        <input type="number" id="max-score" name="maxScore" value="5" min="1" step="1" required>
+                    </div>
+                </div>
+            </div>
+        `;
+        configActions.appendChild(buildActions());
+        configActions.classList.add('align-start');
+
+        initializeStarsCategoryEditor();
+    };
+
+    const collectStarsConfig = () => {
+        const questionInput = document.getElementById('question');
+        const minScoreInput = document.getElementById('min-score');
+        const maxScoreInput = document.getElementById('max-score');
+        const categoryList = document.getElementById('stars-category-list');
+
+        const minScore = parseInt(minScoreInput.value, 10);
+        const maxScore = parseInt(maxScoreInput.value, 10);
+
+        if (!Number.isFinite(minScore) || !Number.isFinite(maxScore) || minScore < 0 || maxScore <= minScore) {
+            alert('Revisa els valors de la puntuació mínima i màxima.');
+            minScoreInput.focus();
+            return null;
+        }
+
+        const categories = Array.from(categoryList.querySelectorAll('.stars-category')).map(category => {
+            const nameInput = category.querySelector('.category-name');
+            const itemsInput = category.querySelector('.category-items');
+            const name = nameInput.value.trim();
+            const items = itemsInput.value.split('\n').map(line => line.trim()).filter(Boolean);
+            return { name, items, nameInput, itemsInput };
+        });
+
+        if (!categories.length) {
+            alert('Afegeix com a mínim una categoria.');
+            return null;
+        }
+
+        for (const { name, items, nameInput, itemsInput } of categories) {
+            if (!name) {
+                alert('Introdueix un nom per a cada categoria.');
+                nameInput.focus();
+                return null;
+            }
+            if (!items.length) {
+                alert(`La categoria "${name || 'sense nom'}" necessita com a mínim un ítem.`);
+                itemsInput.focus();
+                return null;
+            }
+        }
+
+        return {
+            type: 'stars',
+            question: questionInput.value.trim(),
+            minScore,
+            maxScore,
+            categories: categories.map(({ name, items }) => ({ name, items }))
+        };
+    };
+
+    const setupLayout = (type) => {
+        configTitle.textContent = titles[type] || 'Configurar activitat';
+        document.body.classList.remove('type-poll', 'type-brainstorm', 'type-brainstorm-poll', 'type-stars');
+        document.body.classList.add(`type-${type}`);
+        configActions.classList.remove('align-start');
+        if (type === 'stars') {
+            buildStarsLayout();
+        } else {
+            buildStandardLayout(type);
+        }
+    };
 
     configForm.addEventListener('submit', event => {
         event.preventDefault();
-        const formData = new FormData(configForm);
-        const config = Object.fromEntries(formData.entries());
-        config.type = activityType;
-        config.pollOptions = config.pollOptions
-            ? config.pollOptions.split('\n').map(opt => opt.trim()).filter(Boolean)
-            : [];
+
+        let config;
+        if (activityType === 'stars') {
+            config = collectStarsConfig();
+            if (!config) return;
+        } else {
+            const formData = new FormData(configForm);
+            config = Object.fromEntries(formData.entries());
+            config.type = activityType;
+            config.pollOptions = config.pollOptions
+                ? config.pollOptions.split('\n').map(opt => opt.trim()).filter(Boolean)
+                : [];
+        }
 
         launchActivity('host', config);
     });
 
-    function launchActivity(mode, config) {
+    const launchActivity = (mode, config) => {
         const sessionId = generateSessionId();
         let url = `activity.html?session=${sessionId}&mode=${mode}`;
         const encodedConfig = encodeURIComponent(JSON.stringify(config));
         url += `&config=${encodedConfig}`;
         window.location.href = url;
-    }
+    };
 
     setupLayout(activityType);
 });

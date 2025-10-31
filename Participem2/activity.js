@@ -48,9 +48,6 @@
     const ideasLeftInfo = document.getElementById('ideas-left-info');
     const pollOptionsContainer = document.getElementById('poll-options-container');
     const votesLeftInfo = document.getElementById('votes-left-info');
-    const starsScoreContainer = document.getElementById('stars-score-container');
-    const starsCategoryWrapper = document.getElementById('stars-category-wrapper');
-    const submitStarsBtn = document.getElementById('submit-stars-btn');
     const sessionCodeLarge = document.getElementById('session-code-large');
     const sidebarParticipants = document.getElementById('sidebar-participants');
     const phaseCard = document.getElementById('phase-card');
@@ -63,17 +60,11 @@
     let guestConnections = [];
     let activityConfig = {};
     let sessionData = {};
-    let studentState = { submittedIdeas: 0, castVotes: 0, pendingVotes: [], starScores: {}, starsSubmitted: false };
+    let studentState = { submittedIdeas: 0, castVotes: 0, pendingVotes: [] };
     let myRole = 'guest';
     let sessionId = null;
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
-    let starStateRestored = false;
-    let starsEventBound = false;
-
-    const starResponseTracker = new Map();
-
-    const HOME_URL = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
 
     const peerServerConfig = {
         host: '0.peerjs.com',
@@ -131,13 +122,6 @@
             } catch (error) {
                 console.warn('No es pot escriure a localStorage:', error);
             }
-        },
-        remove(key) {
-            try {
-                window.localStorage?.removeItem(key);
-            } catch (error) {
-                console.warn('No es pot eliminar de localStorage:', error);
-            }
         }
     };
 
@@ -154,32 +138,6 @@
         } else {
             normalized.votesPerStudent = 1;
         }
-        if (normalized.type === 'stars') {
-            const parsedMin = parseInt(normalized.minScore, 10);
-            const parsedMax = parseInt(normalized.maxScore, 10);
-            const minScore = Number.isFinite(parsedMin) ? Math.max(0, parsedMin) : 1;
-            let maxScore = Number.isFinite(parsedMax) ? parsedMax : Math.max(minScore + 1, 5);
-            if (maxScore <= minScore) {
-                maxScore = minScore + 1;
-            }
-            normalized.minScore = minScore;
-            normalized.maxScore = maxScore;
-            const categories = Array.isArray(normalized.categories) ? normalized.categories : [];
-            normalized.categories = categories
-                .map((category = {}, index) => {
-                    const name = typeof category.name === 'string' ? category.name.trim() : '';
-                    const itemsSource = Array.isArray(category.items) ? category.items : [];
-                    const items = itemsSource
-                        .map(item => (typeof item === 'string' ? item.trim() : ''))
-                        .filter(Boolean);
-                    if (!items.length) return null;
-                    return {
-                        name: name || `Categoria ${index + 1}`,
-                        items
-                    };
-                })
-                .filter(Boolean);
-        }
         return normalized;
     };
 
@@ -190,56 +148,6 @@
 
     const voteStorageKey = () => (sessionId ? `votacio-${sessionId}-vot` : null);
     const ideaStorageKey = () => (sessionId ? `votacio-${sessionId}-idees` : null);
-    const starsStorageKey = () => (sessionId ? `stars-${sessionId}-punts` : null);
-
-    const persistStarState = () => {
-        if (myRole === 'host') return;
-        const key = starsStorageKey();
-        if (!key) return;
-        try {
-            const payload = JSON.stringify({
-                scores: studentState.starScores,
-                submitted: studentState.starsSubmitted
-            });
-            safeStorage.set(key, payload);
-        } catch (error) {
-            console.warn('No s\'han pogut guardar les puntuacions locals:', error);
-        }
-    };
-
-    const restoreStoredStarState = () => {
-        if (myRole === 'host' || starStateRestored) return;
-        const key = starsStorageKey();
-        if (!key) {
-            starStateRestored = true;
-            return;
-        }
-        const raw = safeStorage.get(key);
-        if (!raw) {
-            starStateRestored = true;
-            return;
-        }
-        try {
-            const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === 'object') {
-                const { scores = {}, submitted = false } = parsed;
-                studentState.starScores = typeof scores === 'object' && scores ? { ...scores } : {};
-                studentState.starsSubmitted = Boolean(submitted);
-            }
-        } catch (error) {
-            console.warn('No s\'han pogut restaurar les puntuacions locals:', error);
-            studentState.starScores = {};
-            studentState.starsSubmitted = false;
-        }
-        starStateRestored = true;
-    };
-
-    const clearStoredStarState = () => {
-        if (myRole === 'host') return;
-        const key = starsStorageKey();
-        if (!key) return;
-        safeStorage.remove(key);
-    };
 
     const setSubmitShortcutTarget = (target) => {
         submitShortcutTarget = target;
@@ -261,17 +169,6 @@
         }
     };
     document.addEventListener('keydown', handleSubmitShortcut);
-
-    const getStudentThanksElement = () => {
-        if (!studentInteractionZone) return null;
-        let element = studentInteractionZone.querySelector('.student-thanks');
-        if (!element) {
-            element = document.createElement('p');
-            element.className = 'student-thanks hidden';
-            studentInteractionZone.appendChild(element);
-        }
-        return element;
-    };
 
     const createIdeaId = () => {
         if (window.crypto?.randomUUID) return `idea-${window.crypto.randomUUID().slice(-8)}`;
@@ -333,44 +230,17 @@
     };
 
     const buildInitialSessionState = () => {
-        const base = { phase: 'voting', ideas: [], votes: {}, stars: null };
-        const type = activityConfig.type;
-        if (type === 'brainstorm') {
+        const base = { phase: 'voting', ideas: [], votes: {} };
+        if (activityConfig.type === 'brainstorm') {
             base.phase = 'brainstorm';
-        } else if (type === 'brainstorm-poll') {
+        } else if (activityConfig.type === 'brainstorm-poll') {
             base.phase = 'brainstorm';
-        } else if (type === 'poll') {
+        } else if (activityConfig.type === 'poll') {
             const options = Array.isArray(activityConfig.pollOptions) ? activityConfig.pollOptions : [];
             base.votes = options.reduce((acc, opt) => {
                 const id = typeof opt === 'object' ? opt.id : opt;
                 return { ...acc, [id]: 0 };
             }, {});
-        } else if (type === 'stars') {
-            const minScore = Number.isFinite(activityConfig.minScore) ? activityConfig.minScore : 1;
-            const fallbackMax = Number.isFinite(activityConfig.maxScore) ? activityConfig.maxScore : Math.max(minScore + 1, 5);
-            const maxScore = fallbackMax <= minScore ? minScore + 1 : fallbackMax;
-            const categories = Array.isArray(activityConfig.categories) ? activityConfig.categories : [];
-            base.phase = 'stars';
-            base.votes = {};
-            base.stars = {
-                minScore,
-                maxScore,
-                categories: categories.map(category => {
-                    const items = Array.isArray(category.items) ? category.items : [];
-                    return {
-                        name: category.name,
-                        items: items.map(itemText => ({
-                            text: itemText,
-                            total: 0,
-                            count: 0,
-                            average: 0
-                        }))
-                    };
-                })
-            };
-            if (myRole === 'host') {
-                starResponseTracker.clear();
-            }
         }
         return base;
     };
@@ -414,10 +284,6 @@
         if (sessionCodeLarge) sessionCodeLarge.textContent = sessionId;
         if (closeActivityBtn) addPressListener(closeActivityBtn, closeActivity);
         addPressListener(startVotingBtn, startVotingPhase);
-        if (submitStarsBtn && !starsEventBound) {
-            addPressListener(submitStarsBtn, submitStarRatings);
-            starsEventBound = true;
-        }
         togglePhaseCard(false);
 
         if (myRole === 'host') {
@@ -478,83 +344,27 @@
     }
 
     function handleStudentData(conn, data) {
-        let dataChanged = false;
         if (data.type === 'new-idea') {
             const idea = { id: createIdeaId(), text: data.payload };
             sessionData.ideas.push(idea);
             if (sessionData.phase !== 'brainstorm') {
                 sessionData.votes[idea.id] = 0;
             }
-            dataChanged = true;
         } else if (data.type === 'vote-batch') {
             data.payload.ids.forEach(id => {
                 sessionData.votes[id] = (sessionData.votes[id] || 0) + 1;
             });
-            dataChanged = true;
-        } else if (data.type === 'score') {
-            dataChanged = applyStarScore(conn, data.payload) || dataChanged;
         }
-        if (dataChanged) {
-            broadcastUpdate();
-            renderTeacherResults();
-        }
+        broadcastUpdate();
+        renderTeacherResults();
     }
 
     function startVotingPhase() {
-        if (activityConfig.type !== 'brainstorm-poll') return;
         sessionData.phase = 'voting';
         sessionData.votes = sessionData.ideas.reduce((acc, idea) => ({ ...acc, [idea.id]: 0 }), {});
         startVotingBtn.classList.add('hidden');
         broadcastUpdate();
         renderTeacherResults();
-    }
-
-    function applyStarScore(conn, payload = {}) {
-        if (!sessionData.stars) return false;
-        const { categoryIndex, itemIndex, value } = payload;
-        const categoryIdx = parseInt(categoryIndex, 10);
-        const itemIdx = parseInt(itemIndex, 10);
-        const rawScore = parseInt(value, 10);
-        if (!Number.isFinite(categoryIdx) || !Number.isFinite(itemIdx) || !Number.isFinite(rawScore)) {
-            return false;
-        }
-
-        const starsState = sessionData.stars;
-        const categories = Array.isArray(starsState.categories) ? starsState.categories : [];
-        const category = categories[categoryIdx];
-        if (!category) return false;
-        const items = Array.isArray(category.items) ? category.items : [];
-        const item = items[itemIdx];
-        if (!item) return false;
-
-        const minScore = Number.isFinite(starsState.minScore) ? starsState.minScore : 1;
-        const fallbackMax = Number.isFinite(starsState.maxScore) ? starsState.maxScore : Math.max(minScore + 1, 5);
-        const maxScore = fallbackMax <= minScore ? minScore + 1 : fallbackMax;
-        const clampedScore = Math.max(minScore, Math.min(maxScore, rawScore));
-
-        if (!starResponseTracker.has(conn.peer)) {
-            starResponseTracker.set(conn.peer, {});
-        }
-        const peerScores = starResponseTracker.get(conn.peer);
-        const key = `${categoryIdx}:${itemIdx}`;
-        const previousScore = peerScores[key];
-
-        const safeTotal = Number.isFinite(item.total) ? item.total : 0;
-        const safeCount = Number.isFinite(item.count) ? item.count : 0;
-        item.total = safeTotal;
-        item.count = safeCount;
-
-        if (previousScore !== undefined) {
-            item.total -= previousScore;
-        } else {
-            item.count += 1;
-        }
-
-        item.total += clampedScore;
-        item.average = item.count > 0 ? item.total / item.count : 0;
-        peerScores[key] = clampedScore;
-
-        return true;
     }
 
     function broadcastUpdate() {
@@ -596,12 +406,12 @@
                 hostConnection.on('error', () => {
                     if (!opened) return;
                     alert('S\'ha perdut la connexió amb l\'organitzador.');
-                    window.location.href = HOME_URL;
+                    window.location.href = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
                 });
                 hostConnection.on('close', () => {
                     if (!opened) return;
                     alert('Connexió tancada per l\'organitzador.');
-                    window.location.href = HOME_URL;
+                    window.location.href = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
                 });
             };
 
@@ -624,11 +434,7 @@
 
             if (incomingConfig && incomingConfig.type !== previousType) {
                 const votesAlreadyCast = studentState.castVotes;
-                studentState = { submittedIdeas: 0, castVotes: votesAlreadyCast, pendingVotes: [], starScores: {}, starsSubmitted: false };
-                starStateRestored = false;
-                if (incomingConfig.type !== 'stars') {
-                    clearStoredStarState();
-                }
+                studentState = { submittedIdeas: 0, castVotes: votesAlreadyCast, pendingVotes: [] };
                 restoreStoredVoteState();
                 restoreStoredIdeaCount();
                 const submitBtn = document.getElementById('submit-votes-btn');
@@ -643,11 +449,6 @@
                 } else if (sessionData.phase === 'voting') {
                     studentState.pendingVotes = [];
                     restoreStoredVoteState();
-                } else if (sessionData.phase === 'stars') {
-                    studentState.starScores = {};
-                    studentState.starsSubmitted = false;
-                    starStateRestored = false;
-                    clearStoredStarState();
                 }
                 refreshSubmitShortcutState();
             }
@@ -664,310 +465,10 @@
         }
     }
 
-    const getStarBounds = () => {
-        const sessionMin = parseInt(sessionData?.stars?.minScore, 10);
-        const sessionMax = parseInt(sessionData?.stars?.maxScore, 10);
-        const configMin = parseInt(activityConfig?.minScore, 10);
-        const configMax = parseInt(activityConfig?.maxScore, 10);
-
-        let min = Number.isFinite(sessionMin) ? sessionMin : Number.isFinite(configMin) ? configMin : 1;
-        if (!Number.isFinite(min)) min = 1;
-        min = Math.max(0, min);
-
-        let max = Number.isFinite(sessionMax) ? sessionMax : Number.isFinite(configMax) ? configMax : Math.max(min + 1, 5);
-        if (!Number.isFinite(max)) max = Math.max(min + 1, 5);
-        if (max <= min) max = min + 1;
-
-        return { min, max };
-    };
-
-    const enumerateStarItems = () => {
-        const categories = sessionData?.stars?.categories;
-        if (!Array.isArray(categories)) return [];
-        const records = [];
-        categories.forEach((category, categoryIndex) => {
-            const items = Array.isArray(category?.items) ? category.items : [];
-            items.forEach((item, itemIndex) => {
-                records.push({
-                    key: `${categoryIndex}:${itemIndex}`,
-                    categoryIndex,
-                    itemIndex,
-                    category,
-                    item
-                });
-            });
-        });
-        return records;
-    };
-
-    function renderStarsTeacherResults() {
-        const starsState = sessionData?.stars;
-        const categories = Array.isArray(starsState?.categories) ? starsState.categories : [];
-        const { min, max } = getStarBounds();
-
-        updatePhaseDescription('stars');
-        updateStudentQuestion();
-        togglePhaseCard(false);
-
-        if (!categories.length) {
-            statusIndicator.textContent = 'Preparant puntuacions';
-            setResultsContainerMode('placeholder-state');
-            resultsContainer.innerHTML = '<p class="placeholder">Esperant criteris de puntuació...</p>';
-            return;
-        }
-
-        statusIndicator.textContent = 'Puntuació amb estrelles';
-        setResultsContainerMode('stars-results');
-        resultsContainer.innerHTML = '';
-
-        const fragment = document.createDocumentFragment();
-
-        categories.forEach((category, categoryIndex) => {
-            const categorySection = document.createElement('section');
-            categorySection.className = 'stars-results-category';
-
-            const heading = document.createElement('h3');
-            heading.textContent = category?.name || `Categoria ${categoryIndex + 1}`;
-            categorySection.appendChild(heading);
-
-            const list = document.createElement('div');
-            list.className = 'stars-results-list';
-
-            const items = Array.isArray(category?.items) ? category.items : [];
-
-            items.forEach(item => {
-                const itemContainer = document.createElement('div');
-                itemContainer.className = 'stars-results-item';
-
-                const metrics = document.createElement('div');
-                metrics.className = 'stars-results-metrics';
-
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'stars-results-name';
-                nameSpan.textContent = item?.text || 'Element';
-
-                const statsSpan = document.createElement('span');
-                statsSpan.className = 'stars-results-stats';
-                const count = Number.isFinite(item?.count) ? item.count : 0;
-                const average = Number.isFinite(item?.average) ? item.average : 0;
-                const averageText = (count > 0 ? average : 0).toFixed(1).replace('.', ',');
-                const votesLabel = count === 1 ? '1 vot' : `${count} vots`;
-                statsSpan.textContent = `${averageText} (${votesLabel})`;
-
-                metrics.appendChild(nameSpan);
-                metrics.appendChild(statsSpan);
-                itemContainer.appendChild(metrics);
-
-                const bar = document.createElement('div');
-                bar.className = 'stars-results-bar';
-
-                const fill = document.createElement('div');
-                fill.className = 'stars-results-bar-fill';
-                const denominator = max > 0 ? max : 1;
-                const percentage = count > 0
-                    ? Math.min(100, Math.max(0, (average / denominator) * 100))
-                    : 0;
-                fill.style.width = `${percentage}%`;
-                fill.setAttribute('aria-valuenow', average.toFixed(2));
-                fill.setAttribute('aria-valuemin', String(min));
-                fill.setAttribute('aria-valuemax', String(max));
-
-                bar.appendChild(fill);
-                itemContainer.appendChild(bar);
-
-                list.appendChild(itemContainer);
-            });
-
-            categorySection.appendChild(list);
-            fragment.appendChild(categorySection);
-        });
-
-        resultsContainer.appendChild(fragment);
-    }
-
-    function updateStarsSubmitButton() {
-        if (!submitStarsBtn || !starsScoreContainer) return;
-        const items = enumerateStarItems();
-        const submitted = studentState.starsSubmitted;
-        const ratedCount = items.reduce((count, { key }) => {
-            const value = Number(studentState.starScores[key]);
-            return Number.isFinite(value) ? count + 1 : count;
-        }, 0);
-        const allRated = items.length > 0 && ratedCount === items.length;
-        submitStarsBtn.classList.toggle('hidden', submitted || !allRated);
-        starsScoreContainer.classList.toggle('ratings-submitted', submitted);
-    }
-
-    function updateStarsThanksMessage() {
-        const message = getStudentThanksElement();
-        if (!message) return;
-        if (studentState.starsSubmitted) {
-            message.textContent = 'Puntuacions enviades! Gràcies per participar.';
-            message.classList.remove('hidden');
-        } else {
-            message.classList.add('hidden');
-        }
-    }
-
-    function applyStarSelection(categoryIndex, itemIndex, value) {
-        if (!starsScoreContainer) return;
-        const selector = `.star-button[data-category-index="${categoryIndex}"][data-item-index="${itemIndex}"]`;
-        const buttons = starsScoreContainer.querySelectorAll(selector);
-        buttons.forEach(button => {
-            const buttonValue = parseInt(button.dataset.value, 10);
-            const isActive = Number.isFinite(buttonValue) && buttonValue <= value;
-            button.classList.toggle('active', isActive);
-            button.setAttribute('aria-pressed', String(isActive));
-        });
-    }
-
-    function handleStarSelection(categoryIndex, itemIndex, value) {
-        if (studentState.starsSubmitted) return;
-        const key = `${categoryIndex}:${itemIndex}`;
-        const numericValue = Number(value);
-        if (!Number.isFinite(numericValue)) return;
-        studentState.starScores[key] = numericValue;
-        applyStarSelection(categoryIndex, itemIndex, numericValue);
-        persistStarState();
-        updateStarsSubmitButton();
-    }
-
-    function renderStarsStudentView() {
-        if (!starsScoreContainer || !starsCategoryWrapper) return;
-        const starsState = sessionData?.stars;
-        const categories = Array.isArray(starsState?.categories) ? starsState.categories : [];
-        const { min, max } = getStarBounds();
-
-        updatePhaseDescription('stars');
-        updateStudentQuestion();
-
-        ideaForm.classList.add('hidden');
-        pollOptionsContainer.classList.add('hidden');
-
-        if (!categories.length) {
-            starsCategoryWrapper.innerHTML = '<p class="placeholder">Encara no hi ha elements per puntuar.</p>';
-            starsScoreContainer.classList.remove('ratings-submitted');
-            starsScoreContainer.classList.remove('hidden');
-            submitStarsBtn?.classList.add('hidden');
-            updateStarsThanksMessage();
-            return;
-        }
-
-        if (!starStateRestored) {
-            restoreStoredStarState();
-        }
-
-        if (statusIndicator) {
-            statusIndicator.textContent = studentState.starsSubmitted ? 'Puntuacions enviades' : 'Puntua amb estrelles';
-        }
-
-        const validKeys = new Set();
-        categories.forEach((category, categoryIndex) => {
-            const items = Array.isArray(category?.items) ? category.items : [];
-            items.forEach((_, itemIndex) => validKeys.add(`${categoryIndex}:${itemIndex}`));
-        });
-        Object.keys(studentState.starScores).forEach(key => {
-            if (!validKeys.has(key)) {
-                delete studentState.starScores[key];
-            }
-        });
-
-        starsCategoryWrapper.innerHTML = '';
-
-        categories.forEach((category, categoryIndex) => {
-            const block = document.createElement('section');
-            block.className = 'star-category-block';
-
-            const heading = document.createElement('h3');
-            heading.textContent = category?.name || `Categoria ${categoryIndex + 1}`;
-            block.appendChild(heading);
-
-            const items = Array.isArray(category?.items) ? category.items : [];
-            items.forEach((item, itemIndex) => {
-                const itemWrapper = document.createElement('div');
-                itemWrapper.className = 'star-rating-item';
-
-                const topline = document.createElement('div');
-                topline.className = 'star-rating-topline';
-
-                const label = document.createElement('span');
-                label.className = 'star-rating-label';
-                label.textContent = item?.text || `Ítem ${itemIndex + 1}`;
-
-                const hint = document.createElement('span');
-                hint.className = 'star-rating-hint';
-                hint.textContent = `${min}-${max}`;
-
-                topline.appendChild(label);
-                topline.appendChild(hint);
-                itemWrapper.appendChild(topline);
-
-                const buttonsContainer = document.createElement('div');
-                buttonsContainer.className = 'star-buttons';
-
-                const key = `${categoryIndex}:${itemIndex}`;
-                const currentValue = studentState.starScores[key];
-
-                for (let score = min; score <= max; score++) {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'star-button';
-                    button.dataset.categoryIndex = String(categoryIndex);
-                    button.dataset.itemIndex = String(itemIndex);
-                    button.dataset.value = String(score);
-                    const labelText = `${score} estrella${score !== 1 ? 's' : ''}`;
-                    button.setAttribute('aria-label', labelText);
-                    button.setAttribute('aria-pressed', currentValue >= score ? 'true' : 'false');
-                    if (Number.isFinite(currentValue) && currentValue >= score) {
-                        button.classList.add('active');
-                    }
-                    addPressListener(button, () => handleStarSelection(categoryIndex, itemIndex, score));
-                    buttonsContainer.appendChild(button);
-                }
-
-                itemWrapper.appendChild(buttonsContainer);
-                block.appendChild(itemWrapper);
-            });
-
-            starsCategoryWrapper.appendChild(block);
-        });
-
-        starsScoreContainer.classList.toggle('ratings-submitted', studentState.starsSubmitted);
-        starsScoreContainer.classList.remove('hidden');
-
-        updateStarsSubmitButton();
-        updateStarsThanksMessage();
-        persistStarState();
-    }
-
-    function submitStarRatings() {
-        if (studentState.starsSubmitted || !hostConnection) return;
-        const items = enumerateStarItems();
-        if (!items.length) return;
-        const missingItems = items.filter(({ key }) => !Number.isFinite(Number(studentState.starScores[key])));
-        if (missingItems.length) {
-            return;
-        }
-        items.forEach(({ categoryIndex, itemIndex, key }) => {
-            const value = Number(studentState.starScores[key]);
-            if (!Number.isFinite(value)) return;
-            hostConnection.send({ type: 'score', payload: { categoryIndex, itemIndex, value } });
-        });
-        studentState.starsSubmitted = true;
-        persistStarState();
-        updateStarsSubmitButton();
-        updateStarsThanksMessage();
-    }
-
     // --- RENDERITZAT (VISTES) ---
     function renderTeacherResults() {
         const { type } = activityConfig;
         const { phase, ideas, votes } = sessionData;
-
-        if (type === 'stars') {
-            renderStarsTeacherResults();
-            return;
-        }
 
         updatePhaseDescription(phase);
         updateStudentQuestion();
@@ -1099,9 +600,6 @@
     function renderStudentView() {
         ideaForm.classList.add('hidden');
         pollOptionsContainer.classList.add('hidden');
-        if (starsScoreContainer) {
-            starsScoreContainer.classList.add('hidden');
-        }
         setSubmitShortcutTarget(null);
         refreshSubmitShortcutState();
 
@@ -1115,17 +613,16 @@
             persistIdeaCount();
         }
 
-        if (type === 'stars') {
-            renderStarsStudentView();
-            return;
-        }
-
         updatePhaseDescription(phase);
         updateStudentQuestion();
 
-        const message = getStudentThanksElement();
+        let message = studentInteractionZone.querySelector('.student-thanks');
         const showMessage = (text) => {
-            if (!message) return;
+            if (!message) {
+                message = document.createElement('p');
+                message.className = 'student-thanks hidden';
+                studentInteractionZone.appendChild(message);
+            }
             message.textContent = text;
             message.classList.remove('hidden');
         };
@@ -1306,7 +803,6 @@
         const messages = {
             brainstorm: 'Els alumnes estan aportant idees en directe.',
             voting: 'És moment de votar les propostes pujades per la classe.',
-            stars: "L'alumnat està puntuant amb estrelles.",
             closed: 'La sessió ha finalitzat. Repassa els resultats.'
         };
         phaseDescription.textContent = messages[phase] || 'Preparant la sessió en directe.';
