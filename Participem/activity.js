@@ -66,8 +66,38 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
-    const createHostPeer = (id) => new Peer(String(id));
-    const createGuestPeer = () => new Peer();
+    const peerServerConfig = {
+        host: '0.peerjs.com',
+        port: 443,
+        secure: true,
+        path: '/',
+        debug: 2,
+        config: {
+            iceTransportPolicy: 'all',
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                {
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                }
+            ]
+        }
+    };
+
+    const createHostPeer = (id) => new Peer(String(id), peerServerConfig);
+    const createGuestPeer = () => new Peer(peerServerConfig);
 
     const removeIdea = (ideaId) => {
         if (myRole !== 'host') return;
@@ -351,9 +381,9 @@
         peer = createGuestPeer();
         peer.on('open', () => {
             const tryConnect = (attempt = 1) => {
-                statusIndicator.textContent = 'Connectant...';
+                statusIndicator.textContent = attempt === 1 ? 'Connectant...' : `Reconnectant (int ${attempt})...`;
 
-                hostConnection = peer.connect(sessionId);
+                hostConnection = peer.connect(sessionId, { reliable: true });
                 let opened = false;
                 const timeout = setTimeout(() => {
                     if (!opened) {
@@ -362,7 +392,7 @@
                         } catch (error) {
                             // Ignora errors en tancar intents fallits
                         }
-                        if (attempt < 1) {
+                        if (attempt < 3) {
                             tryConnect(attempt + 1);
                         } else {
                             showFatalState('No s\'ha pogut establir la connexió P2P. Revisa la xarxa o torna-ho a provar.');
