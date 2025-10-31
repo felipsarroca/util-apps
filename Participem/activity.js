@@ -71,7 +71,9 @@
         port: 443,
         secure: true,
         path: '/',
+        debug: 2,
         config: {
+            iceTransportPolicy: 'all',
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
@@ -82,6 +84,11 @@
                 },
                 {
                     urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:openrelay.metered.ca:443',
                     username: 'openrelayproject',
                     credential: 'openrelayproject'
                 }
@@ -373,11 +380,46 @@
     function joinSession(sessionId) {
         peer = createGuestPeer();
         peer.on('open', () => {
-            hostConnection = peer.connect(sessionId, { reliable: true });
-            hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
-            hostConnection.on('data', handleTeacherData);
-            hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
-            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
+            const tryConnect = (attempt = 1) => {
+                statusIndicator.textContent = attempt === 1 ? 'Connectant...' : `Reconnectant (int ${attempt})...`;
+
+                hostConnection = peer.connect(sessionId, { reliable: true });
+                let opened = false;
+                const timeout = setTimeout(() => {
+                    if (!opened) {
+                        try {
+                            hostConnection.close();
+                        } catch (error) {
+                            // Ignora errors en tancar intents fallits
+                        }
+                        if (attempt < 3) {
+                            tryConnect(attempt + 1);
+                        } else {
+                            showFatalState('No s\'ha pogut establir la connexió P2P. Revisa la xarxa o torna-ho a provar.');
+                        }
+                    }
+                }, 10000);
+
+                hostConnection.on('open', () => {
+                    opened = true;
+                    clearTimeout(timeout);
+                    statusIndicator.textContent = 'Connectat';
+                });
+
+                hostConnection.on('data', handleTeacherData);
+                hostConnection.on('error', () => {
+                    if (!opened) return;
+                    alert('S\'ha perdut la connexió amb el professor.');
+                    window.close();
+                });
+                hostConnection.on('close', () => {
+                    if (!opened) return;
+                    alert('Connexió tancada pel professor.');
+                    window.close();
+                });
+            };
+
+            tryConnect();
         });
         peer.on('error', (err) => {
             console.error('Error de PeerJS:', err);
