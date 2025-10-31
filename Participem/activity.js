@@ -66,12 +66,16 @@
     let submitShortcutTarget = null;
     let submitShortcutActive = false;
 
+    const HOME_URL = 'https://felipsarroca.github.io/util-apps/Participem/index.html';
+
     const peerServerConfig = {
         host: '0.peerjs.com',
         port: 443,
         secure: true,
         path: '/',
+        debug: 2,
         config: {
+            iceTransportPolicy: 'all',
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
@@ -84,6 +88,26 @@
                     urls: 'turn:openrelay.metered.ca:443?transport=tcp',
                     username: 'openrelayproject',
                     credential: 'openrelayproject'
+                },
+                {
+                    urls: 'turn:relay1.expressturn.com:3478',
+                    username: 'efK9D2zGMvAem6Cyh',
+                    credential: 'qv7EtbVHYZbJ4k8B'
+                },
+                {
+                    urls: 'turn:relay2.expressturn.com:3478',
+                    username: 'efK9D2zGMvAem6Cyh',
+                    credential: 'qv7EtbVHYZbJ4k8B'
+                },
+                {
+                    urls: 'turn:relay1.expressturn.com:443?transport=tcp',
+                    username: 'efK9D2zGMvAem6Cyh',
+                    credential: 'qv7EtbVHYZbJ4k8B'
+                },
+                {
+                    urls: 'turn:relay2.expressturn.com:443?transport=tcp',
+                    username: 'efK9D2zGMvAem6Cyh',
+                    credential: 'qv7EtbVHYZbJ4k8B'
                 }
             ]
         }
@@ -372,17 +396,99 @@
     // --- LÒGICA DE PEERJS (ALUMNE) ---
     function joinSession(sessionId) {
         peer = createGuestPeer();
-        peer.on('open', () => {
-            hostConnection = peer.connect(sessionId, { reliable: true });
-            hostConnection.on('open', () => statusIndicator.textContent = 'Connectat');
-            hostConnection.on('data', handleTeacherData);
-            hostConnection.on('close', () => { alert('Connexió perduda amb el professor.'); window.close(); });
-            hostConnection.on('error', () => { alert('No s\'ha pogut connectar a la sessió.'); window.close(); });
+        let connectionAttempts = 0;
+        let connecting = false;
+        const maxAttempts = 3;
+
+        const resetIndicator = (attempt) => {
+            statusIndicator.textContent = attempt === 1
+                ? 'Connectant...'
+                : `Reconnectant (int ${attempt})...`;
+        };
+
+        const connectToHost = (isRetry = false) => {
+            if (connecting) return;
+            if (hostConnection && hostConnection.open) return;
+
+            connectionAttempts = isRetry ? connectionAttempts + 1 : 1;
+            if (connectionAttempts > maxAttempts) {
+                showFatalState('No s\'ha pogut establir la connexió P2P. Revisa la xarxa o torna-ho a provar.');
+                return;
+            }
+
+            connecting = true;
+            resetIndicator(connectionAttempts);
+
+            const connection = peer.connect(sessionId, { serialization: 'json', reliable: true });
+            hostConnection = connection;
+
+            let opened = false;
+            const watchdog = setTimeout(() => {
+                if (!opened) {
+                    try {
+                        connection.close();
+                    } catch (error) {
+                        console.warn('Error tancant connexió no oberta:', error);
+                    }
+                    connecting = false;
+                    connectToHost(true);
+                }
+            }, 10000);
+
+            connection.on('open', () => {
+                opened = true;
+                clearTimeout(watchdog);
+                connecting = false;
+                statusIndicator.textContent = 'Connectat';
+            });
+
+            connection.on('data', handleTeacherData);
+
+            connection.on('error', (err) => {
+                console.error('Error al canal amb l\'organitzador:', err);
+                clearTimeout(watchdog);
+                connecting = false;
+                if (!opened) {
+                    connectToHost(true);
+                    return;
+                }
+                alert('S\'ha perdut la connexió amb l\'organitzador.');
+                window.location.href = HOME_URL;
+            });
+
+            connection.on('close', () => {
+                clearTimeout(watchdog);
+                connecting = false;
+                if (!opened) {
+                    connectToHost(true);
+                    return;
+                }
+                alert('Connexió tancada per l\'organitzador.');
+                window.location.href = HOME_URL;
+            });
+        };
+
+        connectToHost(false);
+        peer.on('open', () => connectToHost(false));
+        peer.on('disconnected', () => {
+            connecting = false;
+            try {
+                peer.reconnect();
+            } catch (error) {
+                console.warn('Error reintentant la reconexió del peer:', error);
+            }
+            setTimeout(() => connectToHost(true), 300);
         });
         peer.on('error', (err) => {
             console.error('Error de PeerJS:', err);
             showFatalState('No s\'ha pogut connectar amb la sessió. Comprova el codi o torna-ho a provar.');
         });
+
+        setTimeout(() => {
+            if (!hostConnection || !hostConnection.open) {
+                statusIndicator.textContent = 'Connectant (lent)...';
+            }
+        }, 5000);
     }
 
     function handleTeacherData(data) {
@@ -422,8 +528,8 @@
             studentInteractionZone.classList.remove('hidden');
             renderStudentView();
         } else if (data.type === 'session-closed') {
-            alert('La sessió ha estat tancada pel professor.');
-            window.close();
+            alert('L\'organitzador de l\'activitat ha tancat la sessió.');
+            window.location.href = HOME_URL;
         }
     }
 
@@ -756,7 +862,7 @@
         if (confirm('Vols tancar l\'activitat per a tothom?')) {
             guestConnections.forEach(conn => conn.send({ type: 'session-closed' }));
             if (peer) peer.destroy();
-            window.close();
+            window.location.href = HOME_URL;
         }
     }
 
