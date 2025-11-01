@@ -1198,7 +1198,12 @@
 
         if (phase === 'brainstorm') {
             if (studentState.submittedIdeas < maxIdeasAllowed) {
-                ideasLeftInfo.textContent = `Pots enviar ${maxIdeasAllowed - studentState.submittedIdeas} idea(es).`;
+                const remainingIdeas = maxIdeasAllowed - studentState.submittedIdeas;
+                if (remainingIdeas === 1) {
+                    ideasLeftInfo.textContent = `Pots enviar 1 idea.`;
+                } else {
+                    ideasLeftInfo.textContent = `Pots enviar ${remainingIdeas} idees.`;
+                }
                 ideaForm.classList.remove('hidden');
                 return;
             }
