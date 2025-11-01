@@ -904,6 +904,13 @@
         starsScoreContainer.style.setProperty('--stars-panel-max-width', `${panelWidth}px`);
         studentInteractionZone?.style.setProperty('--student-panel-max-width', `${panelWidth}px`);
 
+        const categoryCount = categories.length;
+        if (categoryCount > 0) {
+            starsCategoryWrapper.style.gridTemplateColumns = `repeat(${categoryCount}, 1fr)`;
+        } else {
+            starsCategoryWrapper.style.removeProperty('grid-template-columns');
+        }
+
         const validKeys = new Set();
         categories.forEach((category, categoryIndex) => {
             const items = Array.isArray(category?.items) ? category.items : [];
