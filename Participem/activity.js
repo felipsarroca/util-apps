@@ -822,14 +822,8 @@
 
     function updateStarsSubmitButton() {
         if (!submitStarsBtn || !starsScoreContainer) return;
-        const items = enumerateStarItems();
         const submitted = studentState.starsSubmitted;
-        const ratedCount = items.reduce((count, { key }) => {
-            const value = Number(studentState.starScores[key]);
-            return Number.isFinite(value) ? count + 1 : count;
-        }, 0);
-        const allRated = items.length > 0 && ratedCount === items.length;
-        submitStarsBtn.classList.toggle('hidden', submitted || !allRated);
+        submitStarsBtn.classList.toggle('hidden', submitted);
         starsScoreContainer.classList.toggle('ratings-submitted', submitted);
     }
 
@@ -1009,17 +1003,16 @@
 
     function submitStarRatings() {
         if (studentState.starsSubmitted || !hostConnection) return;
+
         const items = enumerateStarItems();
         if (!items.length) return;
-        const missingItems = items.filter(({ key }) => !Number.isFinite(Number(studentState.starScores[key])));
-        if (missingItems.length) {
-            return;
-        }
+
         items.forEach(({ categoryIndex, itemIndex, key }) => {
             const value = Number(studentState.starScores[key]);
             if (!Number.isFinite(value)) return;
             hostConnection.send({ type: 'score', payload: { categoryIndex, itemIndex, value } });
         });
+
         studentState.starsSubmitted = true;
         persistStarState();
         updateStarsSubmitButton();
