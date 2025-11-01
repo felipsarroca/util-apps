@@ -117,7 +117,7 @@
     const computeStarGap = (count) => {
         if (count >= 12) return '0.1rem';
         if (count >= 9) return '0.15rem';
-        if (count >= 7) return '0.2rem';
+        if (count >= 7) return '0.1rem';
         if (count >= 5) return '0.38rem';
         return '0.55rem';
     };
