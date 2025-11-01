@@ -560,7 +560,7 @@ header {
     position: fixed;
     right: 2.5rem;
     bottom: 2.5rem;
-    width: min(420px, calc(100% - 5rem));
+    width: min(300px, calc(100% - 5rem));
     background: rgba(255, 255, 255, 0.96);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-elevated);
@@ -583,8 +583,6 @@ header {
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
-    max-width: 70%;
-    align-self: center;
 }
 
 #stars-score-container {
