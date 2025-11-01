@@ -104,9 +104,9 @@
     const createHostPeer = (id) => new Peer(String(id), peerServerConfig);
     const createGuestPeer = () => new Peer(peerServerConfig);
 
-    const BASE_STARS_PANEL_WIDTH = 1100;
-    const EXTRA_WIDTH_PER_CATEGORY = 170;
-    const MAX_STARS_PANEL_WIDTH = 1600;
+    const BASE_STARS_PANEL_WIDTH = 1260;
+    const EXTRA_WIDTH_PER_CATEGORY = 195;
+    const MAX_STARS_PANEL_WIDTH = 1840;
 
     const computeStarsPanelWidth = (categoryCount = 1) => {
         const extraCategories = Math.max(0, categoryCount - 3);
