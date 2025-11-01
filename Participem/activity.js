@@ -104,9 +104,9 @@
     const createHostPeer = (id) => new Peer(String(id), peerServerConfig);
     const createGuestPeer = () => new Peer(peerServerConfig);
 
-    const BASE_STARS_PANEL_WIDTH = 1560;
-    const EXTRA_WIDTH_PER_CATEGORY = 240;
-    const MAX_STARS_PANEL_WIDTH = 2300;
+    const BASE_STARS_PANEL_WIDTH = 1100;
+    const EXTRA_WIDTH_PER_CATEGORY = 170;
+    const MAX_STARS_PANEL_WIDTH = 1600;
 
     const computeStarsPanelWidth = (categoryCount = 1) => {
         const extraCategories = Math.max(0, categoryCount - 3);
@@ -115,17 +115,17 @@
     };
 
     const computeStarGap = (count) => {
-        if (count >= 12) return '0.18rem';
-        if (count >= 9) return '0.24rem';
-        if (count >= 7) return '0.3rem';
+        if (count >= 12) return '0.1rem';
+        if (count >= 9) return '0.15rem';
+        if (count >= 7) return '0.2rem';
         if (count >= 5) return '0.38rem';
         return '0.55rem';
     };
 
     const computeStarSize = (count) => {
-        if (count >= 12) return '1.65rem';
-        if (count >= 9) return '1.8rem';
-        if (count >= 7) return '1.9rem';
+        if (count >= 12) return '1.4rem';
+        if (count >= 9) return '1.6rem';
+        if (count >= 7) return '1.75rem';
         if (count >= 5) return '2.05rem';
         return '2.25rem';
     };
