@@ -657,7 +657,7 @@ header {
     gap: var(--star-gap, 0.45rem);
     align-items: center;
     margin-top: 0.2rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .star-button {
