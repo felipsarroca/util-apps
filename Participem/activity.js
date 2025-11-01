@@ -403,6 +403,10 @@
 
     const updateStudentQuestion = () => {
         if (!studentQuestion) return;
+        if (activityConfig.type === 'stars' || sessionData?.phase === 'stars') {
+            studentQuestion.classList.add('hidden');
+            return;
+        }
         const hasQuestion = Boolean(activityConfig.question);
         studentQuestion.textContent = hasQuestion ? activityConfig.question : '';
         studentQuestion.classList.toggle('hidden', !hasQuestion);
