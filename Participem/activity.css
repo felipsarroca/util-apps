@@ -583,6 +583,8 @@ header {
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
+    max-width: 70%;
+    align-self: center;
 }
 
 #stars-score-container {
