@@ -403,7 +403,7 @@
 
     const updateStudentQuestion = () => {
         if (!studentQuestion) return;
-        if (activityConfig.type === 'stars' || sessionData?.phase === 'stars' || activityConfig.type === 'brainstorm') {
+        if (activityConfig.type === 'stars' || sessionData?.phase === 'stars' || activityConfig.type === 'brainstorm' || activityConfig.type === 'poll' || activityConfig.type === 'brainstorm-poll') {
             studentQuestion.classList.add('hidden');
             return;
         }
