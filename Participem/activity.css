@@ -78,9 +78,9 @@ header {
 
 .live-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+    grid-template-columns: minmax(0, 1.5fr) minmax(260px, 360px);
     gap: 1.5rem;
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 1.8rem auto 1.6rem;
     padding: 0 2rem 2rem;
     box-sizing: border-box;
@@ -288,6 +288,8 @@ header {
     gap: 1.4rem;
     align-items: stretch;
     grid-template-columns: repeat(var(--stars-results-columns, 1), minmax(0, 1fr));
+    max-height: none;
+    overflow-y: visible;
 }
 
 
@@ -300,7 +302,7 @@ header {
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
-    height: 100%;
+    height: auto;
 }
 
 .stars-results-category h3 {
@@ -314,7 +316,7 @@ header {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    flex: 1;
+    flex: initial;
 }
 
 .stars-results-item {
@@ -396,6 +398,12 @@ header {
     flex-direction: column;
     gap: 1.2rem;
     align-items: stretch;
+}
+
+.live-sidebar .quick-panel {
+    width: 65%;
+    min-width: 220px;
+    align-self: flex-start;
 }
 
 .sidebar-card {
@@ -582,7 +590,7 @@ header {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-width: 1280px;
+    max-width: var(--stars-panel-max-width, 1560px);
     width: 100%;
     margin: 0 auto;
     align-items: stretch;
@@ -592,7 +600,7 @@ header {
 .stars-category-wrapper {
     display: grid;
     gap: 1.2rem;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
     align-items: stretch;
     justify-items: stretch;
     align-content: start;
@@ -647,15 +655,16 @@ header {
 
 .star-buttons {
     display: inline-flex;
-    gap: 0.45rem;
+    gap: var(--star-gap, 0.45rem);
     align-items: center;
     margin-top: 0.35rem;
+    flex-wrap: nowrap;
 }
 
 .star-button {
     border: none;
     background: transparent;
-    font-size: 2.05rem;
+    font-size: var(--star-size, 2.05rem);
     line-height: 1;
     color: #d1d5db;
     cursor: pointer;
@@ -833,6 +842,11 @@ header {
     .live-sidebar > * {
         flex: 1 1 320px;
     }
+
+    .live-sidebar .quick-panel {
+        width: 100%;
+        min-width: 0;
+    }
 }
 
 @media (max-width: 960px) {
@@ -895,9 +909,11 @@ body.guest-mode #student-interaction-zone {
     position: static;
     right: auto;
     bottom: auto;
-    width: min(520px, 92%);
+    width: min(var(--student-panel-max-width, 1560px), 96vw);
     margin: 3rem auto;
     display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 body.guest-mode .student-question {

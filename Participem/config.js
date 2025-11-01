@@ -225,6 +225,12 @@ document.addEventListener('DOMContentLoaded', () => {
         secondaryColumn.innerHTML = '';
         secondaryColumn.classList.add('hidden-column');
 
+        const layoutGrid = document.createElement('div');
+        layoutGrid.className = 'stars-layout-grid';
+
+        const mainColumn = document.createElement('div');
+        mainColumn.className = 'stars-layout-main';
+
         const summaryGrid = document.createElement('div');
         summaryGrid.className = 'stars-summary-grid';
         summaryGrid.innerHTML = [
@@ -250,12 +256,12 @@ document.addEventListener('DOMContentLoaded', () => {
             '    </div>',
             '</div>'
         ].join('');
-        primaryColumn.appendChild(summaryGrid);
+        mainColumn.appendChild(summaryGrid);
 
         const actionsWrapper = document.createElement('div');
         actionsWrapper.className = 'stars-actions';
         actionsWrapper.appendChild(buildActions());
-        primaryColumn.appendChild(actionsWrapper);
+        mainColumn.appendChild(actionsWrapper);
 
         const categoriesWrapper = document.createElement('div');
         categoriesWrapper.className = 'stars-categories-wrapper';
@@ -265,7 +271,10 @@ document.addEventListener('DOMContentLoaded', () => {
             '    <i class="fa-solid fa-plus"></i> Afegir categoria',
             '</button>'
         ].join('');
-        primaryColumn.appendChild(categoriesWrapper);
+
+        layoutGrid.appendChild(mainColumn);
+        layoutGrid.appendChild(categoriesWrapper);
+        primaryColumn.appendChild(layoutGrid);
 
         configActions.innerHTML = '';
         configActions.classList.remove('align-start');

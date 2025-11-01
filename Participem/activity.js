@@ -104,6 +104,32 @@
     const createHostPeer = (id) => new Peer(String(id), peerServerConfig);
     const createGuestPeer = () => new Peer(peerServerConfig);
 
+    const BASE_STARS_PANEL_WIDTH = 1560;
+    const EXTRA_WIDTH_PER_CATEGORY = 240;
+    const MAX_STARS_PANEL_WIDTH = 2300;
+
+    const computeStarsPanelWidth = (categoryCount = 1) => {
+        const extraCategories = Math.max(0, categoryCount - 3);
+        const extraWidth = extraCategories * EXTRA_WIDTH_PER_CATEGORY;
+        return Math.min(MAX_STARS_PANEL_WIDTH, BASE_STARS_PANEL_WIDTH + extraWidth);
+    };
+
+    const computeStarGap = (count) => {
+        if (count >= 12) return '0.18rem';
+        if (count >= 9) return '0.24rem';
+        if (count >= 7) return '0.3rem';
+        if (count >= 5) return '0.38rem';
+        return '0.55rem';
+    };
+
+    const computeStarSize = (count) => {
+        if (count >= 12) return '1.65rem';
+        if (count >= 9) return '1.8rem';
+        if (count >= 7) return '1.9rem';
+        if (count >= 5) return '2.05rem';
+        return '2.25rem';
+    };
+
     const removeIdea = (ideaId) => {
         if (myRole !== 'host') return;
         const index = sessionData?.ideas?.findIndex(idea => idea.id === ideaId);
@@ -848,12 +874,14 @@
         pollOptionsContainer.classList.add('hidden');
 
         if (!categories.length) {
-            starsCategoryWrapper.style.gridTemplateColumns = '';
+            starsCategoryWrapper.style.removeProperty('grid-template-columns');
             starsCategoryWrapper.innerHTML = '<p class="placeholder">Encara no hi ha elements per puntuar.</p>';
             starsScoreContainer.classList.remove('ratings-submitted');
             starsScoreContainer.classList.remove('hidden');
             submitStarsBtn?.classList.add('hidden');
             updateStarsThanksMessage();
+            starsScoreContainer.style.removeProperty('--stars-panel-max-width');
+            studentInteractionZone?.style.removeProperty('--student-panel-max-width');
             return;
         }
 
@@ -865,8 +893,13 @@
             statusIndicator.textContent = studentState.starsSubmitted ? 'Puntuacions enviades' : 'Puntua amb estrelles';
         }
 
-        const columnCount = Math.max(categories.length, 1);
-        starsCategoryWrapper.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
+        const starCount = Math.max(1, max - min + 1);
+        const starGap = computeStarGap(starCount);
+        const starSize = computeStarSize(starCount);
+        const panelWidth = computeStarsPanelWidth(categories.length);
+        starsScoreContainer.style.setProperty('--stars-panel-max-width', `${panelWidth}px`);
+        studentInteractionZone?.style.setProperty('--student-panel-max-width', `${panelWidth}px`);
+        starsCategoryWrapper.style.removeProperty('grid-template-columns');
 
         const validKeys = new Set();
         categories.forEach((category, categoryIndex) => {
@@ -911,6 +944,8 @@
 
                 const buttonsContainer = document.createElement('div');
                 buttonsContainer.className = 'star-buttons';
+                buttonsContainer.style.setProperty('--star-gap', starGap);
+                buttonsContainer.style.setProperty('--star-size', starSize);
 
                 const key = `${categoryIndex}:${itemIndex}`;
                 const currentValue = studentState.starScores[key];

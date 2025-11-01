@@ -207,17 +207,31 @@ body {
     resize: vertical;
 }
 
+.stars-layout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 1fr);
+    gap: 1.4rem;
+    align-items: start;
+}
+
+.stars-layout-main {
+    display: grid;
+    gap: 0.85rem;
+    align-items: start;
+}
+
 .stars-summary-grid {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(160px, 220px);
     gap: 0.65rem;
-    align-items: start;
+    align-items: stretch;
 }
 
 .stars-categories-wrapper {
     display: grid;
     gap: 0.75rem;
     align-items: start;
-    margin-top: 0.4rem;
+    margin-top: 0;
 }
 
 .stars-category-list {
@@ -339,7 +353,7 @@ body {
 }
 
 .stars-range-row {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, minmax(110px, 1fr));
     align-items: end;
     gap: 0.6rem;
 }
@@ -354,6 +368,8 @@ body {
     gap: 0.3rem;
     align-content: start;
     padding: 0.55rem 0.75rem;
+    max-width: 220px;
+    justify-self: start;
 }
 
 .stars-range-heading h3 {
@@ -491,6 +507,24 @@ body.type-brainstorm-poll .button-container {
 
     .card-action-row .button-container {
         justify-content: center;
+    }
+
+    .stars-layout-grid {
+        grid-template-columns: 1fr;
+        gap: 1.15rem;
+    }
+
+    .stars-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stars-range-card {
+        max-width: none;
+        width: 100%;
+    }
+
+    .stars-categories-wrapper {
+        margin-top: 0.6rem;
     }
 }
 
