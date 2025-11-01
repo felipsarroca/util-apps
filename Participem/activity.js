@@ -712,12 +712,15 @@
         if (!categories.length) {
             statusIndicator.textContent = 'Preparant puntuacions';
             setResultsContainerMode('placeholder-state');
+            resultsContainer.style.removeProperty('--stars-results-columns');
             resultsContainer.innerHTML = '<p class="placeholder">Esperant criteris de puntuació...</p>';
             return;
         }
 
         statusIndicator.textContent = 'Puntuació amb estrelles';
         setResultsContainerMode('stars-results');
+        const resultsColumnCount = Math.max(categories.length, 1);
+        resultsContainer.style.setProperty('--stars-results-columns', resultsColumnCount);
         resultsContainer.innerHTML = '';
 
         const fragment = document.createDocumentFragment();
@@ -845,6 +848,7 @@
         pollOptionsContainer.classList.add('hidden');
 
         if (!categories.length) {
+            starsCategoryWrapper.style.gridTemplateColumns = '';
             starsCategoryWrapper.innerHTML = '<p class="placeholder">Encara no hi ha elements per puntuar.</p>';
             starsScoreContainer.classList.remove('ratings-submitted');
             starsScoreContainer.classList.remove('hidden');
@@ -860,6 +864,9 @@
         if (statusIndicator) {
             statusIndicator.textContent = studentState.starsSubmitted ? 'Puntuacions enviades' : 'Puntua amb estrelles';
         }
+
+        const columnCount = Math.max(categories.length, 1);
+        starsCategoryWrapper.style.gridTemplateColumns = `repeat(${columnCount}, minmax(0, 1fr))`;
 
         const validKeys = new Set();
         categories.forEach((category, categoryIndex) => {
@@ -963,6 +970,10 @@
     function renderTeacherResults() {
         const { type } = activityConfig;
         const { phase, ideas, votes } = sessionData;
+
+        if (type !== 'stars') {
+            resultsContainer?.style.removeProperty('--stars-results-columns');
+        }
 
         if (type === 'stars') {
             renderStarsTeacherResults();
@@ -1097,6 +1108,9 @@
     }
 
     function renderStudentView() {
+        if (starsCategoryWrapper) {
+            starsCategoryWrapper.style.gridTemplateColumns = '';
+        }
         ideaForm.classList.add('hidden');
         pollOptionsContainer.classList.add('hidden');
         if (starsScoreContainer) {

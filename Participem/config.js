@@ -220,7 +220,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     const buildStarsLayout = () => {
-        primaryColumn.innerHTML = [
+        primaryColumn.innerHTML = '';
+        primaryColumn.classList.add('full-width');
+        secondaryColumn.innerHTML = '';
+        secondaryColumn.classList.add('hidden-column');
+
+        const summaryGrid = document.createElement('div');
+        summaryGrid.className = 'stars-summary-grid';
+        summaryGrid.innerHTML = [
             '<div class="config-card compact-card stars-primary-card">',
             '    <div class="field-group">',
             '        <label for="question">Nom de l\'activitat</label>',
@@ -243,22 +250,22 @@ document.addEventListener('DOMContentLoaded', () => {
             '    </div>',
             '</div>'
         ].join('');
-
-        secondaryColumn.innerHTML = [
-            '<div class="config-card compact-card stars-panel">',
-            '    <div id="stars-category-list" class="stars-category-list"></div>',
-            '    <button type="button" id="add-category-btn" class="add-category-btn">',
-            '        <i class="fa-solid fa-plus"></i> Afegir categoria',
-            '    </button>',
-            '</div>'
-        ].join('');
-        secondaryColumn.classList.remove('hidden-column');
-        primaryColumn.classList.remove('full-width');
+        primaryColumn.appendChild(summaryGrid);
 
         const actionsWrapper = document.createElement('div');
         actionsWrapper.className = 'stars-actions';
         actionsWrapper.appendChild(buildActions());
         primaryColumn.appendChild(actionsWrapper);
+
+        const categoriesWrapper = document.createElement('div');
+        categoriesWrapper.className = 'stars-categories-wrapper';
+        categoriesWrapper.innerHTML = [
+            '<div id="stars-category-list" class="stars-category-list"></div>',
+            '<button type="button" id="add-category-btn" class="add-category-btn">',
+            '    <i class="fa-solid fa-plus"></i> Afegir categoria',
+            '</button>'
+        ].join('');
+        primaryColumn.appendChild(categoriesWrapper);
 
         configActions.innerHTML = '';
         configActions.classList.remove('align-start');
