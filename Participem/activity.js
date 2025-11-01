@@ -930,6 +930,15 @@
                 block.removeAttribute('data-category-name');
             }
 
+            // --- ADD CATEGORY TITLE HERE ---
+            if (categoryLabel) {
+                const categoryTitle = document.createElement('h4'); // Using h4 for semantic hierarchy
+                categoryTitle.className = 'star-category-title-student'; // New class for styling
+                categoryTitle.textContent = categoryLabel;
+                block.prepend(categoryTitle); // Add at the beginning of the block
+            }
+            // --- END ADDITION ---
+
             const items = Array.isArray(category?.items) ? category.items : [];
             items.forEach((item, itemIndex) => {
                 const itemWrapper = document.createElement('div');
