@@ -116,46 +116,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const initializeStarsCategoryEditor = () => {
-        const categoryList = document.getElementById('stars-category-list');
-        const addCategoryBtn = document.getElementById('add-category-btn');
-        if (!categoryList || !addCategoryBtn) return;
-        let counter = 0;
+    const initializeStarsCategoryEditor = (prefillCategories = []) => {
+        const categoryContainer = document.getElementById('stars-category-columns');
+        if (!categoryContainer) return;
+        categoryContainer.innerHTML = '';
 
         const ordinalLabel = (index) => {
-            const ordinals = ['1ª', '2ª', '3ª', '4ª', '5ª', '6ª'];
-            return ordinals[index] || `${index + 1}ª`;
+            const ordinals = ['1a', '2a', '3a'];
+            return ordinals[index] || `${index + 1}a`;
         };
 
-        const refreshHeaders = () => {
-            const categories = categoryList.querySelectorAll('.stars-category');
-            categories.forEach((category, index) => {
-                const title = category.querySelector('.stars-category-title');
-                if (title) title.textContent = `Nom de la ${ordinalLabel(index)} categoria`;
-
-                const removeBtn = category.querySelector('.remove-category-btn');
-                if (removeBtn) removeBtn.disabled = categories.length <= 3 || index < 3;
-            });
-        };
-
-        const createCategory = (prefill = {}) => {
+        const createCategory = (index, prefill = {}) => {
             const wrapper = document.createElement('section');
-            wrapper.className = 'stars-category';
-            wrapper.dataset.index = String(counter++);
+            wrapper.className = `stars-category stars-category-column stars-category-col-${index + 1}`;
+            wrapper.dataset.index = String(index);
 
             const header = document.createElement('div');
             header.className = 'stars-category-header';
 
             const title = document.createElement('span');
             title.className = 'stars-category-title';
+            title.textContent = `Nom de la ${ordinalLabel(index)} categoria`;
             header.appendChild(title);
-
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'remove-category-btn';
-            removeBtn.setAttribute('aria-label', 'Elimina la categoria');
-            removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-            header.appendChild(removeBtn);
 
             const nameGroup = document.createElement('div');
             nameGroup.className = 'field-group stars-name-group';
@@ -186,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (itemsTextarea.value) {
                 const lineCount = itemsTextarea.value.split('\n').length;
-                itemsTextarea.rows = Math.max(5, lineCount);
+                itemsTextarea.rows = Math.max(4, lineCount);
             }
             itemsGroup.appendChild(itemsLabel);
             itemsGroup.appendChild(itemsTextarea);
@@ -194,32 +176,21 @@ document.addEventListener('DOMContentLoaded', () => {
             wrapper.appendChild(header);
             wrapper.appendChild(nameGroup);
             wrapper.appendChild(itemsGroup);
-
-            categoryList.appendChild(wrapper);
-            refreshHeaders();
+            categoryContainer.appendChild(wrapper);
         };
 
-        addCategoryBtn.addEventListener('click', () => createCategory());
+        const categoriesToRender = Array.from({ length: 3 }, (_, index) => ({
+            name: prefillCategories[index]?.name,
+            items: prefillCategories[index]?.items
+        }));
 
-        categoryList.addEventListener('click', event => {
-            const button = event.target.closest('.remove-category-btn');
-            if (!button) return;
-            const category = button.closest('.stars-category');
-            if (!category) return;
-            const index = parseInt(category.dataset.index, 10);
-            if (!Number.isFinite(index)) return;
-            if ((categoryList.children.length <= 3) || index < 3) return;
-            category.remove();
-            refreshHeaders();
+        categoriesToRender.forEach((category, index) => {
+            createCategory(index, category);
         });
-
-        for (let i = 0; i < 3; i += 1) {
-            createCategory();
-        }
     };
 
 
-    const buildStarsLayout = () => {
+    const buildStarsLayout = (prefillConfig = {}) => {
         primaryColumn.innerHTML = '';
         primaryColumn.classList.add('full-width');
         secondaryColumn.innerHTML = '';
@@ -263,30 +234,39 @@ document.addEventListener('DOMContentLoaded', () => {
         actionsWrapper.appendChild(buildActions());
         mainColumn.appendChild(actionsWrapper);
 
-        const categoriesWrapper = document.createElement('div');
-        categoriesWrapper.className = 'stars-categories-wrapper';
-        categoriesWrapper.innerHTML = [
-            '<div id="stars-category-list" class="stars-category-list"></div>',
-            '<button type="button" id="add-category-btn" class="add-category-btn">',
-            '    <i class="fa-solid fa-plus"></i> Afegir categoria',
-            '</button>'
-        ].join('');
+        const categoriesContainer = document.createElement('div');
+        categoriesContainer.id = 'stars-category-columns';
+        categoriesContainer.className = 'stars-category-columns';
 
         layoutGrid.appendChild(mainColumn);
-        layoutGrid.appendChild(categoriesWrapper);
+        layoutGrid.appendChild(categoriesContainer);
         primaryColumn.appendChild(layoutGrid);
 
         configActions.innerHTML = '';
         configActions.classList.remove('align-start');
 
-        initializeStarsCategoryEditor();
+        const prefillCategories = Array.isArray(prefillConfig.categories) ? prefillConfig.categories : [];
+        initializeStarsCategoryEditor(prefillCategories);
+
+        if (prefillConfig.question) {
+            const questionInput = document.getElementById('question');
+            if (questionInput) questionInput.value = prefillConfig.question;
+        }
+        if (Number.isFinite(prefillConfig.minScore)) {
+            const minInput = document.getElementById('min-score');
+            if (minInput) minInput.value = prefillConfig.minScore;
+        }
+        if (Number.isFinite(prefillConfig.maxScore)) {
+            const maxInput = document.getElementById('max-score');
+            if (maxInput) maxInput.value = prefillConfig.maxScore;
+        }
     };
 
     const collectStarsConfig = () => {
         const questionInput = document.getElementById('question');
         const minScoreInput = document.getElementById('min-score');
         const maxScoreInput = document.getElementById('max-score');
-        const categoryList = document.getElementById('stars-category-list');
+        const categoryContainer = document.getElementById('stars-category-columns');
 
         const minScore = parseInt(minScoreInput.value, 10);
         const maxScore = parseInt(maxScoreInput.value, 10);
@@ -297,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
 
-        const rawCategories = Array.from(categoryList.querySelectorAll('.stars-category')).map(category => {
+        const rawCategories = Array.from(categoryContainer.querySelectorAll('.stars-category')).map(category => {
             const nameInput = category.querySelector('.category-name');
             const itemsInput = category.querySelector('.category-items');
             const name = nameInput.value.trim();

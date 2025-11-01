@@ -917,10 +917,14 @@
         categories.forEach((category, categoryIndex) => {
             const block = document.createElement('section');
             block.className = 'star-category-block';
-
-            const heading = document.createElement('h3');
-            heading.textContent = category?.name || `Categoria ${categoryIndex + 1}`;
-            block.appendChild(heading);
+            const categoryLabel = typeof category?.name === 'string' ? category.name.trim() : '';
+            if (categoryLabel) {
+                block.setAttribute('aria-label', categoryLabel);
+                block.dataset.categoryName = categoryLabel;
+            } else {
+                block.removeAttribute('aria-label');
+                block.removeAttribute('data-category-name');
+            }
 
             const items = Array.isArray(category?.items) ? category.items : [];
             items.forEach((item, itemIndex) => {
