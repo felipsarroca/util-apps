@@ -121,11 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!categoryContainer) return;
         categoryContainer.innerHTML = '';
 
-        const ordinalLabel = (index) => {
-            const ordinals = ['1a', '2a', '3a'];
-            return ordinals[index] || `${index + 1}a`;
-        };
-
         const createCategory = (index, prefill = {}) => {
             const wrapper = document.createElement('section');
             wrapper.className = `stars-category stars-category-column stars-category-col-${index + 1}`;
@@ -136,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const title = document.createElement('span');
             title.className = 'stars-category-title';
-            title.textContent = `Nom de la ${ordinalLabel(index)} categoria`;
+            title.textContent = `Categoria ${index + 1}`; // The user's requested change
             header.appendChild(title);
 
             const nameGroup = document.createElement('div');

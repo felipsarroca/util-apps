@@ -211,7 +211,7 @@ body {
     display: grid;
     grid-template-columns: repeat(4, minmax(240px, 1fr));
     gap: 1.2rem;
-    align-items: start;
+    align-items: end;
 }
 
 .stars-layout-main {
@@ -257,7 +257,6 @@ body {
     gap: 0.6rem;
     box-shadow: 0 12px 26px rgba(24, 33, 66, 0.12);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    height: 100%;
 }
 
 .stars-category:hover {

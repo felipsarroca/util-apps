@@ -585,6 +585,38 @@ header {
     gap: 1.1rem;
 }
 
+#stars-score-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: var(--stars-panel-max-width, 1560px);
+    width: 100%;
+    margin: 0 auto;
+    align-items: stretch;
+    padding: 0 1rem;
+}
+
+.stars-category-wrapper {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    align-items: stretch;
+    justify-items: stretch;
+    align-content: start;
+}
+
+.star-category-block {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(79, 70, 229, 0.18);
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.15);
+    padding: 0.5rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* height: 100%; */ /* Removed for vertical compactness */
+}
+
 .star-category-title-student {
     margin: 0 0 0.6rem 0;
     font-size: 1.1rem;
@@ -918,4 +950,3 @@ body.guest-mode #idea-form {
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 }
-

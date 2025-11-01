@@ -903,7 +903,6 @@
         const panelWidth = computeStarsPanelWidth(categories.length);
         starsScoreContainer.style.setProperty('--stars-panel-max-width', `${panelWidth}px`);
         studentInteractionZone?.style.setProperty('--student-panel-max-width', `${panelWidth}px`);
-        starsCategoryWrapper.style.removeProperty('grid-template-columns');
 
         const validKeys = new Set();
         categories.forEach((category, categoryIndex) => {
