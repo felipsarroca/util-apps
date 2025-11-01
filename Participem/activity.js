@@ -115,18 +115,20 @@
     };
 
     const computeStarGap = (count) => {
-        if (count >= 12) return '0.1rem';
-        if (count >= 9) return '0.15rem';
-        if (count >= 7) return '0.1rem';
-        if (count >= 5) return '0.38rem';
-        return '0.55rem';
+        if (count >= 15) return '0.1rem';
+        if (count >= 12) return '0.15rem';
+        if (count >= 10) return '0.2rem';
+        if (count >= 8) return '0.25rem';
+        if (count >= 6) return '0.35rem';
+        return '0.5rem';
     };
 
     const computeStarSize = (count) => {
+        if (count >= 15) return '1.2rem';
         if (count >= 12) return '1.4rem';
-        if (count >= 9) return '1.6rem';
-        if (count >= 7) return '1.75rem';
-        if (count >= 5) return '2.05rem';
+        if (count >= 10) return '1.6rem';
+        if (count >= 8) return '1.8rem';
+        if (count >= 6) return '2.0rem';
         return '2.25rem';
     };
 
