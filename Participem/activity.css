@@ -445,7 +445,7 @@ header {
 }
 
 #session-code-large {
-    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    font-family: 'Courier New', Courier, monospace;
     font-size: clamp(2.6rem, 4.5vw, 3.2rem);
     font-weight: 700;
     color: var(--color-secondary);
