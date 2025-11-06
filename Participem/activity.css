@@ -446,8 +446,8 @@ header {
 
 #session-code-large {
     font-family: 'Courier New', Courier, monospace;
-    font-size: clamp(2.6rem, 4.5vw, 3.2rem);
-    font-weight: 700;
+    font-size: clamp(3.12rem, 5.4vw, 3.84rem);
+    font-weight: 1000;
     color: var(--color-secondary);
     letter-spacing: 0.18em;
     text-transform: uppercase;
