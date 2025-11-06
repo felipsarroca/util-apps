@@ -50,7 +50,7 @@ header {
 #activity-title {
     margin: 0;
     font-size: clamp(1.6rem, 2vw, 2.4rem);
-    font-weight: 700;
+    font-weight: bold;
 }
 
 .status-pill,
