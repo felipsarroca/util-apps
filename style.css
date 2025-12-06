@@ -102,3 +102,7 @@ footer {
 .footer-license {
     gap: 12px;
 }
+
+.author-link {
+    text-decoration: none;
+}
