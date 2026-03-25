@@ -130,7 +130,7 @@ window.addEventListener('beforeinstallprompt', (event) => {
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   hideInstallBanner();
-  showStatus('L app ja ha quedat instal·lada.', 'success');
+  showStatus('L\'app ja ha quedat instal·lada.', 'success');
 });
 
 registerServiceWorker();
@@ -222,7 +222,7 @@ async function handleRegisterStudent(button, studentId) {
       showStatus(`${result.student.nom_complet} registrat com a alumne sense polo.`, 'success');
       markStudentAsDone(card, button);
     } else if (result.status === 'duplicate') {
-      showStatus('Ja estava registrat avui.', 'warning');
+      showStatus('Ja s\'havia registrat avui.', 'warning');
       markStudentAsDone(card, button);
     } else {
       showStatus(result.message || 'Resposta inesperada del backend.', 'error');
