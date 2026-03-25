@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registre de l'ús del polo</title>
+  <meta name="description" content="Aplicació per registrar incidències relacionades amb l'ús del polo a l'ESO.">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Polo ESO">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon-192.png?v=20260325" type="image/png">
+  <link rel="shortcut icon" href="assets/icon-192.png?v=20260325" type="image/png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png?v=20260325">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div class="brand-block">
+        <img class="brand-icon" src="assets/icon-192.png?v=20260325" alt="Icona de l'aplicació">
+        <div class="brand-text">
+          <p class="eyebrow">Escola Ramon Pont</p>
+          <h1>Registre de l'ús del polo</h1>
+        </div>
+      </div>
+    </header>
+
+    <section id="register-screen">
+      <section class="panel">
+        <p class="section-help">Toca un curs per carregar la llista d'alumnes.</p>
+
+        <div class="course-grid">
+          <button class="course-button" type="button" data-course="1r ESO">1r ESO</button>
+          <button class="course-button" type="button" data-course="2n ESO">2n ESO</button>
+          <button class="course-button" type="button" data-course="3r ESO">3r ESO</button>
+          <button class="course-button" type="button" data-course="4t ESO">4t ESO</button>
+        </div>
+
+        <div class="course-panel-action">
+          <p class="section-help">Si vols revisar dades i patrons, entra a l'espai de consultes.</p>
+          <button class="menu-button" id="open-consultations" type="button">
+            Veure resultats i consultes
+          </button>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="students-panel">
+        <div id="students-list"></div>
+      </section>
+    </section>
+
+    <section class="hidden" id="consultations-screen">
+      <section class="panel">
+        <div class="panel-top">
+          <div>
+            <h2 class="section-title">Consultes</h2>
+            <p class="section-help">1. Tria el tipus de resultat. 2. Filtra per curs, alumne o dia quan convingui.</p>
+          </div>
+          <button class="secondary-button back-button" id="back-to-register" type="button">↩ Tornar</button>
+        </div>
+
+        <div class="consultation-grid">
+          <button class="consultation-button" type="button" data-report="course">
+            <span class="consultation-title">Dades per curs</span>
+            <span class="consultation-text">Veure ràpidament quin curs acumula més registres.</span>
+          </button>
+
+          <button class="consultation-button" type="button" data-report="student">
+            <span class="consultation-title">Dades per alumne</span>
+            <span class="consultation-text">Buscar alumnes i detectar casos recurrents.</span>
+          </button>
+
+          <button class="consultation-button" type="button" data-report="weekday">
+            <span class="consultation-title">Dades per dia</span>
+            <span class="consultation-text">Filtrar per dia de la setmana i veure patrons.</span>
+          </button>
+
+          <button class="consultation-button" type="button" data-report="overview">
+            <span class="consultation-title">Vista general</span>
+            <span class="consultation-text">Resum global de tota l'ESO en una sola vista.</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-top">
+          <div>
+            <h2 class="section-title" id="report-title">Consulta seleccionada</h2>
+            <p class="section-help" id="report-subtitle">Selecciona una opció per veure el resum.</p>
+          </div>
+        </div>
+
+        <div class="report-filters hidden" id="report-filters"></div>
+
+        <div id="report-content">
+          <div class="empty-state">
+            <p class="empty-title">Encara no has triat cap consulta.</p>
+            <p class="empty-text">Aquí veurem resums clars i filtres per localitzar millor la informació.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <div class="status hidden" id="status-box"></div>
+  </main>
+
+  <aside class="install-banner hidden" id="install-banner" aria-live="polite">
+    <div class="install-banner__content">
+      <p class="install-banner__eyebrow">Instal·lació</p>
+      <p class="install-banner__title" id="install-title">Instal·la aquesta app al mòbil</p>
+      <p class="install-banner__text" id="install-text">Així la podràs obrir com una aplicació des de la pantalla d'inici.</p>
+    </div>
+    <div class="install-banner__actions">
+      <button class="secondary-button back-button" id="install-dismiss" type="button">↩ Ara no</button>
+      <button class="install-button" id="install-action" type="button">Instal·la</button>
+    </div>
+  </aside>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
