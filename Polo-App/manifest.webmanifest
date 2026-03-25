@@ -1,0 +1,23 @@
+{
+  "name": "Registre de l'ús del polo ESO",
+  "short_name": "Polo ESO",
+  "description": "Aplicació per registrar incidències relacionades amb l'ús del polo a l'ESO.",
+  "lang": "ca",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4efe7",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

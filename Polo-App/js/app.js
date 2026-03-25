@@ -32,6 +32,13 @@ const consultationButtons = document.querySelectorAll('.consultation-button');
 const reportTitle = document.getElementById('report-title');
 const reportSubtitle = document.getElementById('report-subtitle');
 const reportContent = document.getElementById('report-content');
+const installBanner = document.getElementById('install-banner');
+const installTitle = document.getElementById('install-title');
+const installText = document.getElementById('install-text');
+const installActionButton = document.getElementById('install-action');
+const installDismissButton = document.getElementById('install-dismiss');
+
+let deferredInstallPrompt = null;
 
 courseButtons.forEach((button) => {
   button.addEventListener('click', () => {
@@ -56,6 +63,47 @@ consultationButtons.forEach((button) => {
     await openReport(button.dataset.report);
   });
 });
+
+installDismissButton.addEventListener('click', () => {
+  hideInstallBanner();
+});
+
+installActionButton.addEventListener('click', async () => {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+
+    if (choice.outcome === 'accepted') {
+      hideInstallBanner();
+      showStatus('L app s està instal·lant al dispositiu.', 'success');
+    }
+
+    deferredInstallPrompt = null;
+    return;
+  }
+
+  if (isIosDevice() && !isStandaloneMode()) {
+    showStatus('A Safari toca Compartir i després Afegeix a la pantalla d inici.', 'warning');
+  }
+});
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  showInstallBanner({
+    title: 'Instal·la aquesta app al mòbil',
+    text: 'Prem el botó i el navegador obrirà la instal·lació.'
+  });
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  hideInstallBanner();
+  showStatus('L app ja ha quedat instal·lada.', 'success');
+});
+
+registerServiceWorker();
+setupInstallExperience();
 
 async function openCourse(course) {
   if (!COURSES.includes(course)) {
@@ -103,7 +151,7 @@ function renderStudents(result) {
           ${student.registeredToday ? 'disabled' : ''}
           aria-label="${student.registeredToday ? 'Alumne marcat com a sense polo' : 'Marcar alumne com a sense polo'}"
         >
-          <span class="student-action-icon" aria-hidden="true">${student.registeredToday ? '✕' : '✓'}</span>
+          <span class="student-action-icon" aria-hidden="true">${student.registeredToday ? '&#10005;' : '&#10003;'}</span>
         </button>
         <div class="student-main">
           <p class="student-name">${escapeHtml(student.nom_complet)}</p>
@@ -134,7 +182,7 @@ async function handleRegisterStudent(button, studentId) {
   try {
     const result = await fetchApi(
       'registerStudent',
-      { studentId: studentId },
+      { studentId },
       'No s ha pogut registrar l alumne.'
     );
 
@@ -413,6 +461,57 @@ function hideStatus() {
   statusBox.textContent = '';
 }
 
+function showInstallBanner({ title, text, actionLabel = 'Instal·la' }) {
+  if (isStandaloneMode()) {
+    hideInstallBanner();
+    return;
+  }
+
+  installTitle.textContent = title;
+  installText.textContent = text;
+  installActionButton.textContent = actionLabel;
+  installBanner.classList.remove('hidden');
+}
+
+function hideInstallBanner() {
+  installBanner.classList.add('hidden');
+}
+
+function setupInstallExperience() {
+  if (isStandaloneMode()) {
+    hideInstallBanner();
+    return;
+  }
+
+  if (isIosDevice()) {
+    showInstallBanner({
+      title: 'Afegeix-la a la pantalla d inici',
+      text: 'A Safari, toca Compartir i després Afegeix a la pantalla d inici.',
+      actionLabel: 'Mostra passos'
+    });
+  }
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {
+      // Si falla el registre, l'app continua funcionant com a web.
+    });
+  });
+}
+
+function isIosDevice() {
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
 function setActiveCourse(course) {
   courseButtons.forEach((button) => {
     button.classList.toggle('is-active', button.dataset.course === course);
@@ -428,7 +527,7 @@ function markStudentAsDone(card, button) {
   button.disabled = true;
   button.classList.remove('is-loading');
   button.classList.remove('is-ready');
-  button.innerHTML = '<span class="student-action-icon" aria-hidden="true">✕</span>';
+  button.innerHTML = '<span class="student-action-icon" aria-hidden="true">&#10005;</span>';
   button.setAttribute('aria-label', 'Alumne marcat com a sense polo');
   button.classList.add('is-done');
 }

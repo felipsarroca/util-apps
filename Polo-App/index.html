@@ -4,10 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Registre de l'ús del polo</title>
+  <meta name="description" content="Aplicació per registrar incidències relacionades amb l'ús del polo a l'ESO.">
   <meta name="theme-color" content="#0f766e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Polo ESO">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="shortcut icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/favicon.svg">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -98,6 +103,18 @@
 
     <div class="status hidden" id="status-box"></div>
   </main>
+
+  <aside class="install-banner hidden" id="install-banner" aria-live="polite">
+    <div class="install-banner__content">
+      <p class="install-banner__eyebrow">Instal·lació</p>
+      <p class="install-banner__title" id="install-title">Instal·la aquesta app al mòbil</p>
+      <p class="install-banner__text" id="install-text">Així la podràs obrir com una aplicació des de la pantalla d'inici.</p>
+    </div>
+    <div class="install-banner__actions">
+      <button class="secondary-button" id="install-dismiss" type="button">Ara no</button>
+      <button class="install-button" id="install-action" type="button">Instal·la</button>
+    </div>
+  </aside>
 
   <script src="js/app.js"></script>
 </body>
