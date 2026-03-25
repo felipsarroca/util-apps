@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registre de l'ús del polo</title>
+  <meta name="theme-color" content="#0f766e">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="shortcut icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div class="brand-block">
+        <img class="brand-icon" src="assets/favicon.svg" alt="Icona de l'aplicació">
+        <div class="brand-text">
+          <p class="eyebrow">Escola Ramon Pont</p>
+          <h1>Registre de l'ús del polo</h1>
+        </div>
+      </div>
+    </header>
+
+    <section id="register-screen">
+      <section class="panel">
+        <p class="section-help">Toca un curs per carregar la llista d'alumnes.</p>
+
+        <div class="course-grid">
+          <button class="course-button" type="button" data-course="1r ESO">1r ESO</button>
+          <button class="course-button" type="button" data-course="2n ESO">2n ESO</button>
+          <button class="course-button" type="button" data-course="3r ESO">3r ESO</button>
+          <button class="course-button" type="button" data-course="4t ESO">4t ESO</button>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="students-panel">
+        <div id="students-list"></div>
+      </section>
+
+      <section class="panel">
+        <p class="section-help">Vols revisar dades i patrons? Entra a l'espai de consultes.</p>
+        <button class="menu-button" id="open-consultations" type="button">
+          Fer consultes sobre l'ús del polo
+        </button>
+      </section>
+    </section>
+
+    <section class="hidden" id="consultations-screen">
+      <section class="panel">
+        <div class="panel-top">
+          <div>
+            <h2 class="section-title">Consultes</h2>
+            <p class="section-help">Tria quin resum vols consultar.</p>
+          </div>
+          <button class="secondary-button" id="back-to-register" type="button">Tornar</button>
+        </div>
+
+        <div class="consultation-grid">
+          <button class="consultation-button" type="button" data-report="course">
+            <span class="consultation-title">Dades per curs</span>
+            <span class="consultation-text">Veure quin curs acumula més registres.</span>
+          </button>
+
+          <button class="consultation-button" type="button" data-report="student">
+            <span class="consultation-title">Dades per alumne</span>
+            <span class="consultation-text">Localitzar qui acumula més incidències.</span>
+          </button>
+
+          <button class="consultation-button" type="button" data-report="weekday">
+            <span class="consultation-title">Dades per dia</span>
+            <span class="consultation-text">Detectar en quins dies hi ha més casos.</span>
+          </button>
+
+          <button class="consultation-button" type="button" data-report="overview">
+            <span class="consultation-title">Vista general</span>
+            <span class="consultation-text">Resum ràpid de tota l'ESO.</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-top">
+          <div>
+            <h2 class="section-title" id="report-title">Consulta seleccionada</h2>
+            <p class="section-help" id="report-subtitle">Selecciona una opció per veure el resum.</p>
+          </div>
+        </div>
+
+        <div id="report-content">
+          <div class="empty-state">
+            <p class="empty-title">Encara no has triat cap consulta.</p>
+            <p class="empty-text">Aquí veurem resums clars per a tutors i professorat.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <div class="status hidden" id="status-box"></div>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
