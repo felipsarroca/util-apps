@@ -1,12 +1,11 @@
-const CACHE_NAME = 'polo-eso-v1';
+const CACHE_NAME = 'polo-eso-v2';
 const APP_SHELL = [
   './',
   './index.html',
   './css/styles.css',
   './js/app.js',
-  './assets/favicon.svg',
-  './assets/icon-192.png',
-  './assets/icon-512.png',
+  './assets/icon-192.png?v=20260325',
+  './assets/icon-512.png?v=20260325',
   './manifest.webmanifest'
 ];
 

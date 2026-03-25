@@ -17,8 +17,7 @@ Aplicació web pensada per usar-se des del mòbil per registrar ràpidament quin
 - `js/app.js`: lògica del frontend, consultes al backend i gestió de la instal·lació PWA.
 - `manifest.webmanifest`: configuració perquè el navegador la pugui instal·lar com a app.
 - `service-worker.js`: memòria cau bàsica per fer-la instal·lable i més robusta.
-- `assets/favicon.svg`: icona principal.
-- `assets/icon-192.png`: icona PWA de 192 px.
+- `assets/icon-192.png`: icona principal i icona PWA de 192 px.
 - `assets/icon-512.png`: icona PWA de 512 px.
 - `Code.gs`: backend de Google Apps Script.
 
