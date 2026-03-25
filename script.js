@@ -7,9 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
-            name: "Participem",
+            name: 'Participem',
             path: 'Participem/',
             description: "Eina per gestionar la participació de l'alumnat a classe.",
+            category: 'Eines de gestió'
+        },
+        {
+            name: 'Polo App',
+            path: 'Polo-App/',
+            icon: 'Polo-App/assets/favicon.svg',
+            description: "Registre ràpid del polo de l'alumnat i consulta de resums bàsics.",
             category: 'Eines de gestió'
         },
         {
@@ -57,8 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
         appsByCategory[category].forEach(app => {
             const col = document.createElement('div');
             col.className = 'col d-flex';
-            
-            const faviconSrc = `${app.path}favicon.svg`;
+
+            const faviconSrc = app.icon || `${app.path}favicon.svg`;
             const fallbackIcon = `https://via.placeholder.com/64/005a9c/ffffff?text=${app.name.charAt(0)}`;
 
             col.innerHTML = `
