@@ -37,17 +37,17 @@
           <button class="course-button" type="button" data-course="3r ESO">3r ESO</button>
           <button class="course-button" type="button" data-course="4t ESO">4t ESO</button>
         </div>
+
+        <div class="course-panel-action">
+          <p class="section-help">Si vols revisar dades i patrons, entra a l'espai de consultes.</p>
+          <button class="menu-button" id="open-consultations" type="button">
+            Veure resultats i consultes
+          </button>
+        </div>
       </section>
 
       <section class="panel hidden" id="students-panel">
         <div id="students-list"></div>
-      </section>
-
-      <section class="panel">
-        <p class="section-help">Vols revisar dades i patrons? Entra a l'espai de consultes.</p>
-        <button class="menu-button" id="open-consultations" type="button">
-          Fer consultes sobre l'ús del polo
-        </button>
       </section>
     </section>
 
@@ -56,30 +56,30 @@
         <div class="panel-top">
           <div>
             <h2 class="section-title">Consultes</h2>
-            <p class="section-help">Tria quin resum vols consultar.</p>
+            <p class="section-help">1. Tria el tipus de resultat. 2. Filtra per curs, alumne o dia quan convingui.</p>
           </div>
-          <button class="secondary-button" id="back-to-register" type="button">Tornar</button>
+          <button class="secondary-button back-button" id="back-to-register" type="button">↩ Tornar</button>
         </div>
 
         <div class="consultation-grid">
           <button class="consultation-button" type="button" data-report="course">
             <span class="consultation-title">Dades per curs</span>
-            <span class="consultation-text">Veure quin curs acumula més registres.</span>
+            <span class="consultation-text">Veure ràpidament quin curs acumula més registres.</span>
           </button>
 
           <button class="consultation-button" type="button" data-report="student">
             <span class="consultation-title">Dades per alumne</span>
-            <span class="consultation-text">Localitzar qui acumula més incidències.</span>
+            <span class="consultation-text">Buscar alumnes i detectar casos recurrents.</span>
           </button>
 
           <button class="consultation-button" type="button" data-report="weekday">
             <span class="consultation-title">Dades per dia</span>
-            <span class="consultation-text">Detectar en quins dies hi ha més casos.</span>
+            <span class="consultation-text">Filtrar per dia de la setmana i veure patrons.</span>
           </button>
 
           <button class="consultation-button" type="button" data-report="overview">
             <span class="consultation-title">Vista general</span>
-            <span class="consultation-text">Resum ràpid de tota l'ESO.</span>
+            <span class="consultation-text">Resum global de tota l'ESO en una sola vista.</span>
           </button>
         </div>
       </section>
@@ -92,10 +92,12 @@
           </div>
         </div>
 
+        <div class="report-filters hidden" id="report-filters"></div>
+
         <div id="report-content">
           <div class="empty-state">
             <p class="empty-title">Encara no has triat cap consulta.</p>
-            <p class="empty-text">Aquí veurem resums clars per a tutors i professorat.</p>
+            <p class="empty-text">Aquí veurem resums clars i filtres per localitzar millor la informació.</p>
           </div>
         </div>
       </section>
@@ -111,7 +113,7 @@
       <p class="install-banner__text" id="install-text">Així la podràs obrir com una aplicació des de la pantalla d'inici.</p>
     </div>
     <div class="install-banner__actions">
-      <button class="secondary-button" id="install-dismiss" type="button">Ara no</button>
+      <button class="secondary-button back-button" id="install-dismiss" type="button">↩ Ara no</button>
       <button class="install-button" id="install-action" type="button">Instal·la</button>
     </div>
   </aside>

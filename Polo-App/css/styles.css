@@ -116,6 +116,10 @@ h1 {
   gap: 10px;
 }
 
+.course-panel-action {
+  margin-top: 14px;
+}
+
 .course-button {
   width: 100%;
   min-height: 50px;
@@ -146,6 +150,13 @@ h1 {
   font-size: 0.9rem;
 }
 
+.back-button {
+  border-color: #fecaca;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  font-weight: 700;
+}
+
 .menu-button,
 .consultation-button {
   width: 100%;
@@ -163,6 +174,14 @@ h1 {
   font-weight: 700;
 }
 
+#open-consultations.menu-button {
+  border: none;
+  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+  color: #1e3a8a;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(147, 197, 253, 0.28);
+}
+
 .consultation-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -171,6 +190,12 @@ h1 {
 
 .consultation-button {
   padding: 12px;
+}
+
+.consultation-button.is-active {
+  border-color: var(--primary);
+  background: #ecfdf5;
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.15);
 }
 
 .consultation-title {
@@ -298,6 +323,18 @@ h1 {
   margin-top: 8px;
 }
 
+.report-card-button {
+  width: 100%;
+  border: 1px solid var(--border);
+  text-align: left;
+  cursor: pointer;
+}
+
+.report-card-button.is-expanded {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
 .empty-title,
 .report-label,
 .report-value {
@@ -314,6 +351,35 @@ h1 {
   margin: 0;
   color: var(--muted);
   line-height: 1.3;
+  font-size: 0.9rem;
+}
+
+.student-history {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ccfbf1;
+}
+
+.student-history-title {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.student-history-list {
+  display: grid;
+  gap: 6px;
+}
+
+.student-history-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text);
   font-size: 0.9rem;
 }
 
@@ -338,7 +404,10 @@ h1 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 10px;
+}
+
+.report-controls--single {
+  grid-template-columns: 1fr;
 }
 
 .report-input,
@@ -351,6 +420,40 @@ h1 {
   background: white;
   font: inherit;
   color: var(--text);
+}
+
+.report-filters {
+  margin-bottom: 10px;
+}
+
+.filters-card {
+  border: 1px solid #b7e4dc;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
+  padding: 12px;
+}
+
+.filters-title {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field--wide {
+  grid-column: 1 / -1;
+}
+
+.filter-label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--muted);
 }
 
 .status {
@@ -452,6 +555,15 @@ h1 {
 }
 
 @media (max-width: 560px) {
+  .consultation-grid,
+  .report-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-field--wide {
+    grid-column: auto;
+  }
+
   .install-banner__actions {
     flex-direction: column;
   }

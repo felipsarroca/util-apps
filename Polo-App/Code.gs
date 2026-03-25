@@ -489,15 +489,24 @@ function getStudentSummary() {
         nom_complet: record.nom_complet,
         curs: record.curs,
         totalRegisters: 0,
-        lastDate: record.data
+        lastDate: record.data,
+        history: []
       };
     }
 
     studentTotals[record.id_alumne].totalRegisters += 1;
+    studentTotals[record.id_alumne].history.push({
+      data: record.data,
+      diaSetmana: record.dia_setmana_text || getWeekdayInfoFromDateString(record.data).label
+    });
 
     if (record.data > studentTotals[record.id_alumne].lastDate) {
       studentTotals[record.id_alumne].lastDate = record.data;
     }
+  });
+
+  Object.values(studentTotals).forEach(student => {
+    student.history.sort((a, b) => b.data.localeCompare(a.data));
   });
 
   const students = Object.values(studentTotals)
