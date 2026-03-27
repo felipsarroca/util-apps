@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             name: 'Polo App',
-            path: 'Polo-App/',
+            path: 'acces-polo.html',
             icon: 'Polo-App/assets/favicon.svg',
             description: "Registre ràpid del polo de l'alumnat i consulta de resums bàsics.",
             category: 'Eines de gestió'

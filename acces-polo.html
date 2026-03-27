@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accés a Polo App</title>
+    <style>
+        :root {
+            --primary-color: #005a9c;
+            --secondary-color: #e87722;
+            --background-color: #f8f9fa;
+            --panel-background: #ffffff;
+            --text-color: #343a40;
+            --muted-color: #6c757d;
+            --error-color: #b42318;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background:
+                radial-gradient(circle at top right, rgba(232, 119, 34, 0.18), transparent 28%),
+                linear-gradient(180deg, #eef4fb 0%, var(--background-color) 100%);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .access-card {
+            width: min(100%, 420px);
+            background: var(--panel-background);
+            border-radius: 18px;
+            box-shadow: 0 18px 40px var(--shadow-color);
+            padding: 32px 28px;
+        }
+
+        .eyebrow {
+            margin: 0 0 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--secondary-color);
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 1.9rem;
+            line-height: 1.15;
+            color: var(--primary-color);
+        }
+
+        p {
+            margin: 0 0 20px;
+            color: var(--muted-color);
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+
+        input:focus {
+            outline: 2px solid rgba(0, 90, 156, 0.22);
+            border-color: var(--primary-color);
+        }
+
+        button {
+            width: 100%;
+            margin-top: 16px;
+            border: 0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            background: var(--primary-color);
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #004978;
+        }
+
+        .message {
+            min-height: 24px;
+            margin-top: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--error-color);
+        }
+    </style>
+</head>
+<body>
+    <main class="access-card">
+        <p class="eyebrow">Accés restringit</p>
+        <h1>Polo App</h1>
+        <p>Escriu el codi d'accés per entrar a l'aplicació.</p>
+
+        <form id="access-form">
+            <label for="access-code">Codi</label>
+            <input id="access-code" name="access-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+            <button type="submit">Entrar</button>
+            <div class="message" id="message" aria-live="polite"></div>
+        </form>
+    </main>
+
+    <script>
+        const EXPECTED_CODE = "SoL";
+        const form = document.getElementById("access-form");
+        const input = document.getElementById("access-code");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            if (input.value === EXPECTED_CODE) {
+                window.location.href = "Polo-App/";
+                return;
+            }
+
+            message.textContent = "Codi incorrecte.";
+            input.focus();
+            input.select();
+        });
+    </script>
+</body>
+</html>
