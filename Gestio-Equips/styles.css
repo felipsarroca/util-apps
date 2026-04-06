@@ -132,6 +132,9 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   padding: 12px 14px;
   background: #fffdf8;
 }
+.gate-form .primary-button {
+  font-size: 0.962rem;
+}
 .search-box input { font-size: 0.8rem; }
 
 .topbar { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
