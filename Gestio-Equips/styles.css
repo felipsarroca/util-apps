@@ -407,6 +407,28 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   background: rgba(17, 34, 24, 0.24);
 }
 .modal-panel { width: min(100%, 560px); }
+.install-overlay {
+  align-items: end;
+  background: rgba(17, 34, 24, 0.3);
+}
+.install-panel {
+  width: min(100%, 480px);
+  display: grid;
+  gap: 12px;
+}
+.install-copy {
+  margin: 0;
+  color: var(--ink-soft);
+}
+.install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.install-actions .primary-button,
+.install-actions .ghost-button {
+  flex: 1 1 180px;
+}
 .modal-panel .section-head > div {
   display: grid;
   gap: 6px;
@@ -698,6 +720,17 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   .modal-panel .section-head {
     flex-direction: row;
     align-items: flex-start;
+  }
+  .install-panel {
+    border-radius: 18px 18px 16px 16px;
+  }
+  .install-actions {
+    flex-direction: column;
+  }
+  .install-actions .primary-button,
+  .install-actions .ghost-button {
+    width: 100%;
+    flex: 1 1 auto;
   }
   .modal-panel #close-modal {
     margin-left: auto;

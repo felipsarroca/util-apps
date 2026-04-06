@@ -12,7 +12,9 @@ import { supabase } from "./supabase.js";
 
 const app = document.querySelector("#app");
 const ACCESS_CODE_STORAGE_KEY = "rppo:lastAccessCode";
+const INSTALL_PROMPT_SEEN_STORAGE_KEY = "rppo:installPromptSeen";
 let searchRenderTimer = null;
+let deferredInstallPromptEvent = null;
 const savedAccessCode = (() => {
   try {
     return localStorage.getItem(ACCESS_CODE_STORAGE_KEY) ?? "";
@@ -25,6 +27,7 @@ const state = {
   accessMode: null,
   accessCode: savedAccessCode,
   accessError: "",
+  installPromptVisible: false,
   query: "",
   selectedResult: null,
   showActionPanel: true,
@@ -68,11 +71,45 @@ const text = (value) =>
 const byDateDesc = (a, b) => new Date(b) - new Date(a);
 const formatDate = (value) => new Intl.DateTimeFormat("ca-ES").format(new Date(value));
 const makeId = () => crypto.randomUUID();
+const isStandaloneMode = () =>
+  window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+const isMobileDevice = () =>
+  window.matchMedia?.("(max-width: 820px) and (pointer: coarse)")?.matches ||
+  /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+const hasSeenInstallPrompt = () => {
+  try {
+    return localStorage.getItem(INSTALL_PROMPT_SEEN_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const markInstallPromptSeen = () => {
+  try {
+    localStorage.setItem(INSTALL_PROMPT_SEEN_STORAGE_KEY, "1");
+  } catch {}
+};
 const academicYear = (value) => {
   const d = new Date(value);
   const y = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1;
   return `${y}-${y + 1}`;
 };
+
+function shouldShowInstallPrompt() {
+  return isMobileDevice() && !isStandaloneMode() && !hasSeenInstallPrompt();
+}
+
+function getInstallInstructions() {
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isIOS) {
+    return "Obre el menú de compartir del Safari i toca «A la pantalla d'inici» per tenir l'app instal·lada.";
+  }
+
+  if (deferredInstallPromptEvent) {
+    return "Instal·la-la ara per obrir-la com una app independent i tenir-la més a mà.";
+  }
+
+  return "Si el navegador no mostra el botó d'instal·lació, obre el menú i tria «Instal·la l'app» o «Afegeix a la pantalla d'inici».";
+}
 
 function getUser(userId) {
   return state.users.find((item) => item.id === userId) ?? null;
@@ -246,6 +283,66 @@ function bindPress(target, handler) {
   });
 }
 
+function renderInstallPrompt() {
+  if (!state.installPromptVisible) return "";
+
+  const hasNativePrompt = Boolean(deferredInstallPromptEvent);
+
+  return `
+    <div class="modal-overlay install-overlay">
+      <section class="panel modal-panel install-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Instal·lació</p>
+            <h2>Vols instal·lar l'app?</h2>
+          </div>
+          <button type="button" class="ghost-button compact-button" id="dismiss-install-prompt">Ara no</button>
+        </div>
+        <p class="install-copy">${text(getInstallInstructions())}</p>
+        <div class="install-actions">
+          ${
+            hasNativePrompt
+              ? '<button type="button" class="primary-button" id="confirm-install-prompt">Instal·la ara</button>'
+              : ""
+          }
+          <button type="button" class="ghost-button" id="close-install-prompt">${
+            hasNativePrompt ? "Més tard" : "Entesos"
+          }</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function bindInstallPromptEvents() {
+  const closePrompt = () => {
+    state.installPromptVisible = false;
+    markInstallPromptSeen();
+    render();
+  };
+
+  document.querySelector("#dismiss-install-prompt") && bindPress(document.querySelector("#dismiss-install-prompt"), closePrompt);
+  document.querySelector("#close-install-prompt") && bindPress(document.querySelector("#close-install-prompt"), closePrompt);
+
+  document.querySelector("#confirm-install-prompt") &&
+    bindPress(document.querySelector("#confirm-install-prompt"), async () => {
+      if (!deferredInstallPromptEvent) {
+        closePrompt();
+        return;
+      }
+
+      try {
+        await deferredInstallPromptEvent.prompt();
+        await deferredInstallPromptEvent.userChoice;
+      } catch (error) {
+        console.error("No s'ha pogut mostrar el diàleg d'instal·lació.", error);
+      } finally {
+        deferredInstallPromptEvent = null;
+        closePrompt();
+      }
+    });
+}
+
 function renderAccess() {
   app.innerHTML = `
     <main class="gate-shell">
@@ -268,6 +365,7 @@ function renderAccess() {
       </section>
       ${footerMarkup()}
     </main>
+    ${renderInstallPrompt()}
   `;
 
   document.querySelector("#access-code")?.addEventListener("input", (event) => {
@@ -287,6 +385,8 @@ function renderAccess() {
     }
     render();
   });
+
+  bindInstallPromptEvents();
 }
 
 function renderResults(results) {
@@ -757,9 +857,11 @@ function renderMain() {
       ${footerMarkup()}
     </main>
     ${renderModal()}
+    ${renderInstallPrompt()}
   `;
 
   bindMainEvents(results);
+  bindInstallPromptEvents();
 }
 
 function bindMainEvents(results) {
@@ -1147,6 +1249,26 @@ if ("serviceWorker" in navigator) {
       console.error("No s'ha pogut registrar el service worker.", error);
     });
   });
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPromptEvent = event;
+  if (shouldShowInstallPrompt()) {
+    state.installPromptVisible = true;
+    render();
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPromptEvent = null;
+  state.installPromptVisible = false;
+  markInstallPromptSeen();
+  render();
+});
+
+if (shouldShowInstallPrompt()) {
+  state.installPromptVisible = true;
 }
 
 render();
