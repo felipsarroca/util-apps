@@ -20,6 +20,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
+            name: "Gestió d'equips informàtics",
+            path: 'https://ja.cat/gestioequips',
+            icon: 'Gestio-Equips/favicon.svg',
+            description: "Gestió i consulta d'equips informàtics del centre.",
+            category: 'Eines de gestió'
+        },
+        {
             name: 'Rentabilitat Híbrid',
             path: 'RentabilitatHibrid/',
             description: 'Calculadora per comparar el cost entre combustible i electricitat.',
@@ -36,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainContainer = document.getElementById('apps-container');
     if (!mainContainer) return;
 
-    // Agrupa les aplicacions per categoria
     const appsByCategory = apps.reduce((acc, app) => {
         if (!acc[app.category]) {
             acc[app.category] = [];
@@ -45,10 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return acc;
     }, {});
 
-    // Ordena les categories alfabèticament
     const sortedCategories = Object.keys(appsByCategory).sort((a, b) => a.localeCompare(b));
 
-    // Genera l'HTML per a cada categoria
     sortedCategories.forEach(category => {
         const section = document.createElement('section');
         section.className = 'category-section mb-5';
