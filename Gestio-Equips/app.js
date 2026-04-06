@@ -348,7 +348,7 @@ function renderAccess() {
     <main class="gate-shell">
       <section class="panel gate-panel">
         <p class="eyebrow">Accés</p>
-        <h1>Gestió RPPO</h1>
+        <h1>Gestió d'equips informàtics</h1>
         <p class="hero-copy">Introdueix un codi de consulta o d'edició per entrar a l'aplicació.</p>
         <form class="gate-form" id="access-form">
           <label>
