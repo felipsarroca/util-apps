@@ -1,0 +1,19 @@
+{
+  "name": "Gestió d'equips informàtics",
+  "short_name": "Gestió equips",
+  "description": "Aplicació de gestió d'ordinadors de préstec del centre.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f1e4",
+  "theme_color": "#112218",
+  "icons": [
+    {
+      "src": "./favicon.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
