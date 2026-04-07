@@ -366,11 +366,12 @@ function renderAccess() {
             <span class="search-label">Codi d'accés</span>
             <input
               id="access-code"
+              class="masked-access-code"
               name="center-access-code"
-              type="password"
+              type="text"
               value="${text(state.accessCode)}"
               placeholder="Escriu el codi"
-              autocomplete="new-password"
+              autocomplete="off"
               autocapitalize="off"
               autocorrect="off"
               spellcheck="false"
