@@ -361,10 +361,20 @@ function renderAccess() {
         <p class="eyebrow">Accés</p>
         <h1>Gestió d'equips informàtics</h1>
         <p class="hero-copy">Introdueix un codi de consulta o d'edició per entrar a l'aplicació.</p>
-        <form class="gate-form" id="access-form">
+        <form class="gate-form" id="access-form" autocomplete="off">
           <label>
             <span class="search-label">Codi d'accés</span>
-            <input id="access-code" type="password" value="${text(state.accessCode)}" placeholder="Escriu el codi" />
+            <input
+              id="access-code"
+              name="center-access-code"
+              type="password"
+              value="${text(state.accessCode)}"
+              placeholder="Escriu el codi"
+              autocomplete="new-password"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+            />
           </label>
           <button type="submit" class="primary-button">Entrar</button>
         </form>
@@ -690,7 +700,7 @@ function renderModal() {
             <div><p class="eyebrow">Nou registre</p><h2>Afegir un nou element</h2></div>
             <button type="button" class="ghost-button" id="close-modal">Tancar</button>
           </div>
-          <form class="modal-form" id="create-form">
+          <form class="modal-form" id="create-form" autocomplete="off">
             <label>
               <span>Què vols afegir?</span>
               <select id="create-kind">
@@ -746,7 +756,7 @@ function renderModal() {
             <div><p class="eyebrow">Esdeveniment</p><h2>Editar esdeveniment</h2></div>
             <button type="button" class="ghost-button" id="close-modal">Tancar</button>
           </div>
-          <form class="modal-form" id="edit-event-form">
+          <form class="modal-form" id="edit-event-form" autocomplete="off">
             <label><span>Ordinador</span><input type="text" value="${text(computer?.codi ?? "Equip desconegut")}" disabled /></label>
             <label><span>Tipus</span><input type="text" value="${text(EVENT_TYPE_LABELS[editedEvent.tipus] ?? editedEvent.tipus)}" disabled /></label>
             <label><span>Data</span><input id="edit-event-date" type="date" value="${text(state.editEventData.data)}" required /></label>
@@ -793,7 +803,7 @@ function renderModal() {
           <div><p class="eyebrow">Nova acció</p><h2>${text(action.label)}</h2></div>
           <button type="button" class="ghost-button" id="close-modal">Tancar</button>
         </div>
-        <form class="modal-form" id="action-form">
+        <form class="modal-form" id="action-form" autocomplete="off">
           <label><span>Ordinador</span><input type="text" value="${text(computer.codi)}" disabled /></label>
           <label><span>Data</span><input id="event-date" type="date" value="${text(state.formData.data)}" required /></label>
           ${
