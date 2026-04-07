@@ -187,6 +187,17 @@ function currentEditedEvent() {
   return state.events.find((item) => item.id === state.editEventId) ?? null;
 }
 
+function isStructuralEventType(eventType) {
+  return [
+    "assignacio",
+    "retorn",
+    "canvi_propietari",
+    "reparacio_interna",
+    "servei_tecnic_extern",
+    "reparat",
+  ].includes(eventType);
+}
+
 function eventTone(eventType, status) {
   if (status === "fora_servei") return "danger";
   if (eventType === "servei_tecnic_extern") return "danger";
@@ -725,6 +736,9 @@ function renderModal() {
   const editedEvent = currentEditedEvent();
   if (editedEvent) {
     const computer = state.computers.find((item) => item.id === editedEvent.ordinadorId);
+    const deleteWarning = isStructuralEventType(editedEvent.tipus)
+      ? "Atenció: si elimines aquest esdeveniment, pot ser que l'estat actual o l'historial d'assignacions de l'equip ja no quadrin del tot."
+      : "Atenció: aquesta acció elimina definitivament l'esdeveniment seleccionat.";
     return `
       <div class="modal-overlay">
         <section class="panel modal-panel">
@@ -753,9 +767,15 @@ function renderModal() {
             <label><span>Descripció</span><textarea id="edit-event-description" rows="4" required>${text(
               state.editEventData.descripcio,
             )}</textarea></label>
-            <button type="submit" class="primary-button" ${state.isSaving ? "disabled" : ""}>
-              ${state.isSaving ? "Desant..." : "Desar canvis"}
-            </button>
+            <p class="modal-warning">${text(deleteWarning)}</p>
+            <div class="modal-actions">
+              <button type="button" class="danger-button" id="delete-event-button" ${state.isSaving ? "disabled" : ""}>
+                ${state.isSaving ? "Eliminant..." : "Eliminar esdeveniment"}
+              </button>
+              <button type="submit" class="primary-button" ${state.isSaving ? "disabled" : ""}>
+                ${state.isSaving ? "Desant..." : "Desar canvis"}
+              </button>
+            </div>
           </form>
         </section>
       </div>
@@ -988,6 +1008,9 @@ function bindMainEvents(results) {
     document.querySelector("#edit-event-form")?.addEventListener("submit", async (event) => {
       event.preventDefault();
       await persistEventEdit();
+    });
+    document.querySelector("#delete-event-button")?.addEventListener("click", async () => {
+      await deleteEditedEvent();
     });
     return;
   }
@@ -1229,6 +1252,41 @@ async function persistEventEdit() {
   } catch (error) {
     console.error(error);
     state.syncMessage = `Error en desar: ${error.message ?? "revisa permisos o connexió"}`;
+    state.isSaving = false;
+    render();
+    return;
+  }
+
+  state.isSaving = false;
+  render();
+}
+
+async function deleteEditedEvent() {
+  const event = currentEditedEvent();
+  if (!event) return;
+
+  const confirmed = window.confirm(
+    isStructuralEventType(event.tipus)
+      ? "Aquest esdeveniment afecta la traçabilitat de l'equip i s'eliminarà definitivament. Vols continuar?"
+      : "Vols eliminar definitivament aquest esdeveniment?",
+  );
+  if (!confirmed) return;
+
+  state.isSaving = true;
+  state.syncMessage = "Eliminant esdeveniment...";
+  render();
+
+  try {
+    const { error } = await supabase.from("esdeveniments").delete().eq("id", event.id);
+
+    if (error) throw error;
+
+    state.editEventId = null;
+    state.syncMessage = "Esdeveniment eliminat";
+    await loadSupabaseData();
+  } catch (error) {
+    console.error(error);
+    state.syncMessage = `Error en eliminar: ${error.message ?? "revisa permisos o connexió"}`;
     state.isSaving = false;
     render();
     return;

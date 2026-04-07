@@ -242,7 +242,7 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
 
 .action-card { display: grid; gap: 10px; }
 .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-.action-button, .primary-button, .ghost-button {
+.action-button, .primary-button, .ghost-button, .danger-button {
   border: 0;
   border-radius: 12px;
   padding: 11px 12px;
@@ -258,6 +258,7 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
 .action-button:disabled { opacity: 0.55; cursor: not-allowed; }
 .primary-button { background: var(--accent); color: #f7f2e8; }
 .ghost-button { background: var(--accent-soft); color: var(--accent); }
+.danger-button { background: #b94d40; color: #fff6f3; }
 .compact-button { padding: 9px 11px; white-space: nowrap; }
 .icon-plus-button {
   padding: 9px 11px;
@@ -398,6 +399,17 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
 .empty-state p { margin-bottom: 0; }
 .help-text, .error-text, .hint-box p { margin-bottom: 0; }
 .help-text { color: var(--muted); }
+.modal-warning {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: #8a4c22;
+}
+.modal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
 .error-text { color: #9b2c2c; }
 .hint-box { margin-top: 16px; padding: 12px 14px; border-radius: 14px; background: #edf2e8; }
 
