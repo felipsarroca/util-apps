@@ -133,9 +133,9 @@ export const QUICK_ACTIONS = [
 ];
 
 export const initialUsuaris = [
-  { id: "usr-1", nom: "Amina", cognoms: "El Idrissi", tipusUsuari: "alumne" },
-  { id: "usr-2", nom: "Youssef", cognoms: "Bakkali", tipusUsuari: "alumne" },
-  { id: "usr-3", nom: "PFI", cognoms: "", tipusUsuari: "generic" },
+  { id: "usr-1", nom: "Amina", cognoms: "El Idrissi", tipusUsuari: "alumne", actiu: true },
+  { id: "usr-2", nom: "Youssef", cognoms: "Bakkali", tipusUsuari: "alumne", actiu: true },
+  { id: "usr-3", nom: "PFI", cognoms: "", tipusUsuari: "generic", actiu: true },
 ];
 
 export const initialOrdinadors = [

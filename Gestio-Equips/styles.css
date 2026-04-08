@@ -241,6 +241,13 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   gap: 8px;
   flex-wrap: wrap;
 }
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
 .action-panel-copy { color: var(--muted); margin-bottom: 0; }
 
 .action-card { display: grid; gap: 10px; }

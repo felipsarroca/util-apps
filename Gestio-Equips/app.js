@@ -34,6 +34,7 @@ const state = {
   currentActionId: null,
   creatorOpen: false,
   editEventId: null,
+  editUserId: null,
   formData: {
     data: new Date().toISOString().slice(0, 10),
     usuariId: "",
@@ -50,6 +51,12 @@ const state = {
     data: "",
     usuariId: "",
     descripcio: "",
+  },
+  editUserData: {
+    nom: "",
+    cognoms: "",
+    tipusUsuari: "alumne",
+    actiu: true,
   },
   users: structuredClone(initialUsuaris),
   computers: structuredClone(initialOrdinadors),
@@ -113,6 +120,14 @@ function getInstallInstructions() {
 
 function getUser(userId) {
   return state.users.find((item) => item.id === userId) ?? null;
+}
+
+function activeUsers() {
+  return state.users.filter((item) => item.actiu !== false);
+}
+
+function usersForSelection(selectedUserId = "") {
+  return state.users.filter((item) => item.actiu !== false || item.id === selectedUserId);
 }
 
 function userName(userId) {
@@ -185,6 +200,10 @@ function currentAction() {
 
 function currentEditedEvent() {
   return state.events.find((item) => item.id === state.editEventId) ?? null;
+}
+
+function currentEditedUser() {
+  return state.users.find((item) => item.id === state.editUserId) ?? null;
 }
 
 function isStructuralEventType(eventType) {
@@ -459,7 +478,7 @@ function renderResults(results) {
                 state.selectedResult?.type === "user" && state.selectedResult.id === item.id ? "selected" : ""
               }" data-result-type="user" data-result-id="${item.id}">
                 <strong>${text(`${item.nom} ${item.cognoms}`.trim())}</strong>
-                <p>Usuari</p>
+                <p>Usuari ${item.actiu === false ? "inactiu" : "actiu"}</p>
                 <small>${text(item.tipusUsuari)}</small>
               </button>
             `,
@@ -621,7 +640,17 @@ function renderUserDetail(item) {
           <p class="eyebrow">Fitxa d'usuari</p>
           <h2>${text(`${item.nom} ${item.cognoms}`.trim())}</h2>
         </div>
-        <span class="status-badge status-lliure">${text(item.tipusUsuari)}</span>
+        <div class="detail-header-actions">
+          <span class="status-badge ${item.actiu === false ? "status-fora_servei" : "status-lliure"}">${
+            item.actiu === false ? "Inactiu" : "Actiu"
+          }</span>
+          <span class="status-badge status-lliure">${text(item.tipusUsuari)}</span>
+          ${
+            state.accessMode === "edicio"
+              ? '<button type="button" class="ghost-button compact-button" id="edit-user-button">Editar usuari</button>'
+              : ""
+          }
+        </div>
       </div>
 
       <div class="detail-grid">
@@ -630,6 +659,7 @@ function renderUserDetail(item) {
           <dl>
             <div><dt>Ordinador actual</dt><dd>${text(currentComputer?.codi ?? "Cap equip assignat")}</dd></div>
             <div><dt>Total d'assignacions</dt><dd>${assignments.length}</dd></div>
+            <div><dt>Estat</dt><dd>${item.actiu === false ? "Usuari inactiu" : "Usuari actiu"}</dd></div>
           </dl>
         </article>
         <article class="detail-card">
@@ -765,7 +795,7 @@ function renderModal() {
               <span>Usuari</span>
               <select id="edit-event-user">
                 <option value="">Sense usuari</option>
-                ${state.users
+                ${usersForSelection(state.editEventData.usuariId)
                   .map(
                     (user) =>
                       `<option value="${user.id}" ${state.editEventData.usuariId === user.id ? "selected" : ""}>${text(
@@ -793,6 +823,42 @@ function renderModal() {
     `;
   }
 
+  const editedUser = currentEditedUser();
+  if (editedUser) {
+    return `
+      <div class="modal-overlay">
+        <section class="panel modal-panel">
+          <div class="section-head">
+            <div><p class="eyebrow">Usuari</p><h2>Editar usuari</h2></div>
+            <button type="button" class="ghost-button" id="close-modal">Tancar</button>
+          </div>
+          <form class="modal-form" id="edit-user-form" autocomplete="off">
+            <label><span>Nom</span><input id="edit-user-name" type="text" value="${text(state.editUserData.nom)}" required /></label>
+            <label><span>Cognoms</span><input id="edit-user-surname" type="text" value="${text(state.editUserData.cognoms)}" /></label>
+            <label>
+              <span>Tipus d'usuari</span>
+              <select id="edit-user-type">
+                <option value="alumne" ${state.editUserData.tipusUsuari === "alumne" ? "selected" : ""}>Alumne</option>
+                <option value="generic" ${state.editUserData.tipusUsuari === "generic" ? "selected" : ""}>Genèric</option>
+              </select>
+            </label>
+            <label>
+              <span>Estat</span>
+              <select id="edit-user-active">
+                <option value="true" ${state.editUserData.actiu ? "selected" : ""}>Actiu</option>
+                <option value="false" ${!state.editUserData.actiu ? "selected" : ""}>Inactiu</option>
+              </select>
+            </label>
+            <p class="modal-warning">Els usuaris inactius mantenen l'historial, però ja no apareixen a la llista per assignar ordinadors nous.</p>
+            <button type="submit" class="primary-button" ${state.isSaving ? "disabled" : ""}>
+              ${state.isSaving ? "Desant..." : "Desar usuari"}
+            </button>
+          </form>
+        </section>
+      </div>
+    `;
+  }
+
   const action = currentAction();
   const computer = selectedComputer();
   if (!action || !computer) return "";
@@ -809,7 +875,7 @@ function renderModal() {
           <label><span>Data</span><input id="event-date" type="date" value="${text(state.formData.data)}" required /></label>
           ${
             action.requiresUser
-              ? `<label><span>Usuari</span><select id="event-user" required><option value="">Selecciona un usuari</option>${state.users
+              ? `<label><span>Usuari</span><select id="event-user" required><option value="">Selecciona un usuari</option>${activeUsers()
                   .map(
                     (user) =>
                       `<option value="${user.id}" ${state.formData.usuariId === user.id ? "selected" : ""}>${text(
@@ -930,6 +996,7 @@ function bindMainEvents(results) {
       state.currentActionId = action.id;
       state.creatorOpen = false;
       state.editEventId = null;
+      state.editUserId = null;
       state.formData = {
         data: new Date().toISOString().slice(0, 10),
         usuariId: action.requiresUser && computer.usuariActualId ? computer.usuariActualId : "",
@@ -943,6 +1010,7 @@ function bindMainEvents(results) {
     state.creatorOpen = true;
     state.currentActionId = null;
     state.editEventId = null;
+    state.editUserId = null;
     state.createData = {
       kind: "computer",
       codi: "",
@@ -962,6 +1030,23 @@ function bindMainEvents(results) {
     state.currentActionId = null;
     state.creatorOpen = false;
     state.editEventId = null;
+    state.editUserId = null;
+    render();
+  });
+
+  document.querySelector("#edit-user-button") && bindPress(document.querySelector("#edit-user-button"), () => {
+    const user = selectedUser();
+    if (!user || state.accessMode !== "edicio") return;
+    state.editUserId = user.id;
+    state.creatorOpen = false;
+    state.currentActionId = null;
+    state.editEventId = null;
+    state.editUserData = {
+      nom: user.nom,
+      cognoms: user.cognoms ?? "",
+      tipusUsuari: user.tipusUsuari,
+      actiu: user.actiu !== false,
+    };
     render();
   });
 
@@ -973,6 +1058,7 @@ function bindMainEvents(results) {
       state.editEventId = event.id;
       state.currentActionId = null;
       state.creatorOpen = false;
+      state.editUserId = null;
       state.editEventData = {
         data: event.data,
         usuariId: event.usuariId ?? "",
@@ -1026,6 +1112,26 @@ function bindMainEvents(results) {
     return;
   }
 
+  if (state.editUserId) {
+    document.querySelector("#edit-user-name")?.addEventListener("input", (event) => {
+      state.editUserData.nom = event.target.value;
+    });
+    document.querySelector("#edit-user-surname")?.addEventListener("input", (event) => {
+      state.editUserData.cognoms = event.target.value;
+    });
+    document.querySelector("#edit-user-type")?.addEventListener("change", (event) => {
+      state.editUserData.tipusUsuari = event.target.value;
+    });
+    document.querySelector("#edit-user-active")?.addEventListener("change", (event) => {
+      state.editUserData.actiu = event.target.value === "true";
+    });
+    document.querySelector("#edit-user-form")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await persistUserEdit();
+    });
+    return;
+  }
+
   const action = currentAction();
   const computer = selectedComputer();
   if (!action || !computer) return;
@@ -1054,7 +1160,7 @@ async function loadSupabaseData() {
   state.syncMessage = "Carregant dades...";
   try {
     const [usersResult, computersResult, eventsResult, assignmentsResult] = await Promise.all([
-      supabase.from("usuaris").select("id, nom, cognoms, tipus_usuari").order("nom"),
+      supabase.from("usuaris").select("id, nom, cognoms, tipus_usuari, actiu").order("nom"),
       supabase.from("ordinadors").select("id, codi_rppo, estat_actual, usuari_actual_id, observacions_generals").order("codi_rppo"),
       supabase.from("esdeveniments").select("id, ordinador_id, usuari_id, tipus, data_event, descripcio, curs_academic").order("data_event", { ascending: false }),
       supabase.from("assignacions").select("id, ordinador_id, usuari_id, data_inici, data_final, curs_academic, motiu"),
@@ -1069,6 +1175,7 @@ async function loadSupabaseData() {
       nom: item.nom,
       cognoms: item.cognoms ?? "",
       tipusUsuari: item.tipus_usuari,
+      actiu: item.actiu !== false,
     }));
     state.computers = computersResult.data.map((item) => ({
       id: item.id,
@@ -1259,6 +1366,45 @@ async function persistEventEdit() {
 
     state.editEventId = null;
     state.syncMessage = "Canvis desats a Supabase";
+    await loadSupabaseData();
+  } catch (error) {
+    console.error(error);
+    state.syncMessage = `Error en desar: ${error.message ?? "revisa permisos o connexió"}`;
+    state.isSaving = false;
+    render();
+    return;
+  }
+
+  state.isSaving = false;
+  render();
+}
+
+async function persistUserEdit() {
+  const user = currentEditedUser();
+  if (!user) return;
+
+  state.isSaving = true;
+  state.syncMessage = "Desant a Supabase...";
+  render();
+
+  try {
+    const nom = state.editUserData.nom.trim();
+    if (!nom) throw new Error("Cal indicar el nom de l'usuari.");
+
+    const { error } = await supabase
+      .from("usuaris")
+      .update({
+        nom,
+        cognoms: state.editUserData.cognoms.trim(),
+        tipus_usuari: state.editUserData.tipusUsuari,
+        actiu: state.editUserData.actiu,
+      })
+      .eq("id", user.id);
+
+    if (error) throw error;
+
+    state.editUserId = null;
+    state.syncMessage = "Usuari desat a Supabase";
     await loadSupabaseData();
   } catch (error) {
     console.error(error);
