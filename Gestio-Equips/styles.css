@@ -248,6 +248,55 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(17, 34, 24, 0.08);
+}
+.user-chip-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.user-chip-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.05;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.user-chip-active {
+  background: linear-gradient(180deg, #dff5d9, #b9e7ad);
+  color: #1f6a39;
+}
+.user-chip-inactive {
+  background: linear-gradient(180deg, #fde2dc, #f2bdb3);
+  color: #9a4136;
+}
+.user-chip-type {
+  background: linear-gradient(180deg, #edf2ff, #cedcfe);
+  color: #234f91;
+}
+.user-edit-button {
+  padding: 10px 14px;
+  white-space: nowrap;
+  font-weight: 700;
+  color: #f5fff7;
+  background: linear-gradient(180deg, #3fae58, #238a3d);
+  box-shadow: 0 10px 22px rgba(35, 138, 61, 0.22);
+}
 .action-panel-copy { color: var(--muted); margin-bottom: 0; }
 
 .action-card { display: grid; gap: 10px; }

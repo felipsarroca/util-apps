@@ -641,13 +641,28 @@ function renderUserDetail(item) {
           <h2>${text(`${item.nom} ${item.cognoms}`.trim())}</h2>
         </div>
         <div class="detail-header-actions">
-          <span class="status-badge ${item.actiu === false ? "status-fora_servei" : "status-lliure"}">${
-            item.actiu === false ? "Inactiu" : "Actiu"
-          }</span>
-          <span class="status-badge status-lliure">${text(item.tipusUsuari)}</span>
+          <span class="user-chip ${item.actiu === false ? "user-chip-inactive" : "user-chip-active"}">
+            <span class="user-chip-icon" aria-hidden="true">
+              ${
+                item.actiu === false
+                  ? `<svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="7.2"></circle><path d="M8.3 8.3 15.7 15.7"></path><path d="M15.7 8.3 8.3 15.7"></path></svg>`
+                  : `<svg viewBox="0 0 24 24" focusable="false"><path d="M12 4.8 18 7.2v4.7c0 3-2 5.6-6 7.3-4-1.7-6-4.3-6-7.3V7.2L12 4.8Z"></path><path d="m9.2 12.2 2.1 2.1 4.2-4.3"></path></svg>`
+              }
+            </span>
+            <span>${item.actiu === false ? "Inactiu" : "Actiu"}</span>
+          </span>
+          <span class="user-chip user-chip-type">
+            <span class="user-chip-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="8.5" r="2.6"></circle>
+                <path d="M7.2 18c.8-2.5 2.5-3.8 4.8-3.8s4 1.3 4.8 3.8"></path>
+              </svg>
+            </span>
+            <span>${text(item.tipusUsuari === "generic" ? "Genèric" : "Alumne")}</span>
+          </span>
           ${
             state.accessMode === "edicio"
-              ? '<button type="button" class="ghost-button compact-button" id="edit-user-button">Editar usuari</button>'
+              ? '<button type="button" class="compact-button user-edit-button" id="edit-user-button">Editar usuari</button>'
               : ""
           }
         </div>
