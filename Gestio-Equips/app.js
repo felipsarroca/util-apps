@@ -514,7 +514,7 @@ function renderComputerDetail(item) {
               title="Afegir un nou equip"
               ${state.accessMode !== "edicio" ? "disabled" : ""}
             >
-              Afegir
+              Editar equips / usuaris
             </button>
             <button type="button" class="primary-button compact-button" id="toggle-actions" ${
               state.accessMode !== "edicio" ? "disabled" : ""
