@@ -7,3 +7,5 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 resources/bin/win/*.exe
+assets/icon.ico
+assets/icon.png

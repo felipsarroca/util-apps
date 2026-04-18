@@ -115,8 +115,6 @@ Ubicacions habituals:
 DescarregApp/
 ├─ assets/
 │  ├─ favicon.svg
-│  ├─ icon.ico
-│  └─ icon.png
 ├─ docs/
 │  └─ images/
 │     └─ descarregapp-main.png
@@ -246,6 +244,8 @@ No cal pujar:
 - `node_modules/`
 - `dist/`
 - `resources/bin/win/*.exe`
+- `assets/icon.ico`
+- `assets/icon.png`
 
 La carpeta `dist/` només serveix per generar l'instal·lador localment. L'instal·lador final s'ha d'adjuntar a una release de GitHub.
 
@@ -259,13 +259,13 @@ L'usuari final no necessita fer això, perquè l'instal·lador publicat a GitHub
 
 ## Icona de l'aplicació
 
-La icona base és:
+La icona base que ha d'estar a GitHub és:
 
 ```text
 assets/favicon.svg
 ```
 
-Per regenerar `icon.png` i `icon.ico`:
+`icon.png` i `icon.ico` són fitxers generats a partir de `favicon.svg`. No cal pujar-los a GitHub. Per regenerar-los localment:
 
 ```powershell
 npm.cmd run icons:generate

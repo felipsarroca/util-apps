@@ -45,7 +45,9 @@
       "icon": "assets/icon.ico"
     },
     "nsis": {
-      "artifactName": "DescarregApp-Setup.${ext}"
+      "artifactName": "DescarregApp-Setup.${ext}",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
     },
     "mac": {
       "target": "dmg",
