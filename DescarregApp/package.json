@@ -1,0 +1,62 @@
+{
+  "name": "descarregapp",
+  "version": "0.1.0",
+  "description": "Aplicacio d'escriptori per descarregar video i audio amb yt-dlp.",
+  "main": "src/main.js",
+  "author": "Felip Sarroca",
+  "license": "CC-BY-NC-SA-4.0",
+  "scripts": {
+    "start": "electron .",
+    "icons:generate": "node scripts/generate-icon.js",
+    "tools:download": "powershell -ExecutionPolicy Bypass -File scripts/download-tools.ps1",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^41.2.1",
+    "electron-builder": "^26.8.1",
+    "sharp": "^0.34.5"
+  },
+  "build": {
+    "appId": "cat.felipsarroca.descarregapp",
+    "productName": "DescarregApp",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/bin",
+        "to": "bin",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false,
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "artifactName": "DescarregApp-Setup.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
+    }
+  }
+}

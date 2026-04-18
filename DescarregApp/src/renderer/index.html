@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DescarregApp</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div class="brand-area">
+          <div class="brand-mark" aria-hidden="true">
+            <img src="../../assets/favicon.svg" alt="" />
+          </div>
+          <div>
+            <h1>DescarregApp</h1>
+            <p>Descarrega vídeos o àudio en local de manera senzilla</p>
+          </div>
+        </div>
+
+      </header>
+
+      <div class="workspace-grid">
+        <section class="main-panel" aria-labelledby="download-title">
+          <div class="section-heading">
+            <h2 id="download-title">Nova descàrrega</h2>
+            <p>Enganxa un enllaç per línia i tria on vols guardar els fitxers.</p>
+          </div>
+
+          <label class="field-label" for="linksInput">Enllaços</label>
+          <textarea
+            id="linksInput"
+            rows="8"
+            placeholder="Enganxa aquí un o diversos enllaços (un per línia)"
+          ></textarea>
+          <p id="validationMessage" class="validation-message" aria-live="polite"></p>
+
+          <div class="format-row" role="radiogroup" aria-label="Format de sortida">
+            <button class="format-option active" type="button" data-format="video" aria-pressed="true">
+              <span class="format-icon video-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M4 6.75C4 5.78 4.78 5 5.75 5h8.5C15.22 5 16 5.78 16 6.75v1.64l3.02-1.9A1.3 1.3 0 0 1 21 7.58v8.84a1.3 1.3 0 0 1-1.98 1.1L16 15.6v1.65c0 .97-.78 1.75-1.75 1.75h-8.5C4.78 19 4 18.22 4 17.25V6.75Z" />
+                </svg>
+              </span>
+              <span>Vídeo</span>
+            </button>
+            <button class="format-option" type="button" data-format="audio" aria-pressed="false">
+              <span class="format-icon audio-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M11 5.5v8.76A3.5 3.5 0 1 1 9.5 11.4V7.1c0-.61.37-1.16.94-1.39l6-2.4A1.5 1.5 0 0 1 18.5 4.7v7.56A3.5 3.5 0 1 1 17 9.4V6.92l-6 2.4V5.5Z" />
+                </svg>
+              </span>
+              <span>Àudio</span>
+            </button>
+          </div>
+
+          <div id="videoFormatPanel" class="format-detail-panel">
+            <label class="field-label" for="videoFormat">Format del vídeo</label>
+            <select id="videoFormat">
+              <option value="mp4">MP4</option>
+              <option value="mkv">MKV</option>
+              <option value="avi">AVI</option>
+            </select>
+          </div>
+
+          <div id="audioQualityPanel" class="format-detail-panel" hidden>
+            <label class="field-label" for="audioBitrate">Qualitat de l'àudio</label>
+            <select id="audioBitrate">
+              <option value="128">128 kbps</option>
+              <option value="256">256 kbps</option>
+              <option value="320">320 kbps</option>
+            </select>
+          </div>
+
+          <label class="field-label" for="folderPath">Carpeta de destinació</label>
+          <div class="folder-row">
+            <input id="folderPath" type="text" readonly />
+            <div class="folder-actions">
+              <button id="selectFolderButton" class="secondary-button icon-button" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M3 6.75C3 5.78 3.78 5 4.75 5h5.1c.48 0 .94.2 1.27.54L12.58 7h6.67c.97 0 1.75.78 1.75 1.75v8.5c0 .97-.78 1.75-1.75 1.75H4.75C3.78 19 3 18.22 3 17.25V6.75Z" />
+                </svg>
+                Seleccionar
+              </button>
+              <button id="openFolderButton" class="secondary-button icon-button" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M5.75 4h5.43c.46 0 .9.18 1.24.5L14 6h4.25C19.77 6 21 7.23 21 8.75v1.08a2.74 2.74 0 0 0-1.75-.63H7.92a2.75 2.75 0 0 0-2.65 2.02L4 15.82V6.75C4 5.78 4.78 4 5.75 4Zm1.45 7h12.05c.79 0 1.36.75 1.16 1.51l-1.33 5A2 2 0 0 1 17.14 19H5.09c-.79 0-1.36-.75-1.16-1.51l1.33-5A2 2 0 0 1 7.2 11Z" />
+                </svg>
+                Obrir
+              </button>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button id="downloadButton" class="primary-button" type="button" disabled>Descarregar</button>
+            <button id="cancelButton" class="danger-button" type="button" disabled>Cancel·lar cua</button>
+            <p id="globalStatus" class="global-status" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <section class="results-panel" aria-labelledby="results-title">
+          <div class="section-heading results-heading">
+            <div>
+              <h2 id="results-title">Resultats</h2>
+              <p id="resultsSummary">Encara no hi ha cap descàrrega a la cua.</p>
+            </div>
+            <button id="clearResultsButton" class="secondary-button compact-button" type="button" disabled>
+              Netejar resultats
+            </button>
+          </div>
+          <div id="resultsList" class="results-list" aria-live="polite"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="license-footer">
+      <img
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/CC_BY-NC-SA.svg/1280px-CC_BY-NC-SA.svg.png"
+        alt="Llicència Creative Commons BY-NC-SA"
+      />
+      <div>
+        <p>
+          Aplicació creada per
+          <a href="https://ja.cat/felipsarroca" data-external-link>Felip Sarroca</a>
+          amb assistència de la IA
+        </p>
+        <p>Obra sota llicència CC BY-NC-SA 4.0</p>
+      </div>
+    </footer>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>
