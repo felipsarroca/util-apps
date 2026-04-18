@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
+            name: 'DescarregApp',
+            path: 'https://ja.cat/descarregapp',
+            icon: 'DescarregApp/assets/favicon.svg',
+            description: "Aplicació d'escriptori per descarregar vídeo o àudio en local.",
+            category: "Eines d'escriptori"
+        },
+        {
             name: 'Rentabilitat Híbrid',
             path: 'RentabilitatHibrid/',
             description: 'Calculadora per comparar el cost entre combustible i electricitat.',
