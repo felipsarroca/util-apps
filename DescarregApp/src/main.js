@@ -5,6 +5,11 @@ const { spawn } = require("child_process");
 
 const APP_NAME = "DescarregApp";
 
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch("disable-gpu");
+app.commandLine.appendSwitch("disable-gpu-compositing");
+app.commandLine.appendSwitch("disable-gpu-sandbox");
+
 let mainWindow;
 let queueRunning = false;
 let cancelRequested = false;
@@ -226,6 +231,13 @@ function createWindow() {
     mainWindow.show();
   });
 
+  mainWindow.webContents.once("did-finish-load", () => {
+    if (!mainWindow.isVisible()) {
+      mainWindow.maximize();
+      mainWindow.show();
+    }
+  });
+
   mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
 }
 
@@ -264,7 +276,14 @@ function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, vid
     ...commonArgs,
     "-f",
     "bv*+ba/b",
+    "-S",
+    "res,fps,br",
+    "--format-sort-force",
+    "--print",
+    "before_dl:FORMAT:%(format)s",
     "--merge-output-format",
+    videoFormat,
+    "--remux-video",
     videoFormat,
     "-o",
     outputTemplate,
@@ -298,6 +317,15 @@ function parseTitle(line) {
   }
 
   return null;
+}
+
+function parseSelectedFormat(line) {
+  const prefix = "FORMAT:";
+  if (!line.startsWith(prefix)) {
+    return null;
+  }
+
+  return line.slice(prefix.length).trim();
 }
 
 function fetchTitle(url, tools) {
@@ -381,6 +409,7 @@ async function runDownload(job, tools) {
 
     let lastError = "";
     let completed = false;
+    let selectedFormat = "";
 
     sendDownloadEvent({
       id: item.id,
@@ -394,6 +423,7 @@ async function runDownload(job, tools) {
 
       for (const line of lines) {
         const parsedTitle = parseTitle(line);
+        const parsedFormat = parseSelectedFormat(line);
         const progress = parseProgress(line);
 
         if (parsedTitle) {
@@ -401,6 +431,15 @@ async function runDownload(job, tools) {
             id: item.id,
             title: parsedTitle,
             status: "downloading"
+          });
+        }
+
+        if (parsedFormat) {
+          selectedFormat = parsedFormat;
+          sendDownloadEvent({
+            id: item.id,
+            status: "downloading",
+            message: `Format triat: ${parsedFormat}`
           });
         }
 
@@ -467,7 +506,7 @@ async function runDownload(job, tools) {
           id: item.id,
           status: "completed",
           progress: 100,
-          message: "Completat"
+          message: selectedFormat ? `Completat. Format: ${selectedFormat}` : "Completat"
         });
       } else {
         sendDownloadEvent({
