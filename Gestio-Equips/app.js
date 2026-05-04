@@ -1851,5 +1851,5 @@ if (shouldShowInstallPrompt()) {
   state.installPromptVisible = true;
 }
 
+render();
 restoreSession();
-
