@@ -140,11 +140,24 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
 }
 .search-box input { font-size: 0.8rem; }
 
-.topbar { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.topbar { display: flex; justify-content: flex-end; align-items: stretch; gap: 10px; flex-wrap: wrap; }
 .mode-badge, .source-badge, .status-badge {
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 0.64rem;
+}
+.topbar .mode-badge,
+.topbar .source-badge,
+.topbar .compact-button {
+  min-height: 2.35rem;
+  min-width: 7.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.1;
+  font-size: 0.74rem;
+  font-weight: 700;
 }
 .mode-badge { color: #f7f2e8; }
 .mode-lectura { background: var(--accent); }
@@ -472,6 +485,63 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
 .error-text { color: #9b2c2c; }
 .hint-box { margin-top: 16px; padding: 12px 14px; border-radius: 14px; background: #edf2e8; }
 
+.admin-panel {
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  justify-self: start;
+}
+.admin-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.75fr) minmax(120px, 0.35fr) auto;
+  gap: 10px;
+  align-items: end;
+  min-width: 760px;
+}
+.admin-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.admin-form input,
+.admin-form select {
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: #fffdf8;
+  color: #112218;
+}
+.admin-users {
+  display: grid;
+  gap: 8px;
+}
+.admin-user-row {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) max-content;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--card);
+  min-width: 760px;
+}
+.admin-user-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+}
+.admin-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -651,6 +721,10 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   .hero-panel, .info-strip, .detail-grid, .detail-grid-wide, .quick-actions {
     grid-template-columns: 1fr;
   }
+  .admin-form,
+  .admin-user-row {
+    grid-template-columns: 1fr;
+  }
   .timeline { grid-template-columns: 1fr; }
   .hero-panel { padding: 16px; }
   .hero-title-row { align-items: flex-start; }
@@ -749,6 +823,13 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
     text-align: center;
     justify-content: center;
   }
+  .topbar .mode-badge,
+  .topbar .source-badge,
+  .topbar .compact-button {
+    min-width: 0;
+    width: 100%;
+    font-size: 0.86rem;
+  }
   .gate-panel .eyebrow {
     margin-bottom: 10px;
   }
@@ -763,6 +844,8 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   }
   .search-box input,
   .gate-form input,
+  .admin-form input,
+  .admin-form select,
   .modal-form input,
   .modal-form select,
   .modal-form textarea {
@@ -980,6 +1063,16 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   h1 { font-size: 1.56rem; max-width: none; }
   .hero-panel,
   .hero-tools { width: 100%; }
+  .admin-form,
+  .admin-user-row {
+    grid-template-columns: 1fr;
+  }
+  .admin-user-actions {
+    justify-content: stretch;
+  }
+  .admin-user-actions button {
+    flex: 1 1 9rem;
+  }
   .hero-tools {
     display: grid;
     grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);

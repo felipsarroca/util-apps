@@ -7,11 +7,6 @@ export const ESTATS = {
   fora_servei: "Fora de servei",
 };
 
-export const ACCESS_CODES = {
-  consulta: "SoL",
-  edicio: "ce1092012",
-};
-
 export const EVENT_TYPE_LABELS = {
   assignacio: "Assignació",
   retorn: "Retorn",

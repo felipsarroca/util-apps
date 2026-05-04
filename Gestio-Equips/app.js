@@ -1,5 +1,4 @@
 import {
-  ACCESS_CODES,
   ACTION_ICONS,
   ESTATS,
   EVENT_TYPE_LABELS,
@@ -11,13 +10,13 @@ import {
 import { supabase } from "./supabase.js";
 
 const app = document.querySelector("#app");
-const ACCESS_CODE_STORAGE_KEY = "rppo:lastAccessCode";
+const AUTH_EMAIL_STORAGE_KEY = "rppo:lastAuthEmail";
 const INSTALL_PROMPT_SEEN_STORAGE_KEY = "rppo:installPromptSeen";
 let searchRenderTimer = null;
 let deferredInstallPromptEvent = null;
-const savedAccessCode = (() => {
+const savedAuthEmail = (() => {
   try {
-    return localStorage.getItem(ACCESS_CODE_STORAGE_KEY) ?? "";
+    return localStorage.getItem(AUTH_EMAIL_STORAGE_KEY) ?? "";
   } catch {
     return "";
   }
@@ -25,8 +24,21 @@ const savedAccessCode = (() => {
 
 const state = {
   accessMode: null,
-  accessCode: savedAccessCode,
+  authEmail: savedAuthEmail,
+  authPassword: "",
+  authUser: null,
   accessError: "",
+  isAuthenticating: false,
+  adminOpen: false,
+  adminUsers: [],
+  adminMessage: "",
+  adminError: "",
+  isAdminLoading: false,
+  adminForm: {
+    email: "",
+    password: "",
+    role: "consulta",
+  },
   installPromptVisible: false,
   query: "",
   selectedResult: null,
@@ -100,6 +112,12 @@ const academicYear = (value) => {
   const y = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1;
   return `${y}-${y + 1}`;
 };
+const userRole = (user) =>
+  user?.app_metadata?.role ??
+  user?.app_metadata?.access_role ??
+  null;
+const roleToAccessMode = (role) => (role === "edicio" ? "edicio" : role === "consulta" ? "consulta" : null);
+const isEditor = () => state.accessMode === "edicio";
 
 function shouldShowInstallPrompt() {
   return isMobileDevice() && !isStandaloneMode() && !hasSeenInstallPrompt();
@@ -373,34 +391,48 @@ function bindInstallPromptEvents() {
     });
 }
 
-function renderAccess() {
+function renderAuthAccess() {
   app.innerHTML = `
     <main class="gate-shell">
       <section class="panel gate-panel">
         <p class="eyebrow">Accés</p>
         <h1>Gestió d'equips informàtics</h1>
-        <p class="hero-copy">Introdueix un codi de consulta o d'edició per entrar a l'aplicació.</p>
+        <p class="hero-copy">Inicia sessió amb l'usuari autoritzat del centre.</p>
         <form class="gate-form" id="access-form" autocomplete="off">
           <label>
-            <span class="search-label">Codi d'accés</span>
+            <span class="search-label">Correu electrònic</span>
             <input
-              id="access-code"
-              class="masked-access-code"
-              name="center-access-code"
-              type="text"
-              value="${text(state.accessCode)}"
-              placeholder="Escriu el codi"
-              autocomplete="off"
+              id="auth-email"
+              name="email"
+              type="email"
+              value="${text(state.authEmail)}"
+              placeholder="usuari@centre.cat"
+              autocomplete="username"
               autocapitalize="off"
               autocorrect="off"
               spellcheck="false"
+              required
             />
           </label>
-          <button type="submit" class="primary-button">Entrar</button>
+          <label>
+            <span class="search-label">Contrasenya</span>
+            <input
+              id="auth-password"
+              name="password"
+              type="password"
+              value="${text(state.authPassword)}"
+              placeholder="Contrasenya"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          <button type="submit" class="primary-button" ${state.isAuthenticating ? "disabled" : ""}>
+            ${state.isAuthenticating ? "Entrant..." : "Entrar"}
+          </button>
         </form>
         <div class="hint-box">
-          <strong>Accés del centre</strong>
-          <p>Introdueix la contrasenya corresponent al teu perfil d'ús.</p>
+          <strong>Accés segur</strong>
+          <p>El permís de consulta o edició es comprova a Supabase abans de carregar les dades.</p>
         </div>
         ${state.accessError ? `<p class="error-text">${text(state.accessError)}</p>` : ""}
       </section>
@@ -409,25 +441,101 @@ function renderAccess() {
     ${renderInstallPrompt()}
   `;
 
-  document.querySelector("#access-code")?.addEventListener("input", (event) => {
-    state.accessCode = event.target.value;
+  document.querySelector("#auth-email")?.addEventListener("input", (event) => {
+    state.authEmail = event.target.value;
   });
-
-  document.querySelector("#access-form")?.addEventListener("submit", (event) => {
+  document.querySelector("#auth-password")?.addEventListener("input", (event) => {
+    state.authPassword = event.target.value;
+  });
+  document.querySelector("#access-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (state.accessCode === ACCESS_CODES.consulta) state.accessMode = "consulta";
-    else if (state.accessCode === ACCESS_CODES.edicio) state.accessMode = "edicio";
-    else state.accessError = "El codi no és correcte.";
-    if (state.accessMode) {
-      state.accessError = "";
-      try {
-        localStorage.setItem(ACCESS_CODE_STORAGE_KEY, state.accessCode);
-      } catch {}
-    }
-    render();
+    await signIn();
   });
 
   bindInstallPromptEvents();
+}
+
+async function signIn() {
+  state.isAuthenticating = true;
+  state.accessError = "";
+  render();
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: state.authEmail.trim(),
+      password: state.authPassword,
+    });
+    if (error) throw error;
+
+    const accessMode = roleToAccessMode(userRole(data.user));
+    if (!accessMode) {
+      await supabase.auth.signOut();
+      throw new Error("Aquest usuari no té cap rol de consulta o edició assignat.");
+    }
+
+    state.authUser = data.user;
+    state.accessMode = accessMode;
+    state.authPassword = "";
+    state.accessError = "";
+    state.isAuthenticating = false;
+    try {
+      localStorage.setItem(AUTH_EMAIL_STORAGE_KEY, state.authEmail.trim());
+    } catch {}
+    render();
+    await loadSupabaseData();
+  } catch (error) {
+    state.authUser = null;
+    state.accessMode = null;
+    state.accessError = error.message ?? "No s'ha pogut iniciar sessió.";
+    state.isAuthenticating = false;
+    render();
+  }
+}
+
+async function signOut() {
+  try {
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error("No s'ha pogut tancar la sessió.", error);
+  } finally {
+    state.authUser = null;
+    state.accessMode = null;
+    state.authPassword = "";
+    state.query = "";
+    state.selectedResult = null;
+    state.adminOpen = false;
+    state.adminUsers = [];
+    state.adminMessage = "";
+    state.adminError = "";
+    state.source = "local";
+    state.syncMessage = "Sessió tancada";
+    render();
+  }
+}
+
+async function restoreSession() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.user) {
+    render();
+    return;
+  }
+
+  const accessMode = roleToAccessMode(userRole(data.session.user));
+  if (!accessMode) {
+    await supabase.auth.signOut();
+    state.accessError = "Aquest usuari no té cap rol de consulta o edició assignat.";
+    render();
+    return;
+  }
+
+  state.authUser = data.session.user;
+  state.authEmail = data.session.user.email ?? state.authEmail;
+  state.accessMode = accessMode;
+  try {
+    if (state.authEmail) localStorage.setItem(AUTH_EMAIL_STORAGE_KEY, state.authEmail);
+  } catch {}
+  render();
+  await loadSupabaseData();
 }
 
 function renderResults(results) {
@@ -484,6 +592,75 @@ function renderResults(results) {
             `,
           )
           .join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderAdminPanel() {
+  if (!state.adminOpen || !isEditor()) return "";
+
+  return `
+    <section class="panel admin-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Administració</p>
+          <h2>Accessos a l'app</h2>
+        </div>
+        <button type="button" class="ghost-button compact-button" id="refresh-admin-users" ${state.isAdminLoading ? "disabled" : ""}>
+          Actualitzar
+        </button>
+      </div>
+
+      <form class="admin-form" id="admin-create-user-form" autocomplete="off">
+        <label>
+          <span>Correu</span>
+          <input id="admin-email" type="email" value="${text(state.adminForm.email)}" placeholder="persona@centre.cat" required />
+        </label>
+        <label>
+          <span>Contrasenya inicial</span>
+          <input id="admin-password" type="password" value="${text(state.adminForm.password)}" minlength="8" placeholder="Mínim 8 caràcters" required />
+        </label>
+        <label>
+          <span>Rol</span>
+          <select id="admin-role">
+            <option value="consulta" ${state.adminForm.role === "consulta" ? "selected" : ""}>Consulta</option>
+            <option value="edicio" ${state.adminForm.role === "edicio" ? "selected" : ""}>Edició</option>
+          </select>
+        </label>
+        <button type="submit" class="primary-button" ${state.isAdminLoading ? "disabled" : ""}>
+          ${state.isAdminLoading ? "Gestionant..." : "Crear accés"}
+        </button>
+      </form>
+
+      ${state.adminMessage ? `<p class="help-text">${text(state.adminMessage)}</p>` : ""}
+      ${state.adminError ? `<p class="error-text">${text(state.adminError)}</p>` : ""}
+
+      <div class="admin-users">
+        ${
+          state.adminUsers.length
+            ? state.adminUsers
+                .map(
+                  (user) => `
+                    <article class="admin-user-row">
+                      <div>
+                        <strong>${text(user.email ?? "Sense correu")}</strong>
+                        <small>${user.disabled ? "Accés desactivat" : "Accés actiu"} · Rol: ${text(user.role ?? "sense rol")}</small>
+                      </div>
+                      <div class="admin-user-actions">
+                        <button type="button" class="ghost-button compact-button" data-admin-role="consulta" data-user-id="${text(user.id)}" ${state.isAdminLoading ? "disabled" : ""}>Consulta</button>
+                        <button type="button" class="ghost-button compact-button" data-admin-role="edicio" data-user-id="${text(user.id)}" ${state.isAdminLoading ? "disabled" : ""}>Edició</button>
+                        <button type="button" class="ghost-button compact-button" data-admin-disable data-user-id="${text(user.id)}" ${state.isAdminLoading || user.id === state.authUser?.id ? "disabled" : ""}>
+                          ${user.disabled ? "Reactivar" : "Desactivar"}
+                        </button>
+                        <button type="button" class="danger-button compact-button" data-admin-delete data-user-id="${text(user.id)}" ${state.isAdminLoading || user.id === state.authUser?.id ? "disabled" : ""}>Eliminar</button>
+                      </div>
+                    </article>
+                  `,
+                )
+                .join("")
+            : `<p class="help-text">${state.isAdminLoading ? "Carregant usuaris..." : "Encara no s'ha carregat cap usuari."}</p>`
+        }
       </div>
     </section>
   `;
@@ -961,9 +1138,18 @@ function renderMain() {
             state.accessMode === "edicio" ? "edició" : "lectura"
           }</span>
           <span class="source-badge source-${state.source}">${text(state.syncMessage)}</span>
+          ${
+            isEditor()
+              ? `<button type="button" class="ghost-button compact-button" id="toggle-admin-panel">
+                  ${state.adminOpen ? "Tancar usuaris" : "Usuaris"}
+                </button>`
+              : ""
+          }
+          <button type="button" class="ghost-button compact-button" id="sign-out-button">Sortir</button>
         </div>
       </div>
 
+      ${renderAdminPanel()}
       ${renderResults(results)}
       ${computer ? renderComputerDetail(computer) : user ? renderUserDetail(user) : ""}
       ${footerMarkup()}
@@ -977,6 +1163,16 @@ function renderMain() {
 }
 
 function bindMainEvents(results) {
+  document.querySelector("#sign-out-button") && bindPress(document.querySelector("#sign-out-button"), signOut);
+  document.querySelector("#toggle-admin-panel") && bindPress(document.querySelector("#toggle-admin-panel"), async () => {
+    state.adminOpen = !state.adminOpen;
+    state.adminMessage = "";
+    state.adminError = "";
+    render();
+    if (state.adminOpen && !state.adminUsers.length) await loadAdminUsers();
+  });
+  document.querySelector("#refresh-admin-users") && bindPress(document.querySelector("#refresh-admin-users"), loadAdminUsers);
+
   document.querySelector("#search-input")?.addEventListener("input", (event) => {
     state.query = event.target.value;
     if (!state.query.trim()) state.selectedResult = null;
@@ -1002,6 +1198,10 @@ function bindMainEvents(results) {
       render();
     });
   });
+
+  if (state.adminOpen) {
+    bindAdminEvents();
+  }
 
   document.querySelectorAll("[data-action-id]").forEach((button) => {
     bindPress(button, () => {
@@ -1169,6 +1369,160 @@ function bindMainEvents(results) {
         : computer.usuariActualId;
     await persistAction(action, computer, nextUserId, state.formData.data, state.formData.descripcio);
   });
+}
+
+function bindAdminEvents() {
+  document.querySelector("#admin-email")?.addEventListener("input", (event) => {
+    state.adminForm.email = event.target.value;
+  });
+  document.querySelector("#admin-password")?.addEventListener("input", (event) => {
+    state.adminForm.password = event.target.value;
+  });
+  document.querySelector("#admin-role")?.addEventListener("change", (event) => {
+    state.adminForm.role = event.target.value;
+  });
+  document.querySelector("#admin-create-user-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await createAdminUser();
+  });
+  document.querySelectorAll("[data-admin-role]").forEach((button) => {
+    bindPress(button, async () => {
+      await updateAdminUserRole(button.dataset.userId, button.dataset.adminRole);
+    });
+  });
+  document.querySelectorAll("[data-admin-disable]").forEach((button) => {
+    bindPress(button, async () => {
+      const user = state.adminUsers.find((item) => item.id === button.dataset.userId);
+      if (!user) return;
+      await setAdminUserDisabled(user.id, !user.disabled);
+    });
+  });
+  document.querySelectorAll("[data-admin-delete]").forEach((button) => {
+    bindPress(button, async () => {
+      const user = state.adminUsers.find((item) => item.id === button.dataset.userId);
+      if (!user) return;
+      const confirmed = window.confirm(`Vols eliminar l'accés de ${user.email}?`);
+      if (!confirmed) return;
+      await deleteAdminUser(user.id);
+    });
+  });
+}
+
+async function callUserAdmin(action, payload = {}) {
+  const { data, error } = await supabase.functions.invoke("manage-users", {
+    body: { action, ...payload },
+  });
+  if (error) {
+    if (error.context instanceof Response) {
+      try {
+        const body = await error.context.json();
+        throw new Error(body.error ?? error.message);
+      } catch (parseError) {
+        if (parseError instanceof Error && parseError.message !== "Unexpected end of JSON input") throw parseError;
+      }
+    }
+    throw error;
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+async function loadAdminUsers() {
+  state.isAdminLoading = true;
+  state.adminError = "";
+  state.adminMessage = "";
+  render();
+
+  try {
+    const data = await callUserAdmin("list");
+    state.adminUsers = data.users ?? [];
+    state.adminMessage = "Llista d'usuaris actualitzada.";
+  } catch (error) {
+    state.adminError = error.message ?? "No s'han pogut carregar els usuaris.";
+  } finally {
+    state.isAdminLoading = false;
+    render();
+  }
+}
+
+async function createAdminUser() {
+  state.isAdminLoading = true;
+  state.adminError = "";
+  state.adminMessage = "";
+  render();
+
+  try {
+    await callUserAdmin("create", {
+      email: state.adminForm.email.trim(),
+      password: state.adminForm.password,
+      role: state.adminForm.role,
+    });
+    state.adminForm = { email: "", password: "", role: "consulta" };
+    state.adminMessage = "Usuari creat correctament.";
+    const data = await callUserAdmin("list");
+    state.adminUsers = data.users ?? [];
+  } catch (error) {
+    state.adminError = error.message ?? "No s'ha pogut crear l'usuari.";
+  } finally {
+    state.isAdminLoading = false;
+    render();
+  }
+}
+
+async function updateAdminUserRole(userId, role) {
+  state.isAdminLoading = true;
+  state.adminError = "";
+  state.adminMessage = "";
+  render();
+
+  try {
+    await callUserAdmin("update-role", { userId, role });
+    state.adminMessage = "Rol actualitzat.";
+    const data = await callUserAdmin("list");
+    state.adminUsers = data.users ?? [];
+  } catch (error) {
+    state.adminError = error.message ?? "No s'ha pogut actualitzar el rol.";
+  } finally {
+    state.isAdminLoading = false;
+    render();
+  }
+}
+
+async function setAdminUserDisabled(userId, disabled) {
+  state.isAdminLoading = true;
+  state.adminError = "";
+  state.adminMessage = "";
+  render();
+
+  try {
+    await callUserAdmin("set-disabled", { userId, disabled });
+    state.adminMessage = disabled ? "Accés desactivat." : "Accés reactivat.";
+    const data = await callUserAdmin("list");
+    state.adminUsers = data.users ?? [];
+  } catch (error) {
+    state.adminError = error.message ?? "No s'ha pogut canviar l'estat de l'usuari.";
+  } finally {
+    state.isAdminLoading = false;
+    render();
+  }
+}
+
+async function deleteAdminUser(userId) {
+  state.isAdminLoading = true;
+  state.adminError = "";
+  state.adminMessage = "";
+  render();
+
+  try {
+    await callUserAdmin("delete", { userId });
+    state.adminUsers = state.adminUsers.filter((user) => user.id !== userId);
+    state.adminMessage = "Usuari eliminat.";
+  } catch (error) {
+    state.adminError = error.message ?? "No s'ha pogut eliminar l'usuari.";
+  } finally {
+    state.isAdminLoading = false;
+    render();
+  }
 }
 
 async function loadSupabaseData() {
@@ -1469,7 +1823,7 @@ async function deleteEditedEvent() {
 }
 
 function render() {
-  if (!state.accessMode) renderAccess();
+  if (!state.accessMode) renderAuthAccess();
   else renderMain();
 }
 
@@ -1501,5 +1855,5 @@ if (shouldShowInstallPrompt()) {
   state.installPromptVisible = true;
 }
 
-render();
-loadSupabaseData();
+restoreSession();
+

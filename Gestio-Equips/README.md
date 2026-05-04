@@ -70,14 +70,14 @@ L'aplicació treballa amb aquests estats:
 
 ## Modes d'accés
 
-Actualment l'app usa codis simples guardats al fitxer [`data.js`](./data.js).
+Actualment l'app usa Supabase Auth. Els permisos reals es defineixen amb RLS a Supabase.
 
-| Mode | Codi actual | Què permet |
+| Mode | Rol a Supabase | Què permet |
 | --- | --- | --- |
-| Consulta | `SoL` | Veure fitxes, resultats i historial |
-| Edició | `ce1092012` | Consultar, crear registres i editar dades |
+| Consulta | `consulta` | Veure fitxes, resultats i historial |
+| Edició | `edicio` | Consultar, crear registres i editar dades |
 
-Important: aquests codis estan al frontend i, per tant, no són un sistema d'autenticació segur. Per a un entorn real convé substituir-los per autenticació amb Supabase Auth o una capa equivalent.
+Consulta [`seguretat-supabase.md`](./seguretat-supabase.md) i [`supabase-rls.sql`](./supabase-rls.sql) per configurar els usuaris i les polítiques de seguretat.
 
 ## Funcionament general
 
@@ -129,10 +129,11 @@ Després de desar, l'app intenta escriure a Supabase i recarrega les dades.
 
 - [`index.html`](./index.html): shell principal de l'aplicació.
 - [`app.js`](./app.js): lògica de la interfície, renderitzat, cerca, formularis i persistència.
-- [`data.js`](./data.js): estats, accions ràpides, codis d'accés i dades inicials de reserva.
+- [`data.js`](./data.js): estats, accions ràpides i dades inicials de reserva.
 - [`styles.css`](./styles.css): estils responsive.
 - [`supabase.js`](./supabase.js): client de Supabase.
 - [`supabase-config.js`](./supabase-config.js): URL i clau pública del projecte Supabase.
+- [`supabase/functions/manage-users`](./supabase/functions/manage-users/index.ts): funció segura per administrar accessos amb Supabase Auth.
 - [`manifest.webmanifest`](./manifest.webmanifest): configuració PWA.
 - [`sw.js`](./sw.js): cache offline bàsic.
 - [`instruccions.md`](./instruccions.md): document funcional del projecte.
@@ -304,9 +305,8 @@ Això permet:
 
 Aquest projecte ja és funcional, però encara té límits clars:
 
-- l'accés amb codis no és segur
-- no hi ha autenticació d'usuaris reals
-- no hi ha control fi de permisos
+- cal crear usuaris reals a Supabase Auth
+- cal executar les polítiques RLS abans d'usar dades sensibles
 - no hi ha filtres avançats per curs, estat o període
 - no hi ha exportació d'informes
 - el `service worker` fa cache bàsica i no una estratègia offline avançada
