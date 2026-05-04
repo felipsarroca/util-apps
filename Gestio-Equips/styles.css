@@ -721,9 +721,22 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   .hero-panel, .info-strip, .detail-grid, .detail-grid-wide, .quick-actions {
     grid-template-columns: 1fr;
   }
+  .admin-panel {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    justify-self: stretch;
+  }
   .admin-form,
   .admin-user-row {
     grid-template-columns: 1fr;
+    min-width: 0;
+  }
+  .admin-user-actions {
+    justify-content: stretch;
+  }
+  .admin-user-actions button {
+    flex: 1 1 9rem;
   }
   .timeline { grid-template-columns: 1fr; }
   .hero-panel { padding: 16px; }
@@ -767,7 +780,7 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
     width: 100%;
     justify-self: center;
     display: grid;
-    grid-template-columns: minmax(0, 18.2rem) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: 8px;
     align-items: start;
   }
@@ -822,6 +835,12 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   .mode-badge {
     text-align: center;
     justify-content: center;
+  }
+  .topbar {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
   .topbar .mode-badge,
   .topbar .source-badge,
@@ -1066,6 +1085,7 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   .admin-form,
   .admin-user-row {
     grid-template-columns: 1fr;
+    min-width: 0;
   }
   .admin-user-actions {
     justify-content: stretch;
@@ -1075,8 +1095,11 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   }
   .hero-tools {
     display: grid;
-    grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: 7px;
+  }
+  .topbar {
+    grid-template-columns: 1fr;
   }
   .search-box { width: 100%; }
   .info-strip { grid-template-columns: repeat(auto-fit, minmax(9.2rem, 1fr)); }
