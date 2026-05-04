@@ -430,10 +430,6 @@ function renderAuthAccess() {
             ${state.isAuthenticating ? "Entrant..." : "Entrar"}
           </button>
         </form>
-        <div class="hint-box">
-          <strong>Accés segur</strong>
-          <p>El permís de consulta o edició es comprova a Supabase abans de carregar les dades.</p>
-        </div>
         ${state.accessError ? `<p class="error-text">${text(state.accessError)}</p>` : ""}
       </section>
       ${footerMarkup()}
