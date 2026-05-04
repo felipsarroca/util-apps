@@ -1150,6 +1150,105 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   }
 }
 
+html.installed-mobile {
+  font-size: 15.6px;
+}
+html.installed-mobile .app-shell,
+html.installed-mobile .gate-shell {
+  width: 100%;
+  max-width: none;
+  padding: 10px 8px 8px;
+}
+html.installed-mobile .search-layout {
+  gap: 10px;
+  grid-template-rows: auto auto auto 1fr auto;
+}
+html.installed-mobile .hero-panel,
+html.installed-mobile .hero-tools,
+html.installed-mobile .results-panel,
+html.installed-mobile .empty-state,
+html.installed-mobile .detail-panel,
+html.installed-mobile .gate-panel,
+html.installed-mobile .modal-panel,
+html.installed-mobile .admin-panel {
+  padding: 10px;
+}
+html.installed-mobile .hero-panel {
+  grid-template-columns: 1fr;
+  width: 100%;
+}
+html.installed-mobile .search-box-web {
+  display: none;
+}
+html.installed-mobile .search-box-mobile {
+  display: grid;
+}
+html.installed-mobile .hero-tools {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+html.installed-mobile .topbar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+html.installed-mobile .topbar .mode-badge,
+html.installed-mobile .topbar .source-badge,
+html.installed-mobile .topbar .compact-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  font-size: 0.9rem;
+}
+html.installed-mobile .admin-panel {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: stretch;
+}
+html.installed-mobile .admin-form,
+html.installed-mobile .admin-user-row,
+html.installed-mobile .hero-panel,
+html.installed-mobile .info-strip,
+html.installed-mobile .detail-grid,
+html.installed-mobile .detail-grid-wide,
+html.installed-mobile .quick-actions {
+  grid-template-columns: 1fr;
+  min-width: 0;
+}
+html.installed-mobile .admin-user-actions {
+  justify-content: stretch;
+}
+html.installed-mobile .admin-user-actions button {
+  flex: 1 1 9rem;
+}
+html.installed-mobile h1 {
+  font-size: 1.704rem;
+  line-height: 1.04;
+}
+html.installed-mobile h2 {
+  font-size: 1.18rem;
+  line-height: 1.08;
+}
+html.installed-mobile h3 {
+  font-size: 1.06rem;
+  line-height: 1.08;
+}
+html.installed-mobile p,
+html.installed-mobile dt,
+html.installed-mobile dd,
+html.installed-mobile small,
+html.installed-mobile input,
+html.installed-mobile select,
+html.installed-mobile textarea,
+html.installed-mobile button {
+  font-size: 1.06rem;
+  line-height: 1.16;
+}
+
 @media (max-width: 420px) {
   :root { font-size: 14.6px; }
   .app-shell, .gate-shell { padding: 8px 6px 6px; }
@@ -1181,9 +1280,6 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
     display: grid;
     grid-template-columns: 1fr;
     gap: 7px;
-  }
-  .topbar {
-    grid-template-columns: 1fr;
   }
   .search-box { width: 100%; }
   .info-strip { grid-template-columns: repeat(auto-fit, minmax(9.2rem, 1fr)); }

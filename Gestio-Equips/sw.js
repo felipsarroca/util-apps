@@ -1,4 +1,4 @@
-const CACHE_NAME = "gestio-equips-v1";
+const CACHE_NAME = "gestio-equips-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -35,6 +35,25 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+
+  const requestUrl = new URL(event.request.url);
+  const isAppShellRequest =
+    requestUrl.origin === self.location.origin &&
+    APP_SHELL.some((path) => new URL(path, self.location.href).pathname === requestUrl.pathname);
+
+  if (isAppShellRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (!response || response.status !== 200) return response;
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cachedResponse) => cachedResponse ?? caches.match("./index.html"))),
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {

@@ -95,6 +95,12 @@ const isStandaloneMode = () =>
 const isMobileDevice = () =>
   window.matchMedia?.("(max-width: 820px) and (pointer: coarse)")?.matches ||
   /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+const syncInstalledMobileClass = () => {
+  document.documentElement.classList.toggle(
+    "installed-mobile",
+    isStandaloneMode() && isMobileDevice(),
+  );
+};
 const hasSeenInstallPrompt = () => {
   try {
     return localStorage.getItem(INSTALL_PROMPT_SEEN_STORAGE_KEY) === "1";
@@ -1830,6 +1836,10 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
+
+syncInstalledMobileClass();
+window.matchMedia?.("(display-mode: standalone)")?.addEventListener?.("change", syncInstalledMobileClass);
+window.matchMedia?.("(max-width: 820px) and (pointer: coarse)")?.addEventListener?.("change", syncInstalledMobileClass);
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
