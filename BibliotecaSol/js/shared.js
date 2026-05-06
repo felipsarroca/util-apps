@@ -822,7 +822,7 @@
   }
 
   function canManageCatalog(session) {
-    return Boolean(session && (session.rol === "editor" || session.rol === "administrador"));
+    return Boolean(session && isManagerEmail(session.email) && (session.rol === "editor" || session.rol === "administrador"));
   }
 
   function updateAccessLink() {
@@ -848,6 +848,9 @@
     const canEdit = canManageCatalog(getSession());
     document.querySelectorAll("[data-editor-only]").forEach((element) => {
       element.hidden = !canEdit;
+    });
+    document.querySelectorAll("[data-reader-only]").forEach((element) => {
+      element.hidden = canEdit;
     });
   }
 

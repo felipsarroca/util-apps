@@ -335,6 +335,11 @@ h3 {
   --button-icon: var(--icon-pdf);
 }
 
+.icon-request,
+.icon-reserve {
+  --button-icon: var(--icon-catalog);
+}
+
 .icon-sort-asc {
   --button-icon: var(--icon-sort-asc);
 }
@@ -704,6 +709,13 @@ main h3 {
   margin: 0.25rem 0 0;
   color: var(--muted);
   font-weight: 650;
+}
+
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
 }
 
 .section-heading p {
@@ -1438,11 +1450,13 @@ main h3 {
     grid-template-columns: 1fr;
   }
 
-  .filter-actions {
+  .filter-actions,
+  .toolbar-actions {
     justify-content: stretch;
   }
 
-  .filter-actions .button {
+  .filter-actions .button,
+  .toolbar-actions .button {
     width: 100%;
   }
 
