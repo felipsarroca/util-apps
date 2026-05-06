@@ -37,37 +37,45 @@
         </div>
       </section>
 
-      <section class="filters catalog-filters" aria-label="Filtres del catàleg">
+      <section class="filters catalog-filters compact-catalog-filters" aria-label="Filtres del catàleg">
         <label>
           Cerca
           <input id="catalog-search" type="search" placeholder="Títol, autor, ISBN, tema...">
         </label>
         <div class="filter-actions">
+          <button id="toggle-filters" class="button button-secondary icon-filter" type="button" aria-expanded="false" aria-controls="advanced-filters">Filtres</button>
           <button id="clear-filters" class="button button-secondary button-warning icon-clear" type="button">Netejar filtres</button>
           <button id="download-pdf" class="button button-secondary button-pdf icon-pdf" type="button">Descarregar PDF</button>
         </div>
       </section>
 
-      <section class="multi-filter-panel" aria-label="Criteris de cerca">
-        <div>
-          <h2>Edat</h2>
-          <div id="age-filters" class="filter-chip-group"></div>
-        </div>
-        <div>
-          <h2>Temàtica</h2>
-          <div id="topic-filters" class="filter-chip-group"></div>
-        </div>
-        <div>
-          <h2>Gènere</h2>
-          <div id="genre-filters" class="filter-chip-group"></div>
-        </div>
-        <div>
-          <h2>Disponibilitat</h2>
-          <div id="availability-filters" class="filter-chip-group">
-            <button class="filter-chip icon-filter" type="button" data-value="available" aria-pressed="false">Disponibles</button>
-            <button class="filter-chip icon-filter" type="button" data-value="unavailable" aria-pressed="false">No disponibles</button>
-          </div>
-        </div>
+      <section id="advanced-filters" class="advanced-filters" aria-label="Filtres avançats" hidden>
+        <label>
+          Edat
+          <select id="age-filter">
+            <option value="">Totes</option>
+          </select>
+        </label>
+        <label>
+          Temàtica
+          <select id="topic-filter">
+            <option value="">Totes</option>
+          </select>
+        </label>
+        <label>
+          Gènere
+          <select id="genre-filter">
+            <option value="">Tots</option>
+          </select>
+        </label>
+        <label>
+          Disponibilitat
+          <select id="availability-filter">
+            <option value="">Tots</option>
+            <option value="available">Disponibles</option>
+            <option value="unavailable">No disponibles</option>
+          </select>
+        </label>
       </section>
 
       <section id="request-panel" class="request-panel" hidden>

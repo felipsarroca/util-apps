@@ -16,17 +16,19 @@
     const count = document.getElementById("catalog-count");
     const clearButton = document.getElementById("clear-filters");
     const pdfButton = document.getElementById("download-pdf");
+    const toggleFilters = document.getElementById("toggle-filters");
+    const advancedFilters = document.getElementById("advanced-filters");
     const sortField = document.getElementById("sort-field");
     const sortDirection = document.getElementById("sort-direction");
-    const ageFilters = document.getElementById("age-filters");
-    const topicFilters = document.getElementById("topic-filters");
-    const genreFilters = document.getElementById("genre-filters");
-    const availabilityFilters = document.getElementById("availability-filters");
+    const ageFilter = document.getElementById("age-filter");
+    const topicFilter = document.getElementById("topic-filter");
+    const genreFilter = document.getElementById("genre-filter");
+    const availabilityFilter = document.getElementById("availability-filter");
     const requestPanel = document.getElementById("request-panel");
     const requestSummary = document.getElementById("request-summary");
     const clearSelection = document.getElementById("clear-selection");
     const sendRequest = document.getElementById("send-request");
-    if (!list || !search || !count || !clearButton || !pdfButton || !sortField || !sortDirection || !ageFilters || !topicFilters || !genreFilters || !availabilityFilters) return;
+    if (!list || !search || !count || !clearButton || !pdfButton || !toggleFilters || !advancedFilters || !sortField || !sortDirection || !ageFilter || !topicFilter || !genreFilter || !availabilityFilter) return;
 
     const params = new URLSearchParams(window.location.search);
     search.value = params.get("q") || "";
@@ -34,22 +36,25 @@
     const selectedBooks = new Set();
     const canRequestBooks = !window.BibliotecaSol.canManageCatalog(window.BibliotecaSol.getSession());
 
-    populateFilterGroup(ageFilters, valuesFor("nivell_recomanat"), render);
-    populateFilterGroup(topicFilters, valuesFor("tematica"), render);
-    populateFilterGroup(genreFilters, valuesFor("genere"), render);
-    availabilityFilters.querySelectorAll("button").forEach((button) => {
-      button.addEventListener("click", () => {
-        toggleChip(button);
-        render();
-      });
-    });
+    populateSelect(ageFilter, valuesFor("nivell_recomanat"));
+    populateSelect(topicFilter, valuesFor("tematica"));
+    populateSelect(genreFilter, valuesFor("genere"));
+
     clearButton.addEventListener("click", () => {
       search.value = "";
-      document.querySelectorAll(".filter-chip[aria-pressed='true']").forEach((button) => button.setAttribute("aria-pressed", "false"));
+      ageFilter.value = "";
+      topicFilter.value = "";
+      genreFilter.value = "";
+      availabilityFilter.value = "";
       render();
     });
+    toggleFilters.addEventListener("click", () => {
+      const expanded = toggleFilters.getAttribute("aria-expanded") === "true";
+      toggleFilters.setAttribute("aria-expanded", String(!expanded));
+      advancedFilters.hidden = expanded;
+    });
     pdfButton.addEventListener("click", () => {
-      openPdfView(currentResults, buildFilterSummary(search, ageFilters, topicFilters, genreFilters, availabilityFilters));
+      openPdfView(currentResults, buildFilterSummary(search, ageFilter, topicFilter, genreFilter, availabilityFilter));
     });
     if (requestPanel) requestPanel.hidden = !canRequestBooks;
     if (clearSelection) {
@@ -58,6 +63,11 @@
         render();
       });
     }
+    search.addEventListener("input", render);
+    ageFilter.addEventListener("change", render);
+    topicFilter.addEventListener("change", render);
+    genreFilter.addEventListener("change", render);
+    availabilityFilter.addEventListener("change", render);
     sortField.addEventListener("change", render);
     sortDirection.addEventListener("click", () => {
       const nextDirection = sortDirection.dataset.direction === "asc" ? "desc" : "asc";
@@ -70,10 +80,10 @@
 
     function render() {
       const query = window.BibliotecaSol.normalize(search.value);
-      const selectedAges = selectedValues(ageFilters);
-      const selectedTopics = selectedValues(topicFilters);
-      const selectedGenres = selectedValues(genreFilters);
-      const selectedAvailability = selectedValues(availabilityFilters);
+      const selectedAge = ageFilter.value;
+      const selectedTopic = topicFilter.value;
+      const selectedGenre = genreFilter.value;
+      const selectedAvailability = availabilityFilter.value;
 
       const books = window.BibliotecaSol.getBooks().filter((book) => {
         const searchable = window.BibliotecaSol.normalize([
@@ -92,10 +102,10 @@
 
         return (
           (!query || searchable.includes(query)) &&
-          matchesAny(selectedAges, book.nivell_recomanat) &&
-          matchesAny(selectedTopics, book.tematica) &&
-          matchesAny(selectedGenres, book.genere) &&
-          (!selectedAvailability.length || selectedAvailability.includes(availabilityValue))
+          matchesValue(selectedAge, book.nivell_recomanat) &&
+          matchesValue(selectedTopic, book.tematica) &&
+          matchesValue(selectedGenre, book.genere) &&
+          (!selectedAvailability || selectedAvailability === availabilityValue)
         );
       });
       sortBooks(books, sortField.value, sortDirection.dataset.direction || "asc");
@@ -112,9 +122,6 @@
       updateRequestPanel();
     }
 
-    search.addEventListener("input", render);
-    render();
-
     function createCatalogCard(book, canRequest, selected) {
       const card = window.BibliotecaSol.createBookCard(book);
       if (!canRequest) return card;
@@ -122,8 +129,8 @@
       const action = document.createElement("div");
       action.className = "book-select-action";
       action.innerHTML = `
-        <button class="link-button ${selected ? "button-selected icon-save" : "icon-add"}" type="button" aria-pressed="${selected ? "true" : "false"}">
-          ${selected ? "Seleccionat" : "Seleccionar"}
+        <button class="link-button compact-select ${selected ? "button-selected icon-save" : "icon-add"}" type="button" aria-pressed="${selected ? "true" : "false"}">
+          ${selected ? "Triat" : "Triar"}
         </button>
       `;
       action.querySelector("button").addEventListener("click", () => {
@@ -165,6 +172,8 @@
       sendRequest.toggleAttribute("aria-disabled", !selected.length);
       sendRequest.classList.toggle("button-disabled", !selected.length);
     }
+
+    render();
   }
 
   function valuesFor(field) {
@@ -173,35 +182,21 @@
     return uniqueSorted([...fromBooks, ...fromOptions]);
   }
 
-  function populateFilterGroup(container, values, onChange) {
-    container.innerHTML = "";
+  function populateSelect(select, values) {
+    const firstOption = select.querySelector("option");
+    select.innerHTML = "";
+    if (firstOption) select.appendChild(firstOption);
     values.forEach((value) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "filter-chip icon-filter";
-      button.dataset.value = value;
-      button.setAttribute("aria-pressed", "false");
-      button.textContent = value;
-      button.addEventListener("click", () => {
-        toggleChip(button);
-        onChange();
-      });
-      container.appendChild(button);
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
     });
   }
 
-  function toggleChip(button) {
-    button.setAttribute("aria-pressed", button.getAttribute("aria-pressed") === "true" ? "false" : "true");
-  }
-
-  function selectedValues(container) {
-    return Array.from(container.querySelectorAll(".filter-chip[aria-pressed='true']")).map((button) => button.dataset.value);
-  }
-
-  function matchesAny(selected, value) {
-    if (!selected.length) return true;
-    const normalizedValue = window.BibliotecaSol.normalize(value);
-    return selected.some((item) => window.BibliotecaSol.normalize(item) === normalizedValue);
+  function matchesValue(selected, value) {
+    if (!selected) return true;
+    return window.BibliotecaSol.normalize(selected) === window.BibliotecaSol.normalize(value);
   }
 
   function uniqueSorted(values) {
@@ -232,19 +227,18 @@
     return book[field] || "";
   }
 
-  function buildFilterSummary(search, ageFilters, topicFilters, genreFilters, availabilityFilters) {
+  function buildFilterSummary(search, ageFilter, topicFilter, genreFilter, availabilityFilter) {
     const parts = [];
     if (search.value.trim()) parts.push(`Cerca: ${search.value.trim()}`);
-    addSelectedSummary(parts, "Edat", ageFilters);
-    addSelectedSummary(parts, "Temàtica", topicFilters);
-    addSelectedSummary(parts, "Gènere", genreFilters);
-    addSelectedSummary(parts, "Disponibilitat", availabilityFilters);
+    addSelectSummary(parts, "Edat", ageFilter);
+    addSelectSummary(parts, "Temàtica", topicFilter);
+    addSelectSummary(parts, "Gènere", genreFilter);
+    addSelectSummary(parts, "Disponibilitat", availabilityFilter);
     return parts.length ? parts.join(" · ") : "Sense filtres aplicats";
   }
 
-  function addSelectedSummary(parts, label, container) {
-    const values = selectedValues(container);
-    if (values.length) parts.push(`${label}: ${values.join(", ")}`);
+  function addSelectSummary(parts, label, select) {
+    if (select.value) parts.push(`${label}: ${select.options[select.selectedIndex].textContent}`);
   }
 
   function openPdfView(books, filterSummary) {
