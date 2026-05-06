@@ -42,8 +42,36 @@
         <a class="button icon-login" href="login.html">Anar a l'accés</a>
       </section>
 
-      <section id="editor-app" class="editor-workspace" hidden>
-        <section class="editor-panel">
+      <section id="editor-app" class="manager-shell" hidden>
+        <section class="manager-summary" aria-label="Resum de circulació">
+          <div>
+            <strong id="summary-pending">0</strong>
+            <span>Sol·licituds pendents</span>
+          </div>
+          <div>
+            <strong id="summary-active-loans">0</strong>
+            <span>Préstecs actius</span>
+          </div>
+          <div>
+            <strong id="summary-overdue">0</strong>
+            <span>Retards</span>
+          </div>
+          <div>
+            <strong id="summary-available-books">0</strong>
+            <span>Exemplars disponibles</span>
+          </div>
+        </section>
+
+        <nav class="manager-tabs" aria-label="Gestió de biblioteca">
+          <button class="manager-tab" type="button" data-manager-tab="catalog" aria-selected="true">Catàleg</button>
+          <button class="manager-tab" type="button" data-manager-tab="requests" aria-selected="false">Sol·licituds</button>
+          <button class="manager-tab" type="button" data-manager-tab="loans" aria-selected="false">Préstecs</button>
+          <button class="manager-tab" type="button" data-manager-tab="overdue" aria-selected="false">Retards</button>
+          <button class="manager-tab" type="button" data-manager-tab="history" aria-selected="false">Historial</button>
+        </nav>
+
+        <section class="manager-view editor-workspace" data-manager-view="catalog">
+          <section class="editor-panel">
           <div class="section-heading compact">
             <div>
               <h2 id="form-title">Introduir nous llibres</h2>
@@ -116,9 +144,9 @@
             <datalist id="genere-options"></datalist>
             <datalist id="ubicacio-options"></datalist>
           </form>
-        </section>
+          </section>
 
-        <section class="editor-panel">
+          <section class="editor-panel">
           <div class="section-heading compact">
             <div>
               <h2>Editar catàleg</h2>
@@ -130,6 +158,59 @@
             <input id="editor-search" type="search" placeholder="Títol, autor, ISBN, ubicació...">
           </label>
           <div id="editor-list" class="list-panel"></div>
+          </section>
+        </section>
+
+        <section class="manager-view" data-manager-view="requests" hidden>
+          <section class="editor-panel">
+            <div class="section-heading compact">
+              <div>
+                <h2>Sol·licituds pendents</h2>
+                <p>Ordenades per ubicació per facilitar la preparació dels llibres.</p>
+              </div>
+              <button class="button button-secondary icon-sort-asc" type="button" data-refresh-circulation>Actualitzar</button>
+            </div>
+            <div id="requests-list" class="circulation-list"></div>
+          </section>
+        </section>
+
+        <section class="manager-view" data-manager-view="loans" hidden>
+          <section class="editor-panel">
+            <div class="section-heading compact">
+              <div>
+                <h2>Préstecs actius</h2>
+                <p>Control de qui té cada llibre i data prevista de retorn.</p>
+              </div>
+              <button class="button button-secondary icon-sort-asc" type="button" data-refresh-circulation>Actualitzar</button>
+            </div>
+            <div id="loans-list" class="circulation-list"></div>
+          </section>
+        </section>
+
+        <section class="manager-view" data-manager-view="overdue" hidden>
+          <section class="editor-panel">
+            <div class="section-heading compact">
+              <div>
+                <h2>Retards</h2>
+                <p>Préstecs que ja han superat la data prevista de retorn.</p>
+              </div>
+              <button class="button button-secondary icon-sort-asc" type="button" data-refresh-circulation>Actualitzar</button>
+            </div>
+            <div id="overdue-list" class="circulation-list"></div>
+          </section>
+        </section>
+
+        <section class="manager-view" data-manager-view="history" hidden>
+          <section class="editor-panel">
+            <div class="section-heading compact">
+              <div>
+                <h2>Historial</h2>
+                <p>Darreres devolucions registrades.</p>
+              </div>
+              <button class="button button-secondary icon-sort-asc" type="button" data-refresh-circulation>Actualitzar</button>
+            </div>
+            <div id="history-list" class="circulation-list"></div>
+          </section>
         </section>
       </section>
     </main>

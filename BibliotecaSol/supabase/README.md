@@ -20,6 +20,7 @@ Amb aquests valors:
 - el catàleg es carregarà de Supabase;
 - els accessos quedaran registrats a `app_users` i `access_logs`;
 - les reserves es desaran a `reservations`;
+- el gestor podrà convertir reserves en préstecs, renovar 15 dies i registrar devolucions;
 - si Supabase no està configurat o falla, l'app continuarà funcionant amb `localStorage`.
 
 Important: quan Supabase estigui configurat correctament, el catàleg vindrà de la taula `books`. Si aquesta taula encara és buida, l'app mostrarà 0 llibres. Després d'executar l'esquema caldrà importar els llibres reals o donar-los d'alta amb el gestor quan tinguem l'autenticació de Supabase activada.

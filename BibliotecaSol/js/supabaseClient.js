@@ -83,6 +83,85 @@
     };
   }
 
+  function dbReservationToApp(row) {
+    const book = row.books || {};
+    return {
+      id: row.id,
+      bookId: row.book_id,
+      userEmail: row.user_email,
+      status: row.status,
+      requestedAt: row.requested_at,
+      resolvedAt: row.resolved_at,
+      notes: row.notes || "",
+      book: dbBookToApp({
+        id: row.book_id,
+        title: book.title || "",
+        author: book.author || "",
+        publisher: book.publisher || "",
+        isbn: book.isbn || "",
+        publication_year: book.publication_year || "",
+        language: book.language || "Català",
+        recommended_level: book.recommended_level || "",
+        topic: book.topic || "",
+        genre: book.genre || "",
+        summary: book.summary || "",
+        location: book.location || "",
+        total_copies: book.total_copies || 0,
+        available_copies: book.available_copies || 0,
+        active: book.active !== false
+      })
+    };
+  }
+
+  function dbLoanToApp(row) {
+    const book = row.books || {};
+    return {
+      id: row.id,
+      bookId: row.book_id,
+      reservationId: row.reservation_id,
+      userEmail: row.user_email,
+      status: row.status,
+      loanedAt: row.loaned_at,
+      dueAt: row.due_at,
+      returnedAt: row.returned_at,
+      notes: row.notes || "",
+      book: dbBookToApp({
+        id: row.book_id,
+        title: book.title || "",
+        author: book.author || "",
+        publisher: book.publisher || "",
+        isbn: book.isbn || "",
+        publication_year: book.publication_year || "",
+        language: book.language || "Català",
+        recommended_level: book.recommended_level || "",
+        topic: book.topic || "",
+        genre: book.genre || "",
+        summary: book.summary || "",
+        location: book.location || "",
+        total_copies: book.total_copies || 0,
+        available_copies: book.available_copies || 0,
+        active: book.active !== false
+      })
+    };
+  }
+
+  function dbReturnToApp(row) {
+    const book = row.books || {};
+    return {
+      id: row.id,
+      loanId: row.loan_id,
+      bookId: row.book_id,
+      userEmail: row.user_email,
+      returnedAt: row.returned_at,
+      conditionNotes: row.condition_notes || "",
+      book: {
+        titol: book.title || "",
+        autor: book.author || "",
+        ubicacio: book.location || ""
+      }
+    };
+  }
+
   const optionFieldMap = {
     recommended_level: "nivell_recomanat",
     topic: "tematica",
@@ -176,6 +255,65 @@
         method: "PATCH",
         body: JSON.stringify({ active: false })
       });
+    },
+    async listReservations() {
+      const rows = await request("/rest/v1/reservations?select=*,books(*)&status=in.(pendent,acceptada)&order=requested_at.asc");
+      return rows.map(dbReservationToApp);
+    },
+    async updateReservationStatus(reservationId, status) {
+      const rows = await request(`/rest/v1/reservations?id=eq.${encodeURIComponent(reservationId)}&select=*`, {
+        method: "PATCH",
+        prefer: "return=representation",
+        body: JSON.stringify({
+          status,
+          resolved_at: new Date().toISOString()
+        })
+      });
+      return rows[0];
+    },
+    async listLoans(status) {
+      const filter = status ? `&status=eq.${encodeURIComponent(status)}` : "";
+      const rows = await request(`/rest/v1/loans?select=*,books(*)&order=loaned_at.desc${filter}`);
+      return rows.map(dbLoanToApp);
+    },
+    async listReturns() {
+      const rows = await request("/rest/v1/returns?select=*,books(*)&order=returned_at.desc&limit=80");
+      return rows.map(dbReturnToApp);
+    },
+    async registerLoan(bookId, userEmail, managerEmail, reservationId, dueAt) {
+      const row = await request("/rest/v1/rpc/register_loan", {
+        method: "POST",
+        body: JSON.stringify({
+          target_book_id: bookId,
+          target_user_email: userEmail,
+          manager_email: managerEmail,
+          target_reservation_id: reservationId || null,
+          due_date: dueAt || null
+        })
+      });
+      return dbLoanToApp(row);
+    },
+    async registerReturn(loanId, managerEmail, conditionNote) {
+      const row = await request("/rest/v1/rpc/register_return", {
+        method: "POST",
+        body: JSON.stringify({
+          target_loan_id: loanId,
+          manager_email: managerEmail,
+          condition_note: conditionNote || null
+        })
+      });
+      return dbReturnToApp(row);
+    },
+    async renewLoan(loanId, dueAt, note) {
+      const rows = await request(`/rest/v1/loans?id=eq.${encodeURIComponent(loanId)}&select=*,books(*)`, {
+        method: "PATCH",
+        prefer: "return=representation",
+        body: JSON.stringify({
+          due_at: dueAt,
+          notes: note || null
+        })
+      });
+      return dbLoanToApp(rows[0]);
     }
   };
 })();

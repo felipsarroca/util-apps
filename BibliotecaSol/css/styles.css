@@ -1329,6 +1329,75 @@ main h3 {
   grid-column: 1 / -1;
 }
 
+.manager-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.manager-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.manager-summary div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.manager-summary strong,
+.manager-summary span {
+  display: block;
+}
+
+.manager-summary strong {
+  color: #1e1e24;
+  font-size: 1.26rem;
+  line-height: 1;
+}
+
+.manager-summary span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.manager-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.manager-tab {
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 750;
+  padding: 0.5rem 0.75rem;
+}
+
+.manager-tab:hover {
+  background: #f8fafc;
+}
+
+.manager-tab[aria-selected="true"] {
+  background: #1e1e24;
+  color: #ffffff;
+}
+
 .editor-workspace,
 .editor-layout {
   display: grid;
@@ -1347,6 +1416,77 @@ main h3 {
 
 .list-panel {
   overflow: hidden;
+}
+
+.circulation-list {
+  display: grid;
+  gap: 8px;
+}
+
+.circulation-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(180px, 0.65fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.circulation-main,
+.circulation-meta {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.circulation-main strong,
+.circulation-main span,
+.circulation-meta span {
+  overflow-wrap: anywhere;
+}
+
+.circulation-main strong {
+  font-size: 0.92rem;
+}
+
+.circulation-main span,
+.circulation-meta span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.circulation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.status-pill {
+  width: fit-content;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.22rem 0.5rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.69rem;
+  font-weight: 850;
+}
+
+.status-pill.warning {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.status-pill.danger {
+  background: #fef2f2;
+  color: #991b1b;
 }
 
 .editor-item {
@@ -1470,6 +1610,7 @@ main h3 {
 
 @media (max-width: 960px) {
   .home-dashboard,
+  .manager-summary,
   .editor-workspace,
   .editor-layout,
   .auth-layout,
@@ -1556,6 +1697,7 @@ main h3 {
   }
 
   .search-row,
+  .manager-summary,
   .access-choice-panel,
   .book-grid,
   .form-grid,
@@ -1576,6 +1718,23 @@ main h3 {
 
   .filter-actions .button,
   .toolbar-actions .button {
+    width: 100%;
+  }
+
+  .manager-tab {
+    flex: 1 1 auto;
+  }
+
+  .circulation-card {
+    grid-template-columns: 1fr;
+  }
+
+  .circulation-actions {
+    justify-content: stretch;
+  }
+
+  .circulation-actions .link-button,
+  .circulation-actions .button {
     width: 100%;
   }
 
