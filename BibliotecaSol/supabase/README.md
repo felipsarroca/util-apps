@@ -34,6 +34,24 @@ Important: quan Supabase estigui configurat correctament, el catàleg vindrà de
 - `loans`: préstecs actius o retornats.
 - `returns`: registre específic de devolucions.
 - `book_options`: opcions reutilitzables per edat, temàtica, gènere i ubicació.
+- `email_notifications`: registre dels avisos de correu enviats, omesos o fallits.
+
+## Avisos per correu
+
+Hi ha dues Edge Functions preparades:
+
+- `notify-reservation`: s'executa quan es registra una reserva i avisa `biblioteca@ramonpont.cat`.
+- `daily-loan-reminders`: revisa préstecs actius i envia avisos de cortesia quan falten pocs dies, quan venç el termini o quan ja s'ha superat.
+
+Per enviar correus reals cal configurar un proveïdor SMTP/API. Ara està preparat per a Resend:
+
+```powershell
+supabase secrets set RESEND_API_KEY=LA_TEVA_CLAU RESEND_FROM="Biblioteca de la Sol <avisos@el-teu-domini.cat>" LIBRARY_EMAIL=biblioteca@ramonpont.cat --project-ref jqabmywmbvvlacpzujup
+```
+
+Si `RESEND_API_KEY` o `RESEND_FROM` no existeixen, les funcions no fallen: deixen la notificació marcada com a `skipped` perquè l'app pugui continuar funcionant.
+
+La funció `daily-loan-reminders` s'ha de programar al Dashboard de Supabase com a tasca diària, per exemple cada matí. La funció de reserves s'invoca directament des de l'app quan es crea una reserva.
 
 ## Criteri de seguretat
 

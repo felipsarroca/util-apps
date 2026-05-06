@@ -42,6 +42,30 @@
     return text ? JSON.parse(text) : null;
   }
 
+  async function invokeFunction(name, body) {
+    if (!window.BibliotecaSolSupabase.isConfigured()) return null;
+
+    const response = await fetch(`${config.supabaseUrl}/functions/v1/${name}`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(body || {})
+    });
+
+    if (!response.ok) {
+      let message = `Error de funcio Supabase (${response.status})`;
+      try {
+        const payload = await response.json();
+        message = payload.error || payload.message || message;
+      } catch (error) {
+        message = await response.text();
+      }
+      throw new Error(message);
+    }
+
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+  }
+
   function dbBookToApp(book) {
     return {
       id: book.id,
@@ -223,7 +247,7 @@
       sessionStorage.removeItem(TOKEN_KEY);
     },
     async reserveBook(bookId, email, note) {
-      return request("/rest/v1/rpc/reserve_book", {
+      const reservation = await request("/rest/v1/rpc/reserve_book", {
         method: "POST",
         body: JSON.stringify({
           target_book_id: bookId,
@@ -231,6 +255,12 @@
           note: note || null
         })
       });
+      if (reservation && reservation.id) {
+        invokeFunction("notify-reservation", { reservation_id: reservation.id }).catch((error) => {
+          console.warn("No s'ha pogut enviar l'avis de reserva.", error);
+        });
+      }
+      return reservation;
     },
     async saveBook(book) {
       const payload = appBookToDb(book);

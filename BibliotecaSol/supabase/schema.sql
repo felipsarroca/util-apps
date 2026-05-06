@@ -117,6 +117,21 @@ create table public.book_options (
   unique (field_name, value)
 );
 
+create table public.email_notifications (
+  id uuid primary key default gen_random_uuid(),
+  notification_type text not null,
+  recipient_email text not null,
+  reservation_id uuid references public.reservations(id) on delete cascade,
+  loan_id uuid references public.loans(id) on delete cascade,
+  subject text not null,
+  status text not null default 'pending' check (status in ('pending', 'sent', 'skipped', 'failed')),
+  sent_at timestamptz,
+  error_message text,
+  created_at timestamptz not null default now(),
+  unique (notification_type, recipient_email, reservation_id),
+  unique (notification_type, recipient_email, loan_id)
+);
+
 create index books_active_title_idx on public.books (active, title);
 create index books_search_idx on public.books using gin (
   to_tsvector(
@@ -136,6 +151,7 @@ create index reservations_book_status_idx on public.reservations (book_id, statu
 create index reservations_user_status_idx on public.reservations (user_email, status);
 create index loans_book_status_idx on public.loans (book_id, status);
 create index loans_user_status_idx on public.loans (user_email, status);
+create index email_notifications_status_idx on public.email_notifications (status, created_at);
 
 create trigger app_users_set_updated_at
 before update on public.app_users
@@ -358,6 +374,7 @@ alter table public.reservations enable row level security;
 alter table public.loans enable row level security;
 alter table public.returns enable row level security;
 alter table public.book_options enable row level security;
+alter table public.email_notifications enable row level security;
 
 create policy "Tothom pot consultar el cataleg actiu"
 on public.books for select
@@ -420,6 +437,10 @@ with check ((auth.jwt() ->> 'email') = 'biblioteca@ramonpont.cat');
 create policy "Gestor autenticat pot crear devolucions"
 on public.returns for insert
 with check ((auth.jwt() ->> 'email') = 'biblioteca@ramonpont.cat');
+
+create policy "Gestor autenticat pot consultar notificacions"
+on public.email_notifications for select
+using ((auth.jwt() ->> 'email') = 'biblioteca@ramonpont.cat');
 
 insert into public.book_options (field_name, value) values
   ('recommended_level', '3-5 anys'),

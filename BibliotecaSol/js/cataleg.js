@@ -31,10 +31,19 @@
     if (!list || !search || !count || !clearButton || !pdfButton || !toggleFilters || !advancedFilters || !sortField || !sortDirection || !ageFilter || !topicFilter || !genreFilter || !availabilityFilter) return;
 
     const params = new URLSearchParams(window.location.search);
+    const session = window.BibliotecaSol.getSession();
+    const publicMode = params.get("mode") === "public" && !session;
     search.value = params.get("q") || "";
     let currentResults = [];
     const selectedBooks = new Set();
-    const canRequestBooks = !window.BibliotecaSol.canManageCatalog(window.BibliotecaSol.getSession());
+    const canRequestBooks = Boolean(session && !window.BibliotecaSol.canManageCatalog(session));
+
+    if (publicMode) {
+      document.body.classList.add("catalog-public-mode");
+      document.querySelectorAll(".main-nav a[href='login.html'], [data-editor-only]").forEach((element) => {
+        element.hidden = true;
+      });
+    }
 
     populateSelect(ageFilter, valuesFor("nivell_recomanat"));
     populateSelect(topicFilter, valuesFor("tematica"));
