@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editor - Biblioteca de la Sol</title>
+    <link rel="icon" href="assets/logo-sol.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/config.js" defer></script>
+    <script src="js/shared.js" defer></script>
+    <script src="js/editor.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Biblioteca de la Sol">
+        <img src="assets/logo-sol.svg" alt="" width="56" height="56">
+        <span>
+          <strong>Biblioteca de la Sol</strong>
+          <small>Escola Ramon Pont</small>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="Navegació principal">
+        <a href="cataleg.html">Catàleg</a>
+        <a aria-current="page" href="editor.html">Editor</a>
+        <a class="button button-small icon-login" href="login.html">Accés</a>
+      </nav>
+    </header>
+
+    <main class="page-shell">
+      <section class="toolbar page-intro">
+        <div>
+          <h1>Editor del catàleg</h1>
+          <p>Alta i manteniment dels llibres registrats.</p>
+        </div>
+        <a class="button button-secondary icon-catalog" href="cataleg.html">Veure catàleg</a>
+      </section>
+
+      <section id="editor-gate" class="notice" hidden>
+        <h2>Cal iniciar sessió com a editor</h2>
+        <p>Aquesta pantalla està pensada per al personal que introdueix o modifica llibres.</p>
+        <a class="button icon-login" href="login.html">Anar a l'accés</a>
+      </section>
+
+      <section id="editor-app" class="editor-layout" hidden>
+        <form id="book-form" class="editor-form">
+          <input type="hidden" name="id">
+          <h2 id="form-title">Afegir llibre</h2>
+          <div class="form-grid">
+            <label>
+              Títol
+              <input name="titol" type="text" required>
+            </label>
+            <label>
+              Autor
+              <input name="autor" type="text" required>
+            </label>
+            <label>
+              Editorial
+              <input name="editorial" type="text">
+            </label>
+            <label>
+              ISBN
+              <input name="isbn" type="text">
+            </label>
+            <label>
+              Any de publicació
+              <input name="any_publicacio" type="number" min="1400" max="2100">
+            </label>
+            <label>
+              Llengua
+              <input name="llengua" type="text" value="Català">
+            </label>
+            <label>
+              Edat
+              <input name="nivell_recomanat" type="text" list="edat-options" placeholder="6-8 anys, 1r ESO...">
+            </label>
+            <label>
+              Temàtica
+              <input name="tematica" type="text" list="tematica-options" placeholder="Aventura, història, ciència...">
+            </label>
+            <label>
+              Gènere
+              <input name="genere" type="text" list="genere-options">
+            </label>
+            <label>
+              Ubicació
+              <input name="ubicacio" type="text" list="ubicacio-options" placeholder="Prestatgeria, aula, zona...">
+            </label>
+            <label>
+              Exemplars totals
+              <input name="exemplars" type="number" min="1" value="1" required>
+            </label>
+            <label>
+              Exemplars disponibles
+              <input name="disponibles" type="number" min="0" value="1" required>
+            </label>
+          </div>
+          <label>
+            Resum breu
+            <textarea name="resum" rows="4"></textarea>
+          </label>
+          <div class="form-actions">
+            <button class="button button-save icon-save" type="submit">Desar llibre</button>
+            <button id="reset-form" class="button button-secondary button-warning icon-clear" type="button">Netejar</button>
+          </div>
+          <p id="editor-message" class="form-message" role="status"></p>
+          <datalist id="edat-options"></datalist>
+          <datalist id="tematica-options"></datalist>
+          <datalist id="genere-options"></datalist>
+          <datalist id="ubicacio-options"></datalist>
+        </form>
+
+        <section>
+          <div class="section-heading compact">
+            <h2>Llibres registrats</h2>
+            <p id="editor-count">0 llibres</p>
+          </div>
+          <div id="editor-list" class="list-panel"></div>
+        </section>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.0</p>
+      <p>Codi: AGPLv3 · Continguts: CC BY-NC-SA 4.0 · © 2026 · <a href="https://github.com/" rel="noopener">Suggeriments i errors</a></p>
+    </footer>
+  </body>
+</html>

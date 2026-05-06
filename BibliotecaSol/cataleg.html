@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Catàleg - Biblioteca de la Sol</title>
+    <link rel="icon" href="assets/logo-sol.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/config.js" defer></script>
+    <script src="js/shared.js" defer></script>
+    <script src="js/cataleg.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Biblioteca de la Sol">
+        <img src="assets/logo-sol.svg" alt="" width="56" height="56">
+        <span>
+          <strong>Biblioteca de la Sol</strong>
+          <small>Escola Ramon Pont</small>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="Navegació principal">
+        <a aria-current="page" href="cataleg.html">Catàleg</a>
+        <a href="editor.html">Editor</a>
+        <a class="button button-small icon-login" href="login.html">Accés</a>
+      </nav>
+    </header>
+
+    <main class="page-shell">
+      <section class="toolbar page-intro">
+        <div>
+          <h1>Catàleg de llibres</h1>
+          <p>Consulta ràpida del fons disponible.</p>
+        </div>
+        <a class="button button-secondary icon-add" href="editor.html">Afegir llibre</a>
+      </section>
+
+      <section class="filters catalog-filters" aria-label="Filtres del catàleg">
+        <label>
+          Cerca
+          <input id="catalog-search" type="search" placeholder="Títol, autor, ISBN, tema...">
+        </label>
+        <div class="filter-actions">
+          <button id="clear-filters" class="button button-secondary button-warning icon-clear" type="button">Netejar filtres</button>
+          <button id="download-pdf" class="button button-secondary button-pdf icon-pdf" type="button">Descarregar PDF</button>
+        </div>
+      </section>
+
+      <section class="multi-filter-panel" aria-label="Criteris de cerca">
+        <div>
+          <h2>Edat</h2>
+          <div id="age-filters" class="filter-chip-group"></div>
+        </div>
+        <div>
+          <h2>Temàtica</h2>
+          <div id="topic-filters" class="filter-chip-group"></div>
+        </div>
+        <div>
+          <h2>Gènere</h2>
+          <div id="genre-filters" class="filter-chip-group"></div>
+        </div>
+        <div>
+          <h2>Disponibilitat</h2>
+          <div id="availability-filters" class="filter-chip-group">
+            <button class="filter-chip icon-filter" type="button" data-value="available" aria-pressed="false">Disponibles</button>
+            <button class="filter-chip icon-filter" type="button" data-value="unavailable" aria-pressed="false">No disponibles</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-heading compact">
+          <h2>Resultats</h2>
+          <div class="result-tools">
+            <p id="catalog-count">0 llibres</p>
+            <label class="sort-control">
+              Ordena per
+              <select id="sort-field">
+                <option value="titol">Nom</option>
+                <option value="autor">Autor</option>
+                <option value="nivell_recomanat">Edat</option>
+                <option value="tematica">Temàtica</option>
+                <option value="genere">Gènere</option>
+                <option value="disponibles">Disponibilitat</option>
+                <option value="any_publicacio">Any</option>
+              </select>
+            </label>
+            <button id="sort-direction" class="button button-secondary icon-sort-asc" type="button" data-direction="asc">Ascendent</button>
+          </div>
+        </div>
+        <div class="catalog-table-head" aria-hidden="true">
+          <span>Llibre</span>
+          <span>Autor</span>
+          <span>Edat</span>
+          <span>Temàtica</span>
+          <span>Gènere</span>
+          <span>Disp.</span>
+          <span>Ubicació</span>
+        </div>
+        <div id="catalog-list" class="catalog-list" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.0</p>
+      <p>Codi: AGPLv3 · Continguts: CC BY-NC-SA 4.0 · © 2026 · <a href="https://github.com/" rel="noopener">Suggeriments i errors</a></p>
+    </footer>
+  </body>
+</html>

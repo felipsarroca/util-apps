@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Biblioteca de la Sol - Escola Ramon Pont</title>
+    <link rel="icon" href="assets/logo-sol.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/config.js" defer></script>
+    <script src="js/shared.js" defer></script>
+    <script src="js/cataleg.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Biblioteca de la Sol">
+        <img src="assets/logo-sol.svg" alt="" width="56" height="56">
+        <span>
+          <strong>Biblioteca de la Sol</strong>
+          <small>Escola Ramon Pont</small>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="Navegació principal">
+        <a href="cataleg.html">Catàleg</a>
+        <a href="editor.html">Editor</a>
+        <a class="button button-small icon-login" href="login.html">Accés</a>
+      </nav>
+    </header>
+
+    <main class="home-shell">
+      <section class="home-dashboard">
+        <div class="hero-copy">
+          <div class="hero-title">
+            <img src="assets/logo-sol.svg" alt="" width="64" height="64">
+            <div>
+              <h1>Biblioteca de la Sol</h1>
+              <p class="subtitle">Escola Ramon Pont</p>
+            </div>
+          </div>
+          <form class="search-band" action="cataleg.html" method="get">
+            <label for="home-search">Cerca un llibre</label>
+            <div class="search-row">
+              <input id="home-search" name="q" type="search" placeholder="Títol, autor, tema o nivell">
+              <button class="button icon-search" type="submit">Cercar</button>
+            </div>
+          </form>
+        </div>
+        <aside class="summary-panel" aria-label="Resum del catàleg">
+          <h2>Estat del catàleg</h2>
+          <dl class="stats-grid">
+            <div>
+              <dt id="stat-books">0</dt>
+              <dd>Llibres</dd>
+            </div>
+            <div>
+              <dt id="stat-copies">0</dt>
+              <dd>Exemplars</dd>
+            </div>
+            <div>
+              <dt id="stat-available">0</dt>
+              <dd>Disponibles</dd>
+            </div>
+          </dl>
+          <a class="button button-secondary icon-edit" href="editor.html">Gestionar llibres</a>
+        </aside>
+      </section>
+
+      <section class="content-section">
+        <div class="section-heading">
+          <h2>Llibres destacats</h2>
+          <a href="cataleg.html">Veure tot el catàleg</a>
+        </div>
+        <div id="featured-books" class="book-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.0</p>
+      <p>Codi: AGPLv3 · Continguts: CC BY-NC-SA 4.0 · © 2026 · <a href="https://github.com/" rel="noopener">Suggeriments i errors</a></p>
+    </footer>
+  </body>
+</html>
