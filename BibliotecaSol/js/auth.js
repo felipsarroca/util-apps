@@ -50,7 +50,7 @@
       const editorEmail = document.querySelector('#editor-login-form input[name="email"]');
       const editorPassword = document.querySelector('#editor-login-form input[name="password"]');
       if (editorEmail) editorEmail.value = "biblioteca@ramonpont.cat";
-      if (editorPassword) editorPassword.value = "biblioteca2026";
+      if (editorPassword) editorPassword.value = "bibliotecasol";
       showMessage("editor-login-message", "Contrasenya de prova preparada.", "success");
       return;
     }

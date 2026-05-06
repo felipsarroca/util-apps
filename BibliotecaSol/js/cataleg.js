@@ -1,17 +1,13 @@
 (function () {
   function initHome() {
-    const featured = document.getElementById("featured-books");
     const statBooks = document.getElementById("stat-books");
-    if (!featured || !statBooks) return;
+    if (!statBooks) return;
 
     const books = window.BibliotecaSol.getBooks();
     const stats = window.BibliotecaSol.getBookStats(books);
     document.getElementById("stat-books").textContent = stats.books;
     document.getElementById("stat-copies").textContent = stats.copies;
     document.getElementById("stat-available").textContent = stats.available;
-
-    featured.innerHTML = "";
-    books.slice(0, 3).forEach((book) => featured.appendChild(window.BibliotecaSol.createBookCard(book)));
   }
 
   function initCatalog() {

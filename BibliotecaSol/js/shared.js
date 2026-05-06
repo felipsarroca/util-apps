@@ -18,7 +18,7 @@
       nom: "Biblioteca",
       cognoms: "Escola Ramon Pont",
       email: "biblioteca@ramonpont.cat",
-      password: "biblioteca2026",
+      password: "bibliotecasol",
       rol: "editor",
       created_at: "2026-05-06"
     }
@@ -851,6 +851,12 @@
     });
   }
 
+  function redirectIfManagerRequired() {
+    if (!document.body.dataset.requiresManager) return;
+    if (canManageCatalog(getSession())) return;
+    window.location.replace("login.html#gestor");
+  }
+
   function updateAccessState() {
     updateAccessLink();
     updateRoleVisibility();
@@ -971,6 +977,7 @@
     ensureUsers();
     ensureOptions();
     updateAccessState();
+    redirectIfManagerRequired();
     initAccessForms();
     document.addEventListener("click", (event) => {
       const logoutLink = event.target.closest("[data-logout='true']");

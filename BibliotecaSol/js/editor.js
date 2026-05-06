@@ -7,10 +7,13 @@
     if (!gate || !app || !form || !resetButton) return;
 
     const session = window.BibliotecaSol.getSession();
-    const canEdit = session && (session.rol === "editor" || session.rol === "administrador");
+    const canEdit = window.BibliotecaSol.canManageCatalog(session);
     gate.hidden = canEdit;
     app.hidden = !canEdit;
-    if (!canEdit) return;
+    if (!canEdit) {
+      window.location.replace("login.html#gestor");
+      return;
+    }
 
     populateOptionLists();
     form.addEventListener("submit", handleSave);
@@ -20,6 +23,7 @@
 
   function handleSave(event) {
     event.preventDefault();
+    if (!requireManager()) return;
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form));
     const books = window.BibliotecaSol.getBooks();
@@ -143,6 +147,7 @@
   }
 
   function archiveBook(id) {
+    if (!requireManager()) return;
     const books = window.BibliotecaSol.getBooks().map((book) => {
       if (book.id === id) {
         return { ...book, actiu: false };
@@ -170,6 +175,12 @@
     if (!element) return;
     element.textContent = text;
     element.className = `form-message ${type || ""}`.trim();
+  }
+
+  function requireManager() {
+    if (window.BibliotecaSol.canManageCatalog(window.BibliotecaSol.getSession())) return true;
+    window.location.replace("login.html#gestor");
+    return false;
   }
 
   document.addEventListener("DOMContentLoaded", initEditor);

@@ -20,7 +20,7 @@ Perfils de prova:
 
 - Usuari de consulta: `alumnat@ramonpont.cat`
 - Usuari editor: `biblioteca@ramonpont.cat`
-- Contrasenya de l’editor local: `biblioteca2026`
+- Contrasenya de l’editor local: `bibliotecasol`
 
 ## Proper pas tecnic
 
