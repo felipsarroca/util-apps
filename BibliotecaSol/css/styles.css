@@ -554,6 +554,67 @@ main h3 {
   gap: 8px;
 }
 
+.access-choice-panel {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.access-choice {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "icon title"
+    "icon text";
+  align-items: start;
+  gap: 3px 9px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+
+.access-choice:hover {
+  border-color: var(--line-strong);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.access-choice::before {
+  content: "";
+  grid-area: icon;
+  width: 1.28rem;
+  height: 1.28rem;
+  margin-top: 0.1rem;
+  background: currentColor;
+  mask: var(--button-icon, var(--icon-catalog)) center / contain no-repeat;
+}
+
+.access-choice strong {
+  grid-area: title;
+  font-size: 0.88rem;
+  line-height: 1.18;
+}
+
+.access-choice span {
+  grid-area: text;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+  line-height: 1.28;
+}
+
+.access-choice-manager {
+  border-color: #f6c453;
+  background: #fffaf0;
+}
+
 .summary-panel {
   padding: 18px;
   display: grid;
@@ -1029,6 +1090,13 @@ main h3 {
   font-weight: 650;
 }
 
+.auth-note {
+  margin: 0.45rem 0 1rem;
+  color: var(--muted);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .editor-auth-card {
   align-self: center;
 }
@@ -1273,6 +1341,7 @@ main h3 {
   }
 
   .search-row,
+  .access-choice-panel,
   .book-grid,
   .form-grid,
   .stats-grid,

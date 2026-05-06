@@ -15,6 +15,7 @@
       showMessage("reader-login-message", "Sessió tancada.", "success");
       renderSession();
     });
+    window.addEventListener("bibliotecaSol:sessionchange", renderSession);
 
     renderSession();
   }
@@ -35,12 +36,12 @@
 
     const user = findUser(data.email);
     if (!user || user.rol !== "editor" || user.password !== data.password) {
-      showMessage("editor-login-message", "Correu d’editor o contrasenya incorrectes.", "error");
+      showMessage("editor-login-message", "Correu de gestor o contrasenya incorrectes.", "error");
       return;
     }
 
     setSessionFromUser(user);
-    showMessage("editor-login-message", "Has iniciat sessió com a editor.", "success");
+    showMessage("editor-login-message", "Has iniciat sessió com a gestor.", "success");
     renderSession();
   }
 
@@ -64,7 +65,7 @@
 
     const user = findUser(email) || createReader(email);
     if (user.rol === "editor") {
-      showMessage("reader-login-message", "Aquest usuari té permisos d’editor. Cal entrar amb contrasenya.", "error");
+      showMessage("reader-login-message", "Aquest usuari té permisos de gestor. Cal entrar amb contrasenya.", "error");
       return;
     }
 

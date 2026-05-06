@@ -21,19 +21,19 @@
       </a>
       <nav class="main-nav" aria-label="Navegació principal">
         <a href="cataleg.html">Catàleg</a>
-        <a href="editor.html">Editor</a>
+        <a href="editor.html" data-editor-only hidden>Gestió</a>
         <a class="button button-small icon-login" aria-current="page" href="login.html">Accés</a>
       </nav>
     </header>
 
     <main class="page-shell auth-page">
-      <section class="auth-card auth-card-main">
+      <section class="auth-card auth-card-main" id="usuari">
         <div class="login-mark">
           <img src="assets/logo-sol.svg" alt="" width="64" height="64">
         </div>
         <div class="auth-heading">
-          <h1>Accés a la biblioteca</h1>
-          <p>Per consultar o reservar, n’hi ha prou amb el correu institucional.</p>
+          <h1>Registrar-se com a usuari</h1>
+          <p>Identifica't amb el correu del centre. Aquest perfil serveix per consultar i, quan s'activi, fer reserves. No dona accés a la gestió de llibres.</p>
         </div>
 
         <form id="reader-login-form" class="stacked-form">
@@ -41,29 +41,30 @@
             Correu institucional
             <input name="email" type="email" autocomplete="email" required placeholder="alumnat@ramonpont.cat">
           </label>
-          <button class="button icon-user" type="submit">Entrar com a usuari</button>
+          <button class="button icon-user" type="submit">Registrar-me com a usuari</button>
           <p id="reader-login-message" class="form-message" role="status"></p>
         </form>
 
         <div class="demo-access" aria-label="Perfils de prova">
           <button class="link-button icon-user" type="button" data-demo-login="alumnat@ramonpont.cat">Provar com a alumnat</button>
-          <button class="link-button icon-editor" type="button" data-demo-login="biblioteca@ramonpont.cat">Provar editor</button>
+          <button class="link-button icon-editor" type="button" data-demo-login="biblioteca@ramonpont.cat">Preparar gestor de prova</button>
         </div>
       </section>
 
-      <section class="auth-card editor-auth-card">
-        <p class="eyebrow">Editor</p>
-        <h2>Accés amb permisos</h2>
+      <section class="auth-card editor-auth-card" id="gestor">
+        <p class="eyebrow">Gestor</p>
+        <h2>Entrar com a gestor</h2>
+        <p class="auth-note">Només per al personal que introdueix llibres, modifica dades o gestiona el catàleg.</p>
         <form id="editor-login-form" class="stacked-form">
           <label>
-            Correu d’editor
+            Correu de gestor
             <input name="email" type="email" autocomplete="email" required placeholder="biblioteca@ramonpont.cat">
           </label>
           <label>
             Contrasenya
             <input name="password" type="password" autocomplete="current-password" required>
           </label>
-          <button class="button button-secondary button-editor icon-lock" type="submit">Entrar a l’editor</button>
+          <button class="button button-secondary button-editor icon-lock" type="submit">Entrar a la gestió</button>
           <p id="editor-login-message" class="form-message" role="status"></p>
         </form>
       </section>

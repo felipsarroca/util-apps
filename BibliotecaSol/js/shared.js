@@ -676,17 +676,25 @@
   }
 
   function getSession() {
-    return readJson(SESSION_KEY, null);
+    try {
+      const value = sessionStorage.getItem(SESSION_KEY);
+      return value ? JSON.parse(value) : null;
+    } catch (error) {
+      return null;
+    }
   }
 
   function setSession(user) {
-    writeJson(SESSION_KEY, user);
-    updateAccessLink();
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    updateAccessState();
+    window.dispatchEvent(new CustomEvent("bibliotecaSol:sessionchange"));
   }
 
   function clearSession() {
     localStorage.removeItem(SESSION_KEY);
-    updateAccessLink();
+    sessionStorage.removeItem(SESSION_KEY);
+    updateAccessState();
+    window.dispatchEvent(new CustomEvent("bibliotecaSol:sessionchange"));
   }
 
   function isAllowedEmail(email) {
@@ -743,6 +751,10 @@
       .replace(/'/g, "&#039;");
   }
 
+  function canManageCatalog(session) {
+    return Boolean(session && (session.rol === "editor" || session.rol === "administrador"));
+  }
+
   function updateAccessLink() {
     const session = getSession();
     document.querySelectorAll('.main-nav a[href="login.html"]').forEach((link) => {
@@ -750,21 +762,45 @@
         link.textContent = "Accés";
         link.title = "Accés";
         link.className = "button button-small icon-login";
+        delete link.dataset.logout;
         return;
       }
 
-      const isEditor = session.rol === "editor" || session.rol === "administrador";
+      const isEditor = canManageCatalog(session);
       link.textContent = session.nom || "Sessió";
-      link.title = `${session.email} (${session.rol})`;
+      link.title = `${session.email} (${session.rol}). Clica per sortir.`;
       link.className = `button button-small session-pill ${isEditor ? "session-editor icon-editor" : "session-reader icon-user"}`;
+      link.dataset.logout = "true";
     });
   }
 
+  function updateRoleVisibility() {
+    const canEdit = canManageCatalog(getSession());
+    document.querySelectorAll("[data-editor-only]").forEach((element) => {
+      element.hidden = !canEdit;
+    });
+  }
+
+  function updateAccessState() {
+    updateAccessLink();
+    updateRoleVisibility();
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    localStorage.removeItem(SESSION_KEY);
     ensureBooks();
     ensureUsers();
     ensureOptions();
-    updateAccessLink();
+    updateAccessState();
+    document.addEventListener("click", (event) => {
+      const logoutLink = event.target.closest("[data-logout='true']");
+      if (!logoutLink) return;
+      event.preventDefault();
+      clearSession();
+      if (window.location.pathname.endsWith("editor.html")) {
+        window.location.href = "login.html";
+      }
+    });
   });
 
   window.BibliotecaSol = {
@@ -778,6 +814,7 @@
     getSession,
     setSession,
     clearSession,
+    canManageCatalog,
     isAllowedEmail,
     getBookStats,
     createBookCard,

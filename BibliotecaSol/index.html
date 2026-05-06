@@ -21,7 +21,7 @@
       </a>
       <nav class="main-nav" aria-label="Navegació principal">
         <a href="cataleg.html">Catàleg</a>
-        <a href="editor.html">Editor</a>
+        <a href="editor.html" data-editor-only hidden>Gestió</a>
         <a class="button button-small icon-login" href="login.html">Accés</a>
       </nav>
     </header>
@@ -43,6 +43,20 @@
               <button class="button icon-search" type="submit">Cercar</button>
             </div>
           </form>
+          <div class="access-choice-panel" aria-label="Opcions d'accés">
+            <a class="access-choice icon-catalog" href="cataleg.html">
+              <strong>Consultar el catàleg</strong>
+              <span>Per mirar llibres i disponibilitat. No cal registrar-se.</span>
+            </a>
+            <a class="access-choice icon-user" href="login.html#usuari">
+              <strong>Registrar-se com a usuari</strong>
+              <span>Per identificar-se amb el correu del centre i poder fer reserves quan estigui disponible.</span>
+            </a>
+            <a class="access-choice access-choice-manager icon-editor" href="login.html#gestor">
+              <strong>Entrar com a gestor</strong>
+              <span>Per afegir llibres, editar dades i gestionar el catàleg.</span>
+            </a>
+          </div>
         </div>
         <aside class="summary-panel" aria-label="Resum del catàleg">
           <h2>Estat del catàleg</h2>
@@ -60,7 +74,7 @@
               <dd>Disponibles</dd>
             </div>
           </dl>
-          <a class="button button-secondary icon-edit" href="editor.html">Gestionar llibres</a>
+          <a class="button button-secondary icon-edit" href="editor.html" data-editor-only hidden>Gestionar llibres</a>
         </aside>
       </section>
 

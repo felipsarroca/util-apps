@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Editor - Biblioteca de la Sol</title>
+    <title>Gestió - Biblioteca de la Sol</title>
     <link rel="icon" href="assets/logo-sol.svg" type="image/svg+xml">
     <link rel="stylesheet" href="css/styles.css">
     <script src="js/config.js" defer></script>
@@ -21,7 +21,7 @@
       </a>
       <nav class="main-nav" aria-label="Navegació principal">
         <a href="cataleg.html">Catàleg</a>
-        <a aria-current="page" href="editor.html">Editor</a>
+        <a aria-current="page" href="editor.html" data-editor-only hidden>Gestió</a>
         <a class="button button-small icon-login" href="login.html">Accés</a>
       </nav>
     </header>
@@ -29,15 +29,15 @@
     <main class="page-shell">
       <section class="toolbar page-intro">
         <div>
-          <h1>Editor del catàleg</h1>
+          <h1>Gestió del catàleg</h1>
           <p>Alta i manteniment dels llibres registrats.</p>
         </div>
         <a class="button button-secondary icon-catalog" href="cataleg.html">Veure catàleg</a>
       </section>
 
       <section id="editor-gate" class="notice" hidden>
-        <h2>Cal iniciar sessió com a editor</h2>
-        <p>Aquesta pantalla està pensada per al personal que introdueix o modifica llibres.</p>
+        <h2>Cal iniciar sessió com a gestor</h2>
+        <p>Aquesta pantalla està pensada per al personal que introdueix, modifica o gestiona llibres.</p>
         <a class="button icon-login" href="login.html">Anar a l'accés</a>
       </section>
 
