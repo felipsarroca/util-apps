@@ -702,6 +702,76 @@
     return normalize(email).endsWith(normalize(domain));
   }
 
+  function isManagerEmail(email) {
+    return normalize(email) === normalize("biblioteca@ramonpont.cat");
+  }
+
+  function findUser(email) {
+    return getUsers().find((item) => normalize(item.email) === normalize(email));
+  }
+
+  function createReader(email) {
+    const users = getUsers();
+    const cleanEmail = String(email || "").trim();
+    const name = cleanEmail.split("@")[0] || "Usuari";
+    const user = {
+      id: `usuari-${Date.now()}`,
+      nom: titleCase(name.replace(/[._-]+/g, " ")),
+      cognoms: "",
+      email: cleanEmail,
+      rol: "lector",
+      created_at: new Date().toISOString()
+    };
+    users.push(user);
+    saveUsers(users);
+    return user;
+  }
+
+  function titleCase(value) {
+    return String(value)
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  function setSessionFromUser(user) {
+    setSession({
+      id: user.id,
+      nom: user.nom,
+      cognoms: user.cognoms || "",
+      email: user.email,
+      rol: user.rol
+    });
+  }
+
+  function loginWithCredentials(email, password) {
+    const cleanEmail = String(email || "").trim();
+    if (!isAllowedEmail(cleanEmail)) {
+      return { ok: false, type: "error", message: "Només es poden utilitzar correus acabats en @ramonpont.cat." };
+    }
+
+    if (isManagerEmail(cleanEmail)) {
+      const user = findUser(cleanEmail);
+      if (!password) {
+        return { ok: false, type: "password", message: "Introdueix la contrasenya de gestor." };
+      }
+      if (!user || user.rol !== "editor" || user.password !== password) {
+        return { ok: false, type: "error", message: "Correu de gestor o contrasenya incorrectes." };
+      }
+      setSessionFromUser(user);
+      return { ok: true, role: "editor", message: "Has iniciat sessió com a gestor." };
+    }
+
+    const existingUser = findUser(cleanEmail);
+    if (existingUser && (existingUser.rol === "editor" || existingUser.rol === "administrador")) {
+      return { ok: false, type: "error", message: "Aquest usuari té permisos de gestor. Cal entrar amb contrasenya." };
+    }
+
+    setSessionFromUser(existingUser || createReader(cleanEmail));
+    return { ok: true, role: "lector", message: "Has iniciat sessió com a usuari." };
+  }
+
   function getBookStats(books) {
     return books.reduce(
       (stats, book) => {
@@ -786,12 +856,122 @@
     updateRoleVisibility();
   }
 
+  function initAccessForms() {
+    createAccessDialog();
+    document.querySelectorAll(".main-nav a[href='login.html']").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        if (link.dataset.logout === "true") return;
+        event.preventDefault();
+        openAccessDialog();
+      });
+    });
+
+    const homeForm = document.getElementById("home-login-form");
+    if (homeForm) {
+      homeForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(homeForm));
+        const result = loginWithCredentials(data.email, "");
+        if (result.type === "password") {
+          openAccessDialog(data.email);
+          return;
+        }
+        showInlineMessage("home-login-message", result.message, result.ok ? "success" : "error");
+      });
+    }
+  }
+
+  function createAccessDialog() {
+    if (document.getElementById("access-dialog")) return;
+
+    const dialog = document.createElement("dialog");
+    dialog.id = "access-dialog";
+    dialog.className = "access-dialog";
+    dialog.innerHTML = `
+      <form id="access-dialog-form" class="access-dialog-card" method="dialog">
+        <button class="dialog-close icon-clear" type="button" aria-label="Tancar"></button>
+        <img src="assets/logo-sol.svg" alt="" width="56" height="56">
+        <div>
+          <h2>Accés a la biblioteca</h2>
+          <p>Escriu el correu del centre. Si és el compte de biblioteca, et demanarà la contrasenya de gestor.</p>
+        </div>
+        <label>
+          Correu electrònic
+          <input name="email" type="email" autocomplete="email" required placeholder="nom@ramonpont.cat">
+        </label>
+        <label id="access-password-field" hidden>
+          Contrasenya de gestor
+          <input name="password" type="password" autocomplete="current-password">
+        </label>
+        <button class="button icon-login" type="submit">Entrar</button>
+        <p id="access-dialog-message" class="form-message" role="status"></p>
+      </form>
+    `;
+    document.body.appendChild(dialog);
+
+    const form = dialog.querySelector("#access-dialog-form");
+    const emailInput = form.elements.email;
+    const passwordField = dialog.querySelector("#access-password-field");
+    const passwordInput = form.elements.password;
+
+    dialog.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    emailInput.addEventListener("input", () => {
+      const manager = isManagerEmail(emailInput.value);
+      passwordField.hidden = !manager;
+      passwordInput.required = manager;
+      if (!manager) passwordInput.value = "";
+    });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const result = loginWithCredentials(emailInput.value, passwordInput.value);
+      if (result.type === "password") {
+        passwordField.hidden = false;
+        passwordInput.required = true;
+        passwordInput.focus();
+        showInlineMessage("access-dialog-message", result.message, "error");
+        return;
+      }
+      showInlineMessage("access-dialog-message", result.message, result.ok ? "success" : "error");
+      if (result.ok) {
+        setTimeout(() => dialog.close(), 250);
+      }
+    });
+  }
+
+  function openAccessDialog(email) {
+    const dialog = document.getElementById("access-dialog");
+    if (!dialog) return;
+    const form = dialog.querySelector("#access-dialog-form");
+    const emailInput = form.elements.email;
+    const passwordField = dialog.querySelector("#access-password-field");
+    const passwordInput = form.elements.password;
+    showInlineMessage("access-dialog-message", "", "");
+    if (email) emailInput.value = email;
+    const manager = isManagerEmail(emailInput.value);
+    passwordField.hidden = !manager;
+    passwordInput.required = manager;
+    if (!manager) passwordInput.value = "";
+    dialog.showModal();
+    (manager ? passwordInput : emailInput).focus();
+  }
+
+  function showInlineMessage(id, text, type) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.textContent = text || "";
+    element.className = `form-message ${type || ""}`.trim();
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem(SESSION_KEY);
     ensureBooks();
     ensureUsers();
     ensureOptions();
     updateAccessState();
+    initAccessForms();
     document.addEventListener("click", (event) => {
       const logoutLink = event.target.closest("[data-logout='true']");
       if (!logoutLink) return;
@@ -815,6 +995,9 @@
     setSession,
     clearSession,
     canManageCatalog,
+    isManagerEmail,
+    loginWithCredentials,
+    openAccessDialog,
     isAllowedEmail,
     getBookStats,
     createBookCard,

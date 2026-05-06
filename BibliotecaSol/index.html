@@ -32,31 +32,19 @@
           <div class="hero-title">
             <img src="assets/logo-sol.svg" alt="" width="64" height="64">
             <div>
-              <h1>Biblioteca de la Sol</h1>
+              <h1>Benvinguda a la Biblioteca de la Sol</h1>
               <p class="subtitle">Escola Ramon Pont</p>
             </div>
           </div>
-          <form class="search-band" action="cataleg.html" method="get">
-            <label for="home-search">Cerca un llibre</label>
+          <form id="home-login-form" class="home-login-form">
+            <label for="home-email">Entra amb el teu correu del centre</label>
             <div class="search-row">
-              <input id="home-search" name="q" type="search" placeholder="Títol, autor, tema o nivell">
-              <button class="button icon-search" type="submit">Cercar</button>
+              <input id="home-email" name="email" type="email" autocomplete="email" required placeholder="nom@ramonpont.cat">
+              <button class="button icon-login" type="submit">Entrar</button>
             </div>
+            <p id="home-login-message" class="form-message" role="status"></p>
           </form>
-          <div class="access-choice-panel" aria-label="Opcions d'accés">
-            <a class="access-choice icon-catalog" href="cataleg.html">
-              <strong>Consultar el catàleg</strong>
-              <span>Per mirar llibres i disponibilitat. No cal registrar-se.</span>
-            </a>
-            <a class="access-choice icon-user" href="login.html#usuari">
-              <strong>Registrar-se com a usuari</strong>
-              <span>Per identificar-se amb el correu del centre i poder fer reserves quan estigui disponible.</span>
-            </a>
-            <a class="access-choice access-choice-manager icon-editor" href="login.html#gestor">
-              <strong>Entrar com a gestor</strong>
-              <span>Per afegir llibres, editar dades i gestionar el catàleg.</span>
-            </a>
-          </div>
+          <a class="catalog-shortcut icon-catalog" href="cataleg.html">Consultar el catàleg sense entrar</a>
         </div>
         <aside class="summary-panel" aria-label="Resum del catàleg">
           <h2>Estat del catàleg</h2>
