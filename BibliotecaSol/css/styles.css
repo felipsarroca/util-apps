@@ -549,6 +549,10 @@ main h3 {
   font-weight: 750;
 }
 
+.subtitle em {
+  font-style: italic;
+}
+
 .search-band,
 .home-login-form {
   position: relative;
