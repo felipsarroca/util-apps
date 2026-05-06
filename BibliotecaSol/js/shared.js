@@ -772,6 +772,16 @@
     return { ok: true, role: "lector", message: "Has iniciat sessió com a usuari." };
   }
 
+  function getPostLoginUrl(session) {
+    return canManageCatalog(session) ? "editor.html" : "cataleg.html";
+  }
+
+  function goToPostLoginPage() {
+    const session = getSession();
+    if (!session) return;
+    window.location.href = getPostLoginUrl(session);
+  }
+
   function getBookStats(books) {
     return books.reduce(
       (stats, book) => {
@@ -886,6 +896,9 @@
           return;
         }
         showInlineMessage("home-login-message", result.message, result.ok ? "success" : "error");
+        if (result.ok) {
+          goToPostLoginPage();
+        }
       });
     }
   }
@@ -945,7 +958,7 @@
       }
       showInlineMessage("access-dialog-message", result.message, result.ok ? "success" : "error");
       if (result.ok) {
-        setTimeout(() => dialog.close(), 250);
+        setTimeout(goToPostLoginPage, 150);
       }
     });
   }
@@ -1007,6 +1020,7 @@
     canManageCatalog,
     isManagerEmail,
     loginWithCredentials,
+    goToPostLoginPage,
     openAccessDialog,
     isAllowedEmail,
     getBookStats,
