@@ -1,10 +1,13 @@
 (function () {
+  let currentQuery = "";
+
   function initEditor() {
     const gate = document.getElementById("editor-gate");
     const app = document.getElementById("editor-app");
     const form = document.getElementById("book-form");
     const resetButton = document.getElementById("reset-form");
-    if (!gate || !app || !form || !resetButton) return;
+    const search = document.getElementById("editor-search");
+    if (!gate || !app || !form || !resetButton || !search) return;
 
     const session = window.BibliotecaSol.getSession();
     const canEdit = window.BibliotecaSol.canManageCatalog(session);
@@ -18,18 +21,24 @@
     populateOptionLists();
     form.addEventListener("submit", handleSave);
     resetButton.addEventListener("click", resetForm);
+    search.addEventListener("input", () => {
+      currentQuery = window.BibliotecaSol.normalize(search.value);
+      renderEditorList();
+    });
     renderEditorList();
   }
 
   function handleSave(event) {
     event.preventDefault();
     if (!requireManager()) return;
+
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form));
     const books = window.BibliotecaSol.getBooks();
     const exemplars = Math.max(1, Number(data.exemplars || 1));
     const disponibles = Math.min(exemplars, Math.max(0, Number(data.disponibles || 0)));
     const existingIndex = books.findIndex((book) => book.id === data.id);
+    const existing = existingIndex >= 0 ? books[existingIndex] : null;
     const session = window.BibliotecaSol.getSession();
 
     const book = {
@@ -48,8 +57,10 @@
       disponibles,
       resum: data.resum.trim(),
       actiu: true,
-      created_by: session ? session.email : "",
-      created_at: existingIndex >= 0 ? books[existingIndex].created_at : new Date().toISOString()
+      created_by: existing ? existing.created_by : session.email,
+      created_at: existing ? existing.created_at : new Date().toISOString(),
+      updated_by: session.email,
+      updated_at: new Date().toISOString()
     };
 
     saveFieldOptions(book);
@@ -58,8 +69,9 @@
     } else {
       books.unshift(book);
     }
+
     window.BibliotecaSol.saveBooks(books);
-    showMessage("Llibre desat correctament.", "success");
+    showMessage(existing ? "Llibre actualitzat correctament." : "Llibre afegit correctament.", "success");
     populateOptionLists();
     resetForm();
     renderEditorList();
@@ -97,39 +109,66 @@
     const count = document.getElementById("editor-count");
     if (!list || !count) return;
 
-    const books = window.BibliotecaSol.getBooks();
+    const books = window.BibliotecaSol.getBooks().filter(matchesSearch);
     count.textContent = `${books.length} ${books.length === 1 ? "llibre" : "llibres"}`;
     list.innerHTML = "";
 
     if (!books.length) {
-      list.innerHTML = '<p class="empty-state">Encara no hi ha llibres al catàleg.</p>';
+      list.innerHTML = '<p class="empty-state">No hi ha cap llibre que coincideixi amb la cerca.</p>';
       return;
     }
 
     books.forEach((book) => {
+      const disponibles = Number(book.disponibles || 0);
+      const exemplars = Number(book.exemplars || 0);
       const item = document.createElement("article");
       item.className = "editor-item";
       item.innerHTML = `
-        <div>
-          <h3>${window.BibliotecaSol.escapeHtml(book.titol)}</h3>
-          <p>${window.BibliotecaSol.escapeHtml(book.autor)} · ${Number(book.disponibles || 0)}/${Number(book.exemplars || 0)} disponibles</p>
-        </div>
+        <button class="editor-item-main" type="button" data-action="edit" data-id="${book.id}">
+          <span>
+            <strong>${window.BibliotecaSol.escapeHtml(book.titol)}</strong>
+            <small>${window.BibliotecaSol.escapeHtml(book.autor)} - ${window.BibliotecaSol.escapeHtml(book.ubicacio || "Ubicació pendent")}</small>
+          </span>
+          <span class="availability compact ${disponibles > 0 ? "available" : "unavailable"}">
+            <span class="availability-dot"></span>
+            <span>${disponibles}/${exemplars}</span>
+          </span>
+        </button>
         <div class="editor-item-actions">
           <button class="link-button icon-edit" type="button" data-action="edit" data-id="${book.id}">Editar</button>
+          <button class="link-button icon-archive" type="button" data-action="loan" data-id="${book.id}" ${disponibles <= 0 ? "disabled" : ""}>Marcar préstec</button>
+          <button class="link-button icon-save" type="button" data-action="return" data-id="${book.id}" ${disponibles >= exemplars ? "disabled" : ""}>Marcar retorn</button>
           <button class="link-button link-danger icon-archive" type="button" data-action="archive" data-id="${book.id}">Descatalogar</button>
         </div>
       `;
       list.appendChild(item);
     });
 
-    list.querySelectorAll("button").forEach((button) => {
+    list.querySelectorAll("button[data-action]").forEach((button) => {
       button.addEventListener("click", () => {
         const action = button.dataset.action;
         const id = button.dataset.id;
         if (action === "edit") fillForm(id);
+        if (action === "loan") changeAvailability(id, -1);
+        if (action === "return") changeAvailability(id, 1);
         if (action === "archive") archiveBook(id);
       });
     });
+  }
+
+  function matchesSearch(book) {
+    if (!currentQuery) return true;
+    const searchable = [
+      book.titol,
+      book.autor,
+      book.editorial,
+      book.isbn,
+      book.nivell_recomanat,
+      book.tematica,
+      book.genere,
+      book.ubicacio
+    ].join(" ");
+    return window.BibliotecaSol.normalize(searchable).includes(currentQuery);
   }
 
   function fillForm(id) {
@@ -143,7 +182,31 @@
       }
     });
     document.getElementById("form-title").textContent = "Editar llibre";
+    document.getElementById("form-mode").textContent = "Modificació del registre seleccionat.";
     form.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function changeAvailability(id, delta) {
+    if (!requireManager()) return;
+    const books = window.BibliotecaSol.getBooks();
+    const index = books.findIndex((book) => book.id === id);
+    if (index === -1) return;
+
+    const book = books[index];
+    const exemplars = Math.max(1, Number(book.exemplars || 1));
+    const current = Number(book.disponibles || 0);
+    const next = Math.min(exemplars, Math.max(0, current + delta));
+    if (next === current) return;
+
+    books[index] = {
+      ...book,
+      disponibles: next,
+      updated_at: new Date().toISOString(),
+      updated_by: window.BibliotecaSol.getSession().email
+    };
+    window.BibliotecaSol.saveBooks(books);
+    showMessage(delta < 0 ? "Préstec registrat." : "Retorn registrat.", "success");
+    renderEditorList();
   }
 
   function archiveBook(id) {
@@ -167,7 +230,8 @@
     form.elements.llengua.value = "Català";
     form.elements.exemplars.value = 1;
     form.elements.disponibles.value = 1;
-    document.getElementById("form-title").textContent = "Afegir llibre";
+    document.getElementById("form-title").textContent = "Introduir nous llibres";
+    document.getElementById("form-mode").textContent = "Alta de llibres al catàleg.";
   }
 
   function showMessage(text, type) {

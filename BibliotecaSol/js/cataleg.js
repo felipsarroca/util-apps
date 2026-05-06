@@ -22,11 +22,17 @@
     const topicFilters = document.getElementById("topic-filters");
     const genreFilters = document.getElementById("genre-filters");
     const availabilityFilters = document.getElementById("availability-filters");
+    const requestPanel = document.getElementById("request-panel");
+    const requestSummary = document.getElementById("request-summary");
+    const clearSelection = document.getElementById("clear-selection");
+    const sendRequest = document.getElementById("send-request");
     if (!list || !search || !count || !clearButton || !pdfButton || !sortField || !sortDirection || !ageFilters || !topicFilters || !genreFilters || !availabilityFilters) return;
 
     const params = new URLSearchParams(window.location.search);
     search.value = params.get("q") || "";
     let currentResults = [];
+    const selectedBooks = new Set();
+    const canRequestBooks = !window.BibliotecaSol.canManageCatalog(window.BibliotecaSol.getSession());
 
     populateFilterGroup(ageFilters, valuesFor("nivell_recomanat"), render);
     populateFilterGroup(topicFilters, valuesFor("tematica"), render);
@@ -45,6 +51,13 @@
     pdfButton.addEventListener("click", () => {
       openPdfView(currentResults, buildFilterSummary(search, ageFilters, topicFilters, genreFilters, availabilityFilters));
     });
+    if (requestPanel) requestPanel.hidden = !canRequestBooks;
+    if (clearSelection) {
+      clearSelection.addEventListener("click", () => {
+        selectedBooks.clear();
+        render();
+      });
+    }
     sortField.addEventListener("change", render);
     sortDirection.addEventListener("click", () => {
       const nextDirection = sortDirection.dataset.direction === "asc" ? "desc" : "asc";
@@ -92,13 +105,66 @@
       list.innerHTML = "";
       if (!books.length) {
         list.innerHTML = '<p class="empty-state">No hi ha cap llibre que coincideixi amb aquests filtres.</p>';
+        updateRequestPanel();
         return;
       }
-      books.forEach((book) => list.appendChild(window.BibliotecaSol.createBookCard(book)));
+      books.forEach((book) => list.appendChild(createCatalogCard(book, canRequestBooks, selectedBooks.has(book.id))));
+      updateRequestPanel();
     }
 
     search.addEventListener("input", render);
     render();
+
+    function createCatalogCard(book, canRequest, selected) {
+      const card = window.BibliotecaSol.createBookCard(book);
+      if (!canRequest) return card;
+
+      const action = document.createElement("div");
+      action.className = "book-select-action";
+      action.innerHTML = `
+        <button class="link-button ${selected ? "button-selected icon-save" : "icon-add"}" type="button" aria-pressed="${selected ? "true" : "false"}">
+          ${selected ? "Seleccionat" : "Seleccionar"}
+        </button>
+      `;
+      action.querySelector("button").addEventListener("click", () => {
+        if (selectedBooks.has(book.id)) {
+          selectedBooks.delete(book.id);
+        } else {
+          selectedBooks.add(book.id);
+        }
+        render();
+      });
+      card.appendChild(action);
+      return card;
+    }
+
+    function updateRequestPanel() {
+      if (!requestPanel || !requestSummary || !sendRequest) return;
+      if (!canRequestBooks) {
+        requestPanel.hidden = true;
+        return;
+      }
+
+      const selected = window.BibliotecaSol.getBooks().filter((book) => selectedBooks.has(book.id));
+      requestSummary.textContent = selected.length
+        ? `${selected.length} ${selected.length === 1 ? "llibre seleccionat" : "llibres seleccionats"}`
+        : "No has seleccionat cap llibre.";
+      const lines = selected.map((book) => `- ${book.titol} (${book.autor || "autor pendent"})`);
+      const body = [
+        "Hola,",
+        "",
+        "Voldria sol·licitar aquests llibres:",
+        "",
+        ...lines,
+        "",
+        "Gràcies."
+      ].join("\n");
+      sendRequest.href = selected.length
+        ? `mailto:biblioteca@ramonpont.cat?subject=Reserva%20de%20llibres&body=${encodeURIComponent(body)}`
+        : "mailto:biblioteca@ramonpont.cat?subject=Reserva%20de%20llibres";
+      sendRequest.toggleAttribute("aria-disabled", !selected.length);
+      sendRequest.classList.toggle("button-disabled", !selected.length);
+    }
   }
 
   function valuesFor(field) {

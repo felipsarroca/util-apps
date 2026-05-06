@@ -722,6 +722,29 @@ main h3 {
   gap: 0.55rem;
 }
 
+.request-panel {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.request-panel h2 {
+  font-size: 1rem;
+}
+
+.request-panel p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-weight: 650;
+}
+
 .section-heading p {
   margin: 0;
   color: var(--muted);
@@ -786,6 +809,12 @@ main h3 {
   transform: translateY(-1px);
   border-color: var(--line-strong);
   box-shadow: var(--shadow);
+}
+
+.book-select-action {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .book-row h3 {
@@ -1248,6 +1277,13 @@ main h3 {
   gap: 8px;
 }
 
+.button-disabled,
+.link-button:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .form-message {
   min-height: 1.3rem;
   margin: 0;
@@ -1267,11 +1303,20 @@ main h3 {
   grid-column: 1 / -1;
 }
 
+.editor-workspace,
 .editor-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.8fr);
   gap: 14px;
   align-items: start;
+}
+
+.editor-panel {
+  min-width: 0;
+}
+
+.editor-search {
+  margin-bottom: 10px;
 }
 
 .list-panel {
@@ -1283,6 +1328,32 @@ main h3 {
   display: grid;
   gap: 8px;
   border-bottom: 1px solid var(--line);
+}
+
+.editor-item-main {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+}
+
+.editor-item-main strong,
+.editor-item-main small {
+  display: block;
+}
+
+.editor-item-main small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
 }
 
 .editor-item:last-child {
@@ -1360,6 +1431,7 @@ main h3 {
 
 @media (max-width: 960px) {
   .home-dashboard,
+  .editor-workspace,
   .editor-layout,
   .auth-layout,
   .auth-page {

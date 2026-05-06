@@ -30,7 +30,7 @@
       <section class="toolbar page-intro">
         <div>
           <h1>Gestió del catàleg</h1>
-          <p>Alta i manteniment dels llibres registrats.</p>
+          <p>Alta, edició, préstecs i retorns dels llibres registrats.</p>
         </div>
         <a class="button button-secondary icon-catalog" href="cataleg.html">Veure catàleg</a>
       </section>
@@ -41,80 +41,93 @@
         <a class="button icon-login" href="login.html">Anar a l'accés</a>
       </section>
 
-      <section id="editor-app" class="editor-layout" hidden>
-        <form id="book-form" class="editor-form">
-          <input type="hidden" name="id">
-          <h2 id="form-title">Afegir llibre</h2>
-          <div class="form-grid">
-            <label>
-              Títol
-              <input name="titol" type="text" required>
-            </label>
-            <label>
-              Autor
-              <input name="autor" type="text" required>
-            </label>
-            <label>
-              Editorial
-              <input name="editorial" type="text">
-            </label>
-            <label>
-              ISBN
-              <input name="isbn" type="text">
-            </label>
-            <label>
-              Any de publicació
-              <input name="any_publicacio" type="number" min="1400" max="2100">
-            </label>
-            <label>
-              Llengua
-              <input name="llengua" type="text" value="Català">
-            </label>
-            <label>
-              Edat
-              <input name="nivell_recomanat" type="text" list="edat-options" placeholder="6-8 anys, 1r ESO...">
-            </label>
-            <label>
-              Temàtica
-              <input name="tematica" type="text" list="tematica-options" placeholder="Aventura, història, ciència...">
-            </label>
-            <label>
-              Gènere
-              <input name="genere" type="text" list="genere-options">
-            </label>
-            <label>
-              Ubicació
-              <input name="ubicacio" type="text" list="ubicacio-options" placeholder="Prestatgeria, aula, zona...">
-            </label>
-            <label>
-              Exemplars totals
-              <input name="exemplars" type="number" min="1" value="1" required>
-            </label>
-            <label>
-              Exemplars disponibles
-              <input name="disponibles" type="number" min="0" value="1" required>
-            </label>
-          </div>
-          <label>
-            Resum breu
-            <textarea name="resum" rows="4"></textarea>
-          </label>
-          <div class="form-actions">
-            <button class="button button-save icon-save" type="submit">Desar llibre</button>
-            <button id="reset-form" class="button button-secondary button-warning icon-clear" type="button">Netejar</button>
-          </div>
-          <p id="editor-message" class="form-message" role="status"></p>
-          <datalist id="edat-options"></datalist>
-          <datalist id="tematica-options"></datalist>
-          <datalist id="genere-options"></datalist>
-          <datalist id="ubicacio-options"></datalist>
-        </form>
-
-        <section>
+      <section id="editor-app" class="editor-workspace" hidden>
+        <section class="editor-panel">
           <div class="section-heading compact">
-            <h2>Llibres registrats</h2>
-            <p id="editor-count">0 llibres</p>
+            <div>
+              <h2 id="form-title">Introduir nous llibres</h2>
+              <p id="form-mode">Alta de llibres al catàleg.</p>
+            </div>
           </div>
+          <form id="book-form" class="editor-form">
+            <input type="hidden" name="id">
+            <div class="form-grid">
+              <label>
+                Títol
+                <input name="titol" type="text" required>
+              </label>
+              <label>
+                Autor
+                <input name="autor" type="text" required>
+              </label>
+              <label>
+                Editorial
+                <input name="editorial" type="text">
+              </label>
+              <label>
+                ISBN
+                <input name="isbn" type="text">
+              </label>
+              <label>
+                Any de publicació
+                <input name="any_publicacio" type="number" min="1400" max="2100">
+              </label>
+              <label>
+                Llengua
+                <input name="llengua" type="text" value="Català">
+              </label>
+              <label>
+                Edat
+                <input name="nivell_recomanat" type="text" list="edat-options" placeholder="6-8 anys, 1r ESO...">
+              </label>
+              <label>
+                Temàtica
+                <input name="tematica" type="text" list="tematica-options" placeholder="Aventura, història, ciència...">
+              </label>
+              <label>
+                Gènere
+                <input name="genere" type="text" list="genere-options">
+              </label>
+              <label>
+                Ubicació
+                <input name="ubicacio" type="text" list="ubicacio-options" placeholder="Prestatgeria, aula, zona...">
+              </label>
+              <label>
+                Exemplars totals
+                <input name="exemplars" type="number" min="1" value="1" required>
+              </label>
+              <label>
+                Exemplars disponibles
+                <input name="disponibles" type="number" min="0" value="1" required>
+              </label>
+            </div>
+            <label>
+              Resum breu
+              <textarea name="resum" rows="4"></textarea>
+            </label>
+            <div class="form-actions">
+              <button class="button button-save icon-save" type="submit">Desar llibre</button>
+              <button id="reset-form" class="button button-secondary button-warning icon-clear" type="button">Nou llibre</button>
+            </div>
+            <p id="editor-message" class="form-message" role="status"></p>
+            <datalist id="edat-options"></datalist>
+            <datalist id="tematica-options"></datalist>
+            <datalist id="genere-options"></datalist>
+            <datalist id="ubicacio-options"></datalist>
+          </form>
+        </section>
+
+        <section class="editor-panel">
+          <div class="section-heading compact">
+            <div>
+              <h2>Editar catàleg</h2>
+              <p id="editor-count">0 llibres</p>
+            </div>
+          </div>
+          <label class="editor-search">
+            Cerca al catàleg
+            <input id="editor-search" type="search" placeholder="Títol, autor, ISBN, ubicació...">
+          </label>
           <div id="editor-list" class="list-panel"></div>
         </section>
       </section>

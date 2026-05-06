@@ -34,8 +34,6 @@
         </div>
         <div class="toolbar-actions">
           <a class="button button-secondary icon-add" href="editor.html" data-editor-only hidden>Afegir llibre</a>
-          <a class="button button-secondary icon-reserve" href="mailto:biblioteca@ramonpont.cat?subject=Reserva%20de%20llibre" data-reader-only hidden>Demanar reserva</a>
-          <a class="button button-secondary icon-request" href="mailto:biblioteca@ramonpont.cat?subject=Peticio%20de%20llibre" data-reader-only hidden>Demanar llibre</a>
         </div>
       </section>
 
@@ -69,6 +67,17 @@
             <button class="filter-chip icon-filter" type="button" data-value="available" aria-pressed="false">Disponibles</button>
             <button class="filter-chip icon-filter" type="button" data-value="unavailable" aria-pressed="false">No disponibles</button>
           </div>
+        </div>
+      </section>
+
+      <section id="request-panel" class="request-panel" hidden>
+        <div>
+          <h2>Sol·licitud de llibres</h2>
+          <p id="request-summary">No has seleccionat cap llibre.</p>
+        </div>
+        <div class="toolbar-actions">
+          <button id="clear-selection" class="button button-secondary button-warning icon-clear" type="button">Buidar selecció</button>
+          <a id="send-request" class="button icon-reserve" href="mailto:biblioteca@ramonpont.cat?subject=Reserva%20de%20llibre">Enviar sol·licitud</a>
         </div>
       </section>
 
