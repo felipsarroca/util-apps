@@ -20,17 +20,17 @@
     renderSession();
   }
 
-  function handleReaderLogin(event) {
+  async function handleReaderLogin(event) {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget));
-    const result = window.BibliotecaSol.loginWithCredentials(data.email, "");
+    const result = await window.BibliotecaSol.loginWithCredentials(data.email, "");
     showMessage("reader-login-message", result.message, result.ok ? "success" : "error");
     if (result.ok) {
       window.BibliotecaSol.goToPostLoginPage();
     }
   }
 
-  function handleEditorLogin(event) {
+  async function handleEditorLogin(event) {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget));
     if (!window.BibliotecaSol.isManagerEmail(data.email)) {
@@ -38,14 +38,14 @@
       return;
     }
 
-    const result = window.BibliotecaSol.loginWithCredentials(data.email, data.password);
+    const result = await window.BibliotecaSol.loginWithCredentials(data.email, data.password);
     showMessage("editor-login-message", result.message, result.ok ? "success" : "error");
     if (result.ok) {
       window.BibliotecaSol.goToPostLoginPage();
     }
   }
 
-  function loginDemo(email) {
+  async function loginDemo(email) {
     if (email === "biblioteca@ramonpont.cat") {
       const editorEmail = document.querySelector('#editor-login-form input[name="email"]');
       const editorPassword = document.querySelector('#editor-login-form input[name="password"]');
@@ -55,7 +55,7 @@
       return;
     }
 
-    const result = window.BibliotecaSol.loginWithCredentials(email, "");
+    const result = await window.BibliotecaSol.loginWithCredentials(email, "");
     showMessage("reader-login-message", result.message, result.ok ? "success" : "error");
     if (result.ok) {
       window.BibliotecaSol.goToPostLoginPage();
@@ -81,5 +81,8 @@
     element.className = `form-message ${type || ""}`.trim();
   }
 
-  document.addEventListener("DOMContentLoaded", initAuth);
+  document.addEventListener("DOMContentLoaded", async () => {
+    await window.BibliotecaSol.ready;
+    initAuth();
+  });
 })();

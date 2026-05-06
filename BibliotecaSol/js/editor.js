@@ -28,7 +28,7 @@
     renderEditorList();
   }
 
-  function handleSave(event) {
+  async function handleSave(event) {
     event.preventDefault();
     if (!requireManager()) return;
 
@@ -64,6 +64,26 @@
     };
 
     saveFieldOptions(book);
+    if (window.BibliotecaSolSupabase && window.BibliotecaSolSupabase.isConfigured()) {
+      try {
+        const savedBook = await window.BibliotecaSolSupabase.saveBook(book);
+        if (existingIndex >= 0) {
+          books[existingIndex] = savedBook;
+        } else {
+          books.unshift(savedBook);
+        }
+        window.BibliotecaSol.saveBooks(books);
+        showMessage(existing ? "Llibre actualitzat a Supabase." : "Llibre afegit a Supabase.", "success");
+        populateOptionLists();
+        resetForm();
+        renderEditorList();
+        return;
+      } catch (error) {
+        showMessage(`${error.message}. Si Supabase esta configurat, cal entrar amb autenticacio real de gestor.`, "error");
+        return;
+      }
+    }
+
     if (existingIndex >= 0) {
       books[existingIndex] = book;
     } else {
@@ -247,5 +267,8 @@
     return false;
   }
 
-  document.addEventListener("DOMContentLoaded", initEditor);
+  document.addEventListener("DOMContentLoaded", async () => {
+    await window.BibliotecaSol.ready;
+    initEditor();
+  });
 })();

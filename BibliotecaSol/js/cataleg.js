@@ -63,6 +63,29 @@
         render();
       });
     }
+    if (sendRequest) {
+      sendRequest.addEventListener("click", async (event) => {
+        if (!selectedBooks.size) return;
+        const session = window.BibliotecaSol.getSession();
+        if (!session) {
+          event.preventDefault();
+          window.BibliotecaSol.openAccessDialog();
+          return;
+        }
+
+        event.preventDefault();
+        const result = await window.BibliotecaSol.reserveBooks(Array.from(selectedBooks), session.email);
+        if (result.type === "local") {
+          window.location.href = sendRequest.href;
+          return;
+        }
+        if (requestSummary) requestSummary.textContent = result.message;
+        if (result.ok) {
+          selectedBooks.clear();
+          render();
+        }
+      });
+    }
     search.addEventListener("input", render);
     ageFilter.addEventListener("change", render);
     topicFilter.addEventListener("change", render);
@@ -327,7 +350,8 @@
       .replace(/'/g, "&#039;");
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    await window.BibliotecaSol.ready;
     initHome();
     initCatalog();
   });

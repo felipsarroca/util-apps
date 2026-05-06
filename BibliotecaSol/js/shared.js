@@ -3,6 +3,9 @@
   const USERS_KEY = "bibliotecaSol.users";
   const SESSION_KEY = "bibliotecaSol.session";
   const OPTIONS_KEY = "bibliotecaSol.options";
+  let booksCache = null;
+  let optionsCache = null;
+  let dataSource = "local";
 
   const seedUsers = [
     {
@@ -638,10 +641,12 @@
   }
 
   function getBooks() {
-    return ensureBooks().filter((book) => book.actiu !== false);
+    const books = booksCache || ensureBooks();
+    return books.filter((book) => book.actiu !== false);
   }
 
   function saveBooks(books) {
+    booksCache = books;
     writeJson(BOOKS_KEY, books);
   }
 
@@ -654,15 +659,17 @@
   }
 
   function getOptions(field) {
-    return ensureOptions()[field] || [];
+    const options = optionsCache || ensureOptions();
+    return options[field] || [];
   }
 
   function addOption(field, value) {
     const cleanValue = String(value || "").trim();
     if (!cleanValue) return;
 
-    const options = ensureOptions();
+    const options = optionsCache || ensureOptions();
     options[field] = uniqueSorted([...(options[field] || []), cleanValue]);
+    optionsCache = options;
     writeJson(OPTIONS_KEY, options);
   }
 
@@ -693,6 +700,7 @@
   function clearSession() {
     localStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
+    if (window.BibliotecaSolSupabase) window.BibliotecaSolSupabase.signOut();
     updateAccessState();
     window.dispatchEvent(new CustomEvent("bibliotecaSol:sessionchange"));
   }
@@ -745,7 +753,31 @@
     });
   }
 
-  function loginWithCredentials(email, password) {
+  async function initData() {
+    booksCache = ensureBooks();
+    optionsCache = ensureOptions();
+
+    if (!window.BibliotecaSolSupabase || !window.BibliotecaSolSupabase.isConfigured()) {
+      dataSource = "local";
+      return;
+    }
+
+    try {
+      const [remoteBooks, remoteOptions] = await Promise.all([
+        window.BibliotecaSolSupabase.listBooks(),
+        window.BibliotecaSolSupabase.listOptions()
+      ]);
+      booksCache = remoteBooks;
+      optionsCache = { ...optionsCache, ...remoteOptions };
+      dataSource = "supabase";
+      window.dispatchEvent(new CustomEvent("bibliotecaSol:dataready"));
+    } catch (error) {
+      dataSource = "local";
+      console.warn("No s'han pogut carregar les dades de Supabase. Es fa servir localStorage.", error);
+    }
+  }
+
+  async function loginWithCredentials(email, password) {
     const cleanEmail = String(email || "").trim();
     if (!isAllowedEmail(cleanEmail)) {
       return { ok: false, type: "error", message: "Només es poden utilitzar correus acabats en @ramonpont.cat." };
@@ -759,6 +791,14 @@
       if (!user || user.rol !== "editor" || user.password !== password) {
         return { ok: false, type: "error", message: "Correu de gestor o contrasenya incorrectes." };
       }
+      if (dataSource === "supabase" && window.BibliotecaSolSupabase) {
+        try {
+          await window.BibliotecaSolSupabase.signInWithPassword(cleanEmail, password);
+        } catch (error) {
+          return { ok: false, type: "error", message: "No s'ha pogut autenticar el gestor a Supabase." };
+        }
+      }
+      await registerRemoteAccess(cleanEmail);
       setSessionFromUser(user);
       return { ok: true, role: "editor", message: "Has iniciat sessió com a gestor." };
     }
@@ -768,8 +808,38 @@
       return { ok: false, type: "error", message: "Aquest usuari té permisos de gestor. Cal entrar amb contrasenya." };
     }
 
-    setSessionFromUser(existingUser || createReader(cleanEmail));
+    const remoteUser = await registerRemoteAccess(cleanEmail);
+    setSessionFromUser(remoteUser || existingUser || createReader(cleanEmail));
     return { ok: true, role: "lector", message: "Has iniciat sessió com a usuari." };
+  }
+
+  async function registerRemoteAccess(email) {
+    if (dataSource !== "supabase" || !window.BibliotecaSolSupabase) return null;
+    try {
+      return await window.BibliotecaSolSupabase.registerAccess(email);
+    } catch (error) {
+      console.warn("No s'ha pogut registrar l'acces a Supabase.", error);
+      return null;
+    }
+  }
+
+  async function reserveBooks(bookIds, email) {
+    if (!Array.isArray(bookIds) || !bookIds.length) {
+      return { ok: false, message: "No has seleccionat cap llibre." };
+    }
+    if (!isAllowedEmail(email)) {
+      return { ok: false, message: "Cal entrar amb un correu @ramonpont.cat per fer reserves." };
+    }
+    if (dataSource !== "supabase" || !window.BibliotecaSolSupabase) {
+      return { ok: false, type: "local", message: "Supabase encara no esta configurat. De moment envia la sol·licitud per correu." };
+    }
+
+    try {
+      await Promise.all(bookIds.map((bookId) => window.BibliotecaSolSupabase.reserveBook(bookId, email)));
+      return { ok: true, message: "Reserva registrada correctament." };
+    } catch (error) {
+      return { ok: false, message: error.message || "No s'ha pogut registrar la reserva." };
+    }
   }
 
   function getPostLoginUrl(session) {
@@ -887,10 +957,10 @@
 
     const homeForm = document.getElementById("home-login-form");
     if (homeForm) {
-      homeForm.addEventListener("submit", (event) => {
+      homeForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = Object.fromEntries(new FormData(homeForm));
-        const result = loginWithCredentials(data.email, "");
+        const result = await loginWithCredentials(data.email, "");
         if (result.type === "password") {
           openAccessDialog(data.email);
           return;
@@ -946,9 +1016,9 @@
       passwordInput.required = manager;
       if (!manager) passwordInput.value = "";
     });
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const result = loginWithCredentials(emailInput.value, passwordInput.value);
+      const result = await loginWithCredentials(emailInput.value, passwordInput.value);
       if (result.type === "password") {
         passwordField.hidden = false;
         passwordInput.required = true;
@@ -987,11 +1057,11 @@
     element.className = `form-message ${type || ""}`.trim();
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  const ready = new Promise((resolve) => {
+    document.addEventListener("DOMContentLoaded", async () => {
     localStorage.removeItem(SESSION_KEY);
-    ensureBooks();
+    await initData();
     ensureUsers();
-    ensureOptions();
     updateAccessState();
     redirectIfManagerRequired();
     initAccessForms();
@@ -1004,6 +1074,8 @@
         window.location.href = "login.html";
       }
     });
+    resolve();
+  });
   });
 
   window.BibliotecaSol = {
@@ -1017,9 +1089,11 @@
     getSession,
     setSession,
     clearSession,
+    ready,
     canManageCatalog,
     isManagerEmail,
     loginWithCredentials,
+    reserveBooks,
     goToPostLoginPage,
     openAccessDialog,
     isAllowedEmail,
