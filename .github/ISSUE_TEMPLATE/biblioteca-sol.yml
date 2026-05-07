@@ -1,0 +1,43 @@
+name: Biblioteca de la Sol
+description: Comunica un error o proposa una millora per a Biblioteca de la Sol.
+title: "[BibliotecaSol] "
+labels: ["BibliotecaSol"]
+body:
+  - type: dropdown
+    id: tipus
+    attributes:
+      label: Tipus
+      options:
+        - Error
+        - Suggeriment
+        - Dubte
+    validations:
+      required: true
+  - type: textarea
+    id: descripcio
+    attributes:
+      label: Descripcio
+      description: Explica que passa o que t'agradaria millorar.
+      placeholder: Escriu aqui el detall...
+    validations:
+      required: true
+  - type: input
+    id: pagina
+    attributes:
+      label: Pagina o seccio
+      description: Indica on passa, si ho saps.
+      placeholder: Cataleg, gestio, acces...
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos per reproduir-ho
+      description: Omple-ho nomes si es tracta d'un error.
+      placeholder: |
+        1. Obro...
+        2. Clico...
+        3. Veig...
+  - type: input
+    id: dispositiu
+    attributes:
+      label: Dispositiu i navegador
+      placeholder: Ordinador amb Chrome, mobil amb Safari...
