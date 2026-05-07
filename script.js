@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
+            name: 'Biblioteca de la Sol',
+            path: 'https://ja.cat/bibliosol',
+            icon: 'BibliotecaSol/assets/logo-sol.svg',
+            description: 'Catàleg i gestió de la biblioteca del centre.',
+            category: 'Eines de gestió'
+        },
+        {
             name: 'DescarregApp',
             path: 'https://ja.cat/descarregapp',
             icon: 'DescarregApp/assets/favicon.svg',
