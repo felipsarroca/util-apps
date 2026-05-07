@@ -57,7 +57,15 @@ supabase secrets set RESEND_API_KEY=LA_TEVA_CLAU RESEND_FROM="Biblioteca de la S
 
 Si no hi ha cap sistema configurat, les funcions no fallen: deixen la notificació marcada com a `skipped` perquè l'app pugui continuar funcionant.
 
-La funció `daily-loan-reminders` s'ha de programar al Dashboard de Supabase com a tasca diària, per exemple cada matí. La funció de reserves s'invoca directament des de l'app quan es crea una reserva.
+La funció de reserves s'invoca directament des de l'app quan es crea una reserva.
+
+Els avisos diaris de préstecs estan programats amb `pg_cron` i `pg_net`:
+
+- job: `biblioteca-sol-daily-loan-reminders`
+- horari: `30 6 * * *`, cada dia a les 06:30 UTC
+- hora orientativa a Catalunya: 08:30 en horari d'estiu i 07:30 en horari d'hivern
+
+El fitxer `scheduled_reminders.sql` documenta aquesta configuració.
 
 ## Criteri de seguretat
 
