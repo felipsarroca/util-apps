@@ -548,6 +548,8 @@ async function restoreSession() {
 
 function renderResults(results) {
   if (!state.query.trim()) {
+    if (state.adminOpen) return "";
+
     return `
       <section class="panel empty-state">
         <h2>Cerca un equip o un usuari</h2>
