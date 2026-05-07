@@ -1,4 +1,4 @@
-const CACHE_NAME = "gestio-equips-v2";
+const CACHE_NAME = "gestio-equips-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -52,6 +52,11 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => caches.match(event.request).then((cachedResponse) => cachedResponse ?? caches.match("./index.html"))),
     );
+    return;
+  }
+
+  if (requestUrl.origin !== self.location.origin) {
+    event.respondWith(fetch(event.request));
     return;
   }
 

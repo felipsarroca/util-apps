@@ -79,6 +79,12 @@ const state = {
   isSaving: false,
 };
 
+function supabaseErrorMessage(error) {
+  const message = error?.message ?? "error desconegut";
+  const code = error?.code ? ` (${error.code})` : "";
+  return `${message}${code}`;
+}
+
 const text = (value) =>
   String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -1578,7 +1584,7 @@ async function loadSupabaseData() {
   } catch (error) {
     console.error(error);
     state.source = "local";
-    state.syncMessage = "Mode local: no s'ha pogut llegir Supabase";
+    state.syncMessage = `Mode local: ${supabaseErrorMessage(error)}`;
   }
   render();
 }
