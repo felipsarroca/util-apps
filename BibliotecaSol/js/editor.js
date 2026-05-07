@@ -181,8 +181,6 @@
         </button>
         <div class="editor-item-actions">
           <button class="link-button icon-edit" type="button" data-action="edit" data-id="${book.id}">Editar</button>
-          <button class="link-button icon-archive" type="button" data-action="loan" data-id="${book.id}" ${disponibles <= 0 ? "disabled" : ""}>Marcar préstec</button>
-          <button class="link-button icon-save" type="button" data-action="return" data-id="${book.id}" ${disponibles >= exemplars ? "disabled" : ""}>Marcar retorn</button>
           <button class="link-button link-danger icon-archive" type="button" data-action="archive" data-id="${book.id}">Descatalogar</button>
         </div>
       `;
@@ -194,8 +192,6 @@
         const action = button.dataset.action;
         const id = button.dataset.id;
         if (action === "edit") fillForm(id);
-        if (action === "loan") changeAvailability(id, -1);
-        if (action === "return") changeAvailability(id, 1);
         if (action === "archive") archiveBook(id);
       });
     });
@@ -486,29 +482,6 @@
     document.getElementById("form-title").textContent = "Editar llibre";
     document.getElementById("form-mode").textContent = "Modificació del registre seleccionat.";
     form.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function changeAvailability(id, delta) {
-    if (!requireManager()) return;
-    const books = window.BibliotecaSol.getBooks();
-    const index = books.findIndex((book) => book.id === id);
-    if (index === -1) return;
-
-    const book = books[index];
-    const exemplars = Math.max(1, Number(book.exemplars || 1));
-    const current = Number(book.disponibles || 0);
-    const next = Math.min(exemplars, Math.max(0, current + delta));
-    if (next === current) return;
-
-    books[index] = {
-      ...book,
-      disponibles: next,
-      updated_at: new Date().toISOString(),
-      updated_by: window.BibliotecaSol.getSession().email
-    };
-    window.BibliotecaSol.saveBooks(books);
-    showMessage(delta < 0 ? "Préstec registrat." : "Retorn registrat.", "success");
-    renderEditorList();
   }
 
   function archiveBook(id) {
