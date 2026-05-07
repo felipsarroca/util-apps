@@ -15,6 +15,34 @@ type SendMailInput = {
 export const libraryEmail = Deno.env.get("LIBRARY_EMAIL") || "biblioteca@ramonpont.cat";
 
 export async function sendMail(input: SendMailInput): Promise<MailResult> {
+  const appsScriptUrl = Deno.env.get("GOOGLE_MAIL_WEBHOOK_URL");
+  const appsScriptToken = Deno.env.get("GOOGLE_MAIL_WEBHOOK_TOKEN");
+
+  if (appsScriptUrl && appsScriptToken) {
+    const response = await fetch(appsScriptUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        token: appsScriptToken,
+        to: Array.isArray(input.to) ? input.to.join(",") : input.to,
+        subject: input.subject,
+        html: input.html,
+        text: input.text || stripHtml(input.html),
+        replyTo: input.replyTo || libraryEmail
+      })
+    });
+
+    if (response.ok) {
+      const payload = await response.json().catch(() => ({ ok: true }));
+      if (payload.ok !== false) return { ok: true };
+      return { ok: false, error: payload.error || "Google Apps Script ha rebutjat l'enviament." };
+    }
+
+    return { ok: false, error: await response.text() };
+  }
+
   const apiKey = Deno.env.get("RESEND_API_KEY");
   const from = Deno.env.get("RESEND_FROM");
 
@@ -47,6 +75,20 @@ export async function sendMail(input: SendMailInput): Promise<MailResult> {
   return { ok: true };
 }
 
+function stripHtml(value: string) {
+  return String(value || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .trim();
+}
+
 export function htmlPage(title: string, body: string) {
   return `
     <div style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; line-height: 1.45;">
@@ -74,4 +116,3 @@ export function formatDate(value: string | null | undefined) {
     year: "numeric"
   }).format(new Date(value));
 }
-
