@@ -917,9 +917,10 @@
       }
 
       const isEditor = canManageCatalog(session);
-      link.textContent = session.nom || "Sessió";
-      link.title = `${session.email} (${session.rol}). Clica per sortir.`;
-      link.className = `button button-small session-pill ${isEditor ? "session-editor icon-editor" : "session-reader icon-user"}`;
+      link.textContent = `${session.nom || "Sessió"} · Sortir`;
+      link.title = `${session.email} (${session.rol}). Clica per tancar la sessió i tornar a l'inici.`;
+      link.setAttribute("aria-label", `Tancar la sessió de ${session.email} i tornar a l'inici`);
+      link.className = `button button-small session-pill icon-logout ${isEditor ? "session-editor" : "session-reader"}`;
       link.dataset.logout = "true";
     });
   }
@@ -1070,9 +1071,7 @@
       if (!logoutLink) return;
       event.preventDefault();
       clearSession();
-      if (window.location.pathname.endsWith("editor.html")) {
-        window.location.href = "login.html";
-      }
+      window.location.href = "index.html";
     });
     resolve();
   });
