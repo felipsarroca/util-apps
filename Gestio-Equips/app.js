@@ -82,6 +82,9 @@ const state = {
 function supabaseErrorMessage(error) {
   const message = error?.message ?? "error desconegut";
   const code = error?.code ? ` (${error.code})` : "";
+  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message)) {
+    return "Supabase no respon. Pot ser una caiguda de connexió o que el projecte estigui pausat.";
+  }
   return `${message}${code}`;
 }
 

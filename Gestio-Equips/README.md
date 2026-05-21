@@ -221,6 +221,8 @@ Indicadors visibles a la interfície:
 - Sense polítiques RLS adequades, qualsevol usuari amb la clau pública podria intentar llegir o escriure dades.
 - L'app està preparada per a una fase inicial funcional, però encara no implementa autenticació real ni permisos fins.
 
+> Nota: si el projecte de Supabase es queda 7 dies sense activitat en el pla gratuït, Supabase el pot pausar. Per evitar-ho sense passar a Pro, consulta l'apartat de continuïtat a [`seguretat-supabase.md`](./seguretat-supabase.md).
+
 ## Execució en local
 
 Com que la càrrega de mòduls ES i del `service worker` pot donar problemes amb `file://`, convé servir el projecte amb un servidor local simple.
