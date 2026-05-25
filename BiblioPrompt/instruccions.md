@@ -123,7 +123,6 @@ Cada prompt ha de contenir com a mínim:
 - Categoria.
 - Etiquetes.
 - Notes.
-- Valoració.
 - Favorit.
 - Data de creació.
 - Data de modificació.
@@ -140,7 +139,7 @@ L'historial contindrà com a mínim:
 - Número de versió.
 - Títol i contingut del prompt.
 - Programa, categories i etiquetes.
-- Notes, valoració i estat de favorit.
+- Notes i estat de favorit.
 - Data en què es va substituir la versió.
 
 En una primera fase, l'aplicació desarà aquest historial. La consulta detallada i restauració de versions es podrà incorporar en una fase posterior.
@@ -262,7 +261,7 @@ La cerca ha de:
 - Actualitzar els resultats immediatament.
 - Ignorar diferències entre majúscules i minúscules.
 - Ignorar accents per facilitar les cerques.
-- Permetre filtrar també per favorits i valoració.
+- Permetre filtrar també per favorits.
 
 ---
 
@@ -276,7 +275,6 @@ Cada targeta mostrarà:
 - Programa.
 - Categories i etiquetes.
 - Fragment del prompt.
-- Valoració.
 - Estrella per marcar o desmarcar com a favorit.
 - Botó principal per copiar.
 - Accions per editar, duplicar i eliminar.
@@ -313,7 +311,6 @@ La primera versió funcional inclourà:
 - Còpia ràpida del text del prompt.
 - Cerca global i filtres combinables.
 - Favorits.
-- Valoració de prompts.
 - Historial automàtic de modificacions.
 - Exportació CSV i JSON.
 - Gestió bàsica de programes, categories i etiquetes.

@@ -122,8 +122,8 @@ a {
 
 .brand-logo {
   display: block;
-  width: 48px;
-  height: 48px;
+  width: 55px;
+  height: 55px;
   object-fit: contain;
 }
 
@@ -399,6 +399,18 @@ select,
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.prompt-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 16px 38px rgba(37, 50, 90, 0.14);
+}
+
+.prompt-card:focus-visible {
+  outline: 3px solid rgba(67, 56, 202, 0.3);
+  outline-offset: 2px;
 }
 
 .card-accent {
@@ -412,6 +424,7 @@ select,
   flex: 1;
   gap: 4px;
   padding: 7px 12px;
+  font-size: 0.8rem;
 }
 
 .card-top {
@@ -432,7 +445,7 @@ select,
   display: inline-flex;
   align-items: center;
   border-radius: 20px;
-  font-size: 0.84rem;
+  font-size: 0.67rem;
   font-weight: 700;
 }
 
@@ -446,7 +459,7 @@ select,
   border: 0;
   color: #cbd5e1;
   background: transparent;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   line-height: 1;
 }
 
@@ -455,7 +468,7 @@ select,
 }
 
 .prompt-card h3 {
-  font-size: 1.16rem;
+  font-size: 0.93rem;
   line-height: 1.13;
 }
 
@@ -483,28 +496,34 @@ select,
   color: #475569;
   font-weight: 400;
   line-height: 1.29;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
-}
-
-.rating {
-  margin-top: auto;
-  color: var(--accent);
-  letter-spacing: 1px;
-  line-height: 1.1;
-}
-
-.rating .empty-stars {
-  color: #cbd5e1;
 }
 
 .card-actions {
   display: flex;
   gap: 6px;
+  margin-top: auto;
 }
 
 .copy-button {
   flex: 1;
+}
+
+.prompt-card .button {
+  min-height: 30px;
+  padding-inline: 12px;
+  font-size: 0.8rem;
+}
+
+.prompt-card .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.prompt-card .icon-button {
+  width: 30px;
+  height: 30px;
 }
 
 .icon-button {
@@ -615,9 +634,56 @@ select,
   box-shadow: 0 28px 72px rgba(15, 23, 42, 0.28);
 }
 
-.prompt-dialog::backdrop {
+.prompt-dialog::backdrop,
+.view-dialog::backdrop {
   background: rgba(15, 23, 42, 0.56);
   backdrop-filter: blur(3px);
+}
+
+.view-dialog {
+  width: min(850px, calc(100vw - 32px));
+  max-height: min(86vh, 900px);
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 28px 72px rgba(15, 23, 42, 0.28);
+}
+
+.view-content {
+  display: flex;
+  flex-direction: column;
+  max-height: min(86vh, 900px);
+}
+
+.view-heading {
+  margin: 0;
+}
+
+.view-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 18px clamp(17px, 4vw, 24px) 0;
+}
+
+.view-metadata .program-pill,
+.view-metadata .category,
+.view-metadata .tag {
+  font-size: 0.84rem;
+}
+
+.view-text {
+  overflow-y: auto;
+  margin: 18px clamp(17px, 4vw, 24px);
+  color: #334155;
+  font-size: 1.12rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.view-actions {
+  padding: 0 clamp(17px, 4vw, 24px) 20px;
 }
 
 .confirm-dialog {
@@ -817,6 +883,10 @@ select,
   grid-template-columns: 1fr 1fr;
 }
 
+.form-columns-single {
+  grid-template-columns: 1fr;
+}
+
 .form-favorite {
   align-self: flex-start;
   gap: 9px;
@@ -947,8 +1017,8 @@ select,
   }
 
   .brand-logo {
-    width: 46px;
-    height: 46px;
+    width: 53px;
+    height: 53px;
   }
 
   .header-actions {
@@ -974,6 +1044,10 @@ select,
   }
 
   .prompt-dialog {
+    width: calc(100vw - 20px);
+  }
+
+  .view-dialog {
     width: calc(100vw - 20px);
   }
 

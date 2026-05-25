@@ -14,7 +14,7 @@ const CONFIG = {
 
 const PROMPT_HEADERS = [
   "id", "title", "content", "programIds", "categories", "tags", "notes",
-  "rating", "favorite", "createdAt", "updatedAt", "version"
+  "favorite", "createdAt", "updatedAt", "version"
 ];
 
 const PROGRAM_HEADERS = ["id", "name", "icon", "color"];
@@ -86,6 +86,8 @@ function setupBiblioprompt() {
   ensureSheet_(SHEETS.programs, PROGRAM_HEADERS);
   ensureSheet_(SHEETS.history, HISTORY_HEADERS);
   ensureDefaultPrograms_();
+  removeDeprecatedColumn_(SHEETS.prompts, "rating");
+  removeDeprecatedColumn_(SHEETS.history, "rating");
 }
 
 function getAllData_() {
@@ -102,6 +104,8 @@ function ensureSetup_() {
   ensureSheet_(SHEETS.programs, PROGRAM_HEADERS);
   ensureSheet_(SHEETS.history, HISTORY_HEADERS);
   ensureDefaultPrograms_();
+  removeDeprecatedColumn_(SHEETS.prompts, "rating");
+  removeDeprecatedColumn_(SHEETS.history, "rating");
   ensureProgramIdsColumn_(SHEETS.prompts);
   ensureProgramIdsColumn_(SHEETS.history);
 }
@@ -208,7 +212,6 @@ function parsePrompt_(prompt) {
     programIds: parseProgramIds_(prompt.programIds || prompt.programId),
     categories: parseArray_(prompt.categories),
     tags: parseArray_(prompt.tags),
-    rating: Number(prompt.rating || 0),
     favorite: toBoolean_(prompt.favorite),
     version: Number(prompt.version || 1)
   };
@@ -222,7 +225,7 @@ function normalizePrompt_(prompt) {
 }
 
 function samePromptContent_(left, right) {
-  return ["title", "content", "notes", "rating", "favorite"].every((key) => String(left[key]) === String(right[key]))
+  return ["title", "content", "notes", "favorite"].every((key) => String(left[key]) === String(right[key]))
     && JSON.stringify(left.programIds || []) === JSON.stringify(right.programIds || [])
     && JSON.stringify(left.categories || []) === JSON.stringify(right.categories || [])
     && JSON.stringify(left.tags || []) === JSON.stringify(right.tags || []);
@@ -274,6 +277,15 @@ function ensureProgramIdsColumn_(name) {
     const range = sheet.getRange(2, column, sheet.getLastRow() - 1, 1);
     const values = range.getValues().map(([value]) => [JSON.stringify(parseProgramIds_(value))]);
     range.setValues(values);
+  }
+}
+
+function removeDeprecatedColumn_(name, columnName) {
+  const sheet = getSpreadsheet_().getSheetByName(name);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const index = headers.indexOf(columnName);
+  if (index >= 0) {
+    sheet.deleteColumn(index + 1);
   }
 }
 

@@ -6,6 +6,12 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function removeLegacyRatings(data) {
+  data.prompts = data.prompts.map(({ rating, ...prompt }) => prompt);
+  data.history = data.history.map(({ rating, ...prompt }) => prompt);
+  return data;
+}
+
 function getLocalData() {
   const stored = localStorage.getItem(CONFIG.localStorageKey);
   if (!stored) {
@@ -13,7 +19,9 @@ function getLocalData() {
     localStorage.setItem(CONFIG.localStorageKey, JSON.stringify(initialData));
     return initialData;
   }
-  return JSON.parse(stored);
+  const data = removeLegacyRatings(JSON.parse(stored));
+  localStorage.setItem(CONFIG.localStorageKey, JSON.stringify(data));
+  return data;
 }
 
 function saveLocalData(data) {
@@ -80,7 +88,7 @@ async function remoteMutation(action, payload) {
       : action === "setFavorite"
         ? storedPrompt?.favorite === payload.favorite
         : storedPrompt && [
-          "title", "content", "notes", "rating", "favorite"
+          "title", "content", "notes", "favorite"
         ].every((key) => storedPrompt[key] === payload[key])
           && JSON.stringify(storedPrompt.programIds || []) === JSON.stringify(payload.programIds || [])
           && JSON.stringify(storedPrompt.categories || []) === JSON.stringify(payload.categories || [])

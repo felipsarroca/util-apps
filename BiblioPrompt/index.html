@@ -115,14 +115,6 @@
               <option value="">Totes les etiquetes</option>
             </select>
 
-            <label class="select-label" for="rating-filter">Valoració mínima</label>
-            <select id="rating-filter">
-              <option value="0">Qualsevol</option>
-              <option value="3">3 o més estrelles</option>
-              <option value="4">4 o més estrelles</option>
-              <option value="5">5 estrelles</option>
-            </select>
-
             <div class="stats-card">
               <p class="eyebrow">Resultats</p>
               <p><strong id="visible-count">0</strong> de <span id="total-count">0</span> prompts</p>
@@ -181,26 +173,15 @@
         </fieldset>
         <div class="form-columns form-columns-balanced">
           <label>
-            Valoració
-            <select id="rating-input" name="rating">
-              <option value="0">Sense valorar</option>
-              <option value="1">★</option>
-              <option value="2">★★</option>
-              <option value="3">★★★</option>
-              <option value="4">★★★★</option>
-              <option value="5">★★★★★</option>
-            </select>
-          </label>
-          <label>
             Categories <small>Separades amb comes</small>
             <input id="categories-input" name="categories" placeholder="Rúbrica, Presentació">
           </label>
-        </div>
-        <div class="form-columns form-columns-balanced">
           <label>
             Etiquetes <small>Separades amb comes</small>
             <input id="tags-input" name="tags" placeholder="ESO, Avaluació">
           </label>
+        </div>
+        <div class="form-columns form-columns-single">
           <label>
             Notes
             <input id="notes-input" name="notes" placeholder="Informació opcional">
@@ -217,6 +198,25 @@
           <button class="button button-primary" id="save-prompt-button" type="submit"><svg class="icon" aria-hidden="true"><use href="#icon-save"></use></svg> <span id="save-prompt-label">Desa el prompt</span></button>
         </div>
       </form>
+    </dialog>
+
+    <dialog class="view-dialog" id="view-dialog">
+      <div class="view-content">
+        <div class="dialog-heading view-heading">
+          <div>
+            <p class="eyebrow">Prompt</p>
+            <h2 id="view-title"></h2>
+          </div>
+          <button class="icon-button close-button" id="close-view-button" type="button" aria-label="Tanca"><svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+        </div>
+        <div class="view-metadata" id="view-metadata"></div>
+        <p class="view-text" id="view-text"></p>
+        <div class="dialog-actions view-actions">
+          <button class="button button-primary" id="copy-view-button" type="button">
+            <svg class="icon" aria-hidden="true"><use href="#icon-copy"></use></svg> Copia el prompt
+          </button>
+        </div>
+      </div>
     </dialog>
 
     <dialog class="confirm-dialog" id="delete-dialog">

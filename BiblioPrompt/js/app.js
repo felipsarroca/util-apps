@@ -3,7 +3,7 @@ import { createId, downloadFile, escapeCsv, normalizeText, parseCommaValues, tod
 
 const state = {
   data: { prompts: [], programs: [], history: [] },
-  filters: { query: "", favorites: false, programId: "", category: "", tag: "", rating: 0 },
+  filters: { query: "", favorites: false, programId: "", category: "", tag: "" },
   loading: true,
   loadError: false
 };
@@ -19,7 +19,6 @@ const elements = {
   programFilter: document.querySelector("#program-filter"),
   categoryFilter: document.querySelector("#category-filter"),
   tagFilter: document.querySelector("#tag-filter"),
-  ratingFilter: document.querySelector("#rating-filter"),
   filters: document.querySelector("#filters"),
   filterToggle: document.querySelector("#filter-toggle"),
   dialog: document.querySelector("#prompt-dialog"),
@@ -29,7 +28,6 @@ const elements = {
   title: document.querySelector("#title-input"),
   content: document.querySelector("#content-input"),
   programOptions: document.querySelector("#program-options"),
-  rating: document.querySelector("#rating-input"),
   categories: document.querySelector("#categories-input"),
   tags: document.querySelector("#tags-input"),
   notes: document.querySelector("#notes-input"),
@@ -37,6 +35,11 @@ const elements = {
   formStatus: document.querySelector("#form-status"),
   saveButton: document.querySelector("#save-prompt-button"),
   saveLabel: document.querySelector("#save-prompt-label"),
+  viewDialog: document.querySelector("#view-dialog"),
+  viewTitle: document.querySelector("#view-title"),
+  viewMetadata: document.querySelector("#view-metadata"),
+  viewText: document.querySelector("#view-text"),
+  copyView: document.querySelector("#copy-view-button"),
   deleteDialog: document.querySelector("#delete-dialog"),
   deleteTitle: document.querySelector("#delete-prompt-title"),
   confirmDelete: document.querySelector("#confirm-delete-button"),
@@ -169,8 +172,7 @@ function matchingPrompts() {
       && (!state.filters.favorites || prompt.favorite)
       && (!state.filters.programId || programIdsFor(prompt).includes(state.filters.programId))
       && (!state.filters.category || prompt.categories.includes(state.filters.category))
-      && (!state.filters.tag || prompt.tags.includes(state.filters.tag))
-      && prompt.rating >= state.filters.rating;
+      && (!state.filters.tag || prompt.tags.includes(state.filters.tag));
   });
 }
 
@@ -198,6 +200,8 @@ function createCard(prompt) {
   article.className = "prompt-card";
   article.style.setProperty("--program-color", program.color);
   article.dataset.id = prompt.id;
+  article.tabIndex = 0;
+  article.setAttribute("aria-label", `Mostra el prompt: ${prompt.title}`);
 
   const accent = document.createElement("div");
   accent.className = "card-accent";
@@ -231,15 +235,6 @@ function createCard(prompt) {
   excerpt.className = "excerpt";
   excerpt.textContent = prompt.content;
 
-  const rating = document.createElement("p");
-  rating.className = "rating";
-  rating.setAttribute("aria-label", `Valoració: ${prompt.rating} de 5`);
-  rating.textContent = "★".repeat(prompt.rating);
-  const emptyStars = document.createElement("span");
-  emptyStars.className = "empty-stars";
-  emptyStars.textContent = "★".repeat(5 - prompt.rating);
-  rating.append(emptyStars);
-
   const actions = document.createElement("div");
   actions.className = "card-actions";
   actions.append(
@@ -248,7 +243,7 @@ function createCard(prompt) {
     actionButton("", "duplicate", "icon-button", "Duplica", "duplicate"),
     actionButton("", "delete", "icon-button delete-button", "Elimina", "trash")
   );
-  body.append(top, title, chips, excerpt, rating, actions);
+  body.append(top, title, chips, excerpt, actions);
   article.append(accent, body);
   return article;
 }
@@ -276,8 +271,7 @@ function render() {
     state.filters.favorites && "favorits",
     state.filters.programId && programById(state.filters.programId).name,
     state.filters.category,
-    state.filters.tag,
-    state.filters.rating && `${state.filters.rating}+ estrelles`
+    state.filters.tag
   ].filter(Boolean);
   elements.summary.textContent = active.length ? active.join(" · ") : "Tots els prompts";
 }
@@ -293,13 +287,28 @@ function openForm(prompt) {
   if (prompt) {
     elements.title.value = prompt.title;
     elements.content.value = prompt.content;
-    elements.rating.value = String(prompt.rating);
     elements.categories.value = prompt.categories.join(", ");
     elements.tags.value = prompt.tags.join(", ");
     elements.notes.value = prompt.notes;
     elements.favorite.checked = prompt.favorite;
   }
   elements.dialog.showModal();
+}
+
+function openViewer(prompt) {
+  elements.viewTitle.textContent = prompt.title;
+  elements.viewText.textContent = prompt.content;
+  elements.copyView.dataset.id = prompt.id;
+  elements.viewMetadata.replaceChildren(
+    ...programsFor(prompt).map((program) => {
+      const node = chip([program.icon, program.name].filter(Boolean).join(" "), "program-pill");
+      node.style.setProperty("--program-color", program.color);
+      return node;
+    }),
+    ...prompt.categories.map((value) => chip(value, "category")),
+    ...prompt.tags.map((value) => chip(`#${value}`, "tag"))
+  );
+  elements.viewDialog.showModal();
 }
 
 function setFormSaving(saving) {
@@ -322,18 +331,22 @@ function promptFromForm() {
     categories: parseCommaValues(elements.categories.value),
     tags: parseCommaValues(elements.tags.value),
     notes: elements.notes.value.trim(),
-    rating: Number(elements.rating.value),
     favorite: elements.favorite.checked
   };
 }
 
 async function handleCardAction(event) {
   const button = event.target.closest("button[data-action]");
-  if (!button) return;
-  const promptId = button.closest(".prompt-card").dataset.id;
+  const card = event.target.closest(".prompt-card");
+  if (!card) return;
+  const promptId = card.dataset.id;
   const prompt = state.data.prompts.find((item) => item.id === promptId);
   if (!prompt) return;
 
+  if (!button) {
+    openViewer(prompt);
+    return;
+  }
   if (button.dataset.action === "copy") {
     await navigator.clipboard.writeText(prompt.content);
     showToast("Prompt copiat al porta-retalls.");
@@ -362,11 +375,11 @@ function exportJson() {
 }
 
 function exportCsv() {
-  const headers = ["id", "titol", "prompt", "programes", "categories", "etiquetes", "notes", "valoracio", "favorit", "dataCreacio", "dataModificacio", "versio"];
+  const headers = ["id", "titol", "prompt", "programes", "categories", "etiquetes", "notes", "favorit", "dataCreacio", "dataModificacio", "versio"];
   const rows = state.data.prompts.map((prompt) => {
     const values = [
       prompt.id, prompt.title, prompt.content, programsFor(prompt).map((program) => program.name),
-      prompt.categories, prompt.tags, prompt.notes, prompt.rating, prompt.favorite,
+      prompt.categories, prompt.tags, prompt.notes, prompt.favorite,
       prompt.createdAt, prompt.updatedAt, prompt.version
     ];
     return values.map(escapeCsv).join(";");
@@ -395,18 +408,13 @@ function bindEvents() {
     state.filters.tag = elements.tagFilter.value;
     render();
   });
-  elements.ratingFilter.addEventListener("change", () => {
-    state.filters.rating = Number(elements.ratingFilter.value);
-    render();
-  });
   document.querySelector("#clear-filters-button").addEventListener("click", () => {
     elements.search.value = "";
     elements.favorites.checked = false;
     elements.programFilter.value = "";
     elements.categoryFilter.value = "";
     elements.tagFilter.value = "";
-    elements.ratingFilter.value = "0";
-    state.filters = { query: "", favorites: false, programId: "", category: "", tag: "", rating: 0 };
+    state.filters = { query: "", favorites: false, programId: "", category: "", tag: "" };
     render();
   });
   elements.filterToggle.addEventListener("click", () => {
@@ -416,6 +424,13 @@ function bindEvents() {
   document.querySelector("#new-prompt-button").addEventListener("click", () => openForm());
   document.querySelector("#close-dialog-button").addEventListener("click", () => elements.dialog.close());
   document.querySelector("#cancel-button").addEventListener("click", () => elements.dialog.close());
+  document.querySelector("#close-view-button").addEventListener("click", () => elements.viewDialog.close());
+  elements.copyView.addEventListener("click", async () => {
+    const prompt = state.data.prompts.find((item) => item.id === elements.copyView.dataset.id);
+    if (!prompt) return;
+    await navigator.clipboard.writeText(prompt.content);
+    showToast("Prompt copiat al porta-retalls.");
+  });
   document.querySelector("#cancel-delete-button").addEventListener("click", () => elements.deleteDialog.close());
   elements.confirmDelete.addEventListener("click", async () => {
     state.data = await deletePrompt(elements.confirmDelete.dataset.id);
@@ -425,6 +440,13 @@ function bindEvents() {
     showToast("Prompt eliminat.");
   });
   elements.grid.addEventListener("click", handleCardAction);
+  elements.grid.addEventListener("keydown", (event) => {
+    if ((event.key === "Enter" || event.key === " ") && event.target.matches(".prompt-card")) {
+      event.preventDefault();
+      const prompt = state.data.prompts.find((item) => item.id === event.target.dataset.id);
+      if (prompt) openViewer(prompt);
+    }
+  });
   elements.form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (elements.saveButton.disabled) return;
