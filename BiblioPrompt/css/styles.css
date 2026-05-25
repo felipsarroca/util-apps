@@ -657,11 +657,6 @@ select,
   flex-direction: column;
 }
 
-.view-heading {
-  margin: 0;
-  padding: clamp(12px, 2vh, 18px) max(calc((100% - 780px) / 2), 24px) clamp(10px, 1.7vh, 15px);
-}
-
 .view-metadata {
   display: flex;
   flex-wrap: wrap;
@@ -750,6 +745,11 @@ select,
   padding: 18px clamp(17px, 4vw, 24px) 15px;
   border-bottom: 1px solid #e7eaf5;
   background: linear-gradient(135deg, #f4f3ff 0%, #ffffff 82%);
+}
+
+.dialog-heading.view-heading {
+  margin: 0;
+  padding: clamp(12px, 2vh, 18px) max(calc((100% - 780px) / 2), 24px) clamp(10px, 1.7vh, 15px);
 }
 
 .dialog-heading h2 {
@@ -1060,10 +1060,6 @@ select,
     max-height: calc(100dvh - 16px);
   }
 
-  .view-heading {
-    padding-inline: 13px;
-  }
-
   .view-text {
     width: calc(100% - 26px);
     font-size: 1rem;
@@ -1085,6 +1081,11 @@ select,
   .dialog-heading {
     margin-inline: -13px;
     padding: 12px 13px 10px;
+  }
+
+  .dialog-heading.view-heading {
+    margin-inline: 0;
+    padding-inline: 13px;
   }
 
   .dialog-description {
