@@ -659,7 +659,7 @@ select,
 
 .view-heading {
   margin: 0;
-  padding: clamp(12px, 2vh, 18px) clamp(20px, 4vw, 36px) clamp(10px, 1.7vh, 15px);
+  padding: clamp(12px, 2vh, 18px) max(calc((100% - 780px) / 2), 24px) clamp(10px, 1.7vh, 15px);
 }
 
 .view-metadata {
@@ -1058,6 +1058,10 @@ select,
   .view-dialog {
     width: calc(100vw - 20px);
     max-height: calc(100dvh - 16px);
+  }
+
+  .view-heading {
+    padding-inline: 13px;
   }
 
   .view-text {
