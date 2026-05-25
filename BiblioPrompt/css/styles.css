@@ -627,11 +627,14 @@ select,
 
 .prompt-dialog {
   width: min(720px, calc(100vw - 32px));
+  max-height: calc(100dvh - 24px);
   padding: 0;
   border: 0;
   border-radius: 22px;
   background: #ffffff;
   box-shadow: 0 28px 72px rgba(15, 23, 42, 0.28);
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .prompt-dialog::backdrop,
@@ -733,8 +736,8 @@ select,
 .prompt-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 0 clamp(17px, 4vw, 24px) 18px;
+  gap: 7px;
+  padding: 0 clamp(17px, 4vw, 24px) 12px;
 }
 
 .dialog-heading {
@@ -742,7 +745,7 @@ select,
   align-items: flex-start;
   gap: 18px;
   margin: 0 calc(-1 * clamp(17px, 4vw, 24px)) 3px;
-  padding: 18px clamp(17px, 4vw, 24px) 15px;
+  padding: 12px clamp(17px, 4vw, 24px) 10px;
   border-bottom: 1px solid #e7eaf5;
   background: linear-gradient(135deg, #f4f3ff 0%, #ffffff 82%);
 }
@@ -754,14 +757,14 @@ select,
 
 .dialog-heading h2 {
   margin-top: 2px;
-  font-size: 1.42rem;
+  font-size: 1.3rem;
   line-height: 1.15;
 }
 
 .dialog-description {
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--muted);
-  font-size: 0.94rem;
+  font-size: 0.88rem;
 }
 
 .close-button {
@@ -771,7 +774,7 @@ select,
 
 .prompt-form label {
   color: #334155;
-  font-size: 0.94rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
@@ -788,8 +791,8 @@ select,
 .prompt-form textarea,
 .prompt-form select {
   display: block;
-  margin-top: 4px;
-  padding: 8px 11px;
+  margin-top: 3px;
+  padding: 6px 10px;
   font-weight: 400;
   line-height: 1.35;
   outline: 0;
@@ -797,7 +800,7 @@ select,
 
 .prompt-form input,
 .prompt-form select {
-  height: 39px;
+  height: 34px;
 }
 
 .prompt-form input:focus,
@@ -811,8 +814,8 @@ select,
 }
 
 .prompt-content-input {
-  height: 92px;
-  min-height: 92px;
+  height: clamp(62px, 13vh, 76px);
+  min-height: 62px;
   font-weight: 400;
   resize: none;
 }
@@ -824,16 +827,16 @@ select,
 }
 
 .program-selection legend {
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: #334155;
-  font-size: 0.94rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
 .program-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 5px;
 }
 
 .program-message {
@@ -860,8 +863,8 @@ select,
 .program-choice span {
   display: inline-flex;
   align-items: center;
-  min-height: 34px;
-  padding: 5px 12px;
+  min-height: 30px;
+  padding: 4px 10px;
   border: 1px solid var(--line);
   border-radius: 18px;
   color: #475569;
@@ -884,7 +887,7 @@ select,
 .form-columns {
   display: grid;
   grid-template-columns: 1fr 180px;
-  gap: 11px;
+  gap: 8px;
 }
 
 .form-columns-balanced {
@@ -898,12 +901,20 @@ select,
 .form-favorite {
   align-self: flex-start;
   gap: 9px;
-  margin-top: 1px;
-  padding: 7px 11px 7px 8px;
+  margin-top: 0;
+  padding: 5px 10px 5px 7px;
   border-radius: 22px;
   color: #92400e;
   background: #fff7e6;
   transition: background 120ms ease;
+}
+
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
 }
 
 .form-favorite:hover {
@@ -922,8 +933,8 @@ select,
 .favorite-star {
   display: inline-grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   color: #cbd5e1;
   background: #ffffff;
@@ -958,7 +969,7 @@ select,
 .dialog-actions {
   justify-content: flex-end;
   gap: 9px;
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .toast {
@@ -1053,6 +1064,7 @@ select,
 
   .prompt-dialog {
     width: calc(100vw - 20px);
+    max-height: calc(100dvh - 16px);
   }
 
   .view-dialog {
@@ -1076,6 +1088,11 @@ select,
     gap: 8px;
     padding-inline: 13px;
     padding-bottom: 12px;
+  }
+
+  .form-footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .dialog-heading {

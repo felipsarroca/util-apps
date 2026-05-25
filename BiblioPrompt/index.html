@@ -187,15 +187,17 @@
             <input id="notes-input" name="notes" placeholder="Informació opcional">
           </label>
         </div>
-        <label class="check-option form-favorite">
-          <input class="visually-hidden" id="favorite-input" name="favorite" type="checkbox">
-          <span class="favorite-star" aria-hidden="true"><svg class="icon filled-icon"><use href="#icon-star"></use></svg></span>
-          Marcar com a favorit
-        </label>
         <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-        <div class="dialog-actions">
-          <button class="button button-secondary" id="cancel-button" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg> Cancel·la</button>
-          <button class="button button-primary" id="save-prompt-button" type="submit"><svg class="icon" aria-hidden="true"><use href="#icon-save"></use></svg> <span id="save-prompt-label">Desa el prompt</span></button>
+        <div class="form-footer">
+          <label class="check-option form-favorite">
+            <input class="visually-hidden" id="favorite-input" name="favorite" type="checkbox">
+            <span class="favorite-star" aria-hidden="true"><svg class="icon filled-icon"><use href="#icon-star"></use></svg></span>
+            Marcar com a favorit
+          </label>
+          <div class="dialog-actions">
+            <button class="button button-secondary" id="cancel-button" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg> Cancel·la</button>
+            <button class="button button-primary" id="save-prompt-button" type="submit"><svg class="icon" aria-hidden="true"><use href="#icon-save"></use></svg> <span id="save-prompt-label">Desa el prompt</span></button>
+          </div>
         </div>
       </form>
     </dialog>
