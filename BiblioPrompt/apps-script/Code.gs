@@ -85,16 +85,7 @@ function setupBiblioprompt() {
   ensureSheet_(SHEETS.prompts, PROMPT_HEADERS);
   ensureSheet_(SHEETS.programs, PROGRAM_HEADERS);
   ensureSheet_(SHEETS.history, HISTORY_HEADERS);
-
-  const programsSheet = getSpreadsheet_().getSheetByName(SHEETS.programs);
-  if (programsSheet.getLastRow() === 1) {
-    programsSheet.getRange(2, 1, 4, PROGRAM_HEADERS.length).setValues([
-      ["chatgpt", "ChatGPT", "✦", "#10a37f"],
-      ["gemini", "Gemini", "✧", "#2563eb"],
-      ["notebooklm", "NotebookLM", "▣", "#7c3aed"],
-      ["canva", "Canva", "◈", "#00a8b5"]
-    ]);
-  }
+  ensureDefaultPrograms_();
 }
 
 function getAllData_() {
@@ -107,14 +98,24 @@ function getAllData_() {
 }
 
 function ensureSetup_() {
-  const spreadsheet = getSpreadsheet_();
-  if (!spreadsheet.getSheetByName(SHEETS.prompts)
-    || !spreadsheet.getSheetByName(SHEETS.programs)
-    || !spreadsheet.getSheetByName(SHEETS.history)) {
-    setupBiblioprompt();
-  }
+  ensureSheet_(SHEETS.prompts, PROMPT_HEADERS);
+  ensureSheet_(SHEETS.programs, PROGRAM_HEADERS);
+  ensureSheet_(SHEETS.history, HISTORY_HEADERS);
+  ensureDefaultPrograms_();
   ensureProgramIdsColumn_(SHEETS.prompts);
   ensureProgramIdsColumn_(SHEETS.history);
+}
+
+function ensureDefaultPrograms_() {
+  const programsSheet = getSpreadsheet_().getSheetByName(SHEETS.programs);
+  if (programsSheet.getLastRow() === 1) {
+    programsSheet.getRange(2, 1, 4, PROGRAM_HEADERS.length).setValues([
+      ["chatgpt", "ChatGPT", "✦", "#10a37f"],
+      ["gemini", "Gemini", "✧", "#2563eb"],
+      ["notebooklm", "NotebookLM", "▣", "#7c3aed"],
+      ["canva", "Canva", "◈", "#00a8b5"]
+    ]);
+  }
 }
 
 function createPrompt_(prompt) {

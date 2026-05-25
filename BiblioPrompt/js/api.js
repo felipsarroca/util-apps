@@ -70,24 +70,26 @@ async function remoteMutation(action, payload) {
     // Apps Script may write successfully before a cross-origin redirect is rejected.
     requestError = error;
   }
-  // Apps Script may return before a following public read reflects the Sheet update.
-  await new Promise((resolve) => setTimeout(resolve, 450));
-  const data = await jsonpRequest("getAll");
-  const storedPrompt = data.prompts.find((prompt) => prompt.id === payload.id);
-  const reflected = action === "deletePrompt"
-    ? !storedPrompt
-    : action === "setFavorite"
-      ? storedPrompt?.favorite === payload.favorite
-      : storedPrompt && [
-        "title", "content", "notes", "rating", "favorite"
-      ].every((key) => storedPrompt[key] === payload[key])
-        && JSON.stringify(storedPrompt.programIds || []) === JSON.stringify(payload.programIds || [])
-        && JSON.stringify(storedPrompt.categories || []) === JSON.stringify(payload.categories || [])
-        && JSON.stringify(storedPrompt.tags || []) === JSON.stringify(payload.tags || []);
-  if (!reflected) {
-    throw requestError || new Error("Google Sheets no ha confirmat l'operació.");
+  // A public read can briefly lag behind a successful Sheet write.
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, attempt === 0 ? 450 : 700));
+    const data = await jsonpRequest("getAll");
+    const storedPrompt = data.prompts.find((prompt) => prompt.id === payload.id);
+    const reflected = action === "deletePrompt"
+      ? !storedPrompt
+      : action === "setFavorite"
+        ? storedPrompt?.favorite === payload.favorite
+        : storedPrompt && [
+          "title", "content", "notes", "rating", "favorite"
+        ].every((key) => storedPrompt[key] === payload[key])
+          && JSON.stringify(storedPrompt.programIds || []) === JSON.stringify(payload.programIds || [])
+          && JSON.stringify(storedPrompt.categories || []) === JSON.stringify(payload.categories || [])
+          && JSON.stringify(storedPrompt.tags || []) === JSON.stringify(payload.tags || []);
+    if (reflected) {
+      return data;
+    }
   }
-  return data;
+  throw requestError || new Error("Google Sheets no ha confirmat l'operació.");
 }
 
 export async function loadData() {

@@ -109,9 +109,11 @@ function fillProgramOptions(selectedIds) {
   if (!options.length) {
     const message = document.createElement("p");
     message.className = "program-message";
-    message.textContent = state.loadError
-      ? "No s'han pogut carregar els programes."
-      : "Carregant programes...";
+    message.textContent = state.loading
+      ? "Carregant programes..."
+      : state.loadError
+        ? "No s'han pogut carregar els programes. Pots desar sense assignar-ne cap."
+        : "No hi ha programes configurats. Pots desar sense assignar-ne cap.";
     options.push(message);
   }
   elements.programOptions.replaceChildren(...options);
@@ -301,12 +303,9 @@ function openForm(prompt) {
 }
 
 function setFormSaving(saving) {
-  const waitingForPrograms = !state.data.programs.length;
-  elements.saveButton.disabled = saving || waitingForPrograms;
+  elements.saveButton.disabled = saving;
   elements.form.setAttribute("aria-busy", String(saving));
-  elements.saveLabel.textContent = saving
-    ? "Desant..."
-    : waitingForPrograms ? "Carregant dades..." : "Desa el prompt";
+  elements.saveLabel.textContent = saving ? "Desant..." : "Desa el prompt";
 }
 
 function promptFromForm() {
@@ -472,4 +471,5 @@ init().catch((error) => {
   state.loadError = true;
   fillProgramOptions();
   setFormSaving(false);
+  showToast("No s'han pogut carregar les dades. Pots provar de desar un prompt.");
 });
