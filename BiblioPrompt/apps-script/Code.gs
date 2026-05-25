@@ -13,7 +13,7 @@ const CONFIG = {
 };
 
 const PROMPT_HEADERS = [
-  "id", "title", "content", "programId", "categories", "tags", "notes",
+  "id", "title", "content", "programIds", "categories", "tags", "notes",
   "rating", "favorite", "createdAt", "updatedAt", "version"
 ];
 
@@ -41,7 +41,9 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(10000);
     ensureSetup_();
     const request = JSON.parse(e.postData.contents || "{}");
     const payload = request.payload || {};
@@ -57,6 +59,9 @@ function doPost(e) {
       case "toggleFavorite":
         toggleFavorite_(payload.id);
         break;
+      case "setFavorite":
+        setFavorite_(payload.id, payload.favorite);
+        break;
       case "deletePrompt":
         deletePrompt_(payload.id);
         break;
@@ -68,6 +73,8 @@ function doPost(e) {
     return jsonOutput_({ ok: true, data });
   } catch (error) {
     return jsonOutput_({ ok: false, error: error.message });
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -106,13 +113,18 @@ function ensureSetup_() {
     || !spreadsheet.getSheetByName(SHEETS.history)) {
     setupBiblioprompt();
   }
+  ensureProgramIdsColumn_(SHEETS.prompts);
+  ensureProgramIdsColumn_(SHEETS.history);
 }
 
 function createPrompt_(prompt) {
+  const normalized = normalizePrompt_(prompt);
+  const id = normalized.id || `prompt-${Utilities.getUuid()}`;
+  if (findPrompt_(id)) return;
   const now = new Date().toISOString();
   const record = {
-    ...prompt,
-    id: `prompt-${Utilities.getUuid()}`,
+    ...normalized,
+    id,
     createdAt: now,
     updatedAt: now,
     version: 1
@@ -123,11 +135,13 @@ function createPrompt_(prompt) {
 function updatePrompt_(newPrompt) {
   const prompt = findPrompt_(newPrompt.id);
   if (!prompt) throw new Error("No s'ha trobat el prompt.");
+  const normalized = normalizePrompt_(newPrompt);
+  if (samePromptContent_(prompt.value, normalized)) return;
 
   const now = new Date().toISOString();
   addHistory_(prompt.value, now);
   const updated = {
-    ...newPrompt,
+    ...normalized,
     createdAt: prompt.value.createdAt,
     updatedAt: now,
     version: Number(prompt.value.version) + 1
@@ -148,6 +162,21 @@ function toggleFavorite_(id) {
     version: Number(prompt.value.version) + 1
   };
   writeObjectRow_(SHEETS.prompts, PROMPT_HEADERS, prompt.row, updated);
+}
+
+function setFavorite_(id, favorite) {
+  const prompt = findPrompt_(id);
+  if (!prompt) throw new Error("No s'ha trobat el prompt.");
+  const value = toBoolean_(favorite);
+  if (prompt.value.favorite === value) return;
+  const now = new Date().toISOString();
+  addHistory_(prompt.value, now);
+  writeObjectRow_(SHEETS.prompts, PROMPT_HEADERS, prompt.row, {
+    ...prompt.value,
+    favorite: value,
+    updatedAt: now,
+    version: Number(prompt.value.version) + 1
+  });
 }
 
 function deletePrompt_(id) {
@@ -175,12 +204,39 @@ function findPrompt_(id) {
 function parsePrompt_(prompt) {
   return {
     ...prompt,
+    programIds: parseProgramIds_(prompt.programIds || prompt.programId),
     categories: parseArray_(prompt.categories),
     tags: parseArray_(prompt.tags),
     rating: Number(prompt.rating || 0),
     favorite: toBoolean_(prompt.favorite),
     version: Number(prompt.version || 1)
   };
+}
+
+function normalizePrompt_(prompt) {
+  return {
+    ...prompt,
+    programIds: parseProgramIds_(prompt.programIds || prompt.programId)
+  };
+}
+
+function samePromptContent_(left, right) {
+  return ["title", "content", "notes", "rating", "favorite"].every((key) => String(left[key]) === String(right[key]))
+    && JSON.stringify(left.programIds || []) === JSON.stringify(right.programIds || [])
+    && JSON.stringify(left.categories || []) === JSON.stringify(right.categories || [])
+    && JSON.stringify(left.tags || []) === JSON.stringify(right.tags || []);
+}
+
+function parseProgramIds_(value) {
+  const aliases = {
+    "chatgpt": "chatgpt",
+    "gemini": "gemini",
+    "notebooklm": "notebooklm",
+    "canva": "canva"
+  };
+  return parseArray_(value)
+    .map((item) => aliases[String(item).trim().toLowerCase()] || String(item).trim())
+    .filter(Boolean);
 }
 
 function parseArray_(value) {
@@ -203,6 +259,20 @@ function ensureSheet_(name, headers) {
   if (sheet.getLastRow() === 0) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.setFrozenRows(1);
+  }
+}
+
+function ensureProgramIdsColumn_(name) {
+  const sheet = getSpreadsheet_().getSheetByName(name);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const legacyIndex = headers.indexOf("programId");
+  if (legacyIndex < 0) return;
+  const column = legacyIndex + 1;
+  sheet.getRange(1, column).setValue("programIds");
+  if (sheet.getLastRow() > 1) {
+    const range = sheet.getRange(2, column, sheet.getLastRow() - 1, 1);
+    const values = range.getValues().map(([value]) => [JSON.stringify(parseProgramIds_(value))]);
+    range.setValues(values);
   }
 }
 

@@ -175,17 +175,11 @@
           Prompt <span class="required">*</span>
           <textarea class="prompt-content-input" id="content-input" name="content" required rows="6" placeholder="Escriu aquí les instruccions que vols reutilitzar..."></textarea>
         </label>
-        <div class="form-columns">
-          <label>
-            Programa
-            <input id="program-input" name="program" type="text" list="program-suggestions" value="NotebookLM, Gemini, ChatGPT" placeholder="NotebookLM, Gemini, ChatGPT">
-            <datalist id="program-suggestions">
-              <option value="NotebookLM"></option>
-              <option value="Gemini"></option>
-              <option value="ChatGPT"></option>
-              <option value="Canva"></option>
-            </datalist>
-          </label>
+        <fieldset class="program-selection">
+          <legend>Programes</legend>
+          <div class="program-options" id="program-options"></div>
+        </fieldset>
+        <div class="form-columns form-columns-balanced">
           <label>
             Valoració
             <select id="rating-input" name="rating">
@@ -197,21 +191,21 @@
               <option value="5">★★★★★</option>
             </select>
           </label>
-        </div>
-        <div class="form-columns form-columns-balanced">
           <label>
             Categories <small>Separades amb comes</small>
             <input id="categories-input" name="categories" placeholder="Rúbrica, Presentació">
           </label>
+        </div>
+        <div class="form-columns form-columns-balanced">
           <label>
             Etiquetes <small>Separades amb comes</small>
             <input id="tags-input" name="tags" placeholder="ESO, Avaluació">
           </label>
+          <label>
+            Notes
+            <input id="notes-input" name="notes" placeholder="Informació opcional">
+          </label>
         </div>
-        <label>
-          Notes
-          <textarea id="notes-input" name="notes" rows="2" placeholder="Informació complementària opcional"></textarea>
-        </label>
         <label class="check-option form-favorite">
           <input class="visually-hidden" id="favorite-input" name="favorite" type="checkbox">
           <span class="favorite-star" aria-hidden="true"><svg class="icon filled-icon"><use href="#icon-star"></use></svg></span>

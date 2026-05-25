@@ -420,6 +420,12 @@ select,
   gap: 12px;
 }
 
+.program-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .program-pill,
 .tag,
 .category {
@@ -602,7 +608,6 @@ select,
 
 .prompt-dialog {
   width: min(720px, calc(100vw - 32px));
-  max-height: min(92vh, 760px);
   padding: 0;
   border: 0;
   border-radius: 22px;
@@ -660,8 +665,6 @@ select,
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: min(92vh, 760px);
-  overflow-y: auto;
   padding: 0 clamp(17px, 4vw, 24px) 18px;
 }
 
@@ -734,8 +737,74 @@ select,
 }
 
 .prompt-content-input {
-  min-height: 108px;
+  height: 92px;
+  min-height: 92px;
   font-weight: 400;
+  resize: none;
+}
+
+.program-selection {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.program-selection legend {
+  margin-bottom: 4px;
+  color: #334155;
+  font-size: 0.94rem;
+  font-weight: 600;
+}
+
+.program-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.program-message {
+  color: var(--muted);
+  font-size: 0.93rem;
+  font-style: italic;
+}
+
+.program-choice {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.program-choice input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.program-choice span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: #475569;
+  background: white;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.program-choice input:checked + span {
+  border-color: #a5b4fc;
+  color: var(--primary);
+  background: #eef2ff;
+  font-weight: 600;
+}
+
+.program-choice input:focus-visible + span {
+  outline: 3px solid rgba(67, 56, 202, 0.3);
+  outline-offset: 2px;
 }
 
 .form-columns {
@@ -817,7 +886,8 @@ select,
 .toast {
   position: fixed;
   right: 22px;
-  bottom: 22px;
+  bottom: 68px;
+  z-index: 20;
   transform: translateY(18px);
   opacity: 0;
   pointer-events: none;
@@ -903,8 +973,42 @@ select,
     grid-template-columns: 1fr;
   }
 
-  .form-columns {
-    grid-template-columns: 1fr;
+  .prompt-dialog {
+    width: calc(100vw - 20px);
+  }
+
+  .prompt-form {
+    gap: 8px;
+    padding-inline: 13px;
+    padding-bottom: 12px;
+  }
+
+  .dialog-heading {
+    margin-inline: -13px;
+    padding: 12px 13px 10px;
+  }
+
+  .dialog-description {
+    display: none;
+  }
+
+  .prompt-content-input {
+    height: 80px;
+    min-height: 80px;
+  }
+
+  .form-columns-balanced {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .program-options {
+    gap: 5px;
+  }
+
+  .program-choice span {
+    min-height: 31px;
+    padding: 4px 9px;
   }
 
   .site-footer {

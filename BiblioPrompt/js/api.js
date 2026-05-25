@@ -29,14 +29,18 @@ function jsonpRequest(action) {
       reject(new Error("La resposta de Google Sheets està trigant massa."));
       delete globalThis[callbackName];
       script.remove();
-    }, 15000);
+    }, 30000);
     url.searchParams.set("action", action);
     url.searchParams.set("callback", callbackName);
     url.searchParams.set("_", String(Date.now()));
 
     globalThis[callbackName] = (response) => {
       clearTimeout(timeout);
-      resolve(response.data);
+      if (response.ok) {
+        resolve(response.data);
+      } else {
+        reject(new Error(response.error || "Google Sheets ha retornat un error."));
+      }
       delete globalThis[callbackName];
       script.remove();
     };
@@ -54,15 +58,36 @@ function jsonpRequest(action) {
 }
 
 async function remoteMutation(action, payload) {
-  await fetch(CONFIG.appsScriptUrl, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action, payload })
-  });
+  let requestError;
+  try {
+    await fetch(CONFIG.appsScriptUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action, payload })
+    });
+  } catch (error) {
+    // Apps Script may write successfully before a cross-origin redirect is rejected.
+    requestError = error;
+  }
   // Apps Script may return before a following public read reflects the Sheet update.
   await new Promise((resolve) => setTimeout(resolve, 450));
-  return jsonpRequest("getAll");
+  const data = await jsonpRequest("getAll");
+  const storedPrompt = data.prompts.find((prompt) => prompt.id === payload.id);
+  const reflected = action === "deletePrompt"
+    ? !storedPrompt
+    : action === "setFavorite"
+      ? storedPrompt?.favorite === payload.favorite
+      : storedPrompt && [
+        "title", "content", "notes", "rating", "favorite"
+      ].every((key) => storedPrompt[key] === payload[key])
+        && JSON.stringify(storedPrompt.programIds || []) === JSON.stringify(payload.programIds || [])
+        && JSON.stringify(storedPrompt.categories || []) === JSON.stringify(payload.categories || [])
+        && JSON.stringify(storedPrompt.tags || []) === JSON.stringify(payload.tags || []);
+  if (!reflected) {
+    throw requestError || new Error("Google Sheets no ha confirmat l'operació.");
+  }
+  return data;
 }
 
 export async function loadData() {
@@ -72,9 +97,9 @@ export async function loadData() {
   return getLocalData();
 }
 
-export async function savePrompt(prompt) {
+export async function savePrompt(prompt, isNew = false) {
   if (CONFIG.useGoogleSheets && CONFIG.appsScriptUrl) {
-    return remoteMutation(prompt.id ? "updatePrompt" : "createPrompt", prompt);
+    return remoteMutation(isNew ? "createPrompt" : "updatePrompt", prompt);
   }
 
   const data = getLocalData();
@@ -109,9 +134,9 @@ export async function savePrompt(prompt) {
   return data;
 }
 
-export async function toggleFavorite(id) {
+export async function toggleFavorite(id, favorite) {
   if (CONFIG.useGoogleSheets && CONFIG.appsScriptUrl) {
-    return remoteMutation("toggleFavorite", { id });
+    return remoteMutation("setFavorite", { id, favorite });
   }
   const data = getLocalData();
   const prompt = data.prompts.find((item) => item.id === id);
@@ -123,7 +148,7 @@ export async function toggleFavorite(id) {
       promptId: prompt.id,
       replacedAt: now
     });
-    prompt.favorite = !prompt.favorite;
+    prompt.favorite = favorite;
     prompt.updatedAt = now;
     prompt.version += 1;
     saveLocalData(data);

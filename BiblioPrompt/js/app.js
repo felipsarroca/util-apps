@@ -1,12 +1,12 @@
 import { deletePrompt, loadData, savePrompt, toggleFavorite } from "./api.js";
-import { downloadFile, escapeCsv, normalizeText, parseCommaValues, todayFileSuffix } from "./utils.js";
+import { createId, downloadFile, escapeCsv, normalizeText, parseCommaValues, todayFileSuffix } from "./utils.js";
 
 const state = {
   data: { prompts: [], programs: [], history: [] },
-  filters: { query: "", favorites: false, programId: "", category: "", tag: "", rating: 0 }
+  filters: { query: "", favorites: false, programId: "", category: "", tag: "", rating: 0 },
+  loading: true,
+  loadError: false
 };
-
-const DEFAULT_PROGRAM = "NotebookLM, Gemini, ChatGPT";
 
 const elements = {
   grid: document.querySelector("#prompt-grid"),
@@ -28,7 +28,7 @@ const elements = {
   id: document.querySelector("#prompt-id"),
   title: document.querySelector("#title-input"),
   content: document.querySelector("#content-input"),
-  program: document.querySelector("#program-input"),
+  programOptions: document.querySelector("#program-options"),
   rating: document.querySelector("#rating-input"),
   categories: document.querySelector("#categories-input"),
   tags: document.querySelector("#tags-input"),
@@ -59,10 +59,26 @@ function programById(id) {
   return { name: "Sense programa", icon: "", color: "#64748b" };
 }
 
-function programValueFromInput(value) {
-  const name = value.trim();
-  const storedProgram = state.data.programs.find((program) => normalizeText(program.name) === normalizeText(name));
-  return storedProgram?.id || name;
+function programIdsFor(prompt) {
+  let values = prompt.programIds ?? prompt.programId ?? [];
+  if (!Array.isArray(values)) {
+    try {
+      values = JSON.parse(values);
+    } catch (error) {
+      values = String(values).split(",");
+    }
+  }
+  return values
+    .map((value) => String(value).trim())
+    .filter(Boolean)
+    .map((value) => state.data.programs.find((program) => (
+      program.id === value || normalizeText(program.name) === normalizeText(value)
+    ))?.id || value);
+}
+
+function programsFor(prompt) {
+  const programs = programIdsFor(prompt).map(programById);
+  return programs.length ? programs : [programById("")];
 }
 
 function option(select, value, label) {
@@ -70,6 +86,35 @@ function option(select, value, label) {
   node.value = value;
   node.textContent = label;
   select.append(node);
+}
+
+function fillProgramOptions(selectedIds) {
+  const preservedIds = selectedIds || Array.from(
+    elements.programOptions.querySelectorAll("input:checked"),
+    (input) => input.value
+  );
+  const options = state.data.programs.map((program) => {
+    const label = document.createElement("label");
+    label.className = "program-choice";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.name = "programs";
+    input.value = program.id;
+    input.checked = preservedIds.includes(program.id);
+    const text = document.createElement("span");
+    text.textContent = [program.icon, program.name].filter(Boolean).join(" ");
+    label.append(input, text);
+    return label;
+  });
+  if (!options.length) {
+    const message = document.createElement("p");
+    message.className = "program-message";
+    message.textContent = state.loadError
+      ? "No s'han pogut carregar els programes."
+      : "Carregant programes...";
+    options.push(message);
+  }
+  elements.programOptions.replaceChildren(...options);
 }
 
 function fillSelectors() {
@@ -85,12 +130,14 @@ function fillSelectors() {
     option(elements.programFilter, program.id, `${program.icon} ${program.name}`);
   });
   state.data.prompts
-    .filter((prompt) => !state.data.programs.some((program) => program.id === prompt.programId))
-    .forEach((prompt) => {
-      if (!Array.from(elements.programFilter.options).some((item) => item.value === prompt.programId)) {
-        option(elements.programFilter, prompt.programId, prompt.programId);
+    .flatMap(programIdsFor)
+    .filter((id) => !state.data.programs.some((program) => program.id === id))
+    .forEach((id) => {
+      if (!Array.from(elements.programFilter.options).some((item) => item.value === id)) {
+        option(elements.programFilter, id, id);
       }
     });
+  fillProgramOptions();
 
   elements.categoryFilter.replaceChildren();
   option(elements.categoryFilter, "", "Totes les categories");
@@ -108,17 +155,17 @@ function fillSelectors() {
 function matchingPrompts() {
   const query = normalizeText(state.filters.query);
   return state.data.prompts.filter((prompt) => {
-    const program = programById(prompt.programId);
+    const programs = programsFor(prompt);
     const searchable = normalizeText([
       prompt.title,
       prompt.content,
-      program.name,
+      programs.map((program) => program.name).join(" "),
       prompt.categories.join(" "),
       prompt.tags.join(" ")
     ].join(" "));
     return (!query || searchable.includes(query))
       && (!state.filters.favorites || prompt.favorite)
-      && (!state.filters.programId || prompt.programId === state.filters.programId)
+      && (!state.filters.programId || programIdsFor(prompt).includes(state.filters.programId))
       && (!state.filters.category || prompt.categories.includes(state.filters.category))
       && (!state.filters.tag || prompt.tags.includes(state.filters.tag))
       && prompt.rating >= state.filters.rating;
@@ -143,7 +190,8 @@ function icon(name, className = "icon") {
 }
 
 function createCard(prompt) {
-  const program = programById(prompt.programId);
+  const programs = programsFor(prompt);
+  const program = programs[0];
   const article = document.createElement("article");
   article.className = "prompt-card";
   article.style.setProperty("--program-color", program.color);
@@ -156,7 +204,12 @@ function createCard(prompt) {
 
   const top = document.createElement("div");
   top.className = "card-top";
-  top.append(chip([program.icon, program.name].filter(Boolean).join(" "), "program-pill"));
+  const programList = document.createElement("div");
+  programList.className = "program-list";
+  programs.forEach((item) => {
+    programList.append(chip([item.icon, item.name].filter(Boolean).join(" "), "program-pill"));
+  });
+  top.append(programList);
   const favorite = document.createElement("button");
   favorite.type = "button";
   favorite.className = `star-button${prompt.favorite ? " active" : ""}`;
@@ -234,33 +287,39 @@ function openForm(prompt) {
   setFormSaving(false);
   elements.id.value = prompt?.id || "";
   elements.dialogTitle.textContent = prompt ? "Edita el prompt" : "Nou prompt";
+  fillProgramOptions(prompt ? programIdsFor(prompt) : []);
   if (prompt) {
     elements.title.value = prompt.title;
     elements.content.value = prompt.content;
-    elements.program.value = programById(prompt.programId).name;
     elements.rating.value = String(prompt.rating);
     elements.categories.value = prompt.categories.join(", ");
     elements.tags.value = prompt.tags.join(", ");
     elements.notes.value = prompt.notes;
     elements.favorite.checked = prompt.favorite;
-  } else {
-    elements.program.value = DEFAULT_PROGRAM;
   }
   elements.dialog.showModal();
 }
 
 function setFormSaving(saving) {
-  elements.saveButton.disabled = saving;
+  const waitingForPrograms = !state.data.programs.length;
+  elements.saveButton.disabled = saving || waitingForPrograms;
   elements.form.setAttribute("aria-busy", String(saving));
-  elements.saveLabel.textContent = saving ? "Desant..." : "Desa el prompt";
+  elements.saveLabel.textContent = saving
+    ? "Desant..."
+    : waitingForPrograms ? "Carregant dades..." : "Desa el prompt";
 }
 
 function promptFromForm() {
+  const id = elements.id.value || createId("prompt");
+  elements.id.value = id;
   return {
-    id: elements.id.value,
+    id,
     title: elements.title.value.trim(),
     content: elements.content.value.trim(),
-    programId: programValueFromInput(elements.program.value),
+    programIds: Array.from(
+      elements.programOptions.querySelectorAll("input:checked"),
+      (input) => input.value
+    ),
     categories: parseCommaValues(elements.categories.value),
     tags: parseCommaValues(elements.tags.value),
     notes: elements.notes.value.trim(),
@@ -281,7 +340,7 @@ async function handleCardAction(event) {
     showToast("Prompt copiat al porta-retalls.");
   }
   if (button.dataset.action === "favorite") {
-    state.data = await toggleFavorite(prompt.id);
+    state.data = await toggleFavorite(prompt.id, !prompt.favorite);
     render();
   }
   if (button.dataset.action === "edit") openForm(prompt);
@@ -304,10 +363,10 @@ function exportJson() {
 }
 
 function exportCsv() {
-  const headers = ["id", "titol", "prompt", "programa", "categories", "etiquetes", "notes", "valoracio", "favorit", "dataCreacio", "dataModificacio", "versio"];
+  const headers = ["id", "titol", "prompt", "programes", "categories", "etiquetes", "notes", "valoracio", "favorit", "dataCreacio", "dataModificacio", "versio"];
   const rows = state.data.prompts.map((prompt) => {
     const values = [
-      prompt.id, prompt.title, prompt.content, programById(prompt.programId).name,
+      prompt.id, prompt.title, prompt.content, programsFor(prompt).map((program) => program.name),
       prompt.categories, prompt.tags, prompt.notes, prompt.rating, prompt.favorite,
       prompt.createdAt, prompt.updatedAt, prompt.version
     ];
@@ -370,12 +429,16 @@ function bindEvents() {
   elements.form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (elements.saveButton.disabled) return;
+    const isNew = !elements.id.value;
+    const prompt = promptFromForm();
     setFormSaving(true);
     elements.formStatus.textContent = "S'està desant el prompt...";
     elements.formStatus.classList.remove("error");
     elements.formStatus.classList.add("visible");
     try {
-      state.data = await savePrompt(promptFromForm());
+      state.data = await savePrompt(prompt, isNew);
+      elements.formStatus.textContent = "";
+      elements.formStatus.classList.remove("visible", "error");
       elements.dialog.close();
       fillSelectors();
       render();
@@ -397,11 +460,16 @@ async function init() {
   fillSelectors();
   render();
   state.data = await loadData();
+  state.loading = false;
   fillSelectors();
+  setFormSaving(false);
   render();
 }
 
 init().catch((error) => {
   console.error(error);
-  showToast("No s'han pogut carregar les dades.");
+  state.loading = false;
+  state.loadError = true;
+  fillProgramOptions();
+  setFormSaving(false);
 });
