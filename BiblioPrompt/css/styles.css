@@ -641,30 +641,31 @@ select,
 }
 
 .view-dialog {
-  width: min(850px, calc(100vw - 32px));
-  max-height: min(86vh, 900px);
+  width: min(1100px, calc(100vw - 32px));
+  max-height: calc(100dvh - 24px);
   padding: 0;
   border: 0;
   border-radius: 22px;
   background: #ffffff;
   box-shadow: 0 28px 72px rgba(15, 23, 42, 0.28);
+  overflow-y: auto;
 }
 
 .view-content {
   display: flex;
   flex-direction: column;
-  max-height: min(86vh, 900px);
 }
 
 .view-heading {
   margin: 0;
+  padding-block: clamp(12px, 2vh, 18px) clamp(10px, 1.7vh, 15px);
 }
 
 .view-metadata {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  padding: 18px clamp(17px, 4vw, 24px) 0;
+  padding: clamp(10px, 1.7vh, 16px) clamp(17px, 4vw, 24px) 0;
 }
 
 .view-metadata .program-pill,
@@ -674,16 +675,15 @@ select,
 }
 
 .view-text {
-  overflow-y: auto;
-  margin: 18px clamp(17px, 4vw, 24px);
+  margin: clamp(10px, 1.8vh, 16px) clamp(17px, 4vw, 24px);
   color: #334155;
-  font-size: 1.12rem;
-  line-height: 1.55;
+  font-size: clamp(1rem, 0.9rem + 0.28vw, 1.1rem);
+  line-height: 1.48;
   white-space: pre-wrap;
 }
 
 .view-actions {
-  padding: 0 clamp(17px, 4vw, 24px) 20px;
+  padding: 0 clamp(17px, 4vw, 24px) clamp(12px, 2vh, 18px);
 }
 
 .confirm-dialog {
@@ -1049,6 +1049,12 @@ select,
 
   .view-dialog {
     width: calc(100vw - 20px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .view-text {
+    font-size: 1rem;
+    line-height: 1.42;
   }
 
   .prompt-form {
