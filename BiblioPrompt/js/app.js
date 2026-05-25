@@ -354,9 +354,11 @@ function bindEvents() {
 }
 
 async function init() {
+  bindEvents();
+  fillSelectors();
+  render();
   state.data = await loadData();
   fillSelectors();
-  bindEvents();
   render();
 }
 
