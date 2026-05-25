@@ -161,6 +161,7 @@
           <div>
             <p class="eyebrow">Editor</p>
             <h2 id="dialog-title">Nou prompt</h2>
+            <p class="dialog-description">Desa un text per reutilitzar-lo quan el necessitis.</p>
           </div>
           <button class="icon-button close-button" id="close-dialog-button" type="button" aria-label="Tanca"><svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
         </div>
@@ -172,12 +173,18 @@
         </label>
         <label>
           Prompt <span class="required">*</span>
-          <textarea id="content-input" name="content" required rows="9"></textarea>
+          <textarea class="prompt-content-input" id="content-input" name="content" required rows="6" placeholder="Escriu aquí les instruccions que vols reutilitzar..."></textarea>
         </label>
         <div class="form-columns">
           <label>
             Programa
-            <select id="program-input" name="program"></select>
+            <input id="program-input" name="program" type="text" list="program-suggestions" value="NotebookLM, Gemini, ChatGPT" placeholder="NotebookLM, Gemini, ChatGPT">
+            <datalist id="program-suggestions">
+              <option value="NotebookLM"></option>
+              <option value="Gemini"></option>
+              <option value="ChatGPT"></option>
+              <option value="Canva"></option>
+            </datalist>
           </label>
           <label>
             Valoració
@@ -191,25 +198,29 @@
             </select>
           </label>
         </div>
-        <label>
-          Categories <small>Separa-les amb comes</small>
-          <input id="categories-input" name="categories" placeholder="Rúbrica, Presentació">
-        </label>
-        <label>
-          Etiquetes <small>Separa-les amb comes</small>
-          <input id="tags-input" name="tags" placeholder="ESO, Avaluació, Socials">
-        </label>
+        <div class="form-columns form-columns-balanced">
+          <label>
+            Categories <small>Separades amb comes</small>
+            <input id="categories-input" name="categories" placeholder="Rúbrica, Presentació">
+          </label>
+          <label>
+            Etiquetes <small>Separades amb comes</small>
+            <input id="tags-input" name="tags" placeholder="ESO, Avaluació">
+          </label>
+        </div>
         <label>
           Notes
-          <textarea id="notes-input" name="notes" rows="3"></textarea>
+          <textarea id="notes-input" name="notes" rows="2" placeholder="Informació complementària opcional"></textarea>
         </label>
         <label class="check-option form-favorite">
-          <input id="favorite-input" name="favorite" type="checkbox">
-          <svg class="icon filled-icon" aria-hidden="true"><use href="#icon-star"></use></svg> Marcar com a favorit
+          <input class="visually-hidden" id="favorite-input" name="favorite" type="checkbox">
+          <span class="favorite-star" aria-hidden="true"><svg class="icon filled-icon"><use href="#icon-star"></use></svg></span>
+          Marcar com a favorit
         </label>
+        <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
         <div class="dialog-actions">
           <button class="button button-secondary" id="cancel-button" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg> Cancel·la</button>
-          <button class="button button-primary" type="submit"><svg class="icon" aria-hidden="true"><use href="#icon-save"></use></svg> Desa el prompt</button>
+          <button class="button button-primary" id="save-prompt-button" type="submit"><svg class="icon" aria-hidden="true"><use href="#icon-save"></use></svg> <span id="save-prompt-label">Desa el prompt</span></button>
         </div>
       </form>
     </dialog>

@@ -6,6 +6,8 @@ const state = {
   filters: { query: "", favorites: false, programId: "", category: "", tag: "", rating: 0 }
 };
 
+const DEFAULT_PROGRAM = "NotebookLM, Gemini, ChatGPT";
+
 const elements = {
   grid: document.querySelector("#prompt-grid"),
   empty: document.querySelector("#empty-state"),
@@ -32,6 +34,9 @@ const elements = {
   tags: document.querySelector("#tags-input"),
   notes: document.querySelector("#notes-input"),
   favorite: document.querySelector("#favorite-input"),
+  formStatus: document.querySelector("#form-status"),
+  saveButton: document.querySelector("#save-prompt-button"),
+  saveLabel: document.querySelector("#save-prompt-label"),
   deleteDialog: document.querySelector("#delete-dialog"),
   deleteTitle: document.querySelector("#delete-prompt-title"),
   confirmDelete: document.querySelector("#confirm-delete-button"),
@@ -48,11 +53,16 @@ function showToast(message) {
 }
 
 function programById(id) {
-  return state.data.programs.find((program) => program.id === id) || {
-    name: "Sense programa",
-    icon: "•",
-    color: "#64748b"
-  };
+  const storedProgram = state.data.programs.find((program) => program.id === id);
+  if (storedProgram) return storedProgram;
+  if (id) return { name: id, icon: "", color: "#4338ca" };
+  return { name: "Sense programa", icon: "", color: "#64748b" };
+}
+
+function programValueFromInput(value) {
+  const name = value.trim();
+  const storedProgram = state.data.programs.find((program) => normalizeText(program.name) === normalizeText(name));
+  return storedProgram?.id || name;
 }
 
 function option(select, value, label) {
@@ -71,11 +81,16 @@ function fillSelectors() {
 
   elements.programFilter.replaceChildren();
   option(elements.programFilter, "", "Tots els programes");
-  elements.program.replaceChildren();
   state.data.programs.forEach((program) => {
     option(elements.programFilter, program.id, `${program.icon} ${program.name}`);
-    option(elements.program, program.id, `${program.icon} ${program.name}`);
   });
+  state.data.prompts
+    .filter((prompt) => !state.data.programs.some((program) => program.id === prompt.programId))
+    .forEach((prompt) => {
+      if (!Array.from(elements.programFilter.options).some((item) => item.value === prompt.programId)) {
+        option(elements.programFilter, prompt.programId, prompt.programId);
+      }
+    });
 
   elements.categoryFilter.replaceChildren();
   option(elements.categoryFilter, "", "Totes les categories");
@@ -141,7 +156,7 @@ function createCard(prompt) {
 
   const top = document.createElement("div");
   top.className = "card-top";
-  top.append(chip(`${program.icon} ${program.name}`, "program-pill"));
+  top.append(chip([program.icon, program.name].filter(Boolean).join(" "), "program-pill"));
   const favorite = document.createElement("button");
   favorite.type = "button";
   favorite.className = `star-button${prompt.favorite ? " active" : ""}`;
@@ -214,19 +229,30 @@ function render() {
 
 function openForm(prompt) {
   elements.form.reset();
+  elements.formStatus.textContent = "";
+  elements.formStatus.classList.remove("error", "visible");
+  setFormSaving(false);
   elements.id.value = prompt?.id || "";
   elements.dialogTitle.textContent = prompt ? "Edita el prompt" : "Nou prompt";
   if (prompt) {
     elements.title.value = prompt.title;
     elements.content.value = prompt.content;
-    elements.program.value = prompt.programId;
+    elements.program.value = programById(prompt.programId).name;
     elements.rating.value = String(prompt.rating);
     elements.categories.value = prompt.categories.join(", ");
     elements.tags.value = prompt.tags.join(", ");
     elements.notes.value = prompt.notes;
     elements.favorite.checked = prompt.favorite;
+  } else {
+    elements.program.value = DEFAULT_PROGRAM;
   }
   elements.dialog.showModal();
+}
+
+function setFormSaving(saving) {
+  elements.saveButton.disabled = saving;
+  elements.form.setAttribute("aria-busy", String(saving));
+  elements.saveLabel.textContent = saving ? "Desant..." : "Desa el prompt";
 }
 
 function promptFromForm() {
@@ -234,7 +260,7 @@ function promptFromForm() {
     id: elements.id.value,
     title: elements.title.value.trim(),
     content: elements.content.value.trim(),
-    programId: elements.program.value,
+    programId: programValueFromInput(elements.program.value),
     categories: parseCommaValues(elements.categories.value),
     tags: parseCommaValues(elements.tags.value),
     notes: elements.notes.value.trim(),
@@ -343,11 +369,24 @@ function bindEvents() {
   elements.grid.addEventListener("click", handleCardAction);
   elements.form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    state.data = await savePrompt(promptFromForm());
-    elements.dialog.close();
-    fillSelectors();
-    render();
-    showToast("Prompt desat correctament.");
+    if (elements.saveButton.disabled) return;
+    setFormSaving(true);
+    elements.formStatus.textContent = "S'està desant el prompt...";
+    elements.formStatus.classList.remove("error");
+    elements.formStatus.classList.add("visible");
+    try {
+      state.data = await savePrompt(promptFromForm());
+      elements.dialog.close();
+      fillSelectors();
+      render();
+      showToast("Prompt desat correctament.");
+    } catch (error) {
+      console.error(error);
+      elements.formStatus.textContent = "No s'ha pogut desar. Comprova la connexió i torna-ho a provar.";
+      elements.formStatus.classList.add("error", "visible");
+    } finally {
+      setFormSaving(false);
+    }
   });
   document.querySelector("#export-json-button").addEventListener("click", exportJson);
   document.querySelector("#export-csv-button").addEventListener("click", exportCsv);

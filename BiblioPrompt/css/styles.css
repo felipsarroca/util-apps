@@ -39,6 +39,13 @@ button {
   cursor: pointer;
 }
 
+.button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+  box-shadow: none;
+}
+
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
@@ -468,6 +475,7 @@ select,
   display: -webkit-box;
   overflow: hidden;
   color: #475569;
+  font-weight: 400;
   line-height: 1.29;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -593,15 +601,18 @@ select,
 }
 
 .prompt-dialog {
-  width: min(680px, calc(100vw - 32px));
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(92vh, 760px);
   padding: 0;
   border: 0;
-  border-radius: 20px;
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.24);
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 28px 72px rgba(15, 23, 42, 0.28);
 }
 
 .prompt-dialog::backdrop {
-  background: rgba(15, 23, 42, 0.48);
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(3px);
 }
 
 .confirm-dialog {
@@ -648,13 +659,32 @@ select,
 .prompt-form {
   display: flex;
   flex-direction: column;
-  gap: 13px;
-  padding: clamp(19px, 4vw, 28px);
+  gap: 10px;
+  max-height: min(92vh, 760px);
+  overflow-y: auto;
+  padding: 0 clamp(17px, 4vw, 24px) 18px;
 }
 
 .dialog-heading {
   justify-content: space-between;
-  margin-bottom: 5px;
+  align-items: flex-start;
+  gap: 18px;
+  margin: 0 calc(-1 * clamp(17px, 4vw, 24px)) 3px;
+  padding: 18px clamp(17px, 4vw, 24px) 15px;
+  border-bottom: 1px solid #e7eaf5;
+  background: linear-gradient(135deg, #f4f3ff 0%, #ffffff 82%);
+}
+
+.dialog-heading h2 {
+  margin-top: 2px;
+  font-size: 1.42rem;
+  line-height: 1.15;
+}
+
+.dialog-description {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.94rem;
 }
 
 .close-button {
@@ -664,7 +694,8 @@ select,
 
 .prompt-form label {
   color: #334155;
-  font-weight: 700;
+  font-size: 0.94rem;
+  font-weight: 600;
 }
 
 .prompt-form label small {
@@ -680,9 +711,16 @@ select,
 .prompt-form textarea,
 .prompt-form select {
   display: block;
-  margin-top: 5px;
-  padding: 10px 12px;
+  margin-top: 4px;
+  padding: 8px 11px;
+  font-weight: 400;
+  line-height: 1.35;
   outline: 0;
+}
+
+.prompt-form input,
+.prompt-form select {
+  height: 39px;
 }
 
 .prompt-form input:focus,
@@ -695,20 +733,85 @@ select,
   resize: vertical;
 }
 
+.prompt-content-input {
+  min-height: 108px;
+  font-weight: 400;
+}
+
 .form-columns {
   display: grid;
   grid-template-columns: 1fr 180px;
-  gap: 13px;
+  gap: 11px;
+}
+
+.form-columns-balanced {
+  grid-template-columns: 1fr 1fr;
 }
 
 .form-favorite {
-  margin-top: 4px;
+  align-self: flex-start;
+  gap: 9px;
+  margin-top: 1px;
+  padding: 7px 11px 7px 8px;
+  border-radius: 22px;
+  color: #92400e;
+  background: #fff7e6;
+  transition: background 120ms ease;
+}
+
+.form-favorite:hover {
+  background: #ffefd1;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.favorite-star {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #cbd5e1;
+  background: #ffffff;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.form-favorite input:checked + .favorite-star {
+  color: var(--accent);
+  background: #ffedc4;
+}
+
+.form-favorite input:focus-visible + .favorite-star {
+  outline: 3px solid rgba(67, 56, 202, 0.3);
+  outline-offset: 2px;
+}
+
+.form-status {
+  display: none;
+  color: var(--primary);
+  font-size: 0.93rem;
+  font-weight: 600;
+}
+
+.form-status.visible {
+  display: block;
+}
+
+.form-status.error {
+  color: var(--danger);
 }
 
 .dialog-actions {
   justify-content: flex-end;
   gap: 9px;
-  margin-top: 6px;
+  margin-top: 2px;
 }
 
 .toast {

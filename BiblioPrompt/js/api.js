@@ -22,19 +22,27 @@ function saveLocalData(data) {
 
 function jsonpRequest(action) {
   return new Promise((resolve, reject) => {
-    const callbackName = `bibliopromptCallback_${Date.now()}`;
+    const callbackName = `bibliopromptCallback_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     const script = document.createElement("script");
     const url = new URL(CONFIG.appsScriptUrl);
+    const timeout = setTimeout(() => {
+      reject(new Error("La resposta de Google Sheets està trigant massa."));
+      delete globalThis[callbackName];
+      script.remove();
+    }, 15000);
     url.searchParams.set("action", action);
     url.searchParams.set("callback", callbackName);
+    url.searchParams.set("_", String(Date.now()));
 
     globalThis[callbackName] = (response) => {
+      clearTimeout(timeout);
       resolve(response.data);
       delete globalThis[callbackName];
       script.remove();
     };
 
     script.onerror = () => {
+      clearTimeout(timeout);
       reject(new Error("No s'ha pogut carregar Google Sheets."));
       delete globalThis[callbackName];
       script.remove();
