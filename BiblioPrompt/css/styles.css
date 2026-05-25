@@ -122,8 +122,8 @@ a {
 
 .brand-logo {
   display: block;
-  width: 55px;
-  height: 55px;
+  width: 66px;
+  height: 66px;
   object-fit: contain;
 }
 
@@ -613,7 +613,7 @@ select,
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  gap: 2.4px;
 }
 
 .footer-text a {
@@ -759,12 +759,6 @@ select,
   margin-top: 2px;
   font-size: 1.3rem;
   line-height: 1.15;
-}
-
-.dialog-description {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 0.88rem;
 }
 
 .close-button {
@@ -1036,8 +1030,8 @@ select,
   }
 
   .brand-logo {
-    width: 53px;
-    height: 53px;
+    width: 64px;
+    height: 64px;
   }
 
   .header-actions {
@@ -1103,10 +1097,6 @@ select,
   .dialog-heading.view-heading {
     margin-inline: 0;
     padding-inline: 7px;
-  }
-
-  .dialog-description {
-    display: none;
   }
 
   .prompt-content-input {
