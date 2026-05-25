@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Biblioteca de prompts | Felip Sarroca</title>
+    <meta name="description" content="Biblioteca personal per organitzar, cercar i reutilitzar prompts d'intel·ligencia artificial.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v11m0 0 4-4m-4 4-4-4M4 19h16"></path>
+      </symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14"></path>
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="10.5" cy="10.5" r="6.5"></circle>
+        <path d="m16 16 5 5"></path>
+      </symbol>
+      <symbol id="icon-filter" viewBox="0 0 24 24">
+        <path d="M3 5h18l-7 8v6l-4 2v-8z"></path>
+      </symbol>
+      <symbol id="icon-reset" viewBox="0 0 24 24">
+        <path d="M4 12a8 8 0 1 0 2.3-5.6"></path>
+        <path d="M4 4v6h6"></path>
+      </symbol>
+      <symbol id="icon-star" viewBox="0 0 24 24">
+        <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"></path>
+      </symbol>
+      <symbol id="icon-copy" viewBox="0 0 24 24">
+        <path d="M9 8h11v13H9z"></path>
+        <path d="M15 5V3H4v13h2"></path>
+      </symbol>
+      <symbol id="icon-pencil" viewBox="0 0 24 24">
+        <path d="m4 20 4.2-1 10.9-10.9a2.2 2.2 0 0 0-3.2-3.2L5 15.8z"></path>
+        <path d="m14.5 6.5 3 3"></path>
+      </symbol>
+      <symbol id="icon-duplicate" viewBox="0 0 24 24">
+        <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+        <path d="M5 16H4V4h12v1"></path>
+      </symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24">
+        <path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"></path>
+      </symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="M6 6 18 18M18 6 6 18"></path>
+      </symbol>
+      <symbol id="icon-save" viewBox="0 0 24 24">
+        <path d="M5 3h12l3 3v15H4V3zM8 3v7h8V3M8 21v-7h8v7"></path>
+      </symbol>
+    </svg>
+    <header class="app-header">
+      <div class="brand">
+        <img class="brand-logo" src="favicon.svg" alt="" aria-hidden="true">
+        <div>
+          <h1>Biblioteca de prompts</h1>
+          <p class="brand-subtitle">Biblioteca personal</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="button button-secondary" id="export-json-button" type="button">
+          <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg> JSON
+        </button>
+        <button class="button button-secondary" id="export-csv-button" type="button">
+          <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg> CSV
+        </button>
+        <button class="button button-primary" id="new-prompt-button" type="button">
+          <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg> Nou prompt
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="workspace" aria-label="Prompts">
+        <div class="search-panel">
+          <label class="search-field" for="search-input">
+            <svg class="icon icon-search" aria-hidden="true"><use href="#icon-search"></use></svg>
+            <input id="search-input" type="search" placeholder="Cerca per títol, text, programa, categoria o etiqueta..." autocomplete="off">
+          </label>
+          <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false" aria-controls="filters">
+            <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg> Filtres
+          </button>
+        </div>
+
+        <div class="content-row">
+          <aside class="filters" id="filters" aria-label="Filtres">
+            <div class="filter-heading">
+              <h2><svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg> Filtres</h2>
+              <button class="text-button" id="clear-filters-button" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-reset"></use></svg> Neteja</button>
+            </div>
+
+            <label class="check-option favorite-filter">
+              <input id="favorites-only" type="checkbox">
+              <svg class="icon filled-icon" aria-hidden="true"><use href="#icon-star"></use></svg> Només favorits
+            </label>
+
+            <label class="select-label" for="program-filter">Programa</label>
+            <select id="program-filter">
+              <option value="">Tots els programes</option>
+            </select>
+
+            <label class="select-label" for="category-filter">Categoria</label>
+            <select id="category-filter">
+              <option value="">Totes les categories</option>
+            </select>
+
+            <label class="select-label" for="tag-filter">Etiqueta</label>
+            <select id="tag-filter">
+              <option value="">Totes les etiquetes</option>
+            </select>
+
+            <label class="select-label" for="rating-filter">Valoració mínima</label>
+            <select id="rating-filter">
+              <option value="0">Qualsevol</option>
+              <option value="3">3 o més estrelles</option>
+              <option value="4">4 o més estrelles</option>
+              <option value="5">5 estrelles</option>
+            </select>
+
+            <div class="stats-card">
+              <p class="eyebrow">Resultats</p>
+              <p><strong id="visible-count">0</strong> de <span id="total-count">0</span> prompts</p>
+            </div>
+          </aside>
+
+          <section class="results">
+            <div class="results-heading">
+              <h2>Els teus prompts</h2>
+              <p id="active-filter-summary">Tots els prompts</p>
+            </div>
+            <div class="prompt-grid" id="prompt-grid"></div>
+            <div class="empty-state hidden" id="empty-state">
+              <svg class="empty-icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+              <h3>No s'ha trobat cap prompt</h3>
+              <p>Canvia els filtres o crea un prompt nou.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="license-image-link" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+        <img class="license-image" src="CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA">
+      </a>
+      <div class="footer-text">
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+
+    <dialog class="prompt-dialog" id="prompt-dialog">
+      <form class="prompt-form" id="prompt-form" method="dialog">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Editor</p>
+            <h2 id="dialog-title">Nou prompt</h2>
+          </div>
+          <button class="icon-button close-button" id="close-dialog-button" type="button" aria-label="Tanca"><svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+        </div>
+
+        <input id="prompt-id" type="hidden">
+        <label>
+          Títol <span class="required">*</span>
+          <input id="title-input" name="title" required maxlength="120">
+        </label>
+        <label>
+          Prompt <span class="required">*</span>
+          <textarea id="content-input" name="content" required rows="9"></textarea>
+        </label>
+        <div class="form-columns">
+          <label>
+            Programa
+            <select id="program-input" name="program"></select>
+          </label>
+          <label>
+            Valoració
+            <select id="rating-input" name="rating">
+              <option value="0">Sense valorar</option>
+              <option value="1">★</option>
+              <option value="2">★★</option>
+              <option value="3">★★★</option>
+              <option value="4">★★★★</option>
+              <option value="5">★★★★★</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          Categories <small>Separa-les amb comes</small>
+          <input id="categories-input" name="categories" placeholder="Rúbrica, Presentació">
+        </label>
+        <label>
+          Etiquetes <small>Separa-les amb comes</small>
+          <input id="tags-input" name="tags" placeholder="ESO, Avaluació, Socials">
+        </label>
+        <label>
+          Notes
+          <textarea id="notes-input" name="notes" rows="3"></textarea>
+        </label>
+        <label class="check-option form-favorite">
+          <input id="favorite-input" name="favorite" type="checkbox">
+          <svg class="icon filled-icon" aria-hidden="true"><use href="#icon-star"></use></svg> Marcar com a favorit
+        </label>
+        <div class="dialog-actions">
+          <button class="button button-secondary" id="cancel-button" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg> Cancel·la</button>
+          <button class="button button-primary" type="submit"><svg class="icon" aria-hidden="true"><use href="#icon-save"></use></svg> Desa el prompt</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="confirm-dialog" id="delete-dialog">
+      <div class="confirm-content">
+        <div class="danger-icon" aria-hidden="true"><svg class="icon"><use href="#icon-trash"></use></svg></div>
+        <h2>Elimina el prompt</h2>
+        <p>Segur que vols eliminar <strong id="delete-prompt-title"></strong>?</p>
+        <p class="confirm-note">Aquesta acció no es pot desfer des de la pantalla principal.</p>
+        <div class="dialog-actions">
+          <button class="button button-secondary" id="cancel-delete-button" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg> Cancel·la</button>
+          <button class="button button-danger" id="confirm-delete-button" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-trash"></use></svg> Elimina</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

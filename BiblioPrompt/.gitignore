@@ -1,0 +1,4 @@
+# Google Drive Workspace shortcuts are local placeholders, not repository files.
+*.gsheet
+*.gdoc
+*.gslides
