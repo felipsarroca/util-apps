@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             name: 'BiblioPrompt',
-            path: 'BiblioPrompt/',
+            path: 'https://ja.cat/biblioprompt',
             icon: 'BiblioPrompt/favicon.svg',
             description: 'Biblioteca per recollir, editar i reutilitzar prompts.',
             category: 'Eines de gestió'
