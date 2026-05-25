@@ -661,7 +661,7 @@ select,
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  width: min(780px, calc(100% - 48px));
+  width: min(850px, calc(100% - 24px));
   margin: 0 auto;
   padding: clamp(10px, 1.7vh, 16px) 0 0;
 }
@@ -673,7 +673,7 @@ select,
 }
 
 .view-text {
-  width: min(780px, calc(100% - 48px));
+  width: min(850px, calc(100% - 24px));
   margin: clamp(10px, 1.8vh, 16px) auto;
   color: #334155;
   font-size: clamp(1rem, 0.9rem + 0.28vw, 1.1rem);
@@ -684,7 +684,7 @@ select,
 }
 
 .view-actions {
-  width: min(780px, calc(100% - 48px));
+  width: min(850px, calc(100% - 24px));
   margin: 2px auto 0;
   padding: 0 0 clamp(12px, 2vh, 18px);
 }
@@ -749,7 +749,7 @@ select,
 
 .dialog-heading.view-heading {
   margin: 0;
-  padding: clamp(12px, 2vh, 18px) max(calc((100% - 780px) / 2), 24px) clamp(10px, 1.7vh, 15px);
+  padding: clamp(12px, 2vh, 18px) max(calc((100% - 850px) / 2), 12px) clamp(10px, 1.7vh, 15px);
 }
 
 .dialog-heading h2 {
@@ -1061,7 +1061,7 @@ select,
   }
 
   .view-text {
-    width: calc(100% - 26px);
+    width: calc(100% - 14px);
     font-size: 1rem;
     line-height: 1.42;
     text-align: left;
@@ -1069,7 +1069,7 @@ select,
 
   .view-metadata,
   .view-actions {
-    width: calc(100% - 26px);
+    width: calc(100% - 14px);
   }
 
   .prompt-form {
@@ -1085,7 +1085,7 @@ select,
 
   .dialog-heading.view-heading {
     margin-inline: 0;
-    padding-inline: 13px;
+    padding-inline: 7px;
   }
 
   .dialog-description {
