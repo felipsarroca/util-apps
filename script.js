@@ -34,6 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
+            name: 'BiblioPrompt',
+            path: 'BiblioPrompt/',
+            icon: 'BiblioPrompt/favicon.svg',
+            description: 'Biblioteca per recollir, editar i reutilitzar prompts.',
+            category: 'Eines de gestió'
+        },
+        {
             name: 'DescarregApp',
             path: 'https://ja.cat/descarregapp',
             icon: 'DescarregApp/assets/favicon.svg',
