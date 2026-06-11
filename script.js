@@ -41,6 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
+            name: 'AvaluApp',
+            path: 'AvaluApp/',
+            icon: 'AvaluApp/favicon.svg',
+            description: "Anàlisi de qualificacions de grup i informes d'avaluació a partir d'un Excel.",
+            category: 'Eines de gestió'
+        },
+        {
             name: 'DescarregApp',
             path: 'https://ja.cat/descarregapp',
             icon: 'DescarregApp/assets/favicon.svg',

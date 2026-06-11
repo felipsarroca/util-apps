@@ -1,0 +1,67 @@
+name: Publica util-apps a GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descarrega el repositori
+        uses: actions/checkout@v4
+
+      - name: Configura Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: AvaluApp/package-lock.json
+
+      - name: Instal·la les dependències d'AvaluApp
+        working-directory: AvaluApp
+        run: npm ci
+
+      - name: Compila AvaluApp
+        working-directory: AvaluApp
+        run: npm run build
+
+      - name: Prepara el portal complet
+        run: |
+          mkdir _site
+          rsync -a ./ _site/ \
+            --exclude .git \
+            --exclude .github \
+            --exclude _site \
+            --exclude AvaluApp
+          mkdir _site/AvaluApp
+          cp -R AvaluApp/dist/. _site/AvaluApp/
+
+      - name: Configura GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Desa l'artefacte
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Publica a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
