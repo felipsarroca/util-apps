@@ -56,7 +56,7 @@
       }
       button, input, select { font: inherit; }
       button { cursor: pointer; }
-      .app { height: 100%; display: grid; grid-template-rows: 54px 1fr; }
+      .app { height: calc(100% - 54px); display: grid; grid-template-rows: 54px 1fr; }
       .topbar {
         display: flex;
         align-items: center;
@@ -495,12 +495,47 @@
       .access-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
       .access-error { min-height: 18px; color: var(--bad); font-size: 12px; }
       .access-gate.hidden { display: none; }
+      .felip-app-footer {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 15;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        height: 54px;
+        padding: 7px 14px 8px;
+        border-top: 1px solid #d1dae3;
+        background: rgba(247, 249, 251, .97);
+        color: #5f6d7a;
+        font-size: 11px;
+        line-height: 1.18;
+        text-align: left;
+      }
+      .felip-license-image-link { display: block; flex: 0 0 auto; line-height: 0; }
+      .felip-license-image { display: block; width: 76px; height: auto; }
+      .felip-footer-text { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+      .felip-footer-text p { margin: 0; }
+      .felip-footer-text a {
+        color: #244b6f;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .felip-footer-text a:focus-visible {
+        outline: 2px solid #244b6f;
+        outline-offset: 2px;
+      }
       @media (max-width: 900px) {
         .workspace { grid-template-columns: 1fr; }
         .sidebar { display: none; }
         .view-select { display: block; }
         .brand { width: 155px; flex-basis: 155px; }
         .summary-strip { grid-template-columns: repeat(2, 1fr); }
+        .app { height: calc(100% - 64px); }
+        .felip-app-footer { height: 64px; font-size: 10px; }
+        .felip-license-image { width: 68px; }
       }
     </style>
   </head>
@@ -547,6 +582,21 @@
         <main id="main"><div class="loading">Carregant la massa horària…</div></main>
       </div>
     </div>
+    <footer class="felip-app-footer">
+      <a class="felip-license-image-link"
+         href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca"
+         target="_blank"
+         rel="noopener noreferrer"
+         aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+        <img class="felip-license-image"
+             src="../../assets/CC_BY-NC-SA.png"
+             alt="Creative Commons BY-NC-SA">
+      </a>
+      <div class="felip-footer-text">
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
     <div id="toast" class="toast"></div>
     <aside id="subjectInspector" class="subject-inspector"></aside>
     <div id="dialogBackdrop" class="dialog-backdrop"><div id="dialog" class="dialog"></div></div>
