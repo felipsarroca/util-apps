@@ -274,7 +274,11 @@ function findRowById_(sheetName, id) {
 
 function appendAudit_(user, action, entity, recordId, before, after) {
   const sheet = getDatabase_().getSheetByName("RegistreCanvis");
-  sheet.appendRow([
+  sheet.appendRow(auditRow_(user, action, entity, recordId, before, after));
+}
+
+function auditRow_(user, action, entity, recordId, before, after) {
+  return [
     new Date(),
     user.email,
     action,
@@ -282,7 +286,13 @@ function appendAudit_(user, action, entity, recordId, before, after) {
     recordId,
     safeJsonForAudit_(before),
     safeJsonForAudit_(after),
-  ]);
+  ];
+}
+
+function appendAuditRows_(spreadsheet, rows) {
+  if (!rows.length) return;
+  const sheet = spreadsheet.getSheetByName("RegistreCanvis");
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, TABLES.RegistreCanvis.length).setValues(rows);
 }
 
 function toBoolean_(value) {

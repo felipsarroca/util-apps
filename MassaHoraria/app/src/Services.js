@@ -194,81 +194,97 @@ function saveCellAssignments(payload) {
   try {
     const user = requireWebAccess_(requireUser_(APP_CONFIG.editableRoles));
     const data = validateCellAssignmentsPayload_(payload);
-    const lock = LockService.getScriptLock();
-    lock.waitLock(30000);
-    try {
-      const yearId = activeAcademicYearId_();
-      const sheet = getDatabase_().getSheetByName("Assignacions");
-      const allRows = readTable_("Assignacions");
-      const existing = allRows.filter(
-        (item) =>
-          String(item.CursEscolarId) === yearId &&
-          String(item.GrupId) === data.courseId &&
-          String(item.MateriaId) === data.subjectId &&
-          String(item.ProfessorId) === data.teacherId &&
-          toBoolean_(item.Activa)
-      );
-      const existingByType = existing.reduce((map, item) => {
-        map[String(item.Tipus)] = item;
-        return map;
-      }, {});
-      const requestedTypes = new Set(data.entries.map((entry) => entry.type));
-      const now = new Date();
-
-      existing.forEach((item) => {
-        const type = String(item.Tipus);
-        if (requestedTypes.has(type)) return;
-        const record = findRowById_("Assignacions", String(item.Id));
-        if (!record) return;
-        record.sheet.getRange(record.row, 10).setValue(false);
-        record.sheet.getRange(record.row, 11, 1, 2).setValues([[now, user.email]]);
-        appendAudit_(user, "ELIMINAR", "Assignacions", String(item.Id), item, null);
-      });
-
-      const saved = data.entries.map((entry) => {
-        const current = existingByType[entry.type];
-        const record = {
-          Id: current ? String(current.Id) : Utilities.getUuid(),
-          CursEscolarId: yearId,
-          GrupId: data.courseId,
-          MateriaId: data.subjectId,
-          ProfessorId: data.teacherId,
-          Tipus: entry.type,
-          Hores: entry.hours,
-          FactorCobertura: APP_CONFIG.assignmentTypes[entry.type].coverageFactor,
-          Observacions: "",
-          Activa: true,
-          ActualitzatEl: now,
-          ActualitzatPer: user.email,
-        };
-        if (current) {
-          const row = findRowById_("Assignacions", record.Id);
-          row.sheet
-            .getRange(row.row, 1, 1, TABLES.Assignacions.length)
-            .setValues([TABLES.Assignacions.map((header) => record[header])]);
-          appendAudit_(user, "ACTUALITZAR", "Assignacions", record.Id, current, record);
-        } else {
-          sheet.appendRow(TABLES.Assignacions.map((header) => record[header]));
-          appendAudit_(user, "CREAR", "Assignacions", record.Id, null, record);
-        }
-        return {
-          id: record.Id,
-          courseId: record.GrupId,
-          subjectId: record.MateriaId,
-          teacherId: record.ProfessorId,
-          type: record.Tipus,
-          hours: record.Hores,
-          coverageFactor: record.FactorCobertura,
-          notes: "",
-        };
-      });
-      return { ok: true, assignments: saved };
-    } finally {
-      lock.releaseLock();
-    }
+    return saveCellAssignmentsDirect_(data, user);
   } catch (error) {
     return publicError_(error);
   }
+}
+
+function saveCellAssignmentsDirect_(data, user) {
+  const yearId = activeAcademicYearId_();
+  const spreadsheet = getDatabase_();
+  const sheet = spreadsheet.getSheetByName("Assignacions");
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0].map(String);
+  const column = headers.reduce((map, header, index) => {
+    map[header] = index;
+    return map;
+  }, {});
+  const existing = [];
+  for (let index = 1; index < values.length; index += 1) {
+    const row = values[index];
+    if (
+      String(row[column.CursEscolarId]) === yearId &&
+      String(row[column.GrupId]) === data.courseId &&
+      String(row[column.MateriaId]) === data.subjectId &&
+      String(row[column.ProfessorId]) === data.teacherId &&
+      toBoolean_(row[column.Activa])
+    ) {
+      existing.push({
+        rowNumber: index + 1,
+        record: rowToObject_(headers, row),
+      });
+    }
+  }
+
+  const requestedTypes = new Set(data.entries.map((entry) => entry.type));
+  const existingByType = existing.reduce((map, item) => {
+    map[String(item.record.Tipus)] = item;
+    return map;
+  }, {});
+  const now = new Date();
+  const auditRows = [];
+
+  existing.forEach((item) => {
+    const type = String(item.record.Tipus);
+    if (requestedTypes.has(type)) return;
+    sheet.getRange(item.rowNumber, column.Activa + 1).setValue(false);
+    sheet.getRange(item.rowNumber, column.ActualitzatEl + 1, 1, 2).setValues([[now, user.email]]);
+    auditRows.push(auditRow_(user, "ELIMINAR", "Assignacions", String(item.record.Id), item.record, null));
+  });
+
+  const appendRows = [];
+  const saved = data.entries.map((entry) => {
+    const current = existingByType[entry.type];
+    const record = {
+      Id: current ? String(current.record.Id) : Utilities.getUuid(),
+      CursEscolarId: yearId,
+      GrupId: data.courseId,
+      MateriaId: data.subjectId,
+      ProfessorId: data.teacherId,
+      Tipus: entry.type,
+      Hores: entry.hours,
+      FactorCobertura: APP_CONFIG.assignmentTypes[entry.type].coverageFactor,
+      Observacions: "",
+      Activa: true,
+      ActualitzatEl: now,
+      ActualitzatPer: user.email,
+    };
+    const rowValues = TABLES.Assignacions.map((header) => record[header]);
+    if (current) {
+      sheet.getRange(current.rowNumber, 1, 1, TABLES.Assignacions.length).setValues([rowValues]);
+      auditRows.push(auditRow_(user, "ACTUALITZAR", "Assignacions", record.Id, current.record, record));
+    } else {
+      appendRows.push(rowValues);
+      auditRows.push(auditRow_(user, "CREAR", "Assignacions", record.Id, null, record));
+    }
+    return {
+      id: record.Id,
+      courseId: record.GrupId,
+      subjectId: record.MateriaId,
+      teacherId: record.ProfessorId,
+      type: record.Tipus,
+      hours: record.Hores,
+      coverageFactor: record.FactorCobertura,
+      notes: "",
+    };
+  });
+
+  if (appendRows.length) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, appendRows.length, TABLES.Assignacions.length).setValues(appendRows);
+  }
+  appendAuditRows_(spreadsheet, auditRows);
+  return { ok: true, assignments: saved };
 }
 
 function validateCellAssignmentsPayload_(payload) {

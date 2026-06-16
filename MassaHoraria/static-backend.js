@@ -2,6 +2,7 @@
   const STORAGE_KEY = "massa-horaria-static-state-v2";
   const API_TOKEN_KEY = "massa-horaria-api-token-v1";
   const REMOTE_API_URL = String(window.MASSA_APPS_SCRIPT_API_URL || "").trim();
+  const pendingWrites = [];
   const ASSIGNMENT_TYPES = {
     CLASSE: { label: "Classe", coverageFactor: 1 },
     REFORC: { label: "Reforç", coverageFactor: 0 },
@@ -83,6 +84,53 @@
       script.src = url.toString();
       document.head.appendChild(script);
     });
+  }
+
+  function sendRemoteApiWrite(method, payload) {
+    if (!hasRemoteApi()) return;
+    const url = new URL(REMOTE_API_URL);
+    url.searchParams.set("api", "1");
+    url.searchParams.set("method", method);
+    url.searchParams.set("callback", "__massaIgnoredWrite");
+    url.searchParams.set("payload", JSON.stringify(payload || {}));
+    const token = apiToken();
+    if (token) url.searchParams.set("token", token);
+
+    const image = new Image();
+    const cleanup = () => {
+      const index = pendingWrites.indexOf(image);
+      if (index >= 0) pendingWrites.splice(index, 1);
+    };
+    image.onload = cleanup;
+    image.onerror = cleanup;
+    pendingWrites.push(image);
+    image.src = url.toString();
+    window.setTimeout(cleanup, 60000);
+  }
+
+  function optimisticCellAssignments(payload) {
+    const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+    return {
+      ok: true,
+      assignments: entries.map((entry, index) => {
+        const type = String(entry?.type || "").toUpperCase();
+        return {
+          id: `pending-${Date.now()}-${index}`,
+          courseId: String(payload.courseId || ""),
+          subjectId: String(payload.subjectId || ""),
+          teacherId: String(payload.teacherId || ""),
+          type,
+          hours: Number(entry?.hours || 0),
+          coverageFactor: ASSIGNMENT_TYPES[type]?.coverageFactor || 0,
+          notes: "",
+        };
+      }),
+    };
+  }
+
+  function saveCellAssignmentsRemote(payload) {
+    sendRemoteApiWrite("saveCellAssignments", payload);
+    return optimisticCellAssignments(payload);
   }
 
   function remoteOrLocal(method, localMethod) {
@@ -684,7 +732,7 @@
   window.__MASSA_STATIC_BACKEND__ = {
     getApplicationData: remoteOrLocal("getApplicationData", getApplicationData),
     verifyAccessPasscode: remoteOrLocal("verifyAccessPasscode", verifyAccessPasscode),
-    saveCellAssignments: remoteOrLocal("saveCellAssignments", saveCellAssignments),
+    saveCellAssignments: hasRemoteApi() ? saveCellAssignmentsRemote : saveCellAssignments,
     saveTeacher: remoteOrLocal("saveTeacher", saveTeacher),
     saveCourse: remoteOrLocal("saveCourse", saveCourse),
     saveSubject: remoteOrLocal("saveSubject", saveSubject),
