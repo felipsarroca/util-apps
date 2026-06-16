@@ -1,6 +1,7 @@
 (function () {
   const STORAGE_KEY = "massa-horaria-static-state-v2";
   const API_TOKEN_KEY = "massa-horaria-api-token-v1";
+  const PENDING_WRITES_KEY = "massa-horaria-pending-writes-v1";
   const REMOTE_API_URL = String(window.MASSA_APPS_SCRIPT_API_URL || "").trim();
   const pendingWrites = [];
   const ASSIGNMENT_TYPES = {
@@ -49,6 +50,92 @@
     }
   }
 
+  function pendingCellKey(payload) {
+    return [
+      String(payload?.courseId || ""),
+      String(payload?.subjectId || ""),
+      String(payload?.teacherId || ""),
+    ].join("::");
+  }
+
+  function readPendingWrites() {
+    try {
+      const parsed = safeParse(window.localStorage.getItem(PENDING_WRITES_KEY));
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writePendingWrites(items) {
+    try {
+      window.localStorage.setItem(PENDING_WRITES_KEY, JSON.stringify(items));
+    } catch {
+      // Si no hi ha localStorage, la sincronització continua en la sessió actual.
+    }
+  }
+
+  function rememberPendingCellWrite(payload) {
+    const next = {
+      key: pendingCellKey(payload),
+      payload: {
+        courseId: String(payload?.courseId || ""),
+        subjectId: String(payload?.subjectId || ""),
+        teacherId: String(payload?.teacherId || ""),
+        entries: Array.isArray(payload?.entries)
+          ? payload.entries.map((entry) => ({
+              type: String(entry?.type || "").toUpperCase(),
+              hours: Number(entry?.hours || 0),
+            }))
+          : [],
+      },
+      updatedAt: Date.now(),
+    };
+    const items = readPendingWrites().filter((item) => item.key !== next.key);
+    items.push(next);
+    writePendingWrites(items);
+  }
+
+  function sameCell(item, payload) {
+    return String(item.courseId) === String(payload.courseId) &&
+      String(item.subjectId) === String(payload.subjectId) &&
+      String(item.teacherId) === String(payload.teacherId);
+  }
+
+  function assignmentSignature(items) {
+    return (items || [])
+      .map((item) => `${String(item.type).toUpperCase()}:${Number(item.hours || 0)}`)
+      .sort()
+      .join("|");
+  }
+
+  function pendingConfirmed(data, pending) {
+    const actual = (data.assignments || []).filter((item) => sameCell(item, pending.payload));
+    return assignmentSignature(actual) === assignmentSignature(pending.payload.entries);
+  }
+
+  function overlayPendingWrites(data) {
+    const pending = readPendingWrites();
+    if (!pending.length || !data) return data;
+    const remaining = [];
+    let assignments = Array.isArray(data.assignments) ? data.assignments.slice() : [];
+
+    pending.forEach((item) => {
+      if (pendingConfirmed(data, item)) return;
+      remaining.push(item);
+      assignments = assignments.filter((assignment) => !sameCell(assignment, item.payload));
+      assignments = assignments.concat(optimisticCellAssignments(item.payload).assignments);
+      if (Date.now() - Number(item.lastSentAt || 0) > 30000) {
+        item.lastSentAt = Date.now();
+        sendRemoteApiWrite("saveCellAssignments", item.payload);
+      }
+    });
+
+    writePendingWrites(remaining);
+    data.assignments = assignments;
+    return data;
+  }
+
   function callRemoteApi(method, payload) {
     return new Promise((resolve, reject) => {
       const callbackName = `__massaApi_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -88,24 +175,29 @@
 
   function sendRemoteApiWrite(method, payload) {
     if (!hasRemoteApi()) return;
+    const callbackName = `__massaWrite_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     const url = new URL(REMOTE_API_URL);
     url.searchParams.set("api", "1");
     url.searchParams.set("method", method);
-    url.searchParams.set("callback", "__massaIgnoredWrite");
+    url.searchParams.set("callback", callbackName);
     url.searchParams.set("payload", JSON.stringify(payload || {}));
     const token = apiToken();
     if (token) url.searchParams.set("token", token);
 
-    const image = new Image();
+    const script = document.createElement("script");
     const cleanup = () => {
-      const index = pendingWrites.indexOf(image);
+      const index = pendingWrites.indexOf(script);
       if (index >= 0) pendingWrites.splice(index, 1);
+      delete window[callbackName];
+      script.remove();
     };
-    image.onload = cleanup;
-    image.onerror = cleanup;
-    pendingWrites.push(image);
-    image.src = url.toString();
-    window.setTimeout(cleanup, 60000);
+    window[callbackName] = cleanup;
+    script.onerror = cleanup;
+    script.async = true;
+    script.src = url.toString();
+    pendingWrites.push(script);
+    document.head.appendChild(script);
+    window.setTimeout(cleanup, 180000);
   }
 
   function optimisticCellAssignments(payload) {
@@ -129,8 +221,18 @@
   }
 
   function saveCellAssignmentsRemote(payload) {
+    rememberPendingCellWrite(payload);
     sendRemoteApiWrite("saveCellAssignments", payload);
     return optimisticCellAssignments(payload);
+  }
+
+  function getApplicationDataRemote(payload) {
+    return callRemoteApi("getApplicationData", payload).then((response) => {
+      if (response && response.ok && response.data) {
+        response.data = overlayPendingWrites(response.data);
+      }
+      return response;
+    });
   }
 
   function remoteOrLocal(method, localMethod) {
@@ -730,7 +832,7 @@
   }
 
   window.__MASSA_STATIC_BACKEND__ = {
-    getApplicationData: remoteOrLocal("getApplicationData", getApplicationData),
+    getApplicationData: hasRemoteApi() ? getApplicationDataRemote : getApplicationData,
     verifyAccessPasscode: remoteOrLocal("verifyAccessPasscode", verifyAccessPasscode),
     saveCellAssignments: hasRemoteApi() ? saveCellAssignmentsRemote : saveCellAssignments,
     saveTeacher: remoteOrLocal("saveTeacher", saveTeacher),

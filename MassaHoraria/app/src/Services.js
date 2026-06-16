@@ -233,14 +233,12 @@ function saveCellAssignmentsDirect_(data, user) {
     return map;
   }, {});
   const now = new Date();
-  const auditRows = [];
 
   existing.forEach((item) => {
     const type = String(item.record.Tipus);
     if (requestedTypes.has(type)) return;
     sheet.getRange(item.rowNumber, column.Activa + 1).setValue(false);
     sheet.getRange(item.rowNumber, column.ActualitzatEl + 1, 1, 2).setValues([[now, user.email]]);
-    auditRows.push(auditRow_(user, "ELIMINAR", "Assignacions", String(item.record.Id), item.record, null));
   });
 
   const appendRows = [];
@@ -263,10 +261,8 @@ function saveCellAssignmentsDirect_(data, user) {
     const rowValues = TABLES.Assignacions.map((header) => record[header]);
     if (current) {
       sheet.getRange(current.rowNumber, 1, 1, TABLES.Assignacions.length).setValues([rowValues]);
-      auditRows.push(auditRow_(user, "ACTUALITZAR", "Assignacions", record.Id, current.record, record));
     } else {
       appendRows.push(rowValues);
-      auditRows.push(auditRow_(user, "CREAR", "Assignacions", record.Id, null, record));
     }
     return {
       id: record.Id,
@@ -283,7 +279,6 @@ function saveCellAssignmentsDirect_(data, user) {
   if (appendRows.length) {
     sheet.getRange(sheet.getLastRow() + 1, 1, appendRows.length, TABLES.Assignacions.length).setValues(appendRows);
   }
-  appendAuditRows_(spreadsheet, auditRows);
   return { ok: true, assignments: saved };
 }
 
