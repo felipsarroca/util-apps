@@ -48,6 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
+            name: 'Massa horària',
+            path: 'https://ja.cat/massahoraria',
+            icon: 'MassaHoraria/favicon.png',
+            description: "Gestió de la massa horària del centre, assignacions per curs i resum del professorat.",
+            category: 'Eines de gestió'
+        },
+        {
             name: 'DescarregApp',
             path: 'https://ja.cat/descarregapp',
             icon: 'DescarregApp/assets/favicon.svg',
