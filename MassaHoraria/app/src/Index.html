@@ -7,12 +7,22 @@
     <script>
       (function () {
         const icon = document.getElementById("faviconLink");
-        const brandLogo = document.getElementById("brandLogo");
         const serverFaviconUrl = "<?= faviconUrl ?>";
         const fallbackUrl = window.location.pathname.includes("/app/src/") ? "../../favicon.png" : "favicon.png";
         const resolvedUrl = serverFaviconUrl && !serverFaviconUrl.includes("<?= faviconUrl ?>") ? serverFaviconUrl : fallbackUrl;
         icon.href = resolvedUrl;
-        if (brandLogo) brandLogo.src = resolvedUrl;
+        document.addEventListener("DOMContentLoaded", () => {
+          const brandLogo = document.getElementById("brandLogo");
+          const brandTitle = document.getElementById("brandTitle");
+          const brandSubtitle = document.getElementById("brandSubtitle");
+          if (brandLogo) brandLogo.src = resolvedUrl;
+          if (brandTitle && (!brandTitle.textContent.trim() || brandTitle.textContent.includes("<?= appName ?>"))) {
+            brandTitle.textContent = "Massa horària";
+          }
+          if (brandSubtitle && (!brandSubtitle.textContent.trim() || brandSubtitle.textContent.includes("<?= appSubtitle ?>"))) {
+            brandSubtitle.textContent = "Escola Ramon Pont";
+          }
+        });
       })();
     </script>
     <style>
@@ -497,7 +507,7 @@
   <body>
     <div class="app">
       <header class="topbar">
-        <div class="brand"><img id="brandLogo" class="brand-logo" alt=""><div><h1><?= appName ?></h1><p><?= appSubtitle ?></p></div></div>
+        <div class="brand"><img id="brandLogo" class="brand-logo" alt=""><div><h1 id="brandTitle"><?= appName ?></h1><p id="brandSubtitle"><?= appSubtitle ?></p></div></div>
         <select id="viewSelect" class="view-select" aria-label="Selecciona la vista">
           <option value="course">Vista per curs</option>
           <option value="staff">Resum professorat</option>

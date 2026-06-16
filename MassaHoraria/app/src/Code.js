@@ -9,6 +9,10 @@ function onOpen() {
 }
 
 function doGet() {
+  const params = arguments[0] && arguments[0].parameter ? arguments[0].parameter : {};
+  if (params.api === "1") {
+    return handleApiGet_(arguments[0]);
+  }
   const template = HtmlService.createTemplateFromFile("Index");
   template.appName = APP_CONFIG.name;
   template.appSubtitle = APP_CONFIG.subtitle;

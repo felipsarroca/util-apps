@@ -1,5 +1,7 @@
 (function () {
   const STORAGE_KEY = "massa-horaria-static-state-v2";
+  const API_TOKEN_KEY = "massa-horaria-api-token-v1";
+  const REMOTE_API_URL = String(window.MASSA_APPS_SCRIPT_API_URL || "").trim();
   const ASSIGNMENT_TYPES = {
     CLASSE: { label: "Classe", coverageFactor: 1 },
     REFORC: { label: "Reforç", coverageFactor: 0 },
@@ -24,6 +26,70 @@
     } catch {
       return null;
     }
+  }
+
+  function hasRemoteApi() {
+    return /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(REMOTE_API_URL);
+  }
+
+  function apiToken() {
+    try {
+      return window.sessionStorage.getItem(API_TOKEN_KEY) || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function setApiToken(token) {
+    try {
+      if (token) window.sessionStorage.setItem(API_TOKEN_KEY, token);
+    } catch {
+      // sessionStorage pot no estar disponible en algun navegador restrictiu.
+    }
+  }
+
+  function callRemoteApi(method, payload) {
+    return new Promise((resolve, reject) => {
+      const callbackName = `__massaApi_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      const script = document.createElement("script");
+      const url = new URL(REMOTE_API_URL);
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("No s'ha pogut contactar amb Google Sheets."));
+      }, 30000);
+
+      function cleanup() {
+        window.clearTimeout(timeout);
+        delete window[callbackName];
+        script.remove();
+      }
+
+      window[callbackName] = (response) => {
+        cleanup();
+        if (response && response.token) setApiToken(response.token);
+        resolve(response);
+      };
+
+      url.searchParams.set("api", "1");
+      url.searchParams.set("method", method);
+      url.searchParams.set("callback", callbackName);
+      url.searchParams.set("payload", JSON.stringify(payload || {}));
+      const token = apiToken();
+      if (token) url.searchParams.set("token", token);
+      script.onerror = () => {
+        cleanup();
+        reject(new Error("No s'ha pogut carregar l'API de Google Sheets."));
+      };
+      script.src = url.toString();
+      document.head.appendChild(script);
+    });
+  }
+
+  function remoteOrLocal(method, localMethod) {
+    return (payload) => {
+      if (hasRemoteApi()) return callRemoteApi(method, payload);
+      return localMethod(payload);
+    };
   }
 
   function normalizeState(raw) {
@@ -616,16 +682,16 @@
   }
 
   window.__MASSA_STATIC_BACKEND__ = {
-    getApplicationData,
-    verifyAccessPasscode,
-    saveCellAssignments,
-    saveTeacher,
-    saveCourse,
-    saveSubject,
-    savePlan,
-    saveCharge,
-    saveRule,
-    saveAcademicYearStatus,
-    createNextAcademicYear,
+    getApplicationData: remoteOrLocal("getApplicationData", getApplicationData),
+    verifyAccessPasscode: remoteOrLocal("verifyAccessPasscode", verifyAccessPasscode),
+    saveCellAssignments: remoteOrLocal("saveCellAssignments", saveCellAssignments),
+    saveTeacher: remoteOrLocal("saveTeacher", saveTeacher),
+    saveCourse: remoteOrLocal("saveCourse", saveCourse),
+    saveSubject: remoteOrLocal("saveSubject", saveSubject),
+    savePlan: remoteOrLocal("savePlan", savePlan),
+    saveCharge: remoteOrLocal("saveCharge", saveCharge),
+    saveRule: remoteOrLocal("saveRule", saveRule),
+    saveAcademicYearStatus: remoteOrLocal("saveAcademicYearStatus", saveAcademicYearStatus),
+    createNextAcademicYear: remoteOrLocal("createNextAcademicYear", createNextAcademicYear),
   };
 })();

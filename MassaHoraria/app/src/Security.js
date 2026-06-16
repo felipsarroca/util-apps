@@ -27,6 +27,14 @@ function verifyAccessPasscode(payload) {
 }
 
 function lookupUser_(roles) {
+  const apiUser = typeof apiContextUser_ === "function" ? apiContextUser_() : null;
+  if (apiUser) {
+    const role = String(apiUser.role || "").toUpperCase();
+    if (roles && roles.length && !roles.includes(role)) {
+      throw new Error("No tens permisos per fer aquesta operació.");
+    }
+    return apiUser;
+  }
   const email = activeUserEmail_();
   if (!email) {
     throw new Error(
@@ -58,6 +66,7 @@ function requireWebAccess_(user) {
 }
 
 function requireAccessPasscode_(email) {
+  if (typeof apiContextUser_ === "function" && apiContextUser_()) return;
   const cacheValue = CacheService.getUserCache().get(accessCacheKey_(email));
   if (cacheValue !== "1") {
     throw new Error("Cal introduir la clau de pas per obrir l'aplicació.");
