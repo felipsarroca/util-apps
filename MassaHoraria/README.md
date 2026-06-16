@@ -26,3 +26,10 @@ node tools/local_server.mjs
 ```
 
 L'aplicació local utilitza una còpia de les dades a `.tmp/local-state.json`.
+
+## Versió estàtica
+
+La versió de GitHub Pages funciona sense Apps Script i desa les dades al navegador.
+Punt d'entrada:
+
+`https://felipsarroca.github.io/util-apps/MassaHoraria/`

@@ -3,7 +3,18 @@
   <head>
     <base target="_top">
     <meta charset="utf-8">
-    <link rel="icon" type="image/png" href="<?= faviconUrl ?>">
+    <link id="faviconLink" rel="icon" type="image/png">
+    <script>
+      (function () {
+        const icon = document.getElementById("faviconLink");
+        const brandLogo = document.getElementById("brandLogo");
+        const serverFaviconUrl = "<?= faviconUrl ?>";
+        const fallbackUrl = window.location.pathname.includes("/app/src/") ? "../../favicon.png" : "favicon.png";
+        const resolvedUrl = serverFaviconUrl && !serverFaviconUrl.includes("<?= faviconUrl ?>") ? serverFaviconUrl : fallbackUrl;
+        icon.href = resolvedUrl;
+        if (brandLogo) brandLogo.src = resolvedUrl;
+      })();
+    </script>
     <style>
       :root {
         --navy: #17324d;
@@ -486,7 +497,7 @@
   <body>
     <div class="app">
       <header class="topbar">
-        <div class="brand"><img class="brand-logo" src="<?= faviconUrl ?>" alt=""><div><h1><?= appName ?></h1><p><?= appSubtitle ?></p></div></div>
+        <div class="brand"><img id="brandLogo" class="brand-logo" alt=""><div><h1><?= appName ?></h1><p><?= appSubtitle ?></p></div></div>
         <select id="viewSelect" class="view-select" aria-label="Selecciona la vista">
           <option value="course">Vista per curs</option>
           <option value="staff">Resum professorat</option>
@@ -543,6 +554,50 @@
     </div>
 
     <script>
+      (function installStaticBridge() {
+        if (window.google && window.google.script && window.google.script.run) return;
+        let backend = null;
+        try {
+          backend = window.parent && window.parent !== window ? window.parent.__MASSA_STATIC_BACKEND__ : null;
+        } catch (error) {
+          backend = null;
+        }
+        if (!backend && window.__MASSA_STATIC_BACKEND__) {
+          backend = window.__MASSA_STATIC_BACKEND__;
+        }
+        if (!backend) return;
+        let success = () => {};
+        let failure = () => {};
+        const runner = new Proxy({
+          withSuccessHandler(fn) { success = typeof fn === "function" ? fn : () => {}; return runner; },
+          withFailureHandler(fn) { failure = typeof fn === "function" ? fn : () => {}; return runner; },
+        }, {
+          get(target, property) {
+            if (property in target) return target[property];
+            return (payload) => {
+              Promise.resolve()
+                .then(() => {
+                  const method = backend[property];
+                  if (typeof method !== "function") {
+                    throw new Error(`Mètode no disponible: ${String(property)}`);
+                  }
+                  return method.call(backend, payload);
+                })
+                .then((response) => success(response))
+                .catch((error) => failure(error instanceof Error ? error : new Error(String(error))));
+            };
+          },
+        });
+        window.google = window.google || {};
+        window.google.script = window.google.script || {};
+        Object.defineProperty(window.google.script, "run", {
+          configurable: true,
+          get() {
+            return runner;
+          },
+        });
+      })();
+
       const state = {
         data: null,
         courseId: null,
