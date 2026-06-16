@@ -26,9 +26,3 @@ node tools/local_server.mjs
 ```
 
 L'aplicació local utilitza una còpia de les dades a `.tmp/local-state.json`.
-
-## Accés via GitHub Pages
-
-La porta d'entrada estàtica és:
-
-`https://felipsarroca.github.io/util-apps/MassaHoraria/`
