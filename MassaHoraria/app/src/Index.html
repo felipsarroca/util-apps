@@ -1,0 +1,1567 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <link rel="icon" type="image/png" href="<?= faviconUrl ?>">
+    <style>
+      :root {
+        --navy: #17324d;
+        --navy-2: #244b6f;
+        --ink: #17212b;
+        --muted: #667482;
+        --line: #d7dee5;
+        --page: #edf1f4;
+        --good: #1f7a52;
+        --warn: #a96600;
+        --bad: #b43b3b;
+        --class-bg: #e8f1fb;
+        --class-fg: #255f91;
+        --support-bg: #e4f5ec;
+        --support-fg: #18704b;
+        --split-bg: #f0e9fa;
+        --split-fg: #674396;
+        --extra-bg: #fff0d2;
+        --extra-fg: #8a5a00;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        overflow: hidden;
+        color: var(--ink);
+        background: var(--page);
+        font: 13px/1.3 Arial, Helvetica, sans-serif;
+      }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      .app { height: 100%; display: grid; grid-template-rows: 54px 1fr; }
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 7px 12px;
+        color: #fff;
+        background: var(--navy);
+      }
+      .brand { width: 190px; flex: 0 0 190px; display: flex; align-items: center; gap: 9px; }
+      .brand-logo { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 8px; background: rgba(255,255,255,.9); }
+      .brand h1 { margin: 0; font-size: 17px; line-height: 1.05; }
+      .brand p { margin: 3px 0 0; font-size: 11px; opacity: .72; }
+      .course-select {
+        width: 190px;
+        padding: 7px 9px;
+        border: 0;
+        border-radius: 4px;
+        background: #fff;
+      }
+      .view-select {
+        display: none;
+        width: 190px;
+        padding: 7px 9px;
+        border: 0;
+        border-radius: 4px;
+        background: #fff;
+      }
+      .year-pill {
+        padding: 5px 8px;
+        border-radius: 999px;
+        color: #17324d;
+        background: #dfeaf4;
+        font-size: 11px;
+        font-weight: bold;
+      }
+      .user { margin-left: auto; text-align: right; font-size: 11px; opacity: .88; }
+      .workspace { min-height: 0; display: grid; grid-template-columns: 190px 1fr; }
+      .sidebar {
+        padding: 12px 9px;
+        background: #fff;
+        border-right: 1px solid var(--line);
+      }
+      .nav-title { margin: 2px 8px 10px; color: var(--muted); font-size: 10px; font-weight: bold; text-transform: uppercase; }
+      .nav-item {
+        width: 100%;
+        padding: 8px 10px;
+        text-align: left;
+        border: 0;
+        border-radius: 4px;
+        color: #fff;
+        background: var(--navy-2);
+      }
+      .nav-item + .nav-item { margin-top: 4px; }
+      .nav-item:not(.active) { color: #334150; background: transparent; }
+      .nav-section { margin-top: 17px; }
+      .legend { margin: 18px 8px 0; color: var(--muted); font-size: 11px; }
+      .legend div { margin: 7px 0; }
+      .legend b { display: inline-block; min-width: 24px; padding: 2px 4px; text-align: center; border-radius: 3px; }
+      main { min-width: 0; min-height: 0; padding: 10px; display: grid; grid-template-rows: auto auto 1fr; }
+      .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .toolbar h2 { margin: 0 auto 0 0; font-size: 17px; }
+      .save-state { min-width: 72px; color: var(--muted); font-size: 10px; text-align: right; }
+      .save-state.saving { color: var(--warn); }
+      .save-state.saved { color: var(--good); }
+      .teacher-picker { position: relative; }
+      .button {
+        padding: 7px 10px;
+        border: 1px solid #b7c3ce;
+        border-radius: 4px;
+        color: #243746;
+        background: #fff;
+      }
+      .button.primary { color: #fff; border-color: var(--navy-2); background: var(--navy-2); }
+      .picker-panel {
+        position: absolute;
+        top: calc(100% + 5px);
+        right: 0;
+        z-index: 20;
+        display: none;
+        width: 320px;
+        padding: 9px;
+        background: #fff;
+        border: 1px solid #bdc8d2;
+        border-radius: 6px;
+        box-shadow: 0 12px 30px rgba(20, 38, 53, .2);
+      }
+      .picker-panel.open { display: block; }
+      .picker-panel input { width: 100%; padding: 7px; border: 1px solid #bcc7d1; border-radius: 4px; }
+      .picker-list { max-height: 310px; margin-top: 7px; overflow: auto; }
+      .picker-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px;
+        border-radius: 4px;
+      }
+      .picker-row:hover { background: #f0f4f7; }
+      .picker-row input { width: auto; }
+      .summary-strip {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .summary {
+        padding: 7px 9px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+      }
+      .summary span { display: block; color: var(--muted); font-size: 10px; }
+      .summary strong { font-size: 16px; }
+      .summary.warning-card { border-color: #e2b76d; background: #fff7e8; }
+      .good { color: var(--good); }
+      .warn { color: var(--warn); }
+      .bad { color: var(--bad); }
+      .matrix-shell {
+        min-height: 0;
+        overflow: auto;
+        background: #fff;
+        border: 1px solid #c8d2dc;
+        border-radius: 5px;
+      }
+      table { border-collapse: separate; border-spacing: 0; }
+      .matrix { min-width: max-content; }
+      .matrix th, .matrix td {
+        width: 64px;
+        min-width: 64px;
+        height: 31px;
+        padding: 2px;
+        text-align: center;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .matrix thead th {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        height: 63px;
+        color: #fff;
+        background: var(--navy);
+        font-size: 10px;
+        vertical-align: bottom;
+      }
+      .matrix .teacher {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        width: 190px;
+        min-width: 190px;
+        max-width: 190px;
+        padding: 0 7px;
+        text-align: left;
+        background: #f8fafb;
+        font-weight: 600;
+      }
+      .matrix thead .teacher { z-index: 6; color: #fff; background: var(--navy); }
+      .matrix .teacher-total {
+        position: sticky;
+        right: 0;
+        z-index: 3;
+        width: 88px;
+        min-width: 88px;
+        background: #f4f7f9;
+        border-left: 2px solid #b9c6d1;
+        font-size: 10px;
+      }
+      .matrix thead .teacher-total { z-index: 6; color: #fff; background: var(--navy); }
+      .teacher-total strong { display: block; font-size: 12px; }
+      .teacher-total small { color: var(--muted); font-size: 9px; }
+      .teacher-name { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+      .remove-extra {
+        padding: 1px 5px;
+        color: #81909d;
+        border: 0;
+        background: transparent;
+        font-size: 15px;
+      }
+      .subject-label {
+        display: block;
+        max-width: 62px;
+        max-height: 36px;
+        margin: auto;
+        overflow: hidden;
+        line-height: 1.05;
+        white-space: normal;
+      }
+      .subject-total { display: block; margin-top: 3px; font-weight: normal; opacity: .82; }
+      .subject-warning { display: block; margin-top: 2px; color: #9a5700; font-size: 11px; font-weight: bold; }
+      .cell {
+        position: relative;
+        padding: 0 !important;
+        background: #fff;
+      }
+      .matrix tbody tr:not(.summary-row):nth-child(even) .teacher { background: #f1f6f9; }
+      .matrix tbody tr:not(.summary-row):nth-child(odd) .cell:nth-child(even) { background: #f8fbfd; }
+      .matrix tbody tr:not(.summary-row):nth-child(even) .cell:nth-child(odd) { background: #f4f8fb; }
+      .matrix tbody tr:not(.summary-row):nth-child(even) .cell:nth-child(even) { background: #edf5f8; }
+      .cell.selected { outline: 2px solid #3b78aa; outline-offset: -2px; }
+      .cell.active-column { background: #f4f8fc; }
+      .matrix thead th.active-column { background: #2b587d; }
+      .cell-display {
+        width: 100%;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 2px;
+      }
+      .cell:hover .cell-display { background: #f2f7fb; }
+      .token { min-width: 25px; padding: 3px 4px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+      .type-CLASSE { color: var(--class-fg); background: var(--class-bg); }
+      .type-REFORC { color: var(--support-fg); background: var(--support-bg); }
+      .type-DESDOBLAMENT { color: var(--split-fg); background: var(--split-bg); }
+      .type-COMPLEMENTARIA { color: var(--extra-fg); background: var(--extra-bg); }
+      .cell-editor {
+        width: 100%;
+        height: 29px;
+        padding: 2px 3px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: bold;
+        border: 2px solid #3b78aa;
+        outline: 0;
+      }
+      .summary-row th, .summary-row td { height: 27px; background: #edf2f6; font-size: 10px; font-weight: bold; }
+      .summary-row .teacher { background: #e4eaf0; }
+      .empty-state, .loading {
+        margin: 40px auto;
+        max-width: 520px;
+        padding: 22px;
+        text-align: center;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .help { color: var(--muted); font-size: 10px; }
+      .subject-inspector {
+        position: fixed;
+        right: 14px;
+        bottom: 14px;
+        z-index: 15;
+        display: none;
+        width: 330px;
+        padding: 10px 12px;
+        background: #fff;
+        border: 1px solid #b8c5d0;
+        border-radius: 6px;
+        box-shadow: 0 10px 28px rgba(25, 44, 60, .2);
+      }
+      .subject-inspector.open { display: block; }
+      .inspector-head { display: flex; align-items: start; gap: 8px; }
+      .inspector-head h3 { margin: 0; font-size: 14px; }
+      .inspector-head button { margin-left: auto; border: 0; background: transparent; font-size: 17px; }
+      .inspector-stats { display: flex; gap: 12px; margin: 8px 0; color: var(--muted); font-size: 11px; }
+      .inspector-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-top: 1px solid #edf1f4; font-size: 11px; }
+      .toast {
+        position: fixed;
+        right: 14px;
+        bottom: 14px;
+        z-index: 30;
+        display: none;
+        max-width: 420px;
+        padding: 9px 12px;
+        color: #fff;
+        background: #263746;
+        border-radius: 5px;
+      }
+      .data-shell { min-height: 0; overflow: auto; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+      .data-table { width: 100%; border-collapse: collapse; }
+      .data-table th, .data-table td { padding: 6px 7px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+      .data-table th { position: sticky; top: 0; z-index: 2; color: #fff; background: var(--navy); font-size: 10px; }
+      .data-table tbody tr:nth-child(even) td { background: #f4f8fa; }
+      .data-table tbody tr:nth-child(odd) td { background: #fff; }
+      .data-table tbody tr:hover td { background: #eaf2f7; }
+      .data-table input, .data-table select { width: 100%; min-width: 64px; padding: 5px; border: 1px solid #bac6d0; border-radius: 3px; }
+      .data-table input[type="number"] { width: 72px; }
+      .data-table .num { text-align: right; }
+      .staff-summary { width: max-content; min-width: 100%; table-layout: fixed; }
+      .staff-summary th, .staff-summary td {
+        width: 42px;
+        min-width: 42px;
+        max-width: 42px;
+        padding: 5px 4px;
+        text-align: center;
+        border-right: 1px solid #d4dde4;
+      }
+      .staff-summary .num { text-align: center; }
+      .staff-summary thead tr:first-child th { top: 0; height: 24px; }
+      .staff-summary thead tr:nth-child(2) th { top: 24px; }
+      .staff-summary .group-head {
+        color: #fff;
+        background: #314e67;
+        font-size: 10px;
+        letter-spacing: .01em;
+      }
+      .staff-summary .group-stage { border-left: 3px solid #8399aa; border-right: 3px solid #8399aa; }
+      .staff-summary .group-hdc, .staff-summary .group-contract { border-left: 4px solid #60798d; border-right: 4px solid #60798d; }
+      .staff-summary .group-charges { border-left: 4px solid #b48333; border-right: 4px solid #b48333; }
+      .staff-summary .staff-name {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        width: 176px;
+        min-width: 176px;
+        max-width: 176px;
+        padding: 4px 6px;
+        text-align: left;
+        border-right: 2px solid #8fa4b4;
+      }
+      .staff-summary thead .staff-name { z-index: 4; background: var(--navy); }
+      .staff-summary tbody tr:nth-child(odd) .staff-name,
+      .staff-summary tbody tr:nth-child(even) .staff-name { background: #fff; }
+      .staff-summary .staff-name .small-button {
+        width: 100%;
+        overflow: hidden;
+        padding: 3px 4px;
+        text-align: left;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border-color: transparent;
+        background: transparent;
+      }
+      .staff-summary .stage-infantil { background: #fff8e5; }
+      .staff-summary .stage-primaria { background: #eef7ed; }
+      .staff-summary .stage-secundaria { background: #edf3fb; }
+      .staff-summary thead .stage-infantil { color: #59440d; background: #f2d98d; }
+      .staff-summary thead .stage-primaria { color: #244d2d; background: #bcdcb9; }
+      .staff-summary thead .stage-secundaria { color: #294b70; background: #bdd2e9; }
+      .staff-summary tbody .stage-infantil,
+      .staff-summary tbody .stage-primaria,
+      .staff-summary tbody .stage-secundaria { background: #fff; }
+      .staff-summary .stage-start { border-left: 3px solid #8399aa; }
+      .staff-summary .stage-end { border-right: 3px solid #8399aa; }
+      .staff-summary .summary-start { border-left: 4px solid #60798d; }
+      .staff-summary .summary-col {
+        width: 50px;
+        min-width: 50px;
+        max-width: 50px;
+        background: #fff;
+      }
+      .staff-summary thead .summary-col { color: #fff; background: #55466c; }
+      .staff-summary tbody tr:nth-child(even) .summary-col { background: #fff; }
+      .staff-summary .total-col { border-left: 2px solid #9b87ae; font-weight: bold; }
+      .staff-summary .difference-col { border-left: 2px solid #9b87ae; }
+      .staff-summary .charge-col {
+        width: 35px;
+        min-width: 35px;
+        max-width: 35px;
+        background: #fff;
+      }
+      .staff-summary thead .charge-col { color: #5b3d07; background: #f1c873; }
+      .staff-summary tbody tr:nth-child(even) .charge-col { background: #fff; }
+      .staff-summary .charge-start { border-left: 4px solid #b48333; }
+      .staff-summary tbody tr:hover td,
+      .staff-summary tbody tr:hover .staff-name,
+      .staff-summary tbody tr:hover .action-col { background: #f7fafc; }
+      .staff-workload .staff-name {
+        width: 205px;
+        min-width: 205px;
+        max-width: 205px;
+      }
+      .staff-workload .summary-col {
+        width: 58px;
+        min-width: 58px;
+        max-width: 58px;
+      }
+      .staff-workload .action-col {
+        position: sticky;
+        right: 0;
+        z-index: 1;
+        width: 66px;
+        min-width: 66px;
+        max-width: 66px;
+        border-left: 3px solid #8fa4b4;
+        text-align: center;
+        background: #f3f6f8;
+      }
+      .staff-workload thead .action-col { z-index: 4; color: #fff; background: var(--navy); }
+      .staff-workload tbody tr:nth-child(even) .action-col { background: #eaf1f5; }
+      .section-card { margin-bottom: 10px; padding: 10px; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+      .section-card h3 { margin: 0 0 8px; font-size: 14px; }
+      .management-grid { min-height: 0; overflow: auto; }
+      .view-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .view-toolbar h2 { margin: 0 auto 0 0; }
+      .inline-actions { display: flex; gap: 5px; }
+      .small-button { padding: 5px 7px; border: 1px solid #b7c3ce; border-radius: 3px; background: #fff; }
+      .small-button.primary { color: #fff; border-color: var(--navy-2); background: var(--navy-2); }
+      .metric-positive { color: var(--good); font-weight: bold; }
+      .metric-negative { color: var(--bad); font-weight: bold; }
+      .metric-zero { color: var(--muted); }
+      .charges-editor { display: grid; grid-template-columns: 1fr 90px; gap: 6px; margin-top: 8px; }
+      .dialog-backdrop { position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center; background: rgba(14, 28, 40, .45); }
+      .dialog-backdrop.open { display: flex; }
+      .dialog { width: min(520px, calc(100vw - 30px)); max-height: calc(100vh - 30px); overflow: auto; padding: 16px; background: #fff; border-radius: 7px; }
+      .dialog h3 { margin: 0 0 12px; }
+      .dialog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+      .dialog label { display: block; color: var(--muted); font-size: 10px; }
+      .dialog input, .dialog select { width: 100%; margin-top: 3px; padding: 7px; border: 1px solid #bac6d0; border-radius: 4px; }
+      .dialog-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 14px; }
+      .access-gate {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background:
+          radial-gradient(circle at top left, rgba(92, 124, 154, .32), transparent 34%),
+          linear-gradient(135deg, rgba(23, 50, 77, .94), rgba(18, 32, 46, .92));
+      }
+      .access-card {
+        width: min(390px, 100%);
+        padding: 26px;
+        color: var(--ink);
+        background: rgba(255, 255, 255, .97);
+        border: 1px solid rgba(255, 255, 255, .65);
+        border-radius: 14px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, .32);
+      }
+      .access-card h2 { margin: 0; color: var(--navy); font-size: 22px; }
+      .access-card p { margin: 7px 0 18px; color: var(--muted); }
+      .access-card label { display: block; color: #405263; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+      .access-card input {
+        width: 100%;
+        margin-top: 7px;
+        padding: 12px 13px;
+        border: 1px solid #aebdca;
+        border-radius: 8px;
+        font-size: 18px;
+        letter-spacing: .08em;
+      }
+      .access-card input:focus { border-color: var(--navy-2); outline: 3px solid rgba(36, 75, 111, .15); }
+      .access-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+      .access-error { min-height: 18px; color: var(--bad); font-size: 12px; }
+      .access-gate.hidden { display: none; }
+      @media (max-width: 900px) {
+        .workspace { grid-template-columns: 1fr; }
+        .sidebar { display: none; }
+        .view-select { display: block; }
+        .brand { width: 155px; flex-basis: 155px; }
+        .summary-strip { grid-template-columns: repeat(2, 1fr); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand"><img class="brand-logo" src="<?= faviconUrl ?>" alt=""><div><h1><?= appName ?></h1><p><?= appSubtitle ?></p></div></div>
+        <select id="viewSelect" class="view-select" aria-label="Selecciona la vista">
+          <option value="course">Vista per curs</option>
+          <option value="staff">Resum professorat</option>
+          <option value="teachers">Professorat i jornada</option>
+          <option value="curriculum">Matèries per curs</option>
+          <option value="year-settings">Gestió del curs</option>
+          <option value="course-settings">Cursos</option>
+          <option value="subject-settings">Matèries</option>
+          <option value="charge-settings">Càrrecs</option>
+          <option value="hdc-settings">HDC</option>
+        </select>
+        <select id="courseSelect" class="course-select" aria-label="Selecciona el curs"></select>
+        <span id="yearStatus" class="year-pill"></span>
+        <div id="userInfo" class="user"></div>
+      </header>
+      <div class="workspace">
+        <aside class="sidebar">
+          <div class="nav-title">Treball</div>
+          <button class="nav-item active" data-view="course">Vista per curs</button>
+          <button class="nav-item" data-view="staff">Resum professorat</button>
+          <div class="nav-title nav-section">Configuració</div>
+          <button class="nav-item" data-view="teachers">Professorat i jornada</button>
+          <button class="nav-item" data-view="curriculum">Matèries per curs</button>
+          <button class="nav-item" data-view="year-settings">Gestió del curs</button>
+          <button class="nav-item" data-view="course-settings">Cursos</button>
+          <button class="nav-item" data-view="subject-settings">Matèries</button>
+          <button class="nav-item" data-view="charge-settings">Càrrecs</button>
+          <button class="nav-item" data-view="hdc-settings">HDC</button>
+          <div class="legend">
+            <div><b class="type-CLASSE">2</b> Classe</div>
+            <div><b class="type-REFORC">R1</b> Reforç</div>
+            <div><b class="type-DESDOBLAMENT">D2</b> Desdoblament</div>
+            <div><b class="type-COMPLEMENTARIA">2</b> Complementària</div>
+            <p>Escriu directament: <strong>2</strong>, <strong>R1</strong> o <strong>2+D2</strong>.</p>
+          </div>
+        </aside>
+        <main id="main"><div class="loading">Carregant la massa horària…</div></main>
+      </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <aside id="subjectInspector" class="subject-inspector"></aside>
+    <div id="dialogBackdrop" class="dialog-backdrop"><div id="dialog" class="dialog"></div></div>
+    <div id="accessGate" class="access-gate" role="dialog" aria-modal="true" aria-labelledby="accessTitle">
+      <form id="accessForm" class="access-card">
+        <h2 id="accessTitle">Accés a Massa horària</h2>
+        <p>Escola Ramon Pont</p>
+        <label for="accessPasscode">Clau de pas</label>
+        <input id="accessPasscode" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false">
+        <div class="access-actions">
+          <span id="accessError" class="access-error"></span>
+          <button id="accessSubmit" class="button primary" type="submit">Entra</button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      const state = {
+        data: null,
+        courseId: null,
+        extraTeachers: {},
+        pickerOpen: false,
+        saving: false,
+        view: "course",
+      };
+
+      document.addEventListener("DOMContentLoaded", showAccessGate);
+      document.getElementById("courseSelect").addEventListener("change", (event) => {
+        state.courseId = event.target.value;
+        renderCurrentView();
+      });
+      document.getElementById("viewSelect").addEventListener("change", (event) => {
+        setView(event.target.value);
+      });
+      document.querySelectorAll("[data-view]").forEach((button) => {
+        button.addEventListener("click", () => {
+          setView(button.dataset.view);
+        });
+      });
+
+      function showAccessGate() {
+        const gate = document.getElementById("accessGate");
+        const form = document.getElementById("accessForm");
+        const input = document.getElementById("accessPasscode");
+        const error = document.getElementById("accessError");
+        gate.classList.remove("hidden");
+        input.focus();
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const button = document.getElementById("accessSubmit");
+          button.disabled = true;
+          button.textContent = "Comprovant…";
+          error.textContent = "";
+          google.script.run
+            .withSuccessHandler((response) => {
+              button.disabled = false;
+              button.textContent = "Entra";
+              if (!response || !response.ok) {
+                error.textContent = response?.error || "La clau no és correcta.";
+                input.select();
+                return;
+              }
+              gate.classList.add("hidden");
+              loadApplication();
+            })
+            .withFailureHandler((failure) => {
+              button.disabled = false;
+              button.textContent = "Entra";
+              error.textContent = failure.message || "No s'ha pogut verificar la clau.";
+              input.select();
+            })
+            .verifyAccessPasscode({ passcode: input.value });
+        });
+      }
+
+      function setView(view) {
+        state.view = view;
+        document.getElementById("viewSelect").value = view;
+        document.querySelectorAll("[data-view]").forEach((item) => {
+          item.classList.toggle("active", item.dataset.view === view);
+        });
+        renderCurrentView();
+      }
+
+      function loadApplication() {
+        google.script.run
+          .withSuccessHandler((response) => {
+            if (!response || !response.ok) return showFatal(response?.error || "No s'han pogut carregar les dades.");
+            state.data = response.data;
+            state.courseId = state.courseId || response.data.courses[0]?.id;
+            document.getElementById("courseSelect").innerHTML = response.data.courses
+              .map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`)
+              .join("");
+            document.getElementById("courseSelect").value = state.courseId;
+            document.getElementById("yearStatus").textContent =
+              `${response.data.activeYear.name} · ${statusLabel(response.data.activeYear.status)}`;
+            document.getElementById("userInfo").innerHTML =
+              `${escapeHtml(response.data.user.email)}<br>${escapeHtml(response.data.user.role)}`;
+            renderCurrentView();
+          })
+          .withFailureHandler((error) => showFatal(error.message))
+          .getApplicationData();
+      }
+
+      function renderCurrentView() {
+        document.getElementById("courseSelect").style.display =
+          ["course", "curriculum"].includes(state.view) ? "" : "none";
+        if (state.view === "course") return renderCourse();
+        if (state.view === "staff") return renderStaffSummary();
+        if (state.view === "teachers") return renderTeachers();
+        if (state.view === "curriculum") return renderCurriculum();
+        if (state.view === "settings") return renderSettings();
+        if (state.view === "year-settings") return renderYearSettings();
+        if (state.view === "course-settings") return renderCourseSettings();
+        if (state.view === "subject-settings") return renderSubjectSettings();
+        if (state.view === "charge-settings") return renderChargeSettings();
+        if (state.view === "hdc-settings") return renderHdcSettings();
+      }
+
+      function renderCourse() {
+        const course = state.data.courses.find((item) => item.id === state.courseId);
+        if (!course) return;
+        const plans = state.data.plans
+          .filter((item) => item.courseId === course.id)
+          .sort((a, b) => a.order - b.order);
+        const assignments = state.data.assignments.filter((item) => item.courseId === course.id);
+        const assignedIds = new Set(assignments.map((item) => item.teacherId));
+        const extras = state.extraTeachers[course.id] || new Set();
+        const visibleIds = new Set([...assignedIds, ...extras]);
+        const teachers = state.data.teachers.filter((teacher) => visibleIds.has(teacher.id));
+        const coverage = totalsBySubject(plans, assignments, true);
+        const staffHours = totalsBySubject(plans, assignments, false);
+        const complete = plans.filter(
+          (plan) => nearlyEqual(coverage[plan.subjectId] || 0, plan.targetHours)
+        ).length;
+        const missing = plans.reduce(
+          (sum, plan) => sum + Math.max(plan.targetHours - (coverage[plan.subjectId] || 0), 0),
+          0
+        );
+        const reinforcement = assignments
+          .filter((item) => item.type === "REFORC")
+          .reduce((sum, item) => sum + item.hours, 0);
+        const splits = assignments
+          .filter((item) => item.type === "DESDOBLAMENT")
+          .reduce((sum, item) => sum + item.hours, 0);
+        const splitWarnings = splitWarningsBySubject(plans, assignments);
+        const splitWarningCount = Object.keys(splitWarnings).length;
+
+        document.getElementById("main").innerHTML = `
+          <div class="toolbar">
+            <h2>${escapeHtml(course.name)}</h2>
+            <span class="help">Escriu 2, R1, D2 o 2+D2. Les complementàries no necessiten prefix.</span>
+            <span id="saveState" class="save-state"></span>
+            <div class="teacher-picker">
+              <button id="pickerButton" class="button primary">+ Mostra professorat</button>
+              <div id="pickerPanel" class="picker-panel">
+                <input id="teacherSearch" type="search" placeholder="Cerca professor…">
+                <div id="pickerList" class="picker-list"></div>
+              </div>
+            </div>
+          </div>
+          <div class="summary-strip">
+            ${summaryCard("Matèries completes", `${complete}/${plans.length}`, complete === plans.length ? "good" : "warn")}
+            ${summaryCard("Hores pendents", formatHours(missing), missing ? "bad" : "good")}
+            ${summaryCard("Reforços", formatHours(reinforcement), "")}
+            ${summaryCard("Desdoblaments", splitWarningCount ? `${formatHours(splits)} · ${splitWarningCount} avís` : formatHours(splits), splitWarningCount ? "warn warning-card" : "")}
+          </div>
+          <div class="matrix-shell">
+            ${teachers.length ? renderMatrix(teachers, plans, assignments, coverage, staffHours, assignedIds, extras, splitWarnings) :
+              `<div class="empty-state"><strong>Encara no hi ha professorat assignat.</strong><p>Utilitza «Mostra professorat» per afegir les primeres files.</p></div>`}
+          </div>`;
+        bindCourseEvents(course, teachers, plans, assignments, assignedIds, extras);
+      }
+
+      function renderMatrix(teachers, plans, assignments, coverage, staffHours, assignedIds, extras, splitWarnings) {
+        return `<table class="matrix">
+          <thead><tr>
+            <th class="teacher">Professorat</th>
+            ${plans.map((plan) => subjectHeader(plan, coverage, splitWarnings)).join("")}
+            <th class="teacher-total">Curs / contracte</th>
+          </tr></thead>
+          <tbody>
+            ${teachers.map((teacher) => teacherRow(teacher, plans, assignments, assignedIds, extras)).join("")}
+            ${summaryRow("Cobertes", plans, coverage, true)}
+            ${summaryRow("Necessàries", plans, Object.fromEntries(plans.map((plan) => [plan.subjectId, plan.targetHours])))}
+            ${summaryRow("H. professorat", plans, staffHours)}
+          </tbody>
+        </table>`;
+      }
+
+      function teacherRow(teacher, plans, assignments, assignedIds, extras) {
+        const removable = extras.has(teacher.id) && !assignedIds.has(teacher.id);
+        const courseHours = assignments
+          .filter((item) => item.teacherId === teacher.id)
+          .reduce((sum, item) => sum + item.hours, 0);
+        const allLective = state.data.assignments
+          .filter((item) => item.teacherId === teacher.id)
+          .reduce((sum, item) => sum + item.hours, 0);
+        const contract = state.data.contracts.find((item) => item.teacherId === teacher.id)?.hours;
+        return `<tr>
+          <th class="teacher"><div class="teacher-name"><span>${escapeHtml(teacher.name)}</span>
+            ${removable ? `<button class="remove-extra" data-remove-teacher="${teacher.id}" title="Amaga aquesta fila">×</button>` : ""}
+          </div></th>
+          ${plans.map((plan, columnIndex) => {
+            const items = assignments.filter(
+              (item) => item.teacherId === teacher.id && item.subjectId === plan.subjectId
+            );
+            return `<td class="cell" tabindex="0"
+              data-column-index="${columnIndex}"
+              data-course-id="${state.courseId}"
+              data-subject-id="${plan.subjectId}"
+              data-teacher-id="${teacher.id}"
+              title="Escriu 2, R1, D2 o combinacions com 2+D2">
+              <div class="cell-display">${items.map(tokenHtml).join("")}</div>
+            </td>`;
+          }).join("")}
+          <td class="teacher-total"><strong>${formatHours(courseHours)} h</strong>
+            <small>${contract == null ? `${formatHours(allLective)} lectives` : `${formatHours(allLective)} / ${formatHours(contract)}`}</small>
+          </td>
+        </tr>`;
+      }
+
+      function subjectHeader(plan, coverage, splitWarnings) {
+        const subject = state.data.subjects[plan.subjectId];
+        const current = coverage[plan.subjectId] || 0;
+        const status = nearlyEqual(current, plan.targetHours) ? "good" : current < plan.targetHours ? "bad" : "warn";
+        const warning = splitWarnings && splitWarnings[plan.subjectId];
+        return `<th data-subject-header="${plan.subjectId}" title="${escapeHtml(subject.name)}">
+          <span class="subject-label">${escapeHtml(compactSubject(subject.shortName))}</span>
+          <span class="subject-total ${status}">${formatHours(current)}/${formatHours(plan.targetHours)}</span>
+          ${warning ? `<span class="subject-warning" title="${escapeHtml(warning)}">⚠ D</span>` : ""}
+        </th>`;
+      }
+
+      function compactSubject(name) {
+        const replacements = {
+          "Coneixement del medi": "Medi",
+          "Llenguatge matemàtic": "Mat.",
+          "Llenguatge musical": "Música",
+          "Consciència fonològica": "C. fon.",
+          "Educació Emocional": "E. emoc.",
+          "Educació emocional": "E. emoc.",
+          "Psicomotricitat": "Psico.",
+          "Entrada relaxada": "Entrada",
+          "Matemàtiques": "Mates",
+          "Coneix. Medi  (2) i Porjecte (1)": "Medi/Proj.",
+        };
+        return replacements[name] || String(name).replace("Educació ", "Ed. ").replace("Llenguatge ", "Ll. ");
+      }
+
+      function bindCourseEvents(course, teachers, plans, assignments, assignedIds, extras) {
+        const pickerButton = document.getElementById("pickerButton");
+        const pickerPanel = document.getElementById("pickerPanel");
+        pickerButton.addEventListener("click", () => {
+          pickerPanel.classList.toggle("open");
+          renderPickerList("");
+          if (pickerPanel.classList.contains("open")) document.getElementById("teacherSearch").focus();
+        });
+        document.getElementById("teacherSearch").addEventListener("input", (event) => renderPickerList(event.target.value));
+        document.addEventListener("click", closePickerOnOutside, { once: true, capture: true });
+
+        document.querySelectorAll(".cell").forEach((cell) => {
+          cell.addEventListener("click", () => {
+            commitOpenEditor(cell);
+            cell.focus();
+            selectCell(cell);
+          });
+          cell.addEventListener("dblclick", () => beginEdit(cell));
+          cell.addEventListener("focus", () => selectCell(cell));
+          cell.addEventListener("keydown", (event) => {
+            if (/^[0-9RrDd]$/.test(event.key)) {
+              event.preventDefault();
+              beginEdit(cell, event.key);
+            } else if (event.key === "Enter" || event.key === "F2") {
+              event.preventDefault();
+              beginEdit(cell);
+            } else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+              event.preventDefault();
+              moveFromCell(cell, event.key);
+            } else if (event.key === "Delete" || event.key === "Backspace") {
+              event.preventDefault();
+              commitCell(cell, "");
+            }
+          });
+        });
+        document.querySelectorAll("[data-subject-header]").forEach((header) => {
+          header.addEventListener("click", () => showSubjectInspector(header.dataset.subjectHeader));
+        });
+        document.querySelectorAll("[data-remove-teacher]").forEach((button) => {
+          button.addEventListener("click", () => {
+            extras.delete(button.dataset.removeTeacher);
+            renderCourse();
+          });
+        });
+      }
+
+      function closePickerOnOutside(event) {
+        const panel = document.getElementById("pickerPanel");
+        const button = document.getElementById("pickerButton");
+        if (panel && !panel.contains(event.target) && event.target !== button) panel.classList.remove("open");
+      }
+
+      function renderPickerList(query) {
+        const normalized = String(query || "").toLocaleLowerCase("ca");
+        const assignments = state.data.assignments.filter((item) => item.courseId === state.courseId);
+        const assignedIds = new Set(assignments.map((item) => item.teacherId));
+        const extras = state.extraTeachers[state.courseId] || new Set();
+        document.getElementById("pickerList").innerHTML = state.data.teachers
+          .filter((teacher) => teacher.name.toLocaleLowerCase("ca").includes(normalized))
+          .map((teacher) => {
+            const checked = assignedIds.has(teacher.id) || extras.has(teacher.id);
+            const locked = assignedIds.has(teacher.id);
+            return `<label class="picker-row">
+              <input type="checkbox" data-picker-teacher="${teacher.id}" ${checked ? "checked" : ""} ${locked ? "disabled" : ""}>
+              <span>${escapeHtml(teacher.name)}${locked ? " · assignat" : ""}</span>
+            </label>`;
+          }).join("");
+        document.querySelectorAll("[data-picker-teacher]").forEach((checkbox) => {
+          checkbox.addEventListener("change", () => {
+            const selected = state.extraTeachers[state.courseId] || new Set();
+            checkbox.checked ? selected.add(checkbox.dataset.pickerTeacher) : selected.delete(checkbox.dataset.pickerTeacher);
+            state.extraTeachers[state.courseId] = selected;
+            renderCourse();
+            document.getElementById("pickerPanel")?.classList.add("open");
+          });
+        });
+      }
+
+      function beginEdit(cell, initialKey) {
+        if (state.saving || !["ADMIN", "EDITOR"].includes(state.data.user.role)) return;
+        if (cell.querySelector("input")) return;
+        commitOpenEditor(cell);
+        document.querySelectorAll(".cell.selected").forEach((item) => item.classList.remove("selected"));
+        cell.classList.add("selected");
+        const currentItems = cellAssignments(cell.dataset);
+        const input = document.createElement("input");
+        input.className = "cell-editor";
+        input.value = initialKey == null ? serializeAssignments(currentItems) : initialKey;
+        cell.innerHTML = "";
+        cell.appendChild(input);
+        input.focus();
+        if (initialKey == null) input.select();
+        input.addEventListener("keydown", (event) => {
+          event.stopPropagation();
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commitCell(cell, input.value, "ArrowDown");
+          } else if (event.key === "Tab") {
+            event.preventDefault();
+            commitCell(cell, input.value, event.shiftKey ? "ArrowLeft" : "ArrowRight");
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            renderCourse();
+          }
+        });
+      }
+
+      function commitOpenEditor(nextCell) {
+        const input = document.querySelector(".cell-editor");
+        if (!input) return;
+        const cell = input.closest(".cell");
+        if (!cell || cell === nextCell || state.saving) return;
+        commitCell(cell, input.value);
+      }
+
+      function commitCell(cell, value, moveDirection) {
+        let entries;
+        try {
+          if (isIncompleteCellValue(value)) {
+            const input = cell.querySelector("input");
+            if (input) window.setTimeout(() => input.focus(), 0);
+            return;
+          }
+          entries = parseCellValue(value, cell.dataset.subjectId);
+        } catch (error) {
+          showToast(error.message);
+          const input = cell.querySelector("input");
+          if (input) input.focus();
+          return;
+        }
+        state.saving = true;
+        setSaveState("Desant…", "saving");
+        google.script.run
+          .withSuccessHandler((response) => {
+            state.saving = false;
+            if (!response || !response.ok) {
+              showToast(response?.error || "No s'ha pogut desar.");
+              setSaveState("Error", "bad");
+              renderCourse();
+              return;
+            }
+            state.data.assignments = state.data.assignments.filter(
+              (item) => !(
+                item.courseId === cell.dataset.courseId &&
+                item.subjectId === cell.dataset.subjectId &&
+                item.teacherId === cell.dataset.teacherId
+              )
+            ).concat(response.assignments || []);
+            const target = moveDirection ? adjacentCellDescriptor(cell, moveDirection) : null;
+            renderCourse();
+            setSaveState("Desat", "saved");
+            if (target) focusCellDescriptor(target);
+          })
+          .withFailureHandler((error) => {
+            state.saving = false;
+            showToast(error.message);
+            setSaveState("Error", "bad");
+            renderCourse();
+          })
+          .saveCellAssignments({
+            courseId: cell.dataset.courseId,
+            subjectId: cell.dataset.subjectId,
+            teacherId: cell.dataset.teacherId,
+            entries,
+          });
+      }
+
+      function isIncompleteCellValue(value) {
+        const text = String(value || "").trim().toUpperCase().replaceAll(" ", "");
+        return /(^|[+])[RD]$/.test(text) || text.endsWith("+");
+      }
+
+      function parseCellValue(value, subjectId) {
+        const text = String(value || "").trim().toUpperCase().replaceAll(" ", "");
+        if (!text) return [];
+        const defaultType = baseTypeForSubject(subjectId);
+        const typeMap = { R: "REFORC", D: "DESDOBLAMENT" };
+        const entries = text.split("+").map((token) => {
+          const match = token.match(/^([RD]?)(\d+(?:[.,]\d+)?)$/);
+          if (!match) throw new Error("Format incorrecte. Exemples: 2, R1, D2 o 2+D2.");
+          return {
+            type: typeMap[match[1]] || defaultType,
+            hours: Number(match[2].replace(",", ".")),
+          };
+        });
+        if (new Set(entries.map((entry) => entry.type)).size !== entries.length) {
+          throw new Error("No repeteixis el mateix tipus dins la cel·la.");
+        }
+        return entries;
+      }
+
+      function selectCell(cell) {
+        document.querySelectorAll(".cell.selected").forEach((item) => item.classList.remove("selected"));
+        document.querySelectorAll(".active-column").forEach((item) => item.classList.remove("active-column"));
+        cell.classList.add("selected", "active-column");
+        document.querySelector(`[data-subject-header="${cell.dataset.subjectId}"]`)?.classList.add("active-column");
+        document.querySelectorAll(`.cell[data-column-index="${cell.dataset.columnIndex}"]`)
+          .forEach((item) => item.classList.add("active-column"));
+      }
+
+      function moveFromCell(cell, direction) {
+        const target = adjacentCellDescriptor(cell, direction);
+        if (target) focusCellDescriptor(target);
+      }
+
+      function adjacentCellDescriptor(cell, direction) {
+        const rows = Array.from(document.querySelectorAll(".matrix tbody tr"))
+          .filter((row) => row.querySelector(".cell"));
+        const rowIndex = rows.indexOf(cell.parentElement);
+        const rowCells = Array.from(cell.parentElement.querySelectorAll(".cell"));
+        let nextRow = rowIndex;
+        let nextColumn = rowCells.indexOf(cell);
+        if (direction === "ArrowLeft") nextColumn -= 1;
+        if (direction === "ArrowRight") nextColumn += 1;
+        if (direction === "ArrowUp") nextRow -= 1;
+        if (direction === "ArrowDown") nextRow += 1;
+        if (nextColumn < 0) {
+          nextRow -= 1;
+          nextColumn = rowCells.length - 1;
+        }
+        if (nextColumn >= rowCells.length) {
+          nextRow += 1;
+          nextColumn = 0;
+        }
+        if (nextRow < 0 || nextRow >= rows.length) return null;
+        const target = rows[nextRow].querySelectorAll(".cell")[nextColumn];
+        return target
+          ? { teacherId: target.dataset.teacherId, subjectId: target.dataset.subjectId }
+          : null;
+      }
+
+      function focusCellDescriptor(descriptor) {
+        window.setTimeout(() => {
+          document.querySelector(
+            `.cell[data-teacher-id="${descriptor.teacherId}"][data-subject-id="${descriptor.subjectId}"]`
+          )?.focus();
+        }, 0);
+      }
+
+      function showSubjectInspector(subjectId) {
+        const inspector = document.getElementById("subjectInspector");
+        const subject = state.data.subjects[subjectId];
+        const plan = state.data.plans.find(
+          (item) => item.courseId === state.courseId && item.subjectId === subjectId
+        );
+        const items = state.data.assignments.filter(
+          (item) => item.courseId === state.courseId && item.subjectId === subjectId
+        );
+        const covered = items.reduce((sum, item) => sum + item.hours * item.coverageFactor, 0);
+        const staff = items.reduce((sum, item) => sum + item.hours, 0);
+        inspector.innerHTML = `
+          <div class="inspector-head"><h3>${escapeHtml(subject.name)}</h3><button id="closeInspector">×</button></div>
+          <div class="inspector-stats">
+            <span>Cobertes: <strong>${formatHours(covered)}/${formatHours(plan.targetHours)}</strong></span>
+            <span>Professorat: <strong>${formatHours(staff)} h</strong></span>
+          </div>
+          ${items.length ? items.map((item) => {
+            const teacher = state.data.teachers.find((entry) => entry.id === item.teacherId);
+            return `<div class="inspector-row"><span>${escapeHtml(teacher?.name || "")}</span><span>${typePrefix(item.type)}${formatHours(item.hours)}</span></div>`;
+          }).join("") : `<p class="help">Encara no hi ha cap assignació.</p>`}`;
+        inspector.classList.add("open");
+        document.getElementById("closeInspector")
+          .addEventListener("click", () => inspector.classList.remove("open"));
+      }
+
+      function setSaveState(text, css) {
+        const element = document.getElementById("saveState");
+        if (!element) return;
+        element.textContent = text;
+        element.className = `save-state ${css || ""}`;
+        if (css === "saved") {
+          window.setTimeout(() => {
+            if (element.textContent === text) element.textContent = "";
+          }, 1400);
+        }
+      }
+
+      function cellAssignments(dataset) {
+        return state.data.assignments.filter(
+          (item) =>
+            item.courseId === dataset.courseId &&
+            item.subjectId === dataset.subjectId &&
+            item.teacherId === dataset.teacherId
+        );
+      }
+
+      function serializeAssignments(items) {
+        const prefixes = { CLASSE: "", REFORC: "R", DESDOBLAMENT: "D", COMPLEMENTARIA: "" };
+        return items.map((item) => `${prefixes[item.type] || ""}${formatHours(item.hours)}`).join("+");
+      }
+
+      function tokenHtml(item) {
+        return `<span class="token type-${item.type}">${typePrefix(item.type)}${formatHours(item.hours)}</span>`;
+      }
+
+      function typePrefix(type) {
+        return ({ CLASSE: "", REFORC: "R", DESDOBLAMENT: "D", COMPLEMENTARIA: "" })[type] || "";
+      }
+
+      function baseTypeForSubject(subjectId) {
+        const plan = state.data.plans.find((item) => item.courseId === state.courseId && item.subjectId === subjectId);
+        return plan?.baseType === "COMPLEMENTARIA" ? "COMPLEMENTARIA" : "CLASSE";
+      }
+
+      function totalsBySubject(plans, assignments, coverageMode) {
+        return Object.fromEntries(plans.map((plan) => [
+          plan.subjectId,
+          assignments
+            .filter((item) => item.subjectId === plan.subjectId)
+            .reduce((sum, item) => sum + item.hours * (coverageMode ? item.coverageFactor : 1), 0),
+        ]));
+      }
+
+      function splitWarningsBySubject(plans, assignments) {
+        const splitTotals = Object.fromEntries(plans.map((plan) => [
+          plan.subjectId,
+          assignments
+            .filter((item) => item.subjectId === plan.subjectId && item.type === "DESDOBLAMENT")
+            .reduce((sum, item) => sum + item.hours, 0),
+        ]));
+        const subjectsWithSplits = Object.entries(splitTotals).filter(([, hours]) => hours > 0);
+        const warnings = {};
+        subjectsWithSplits.forEach(([subjectId, hours]) => {
+          const messages = [];
+          if (Math.abs(hours % 2) > 0.001) messages.push("El total de desdoblament hauria de ser parell.");
+          if (subjectsWithSplits.length === 1) messages.push("Aquest desdoblament necessita una altra matèria aparellada.");
+          else if (subjectsWithSplits.length % 2 !== 0) messages.push("Hi ha un nombre senar de matèries amb desdoblament en aquest curs.");
+          if (messages.length) warnings[subjectId] = messages.join(" ");
+        });
+        return warnings;
+      }
+
+      function summaryRow(label, plans, values, status) {
+        return `<tr class="summary-row"><th class="teacher">${label}</th>${plans.map((plan) => {
+          const value = values[plan.subjectId] || 0;
+          const css = status ? nearlyEqual(value, plan.targetHours) ? "good" : value < plan.targetHours ? "bad" : "warn" : "";
+          return `<td class="${css}">${formatHours(value)}</td>`;
+        }).join("")}<td class="teacher-total"></td></tr>`;
+      }
+
+      function summaryCard(label, value, css) {
+        return `<div class="summary"><span>${label}</span><strong class="${css}">${value}</strong></div>`;
+      }
+
+      function teacherMetrics(teacherId) {
+        const byCourse = Object.fromEntries(state.data.courses.map((course) => [course.id, 0]));
+        const byStage = {};
+        state.data.assignments
+          .filter((item) => item.teacherId === teacherId)
+          .forEach((item) => {
+            byCourse[item.courseId] = (byCourse[item.courseId] || 0) + item.hours;
+            const stage = state.data.courses.find((course) => course.id === item.courseId)?.stage || "";
+            byStage[stage] = (byStage[stage] || 0) + item.hours;
+          });
+        const hdc = Object.entries(byStage).reduce((sum, [stage, hours]) => {
+          const rate = state.data.rules.find((rule) => rule.stage === stage)?.hdcRate || 0;
+          return sum + hours * rate;
+        }, 0);
+        const charges = state.data.chargeAssignments
+          .filter((item) => item.teacherId === teacherId && item.active !== false)
+          .reduce((sum, item) => sum + item.hours, 0);
+        const byCharge = Object.fromEntries(state.data.charges.map((charge) => [charge.id, 0]));
+        state.data.chargeAssignments
+          .filter((item) => item.teacherId === teacherId && item.active !== false)
+          .forEach((item) => {
+            byCharge[item.chargeId] = (byCharge[item.chargeId] || 0) + item.hours;
+          });
+        const lective = Object.values(byCourse).reduce((sum, hours) => sum + hours, 0);
+        const contract = state.data.contracts.find((item) => item.teacherId === teacherId)?.hours || 0;
+        const total = lective + hdc + charges;
+        return { byCourse, byStage, byCharge, lective, hdc, charges, total, contract, difference: total - contract };
+      }
+
+      function renderStaffSummary() {
+        const rows = state.data.teachers.map((teacher) => ({ teacher, metrics: teacherMetrics(teacher.id) }));
+        const activeCharges = state.data.charges.filter((charge) => charge.active !== false);
+        const courseClasses = state.data.courses.map((course, index) => {
+          const stage = String(course.stage || "").toLowerCase();
+          const stageClass = stage.includes("inf") ? "stage-infantil" :
+            stage.includes("prim") ? "stage-primaria" : "stage-secundaria";
+          const previousStage = state.data.courses[index - 1]?.stage;
+          const nextStage = state.data.courses[index + 1]?.stage;
+          return `${stageClass} ${previousStage !== course.stage ? "stage-start" : ""} ${nextStage !== course.stage ? "stage-end" : ""}`;
+        });
+        const stageGroups = [
+          { label: "Infantil", count: state.data.courses.filter((course) => course.stage === "Infantil").length, className: "stage-infantil" },
+          { label: "Primària", count: state.data.courses.filter((course) => course.stage === "Primària").length, className: "stage-primaria" },
+          { label: "ESO", count: state.data.courses.filter((course) => course.stage === "Secundària").length, className: "stage-secundaria" },
+        ].filter((group) => group.count > 0);
+        document.getElementById("main").innerHTML = `
+          <div class="view-toolbar"><h2>Resum del professorat</h2>
+            <span class="help">Hores lectives, HDC, càrrecs, contracte i diferència.</span>
+          </div>
+          <div></div>
+          <div class="data-shell"><table class="data-table staff-summary">
+            <thead>
+            <tr class="group-row"><th class="staff-name" rowspan="2">Professorat</th>
+              ${stageGroups.map((group) => `<th class="group-head group-stage ${group.className}" colspan="${group.count}">${group.label}</th>`).join("")}
+              <th class="group-head group-hdc summary-col" colspan="3">HDC</th>
+              <th class="group-head group-charges charge-col" colspan="${activeCharges.length + 1}">Càrrecs</th>
+              <th class="group-head group-contract summary-col" colspan="3">Contracte</th>
+            </tr>
+            <tr>
+              ${state.data.courses.map((course, index) => `<th class="${courseClasses[index]}" title="${escapeHtml(course.name)}">${escapeHtml(course.code)}</th>`).join("")}
+              <th class="summary-col summary-start" title="Infantil i Primària">Inf./Prim.</th>
+              <th class="summary-col">ESO</th><th class="summary-col">HDC</th>
+              ${activeCharges.map((charge, index) => `<th class="charge-col ${index === 0 ? "charge-start" : ""}" title="${escapeHtml(charge.name)}">${escapeHtml(shortChargeName(charge.name))}</th>`).join("")}
+              <th class="charge-col total-col">Total càr.</th>
+              <th class="summary-col total-col">Total</th><th class="summary-col">Contracte</th>
+              <th class="summary-col difference-col">Diferència</th>
+            </tr></thead>
+            <tbody>${rows.map(({ teacher, metrics }) => `<tr>
+              <td class="staff-name"><button class="small-button" data-edit-teacher="${teacher.id}" title="${escapeHtml(teacher.name)}">${escapeHtml(teacher.name)}</button></td>
+              ${state.data.courses.map((course, index) => `<td class="num ${courseClasses[index]}">${formatOptional(metrics.byCourse[course.id])}</td>`).join("")}
+              <td class="num summary-col summary-start">${formatHours((metrics.byStage["Infantil"] || 0) + (metrics.byStage["Primària"] || 0))}</td>
+              <td class="num summary-col">${formatHours(metrics.byStage["Secundària"] || 0)}</td>
+              <td class="num summary-col">${formatHours(metrics.hdc)}</td>
+              ${activeCharges.map((charge, index) => `<td class="num charge-col ${index === 0 ? "charge-start" : ""}">${formatOptional(metrics.byCharge[charge.id])}</td>`).join("")}
+              <td class="num charge-col total-col">${formatHours(metrics.charges)}</td>
+              <td class="num summary-col total-col"><strong>${formatHours(metrics.total)}</strong></td>
+              <td class="num summary-col">${formatHours(metrics.contract)}</td>
+              <td class="num summary-col difference-col ${differenceClass(metrics.difference)}">${signedHours(metrics.difference)}</td>
+            </tr>`).join("")}</tbody>
+          </table></div>`;
+        bindTeacherEditButtons();
+      }
+
+      function renderTeachers() {
+        const activeCharges = state.data.charges.filter((charge) => charge.active !== false);
+        document.getElementById("main").innerHTML = `
+          <div class="view-toolbar"><h2>Professorat i jornada laboral</h2>
+            <button class="button primary" id="newTeacher">+ Professor</button>
+          </div><div></div>
+          <div class="data-shell"><table class="data-table staff-summary staff-workload">
+            <thead>
+              <tr class="group-row">
+                <th class="staff-name" rowspan="2">Professorat</th>
+                <th class="group-head group-hdc summary-col" colspan="2">Hores docents</th>
+                <th class="group-head group-charges charge-col" colspan="${activeCharges.length + 1}">Càrrecs</th>
+                <th class="group-head group-contract summary-col" colspan="3">Jornada</th>
+                <th class="action-col" rowspan="2">Acció</th>
+              </tr>
+              <tr>
+                <th class="summary-col summary-start">Lectives</th><th class="summary-col">HDC</th>
+                ${activeCharges.map((charge, index) => `<th class="charge-col ${index === 0 ? "charge-start" : ""}" title="${escapeHtml(charge.name)}">${escapeHtml(shortChargeName(charge.name))}</th>`).join("")}
+                <th class="charge-col total-col">Total càr.</th>
+                <th class="summary-col total-col">Total</th><th class="summary-col">Contracte</th><th class="summary-col difference-col">Diferència</th>
+              </tr>
+            </thead>
+            <tbody>${state.data.teachers.map((teacher) => {
+              const metrics = teacherMetrics(teacher.id);
+              return `<tr><td class="staff-name">${escapeHtml(teacher.name)}</td>
+                <td class="num summary-col summary-start">${formatHours(metrics.lective)}</td>
+                <td class="num summary-col">${formatHours(metrics.hdc)}</td>
+                ${activeCharges.map((charge, index) => `<td class="num charge-col ${index === 0 ? "charge-start" : ""}">${formatOptional(metrics.byCharge[charge.id])}</td>`).join("")}
+                <td class="num charge-col total-col">${formatHours(metrics.charges)}</td>
+                <td class="num summary-col total-col"><strong>${formatHours(metrics.total)}</strong></td>
+                <td class="num summary-col">${formatHours(metrics.contract)}</td>
+                <td class="num summary-col difference-col ${differenceClass(metrics.difference)}">${signedHours(metrics.difference)}</td>
+                <td class="action-col"><button class="small-button primary" data-edit-teacher="${teacher.id}">Edita</button></td></tr>`;
+            }).join("")}</tbody>
+          </table></div>`;
+        document.getElementById("newTeacher").addEventListener("click", () => openTeacherDialog(null));
+        bindTeacherEditButtons();
+      }
+
+      function bindTeacherEditButtons() {
+        document.querySelectorAll("[data-edit-teacher]").forEach((button) => {
+          button.addEventListener("click", () => openTeacherDialog(button.dataset.editTeacher));
+        });
+      }
+
+      function openTeacherDialog(teacherId) {
+        const teacher = state.data.teachers.find((item) => item.id === teacherId) || {
+          id: "", firstName: "", lastName1: "", lastName2: "", name: "", active: true,
+        };
+        const contract = state.data.contracts.find((item) => item.teacherId === teacher.id)?.hours || 0;
+        const assignedCharges = Object.fromEntries(
+          state.data.chargeAssignments
+            .filter((item) => item.teacherId === teacher.id && item.active !== false)
+            .map((item) => [item.chargeId, item.hours])
+        );
+        openDialog(`
+          <h3>${teacher.id ? "Edita el professor" : "Nou professor"}</h3>
+          <div class="dialog-grid">
+            <label>Nom<input id="dlgFirstName" value="${escapeHtml(teacher.firstName || "")}"></label>
+            <label>Primer cognom<input id="dlgLastName1" value="${escapeHtml(teacher.lastName1 || "")}"></label>
+            <label>Segon cognom<input id="dlgLastName2" value="${escapeHtml(teacher.lastName2 || "")}"></label>
+            <label>Hores de contracte<input id="dlgContract" type="number" min="0" step="0.5" value="${contract}"></label>
+          </div>
+          <h3 style="margin-top:14px">Càrrecs i altres</h3>
+          <div class="charges-editor">${state.data.charges.filter((item) => item.active).map((charge) => `
+            <label>${escapeHtml(charge.name)}</label>
+            <input type="number" min="0" step="0.5" data-dialog-charge="${charge.id}" value="${assignedCharges[charge.id] || 0}">
+          `).join("")}</div>
+          <div class="dialog-actions"><button class="button" data-close-dialog>Cancel·la</button><button class="button primary" id="saveTeacherDialog">Desa</button></div>
+        `);
+        document.getElementById("saveTeacherDialog").addEventListener("click", () => {
+          const charges = Array.from(document.querySelectorAll("[data-dialog-charge]"))
+            .map((input) => ({ chargeId: input.dataset.dialogCharge, hours: Number(input.value || 0) }));
+          invokeServer("saveTeacher", {
+            id: teacher.id,
+            firstName: document.getElementById("dlgFirstName").value,
+            lastName1: document.getElementById("dlgLastName1").value,
+            lastName2: document.getElementById("dlgLastName2").value,
+            contractHours: Number(document.getElementById("dlgContract").value || 0),
+            active: true,
+            charges,
+          }, reloadAfterManagement);
+        });
+      }
+
+      function renderCurriculum() {
+        const course = state.data.courses.find((item) => item.id === state.courseId);
+        const plans = state.data.plans
+          .filter((item) => item.courseId === course.id)
+          .sort((a, b) => a.order - b.order);
+        const unusedSubjects = Object.values(state.data.subjects)
+          .filter((subject) => !plans.some((plan) => plan.subjectId === subject.id));
+        document.getElementById("main").innerHTML = `
+          <div class="view-toolbar"><h2>Matèries de ${escapeHtml(course.name)}</h2>
+            <select id="addPlanSubject"><option value="">Afegeix una matèria…</option>
+              ${unusedSubjects.map((subject) => `<option value="${subject.id}">${escapeHtml(subject.name)}</option>`).join("")}
+            </select><button class="button primary" id="addPlan">Afegeix</button>
+          </div><div></div>
+          <div class="data-shell"><table class="data-table">
+            <thead><tr><th>Ordre</th><th>Matèria</th><th>Nom curt</th><th>Hores lectives requerides</th><th>Tipus base</th><th>Activa</th><th></th></tr></thead>
+            <tbody>${plans.map((plan) => {
+              const subject = state.data.subjects[plan.subjectId];
+              return `<tr data-plan-row="${plan.id}">
+                <td><input data-field="order" type="number" value="${plan.order}"></td>
+                <td>${escapeHtml(subject.name)}</td>
+                <td>${escapeHtml(subject.shortName)}</td>
+                <td><input data-field="targetHours" type="number" min="0" step="0.5" value="${plan.targetHours}"></td>
+                <td><select data-field="baseType">${assignmentTypeOptions(plan.baseType)}</select></td>
+                <td><input data-field="active" type="checkbox" checked></td>
+                <td><button class="small-button primary" data-save-plan="${plan.id}">Desa</button></td>
+              </tr>`;
+            }).join("")}</tbody>
+          </table></div>`;
+        document.querySelectorAll("[data-save-plan]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const plan = plans.find((item) => item.id === button.dataset.savePlan);
+            const row = button.closest("tr");
+            invokeServer("savePlan", {
+              ...plan,
+              order: Number(row.querySelector('[data-field="order"]').value),
+              targetHours: Number(row.querySelector('[data-field="targetHours"]').value),
+              baseType: row.querySelector('[data-field="baseType"]').value,
+              active: row.querySelector('[data-field="active"]').checked,
+            }, reloadAfterManagement);
+          });
+        });
+        document.getElementById("addPlan").addEventListener("click", () => {
+          const subjectId = document.getElementById("addPlanSubject").value;
+          if (!subjectId) return;
+          invokeServer("savePlan", {
+            id: "", courseId: course.id, subjectId, order: plans.length + 1,
+            targetHours: 0, baseType: "CLASSE", active: true,
+          }, reloadAfterManagement);
+        });
+      }
+
+      function renderSettings() {
+        renderYearSettings();
+      }
+
+      function renderConfigSection(title, content) {
+        document.getElementById("main").innerHTML = `
+          <div class="view-toolbar"><h2>${escapeHtml(title)}</h2></div><div></div>
+          <div class="management-grid"><section class="section-card">${content}</section></div>`;
+      }
+
+      function renderYearSettings() {
+        renderConfigSection("Gestió del curs", academicYearManagementPanel());
+        bindSettingsActions();
+      }
+
+      function renderCourseSettings() {
+        renderConfigSection("Cursos", courseSettingsTable());
+        bindSettingsActions();
+      }
+
+      function renderSubjectSettings() {
+        renderConfigSection("Matèries", subjectSettingsTable());
+        bindSettingsActions();
+      }
+
+      function renderChargeSettings() {
+        renderConfigSection("Càrrecs", chargeSettingsTable());
+        bindSettingsActions();
+      }
+
+      function renderHdcSettings() {
+        renderConfigSection("HDC", ruleSettingsTable());
+        bindSettingsActions();
+      }
+
+      function academicYearManagementPanel() {
+        const year = state.data.activeYear;
+        const nextName = nextAcademicYearName(year.name);
+        const years = state.data.academicYears || [year];
+        return `<div class="inline-actions" style="margin-bottom:9px; flex-wrap:wrap">
+            <span class="year-pill">${escapeHtml(year.name)} · ${escapeHtml(statusLabel(year.status))}</span>
+            <button class="small-button" data-year-status="ESBORRANY">Marca en procés</button>
+            <button class="small-button" data-year-status="ACTIU">Marca actiu</button>
+            <button class="small-button" data-year-status="TANCAT">Tanca curs</button>
+            <button class="small-button primary" id="createNextYear">Crea ${escapeHtml(nextName)}</button>
+          </div>
+          <p class="help">Crear el curs següent copia classes, matèries, contractes, assignacions, càrrecs i regles HDC del curs actual. El curs nou queda en procés.</p>
+          <table class="data-table"><thead><tr><th>Curs</th><th>Estat</th><th>Actiu</th></tr></thead><tbody>
+            ${years.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${escapeHtml(statusLabel(item.status))}</td><td>${item.active ? "Sí" : "No"}</td></tr>`).join("")}
+          </tbody></table>`;
+      }
+
+      function courseSettingsTable() {
+        return `<table class="data-table"><thead><tr><th>Codi</th><th>Nom</th><th>Etapa</th><th>Ordre</th><th>Hores totals</th><th></th></tr></thead>
+          <tbody>${state.data.courses.map((item) => `<tr data-course-row="${item.id}">
+            <td><input data-f="code" value="${escapeHtml(item.code)}"></td><td><input data-f="name" value="${escapeHtml(item.name)}"></td>
+            <td><select data-f="stage">${stageOptions(item.stage)}</select></td><td><input data-f="order" type="number" value="${item.order}"></td>
+            <td><input data-f="targetHours" type="number" step="0.5" value="${item.targetHours}"></td>
+            <td><button class="small-button primary" data-save-course="${item.id}">Desa</button></td></tr>`).join("")}</tbody></table>`;
+      }
+
+      function subjectSettingsTable() {
+        return `<div class="inline-actions" style="margin-bottom:7px"><button class="small-button primary" id="newSubject">+ Matèria</button></div>
+          <table class="data-table"><thead><tr><th>Nom</th><th>Nom curt</th><th></th></tr></thead><tbody>
+          ${Object.values(state.data.subjects).map((item) => `<tr data-subject-row="${item.id}">
+            <td><input data-f="name" value="${escapeHtml(item.name)}"></td><td><input data-f="shortName" value="${escapeHtml(item.shortName)}"></td>
+            <td><button class="small-button primary" data-save-subject="${item.id}">Desa</button></td></tr>`).join("")}</tbody></table>`;
+      }
+
+      function chargeSettingsTable() {
+        return `<div class="inline-actions" style="margin-bottom:7px"><button class="small-button primary" id="newCharge">+ Càrrec</button></div>
+          <table class="data-table"><thead><tr><th>Nom</th><th>Ordre</th><th></th></tr></thead><tbody>
+          ${state.data.charges.map((item) => `<tr data-charge-row="${item.id}"><td><input data-f="name" value="${escapeHtml(item.name)}"></td>
+            <td><input data-f="order" type="number" value="${item.order}"></td><td><button class="small-button primary" data-save-charge="${item.id}">Desa</button></td></tr>`).join("")}</tbody></table>`;
+      }
+
+      function ruleSettingsTable() {
+        return `<table class="data-table"><thead><tr><th>Etapa</th><th>Percentatge HDC</th><th></th></tr></thead><tbody>
+          ${state.data.rules.map((item) => `<tr data-rule-row="${escapeHtml(item.stage)}"><td>${escapeHtml(item.stage)}</td>
+            <td><input data-f="hdcRate" type="number" min="0" max="1" step="0.01" value="${item.hdcRate}"></td>
+            <td><button class="small-button primary" data-save-rule="${escapeHtml(item.stage)}">Desa</button></td></tr>`).join("")}</tbody></table>`;
+      }
+
+      function bindSettingsActions() {
+        document.querySelectorAll("[data-year-status]").forEach((button) => button.addEventListener("click", () => {
+          invokeServer("saveAcademicYearStatus", {
+            id: state.data.activeYear.id,
+            status: button.dataset.yearStatus,
+          }, reloadAfterManagement);
+        }));
+        document.getElementById("createNextYear")?.addEventListener("click", () => {
+          const nextName = nextAcademicYearName(state.data.activeYear.name);
+          if (!window.confirm(`Vols crear el curs ${nextName} a partir de ${state.data.activeYear.name}?`)) return;
+          invokeServer("createNextAcademicYear", {
+            sourceName: state.data.activeYear.name,
+            targetName: nextName,
+          }, reloadAfterManagement);
+        });
+        document.querySelectorAll("[data-save-course]").forEach((button) => button.addEventListener("click", () => {
+          const item = state.data.courses.find((course) => course.id === button.dataset.saveCourse);
+          const row = button.closest("tr");
+          invokeServer("saveCourse", {
+            id: item.id, code: row.querySelector('[data-f="code"]').value, name: row.querySelector('[data-f="name"]').value,
+            stage: row.querySelector('[data-f="stage"]').value, order: Number(row.querySelector('[data-f="order"]').value),
+            targetHours: Number(row.querySelector('[data-f="targetHours"]').value), active: true,
+          }, reloadAfterManagement);
+        }));
+        document.querySelectorAll("[data-save-subject]").forEach((button) => button.addEventListener("click", () => {
+          const row = button.closest("tr");
+          invokeServer("saveSubject", { id: button.dataset.saveSubject, name: row.querySelector('[data-f="name"]').value,
+            shortName: row.querySelector('[data-f="shortName"]').value, active: true }, reloadAfterManagement);
+        }));
+        document.querySelectorAll("[data-save-charge]").forEach((button) => button.addEventListener("click", () => {
+          const row = button.closest("tr");
+          invokeServer("saveCharge", { id: button.dataset.saveCharge, name: row.querySelector('[data-f="name"]').value,
+            order: Number(row.querySelector('[data-f="order"]').value), active: true }, reloadAfterManagement);
+        }));
+        document.querySelectorAll("[data-save-rule]").forEach((button) => button.addEventListener("click", () => {
+          const item = state.data.rules.find((rule) => rule.stage === button.dataset.saveRule);
+          invokeServer("saveRule", { id: item.id || "", stage: item.stage,
+            hdcRate: Number(button.closest("tr").querySelector('[data-f="hdcRate"]').value), active: true }, reloadAfterManagement);
+        }));
+        document.getElementById("newSubject")?.addEventListener("click", () => simpleNewDialog("Matèria", [
+          ["name", "Nom"], ["shortName", "Nom curt"],
+        ], "saveSubject", { id: "", active: true }));
+        document.getElementById("newCharge")?.addEventListener("click", () => simpleNewDialog("Càrrec", [
+          ["name", "Nom"], ["order", "Ordre", "number"],
+        ], "saveCharge", { id: "", active: true }));
+      }
+
+      function simpleNewDialog(title, fields, method, base) {
+        openDialog(`<h3>Nou ${title.toLowerCase()}</h3><div class="dialog-grid">${fields.map(([id, label, type]) =>
+          `<label>${label}<input id="simple-${id}" type="${type || "text"}"></label>`).join("")}</div>
+          <div class="dialog-actions"><button class="button" data-close-dialog>Cancel·la</button><button class="button primary" id="simpleSave">Desa</button></div>`);
+        document.getElementById("simpleSave").addEventListener("click", () => {
+          const payload = { ...base };
+          fields.forEach(([id, , type]) => {
+            const value = document.getElementById(`simple-${id}`).value;
+            payload[id] = type === "number" ? Number(value) : value;
+          });
+          invokeServer(method, payload, reloadAfterManagement);
+        });
+      }
+
+      function openDialog(html) {
+        const backdrop = document.getElementById("dialogBackdrop");
+        document.getElementById("dialog").innerHTML = html;
+        backdrop.classList.add("open");
+        document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", closeDialog));
+      }
+      function closeDialog() { document.getElementById("dialogBackdrop").classList.remove("open"); }
+      function reloadAfterManagement(response) {
+        if (!response || !response.ok) return showToast(response?.error || "No s'ha pogut desar.");
+        closeDialog();
+        loadApplication();
+        showToast("Canvis desats.");
+      }
+      function invokeServer(method, payload, success) {
+        google.script.run.withSuccessHandler(success).withFailureHandler((error) => showToast(error.message))[method](payload);
+      }
+      function assignmentTypeOptions(selected) {
+        return Object.entries(state.data.assignmentTypes).map(([value, item]) =>
+          `<option value="${value}" ${value === selected ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("");
+      }
+      function stageOptions(selected) {
+        return ["Infantil", "Primària", "Secundària"].map((value) =>
+          `<option value="${value}" ${value === selected ? "selected" : ""}>${value}</option>`).join("");
+      }
+      function formatOptional(value) { return value ? formatHours(value) : ""; }
+      function signedHours(value) { return `${value > 0 ? "+" : ""}${formatHours(value)}`; }
+      function differenceClass(value) { return Math.abs(value) < .001 ? "metric-zero" : value > 0 ? "metric-positive" : "metric-negative"; }
+      function statusLabel(status) {
+        return ({
+          ESBORRANY: "En procés",
+          EN_PROCES: "En procés",
+          ACTIU: "Actiu",
+          TANCAT: "Tancat",
+        })[String(status || "").toUpperCase()] || String(status || "");
+      }
+      function nextAcademicYearName(name) {
+        const match = String(name || "").match(/^(\d{4}|\d{2})-(\d{2}|\d{4})$/);
+        if (!match) return "curs següent";
+        const first = Number(match[1]);
+        const firstFull = first < 100 ? 2000 + first : first;
+        const nextFirst = firstFull + 1;
+        return `${nextFirst}-${String((nextFirst + 1) % 100).padStart(2, "0")}`;
+      }
+      function shortChargeName(name) {
+        const aliases = {
+          "Direcció": "Dir.",
+          "Equip directiu": "Eq. dir.",
+          "Coordinació": "Coord.",
+          "DOIP/SIEI": "DOIP",
+          "Patis ESO": "Patis",
+          "Socialització": "Social.",
+          "Pastoral": "Past.",
+          "Teatre": "Teatre",
+          "TIC": "TIC",
+          "Comitè d'empresa": "Comitè",
+          "Comunicació": "Com.",
+        };
+        return aliases[name] || String(name || "").slice(0, 8);
+      }
+
+      function nearlyEqual(a, b) { return Math.abs(Number(a) - Number(b)) < 0.001; }
+      function formatHours(value) { return Number(value || 0).toLocaleString("ca-ES", { maximumFractionDigits: 2 }); }
+      function showFatal(message) {
+        document.getElementById("main").innerHTML = `<div class="empty-state"><strong>No es pot obrir l'aplicació</strong><p>${escapeHtml(message)}</p></div>`;
+      }
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.style.display = "block";
+        window.setTimeout(() => { toast.style.display = "none"; }, 3500);
+      }
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+    </script>
+  </body>
+</html>
