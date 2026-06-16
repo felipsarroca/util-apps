@@ -8,6 +8,7 @@ const API_METHODS_ = Object.freeze({
   saveCourse: saveCourse,
   saveSubject: saveSubject,
   savePlan: savePlan,
+  saveCurriculumPlan: saveCurriculumPlan,
   saveCharge: saveCharge,
   saveRule: saveRule,
   saveAcademicYearStatus: saveAcademicYearStatus,

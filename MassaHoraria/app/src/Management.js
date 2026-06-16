@@ -85,6 +85,40 @@ function savePlan(payload) {
   });
 }
 
+function saveCurriculumPlan(payload) {
+  return managementAction_(APP_CONFIG.adminRoles, () => {
+    const user = requireUser_(APP_CONFIG.adminRoles);
+    const data = validateObject_(payload, ["subject", "plan"]);
+    const subject = validateObject_(data.subject, ["id", "name", "shortName", "active"]);
+    const plan = validateObject_(data.plan, [
+      "id", "courseId", "subjectId", "order", "targetHours", "baseType", "active",
+    ]);
+    const subjectId = validateId_(subject.id, "subject.id");
+    if (subjectId !== validateId_(plan.subjectId, "plan.subjectId")) {
+      throw new Error("La matèria i el pla no coincideixen.");
+    }
+    upsertRecord_("Materies", subjectId, {
+      Id: subjectId,
+      Nom: safeText_(subject.name, 120),
+      NomCurt: safeText_(subject.shortName || subject.name, 40),
+      Activa: subject.active !== false,
+    }, user);
+    const planId = validateId_(plan.id, "plan.id");
+    assertReferenceExists_("Grups", validateId_(plan.courseId, "plan.courseId"));
+    upsertRecord_("PlaEstudis", planId, {
+      Id: planId,
+      CursEscolarId: activeAcademicYearId_(),
+      GrupId: plan.courseId,
+      MateriaId: subjectId,
+      Ordre: validateHours_(plan.order),
+      HoresObjectiu: validateHours_(plan.targetHours),
+      TipusBase: String(plan.baseType || "CLASSE"),
+      Actiu: plan.active !== false,
+    }, user);
+    return { ok: true, subjectId: subjectId, planId: planId };
+  });
+}
+
 function saveCharge(payload) {
   return managementAction_(APP_CONFIG.adminRoles, () => {
     const user = requireUser_(APP_CONFIG.adminRoles);

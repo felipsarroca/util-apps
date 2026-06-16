@@ -1372,8 +1372,8 @@
               const subject = state.data.subjects[plan.subjectId];
               return `<tr data-plan-row="${plan.id}">
                 <td><input data-field="order" type="number" value="${plan.order}"></td>
-                <td>${escapeHtml(subject.name)}</td>
-                <td>${escapeHtml(subject.shortName)}</td>
+                <td><input data-field="subjectName" value="${escapeHtml(subject.name)}"></td>
+                <td><input data-field="subjectShortName" value="${escapeHtml(subject.shortName)}"></td>
                 <td><input data-field="targetHours" type="number" min="0" step="0.5" value="${plan.targetHours}"></td>
                 <td><select data-field="baseType">${assignmentTypeOptions(plan.baseType)}</select></td>
                 <td><input data-field="active" type="checkbox" checked></td>
@@ -1385,12 +1385,21 @@
           button.addEventListener("click", () => {
             const plan = plans.find((item) => item.id === button.dataset.savePlan);
             const row = button.closest("tr");
-            invokeServer("savePlan", {
-              ...plan,
-              order: Number(row.querySelector('[data-field="order"]').value),
-              targetHours: Number(row.querySelector('[data-field="targetHours"]').value),
-              baseType: row.querySelector('[data-field="baseType"]').value,
-              active: row.querySelector('[data-field="active"]').checked,
+            const subject = state.data.subjects[plan.subjectId];
+            invokeServer("saveCurriculumPlan", {
+              subject: {
+                id: subject.id,
+                name: row.querySelector('[data-field="subjectName"]').value,
+                shortName: row.querySelector('[data-field="subjectShortName"]').value,
+                active: subject.active !== false,
+              },
+              plan: {
+                ...plan,
+                order: Number(row.querySelector('[data-field="order"]').value),
+                targetHours: Number(row.querySelector('[data-field="targetHours"]').value),
+                baseType: row.querySelector('[data-field="baseType"]').value,
+                active: row.querySelector('[data-field="active"]').checked,
+              },
             }, reloadAfterManagement);
           });
         });

@@ -745,6 +745,16 @@
     return { ok: true, id };
   }
 
+  function saveCurriculumPlan(payload) {
+    const subject = payload?.subject || {};
+    const plan = payload?.plan || {};
+    const subjectResult = saveSubject(subject);
+    if (!subjectResult.ok) return subjectResult;
+    const planResult = savePlan(plan);
+    if (!planResult.ok) return planResult;
+    return { ok: true, subjectId: subjectResult.id, planId: planResult.id };
+  }
+
   function saveCharge(payload) {
     const state = readState();
     const id = String(payload?.id || uid("car"));
@@ -839,6 +849,7 @@
     saveCourse: remoteOrLocal("saveCourse", saveCourse),
     saveSubject: remoteOrLocal("saveSubject", saveSubject),
     savePlan: remoteOrLocal("savePlan", savePlan),
+    saveCurriculumPlan: remoteOrLocal("saveCurriculumPlan", saveCurriculumPlan),
     saveCharge: remoteOrLocal("saveCharge", saveCharge),
     saveRule: remoteOrLocal("saveRule", saveRule),
     saveAcademicYearStatus: remoteOrLocal("saveAcademicYearStatus", saveAcademicYearStatus),
