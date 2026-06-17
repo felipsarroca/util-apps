@@ -296,16 +296,21 @@ function updateMatchingRecords_(tableName, predicate, updateRecord, user, action
   const values = sheet.getDataRange().getValues();
   if (values.length < 2) return 0;
   const headers = values[0].map(String);
+  const auditRows = [];
   let count = 0;
   for (let index = 1; index < values.length; index += 1) {
     const before = rowToObject_(headers, values[index]);
     if (!predicate(before)) continue;
     const next = updateRecord(before);
-    sheet
-      .getRange(index + 1, 1, 1, TABLES[tableName].length)
-      .setValues([TABLES[tableName].map((header) => next[header] ?? "")]);
-    appendAudit_(user, action || "ACTUALITZAR", tableName, String(before.Id || ""), before, next);
+    values[index] = TABLES[tableName].map((header) => next[header] ?? "");
+    auditRows.push(auditRow_(user, action || "ACTUALITZAR", tableName, String(before.Id || ""), before, next));
     count += 1;
+  }
+  if (count > 0) {
+    sheet
+      .getRange(2, 1, values.length - 1, TABLES[tableName].length)
+      .setValues(values.slice(1));
+    appendAuditRows_(spreadsheet, auditRows);
   }
   return count;
 }

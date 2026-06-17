@@ -1375,9 +1375,23 @@
             const teacher = state.data.teachers.find((item) => item.id === button.dataset.deleteTeacher);
             if (!teacher) return;
             if (!window.confirm(`Vols eliminar ${teacher.name} del curs ${state.data.activeYear.name}?`)) return;
-            invokeServer("deleteTeacherFromYear", { teacherId: teacher.id }, reloadAfterManagement);
+            button.disabled = true;
+            invokeServer("deleteTeacherFromYear", { teacherId: teacher.id }, (response) => {
+              button.disabled = false;
+              if (!response || !response.ok) return showToast(response?.error || "No s'ha pogut eliminar.");
+              removeTeacherFromCurrentYear(teacher.id);
+              renderCurrentView();
+              showToast("Professor eliminat del curs.");
+            });
           });
         });
+      }
+
+      function removeTeacherFromCurrentYear(teacherId) {
+        state.data.teachers = state.data.teachers.filter((item) => item.id !== teacherId);
+        state.data.contracts = state.data.contracts.filter((item) => item.teacherId !== teacherId);
+        state.data.assignments = state.data.assignments.filter((item) => item.teacherId !== teacherId);
+        state.data.chargeAssignments = state.data.chargeAssignments.filter((item) => item.teacherId !== teacherId);
       }
 
       function openTeacherDialog(teacherId) {
@@ -1472,7 +1486,14 @@
             const subject = plan ? state.data.subjects[plan.subjectId] : null;
             if (!plan || !subject) return;
             if (!window.confirm(`Vols eliminar ${subject.name} de ${course.name}?`)) return;
-            invokeServer("deleteCurriculumPlan", { planId: plan.id }, reloadAfterManagement);
+            button.disabled = true;
+            invokeServer("deleteCurriculumPlan", { planId: plan.id }, (response) => {
+              button.disabled = false;
+              if (!response || !response.ok) return showToast(response?.error || "No s'ha pogut eliminar.");
+              removePlanFromCurrentCourse(plan);
+              renderCurrentView();
+              showToast("Matèria eliminada del curs.");
+            });
           });
         });
         document.getElementById("addPlan").addEventListener("click", () => {
@@ -1513,6 +1534,13 @@
           Object.assign(plan, payload.plan);
           if (!silent) reloadAfterManagement(response);
         });
+      }
+
+      function removePlanFromCurrentCourse(plan) {
+        state.data.plans = state.data.plans.filter((item) => item.id !== plan.id);
+        state.data.assignments = state.data.assignments.filter((item) =>
+          item.courseId !== plan.courseId || item.subjectId !== plan.subjectId
+        );
       }
 
       function renderSettings() {

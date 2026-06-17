@@ -1,11 +1,15 @@
+let DATABASE_CACHE_ = null;
+
 function getDatabase_() {
+  if (DATABASE_CACHE_) return DATABASE_CACHE_;
   const id = PropertiesService.getScriptProperties().getProperty(
     APP_CONFIG.spreadsheetProperty
   );
   if (!id) {
     throw new Error("La base de dades encara no s'ha inicialitzat.");
   }
-  return SpreadsheetApp.openById(id);
+  DATABASE_CACHE_ = SpreadsheetApp.openById(id);
+  return DATABASE_CACHE_;
 }
 
 function initializeApplication() {
