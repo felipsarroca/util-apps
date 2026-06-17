@@ -220,6 +220,10 @@
 
   function callRemoteApi(method, payload) {
     return fetchRemoteApi(method, payload)
+      .then((response) => {
+        if (response && response.token) setApiToken(response.token);
+        return response;
+      })
       .catch(() => callRemoteApiJsonp(method, payload));
   }
 
