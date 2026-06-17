@@ -140,11 +140,50 @@
     return new Error("No s'ha pogut carregar l'API de Google Sheets. Revisa que el desplegament web d'Apps Script sigui accessible.");
   }
 
-  function callRemoteApi(method, payload, attempt = 1) {
+  function remoteApiUrl(method, payload, callbackName) {
+    const url = new URL(REMOTE_API_URL);
+    url.searchParams.set("api", "1");
+    url.searchParams.set("method", method);
+    url.searchParams.set("callback", callbackName);
+    url.searchParams.set("payload", JSON.stringify(payload || {}));
+    const token = apiToken();
+    if (token) url.searchParams.set("token", token);
+    return url;
+  }
+
+  function parseJsonpResponse(text, callbackName) {
+    const source = String(text || "").trim();
+    const prefix = `${callbackName}(`;
+    if (!source.startsWith(prefix) || !source.endsWith(");")) {
+      throw remoteApiLoadError();
+    }
+    return JSON.parse(source.slice(prefix.length, -2));
+  }
+
+  function fetchRemoteApi(method, payload) {
+    if (!window.fetch || !window.AbortController) return Promise.reject(remoteApiLoadError());
+    const callbackName = `__massaFetch_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 30000);
+    return window.fetch(remoteApiUrl(method, payload, callbackName).toString(), {
+      method: "GET",
+      mode: "cors",
+      credentials: "omit",
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw remoteApiLoadError();
+        return response.text();
+      })
+      .then((text) => parseJsonpResponse(text, callbackName))
+      .finally(() => window.clearTimeout(timeout));
+  }
+
+  function callRemoteApiJsonp(method, payload, attempt = 1) {
     return new Promise((resolve, reject) => {
       const callbackName = `__massaApi_${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const script = document.createElement("script");
-      const url = new URL(REMOTE_API_URL);
       const timeout = window.setTimeout(() => {
         cleanup();
         reject(new Error("No s'ha pogut contactar amb Google Sheets."));
@@ -163,38 +202,42 @@
         resolve(response);
       };
 
-      url.searchParams.set("api", "1");
-      url.searchParams.set("method", method);
-      url.searchParams.set("callback", callbackName);
-      url.searchParams.set("payload", JSON.stringify(payload || {}));
-      const token = apiToken();
-      if (token) url.searchParams.set("token", token);
       script.onerror = () => {
         cleanup();
         if (attempt < 2) {
           window.setTimeout(() => {
-            callRemoteApi(method, payload, attempt + 1).then(resolve, reject);
+            callRemoteApiJsonp(method, payload, attempt + 1).then(resolve, reject);
           }, 700);
           return;
         }
         reject(remoteApiLoadError());
       };
       script.async = true;
-      script.src = url.toString();
+      script.src = remoteApiUrl(method, payload, callbackName).toString();
       document.head.appendChild(script);
     });
+  }
+
+  function callRemoteApi(method, payload) {
+    return fetchRemoteApi(method, payload)
+      .catch(() => callRemoteApiJsonp(method, payload));
   }
 
   function sendRemoteApiWrite(method, payload) {
     if (!hasRemoteApi()) return;
     const callbackName = `__massaWrite_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    const url = new URL(REMOTE_API_URL);
-    url.searchParams.set("api", "1");
-    url.searchParams.set("method", method);
-    url.searchParams.set("callback", callbackName);
-    url.searchParams.set("payload", JSON.stringify(payload || {}));
-    const token = apiToken();
-    if (token) url.searchParams.set("token", token);
+    const url = remoteApiUrl(method, payload, callbackName);
+
+    if (window.fetch) {
+      window.fetch(url.toString(), {
+        method: "GET",
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store",
+        keepalive: true,
+      }).catch(() => {});
+      return;
+    }
 
     const script = document.createElement("script");
     const cleanup = () => {
