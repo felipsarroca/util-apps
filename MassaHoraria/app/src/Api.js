@@ -53,26 +53,26 @@ function verifyApiAccessPasscode_(payload) {
     throw new Error("La clau de pas no és correcta.");
   }
   const user = externalApiUser_();
-  const token = Utilities.getUuid();
-  CacheService
-    .getScriptCache()
-    .put(apiSessionKey_(token), JSON.stringify(user), APP_CONFIG.accessCacheSeconds);
+  const token = createApiSessionToken_(user);
   return { ok: true, token: token, user: user };
 }
 
 function requireApiSession_(token) {
   const text = String(token || "");
-  if (!/^[a-f0-9-]{20,80}$/i.test(text)) {
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(text)) {
     throw new Error("Cal tornar a introduir la clau de pas.");
   }
-  const cached = CacheService.getScriptCache().get(apiSessionKey_(text));
-  if (!cached) {
+  const parts = text.split(".");
+  const payloadText = decodeApiTokenPart_(parts[0]);
+  const expectedSignature = signApiTokenPayload_(parts[0]);
+  if (parts[1] !== expectedSignature) {
+    throw new Error("Cal tornar a introduir la clau de pas.");
+  }
+  const session = JSON.parse(payloadText);
+  if (!session || Number(session.expiresAt || 0) < Date.now()) {
     throw new Error("La sessió ha caducat. Torna a introduir la clau de pas.");
   }
-  CacheService
-    .getScriptCache()
-    .put(apiSessionKey_(text), cached, APP_CONFIG.accessCacheSeconds);
-  return JSON.parse(cached);
+  return session.user;
 }
 
 function externalApiUser_() {
@@ -93,8 +93,47 @@ function apiContextUser_() {
   return API_CONTEXT_USER_;
 }
 
-function apiSessionKey_(token) {
-  return `api:${Utilities.base64EncodeWebSafe(String(token || "")).slice(0, 90)}`;
+function createApiSessionToken_(user) {
+  const payload = {
+    user: user,
+    issuedAt: Date.now(),
+    expiresAt: Date.now() + APP_CONFIG.accessCacheSeconds * 1000,
+    nonce: Utilities.getUuid(),
+  };
+  const encodedPayload = encodeApiTokenPart_(JSON.stringify(payload));
+  return `${encodedPayload}.${signApiTokenPayload_(encodedPayload)}`;
+}
+
+function signApiTokenPayload_(encodedPayload) {
+  return Utilities
+    .base64EncodeWebSafe(
+      Utilities.computeHmacSha256Signature(encodedPayload, apiTokenSecret_())
+    )
+    .replace(/=+$/g, "");
+}
+
+function apiTokenSecret_() {
+  const properties = PropertiesService.getScriptProperties();
+  let secret = properties.getProperty("API_TOKEN_SECRET");
+  if (!secret) {
+    secret = Utilities.getUuid() + Utilities.getUuid();
+    properties.setProperty("API_TOKEN_SECRET", secret);
+  }
+  return secret;
+}
+
+function encodeApiTokenPart_(text) {
+  return Utilities
+    .base64EncodeWebSafe(String(text || ""))
+    .replace(/=+$/g, "");
+}
+
+function decodeApiTokenPart_(text) {
+  const value = String(text || "");
+  const padded = value + "=".repeat((4 - value.length % 4) % 4);
+  return Utilities
+    .newBlob(Utilities.base64DecodeWebSafe(padded))
+    .getDataAsString("UTF-8");
 }
 
 function parseApiPayload_(payload) {
