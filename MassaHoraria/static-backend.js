@@ -136,7 +136,11 @@
     return data;
   }
 
-  function callRemoteApi(method, payload) {
+  function remoteApiLoadError() {
+    return new Error("No s'ha pogut carregar l'API de Google Sheets. Revisa que el desplegament web d'Apps Script sigui accessible.");
+  }
+
+  function callRemoteApi(method, payload, attempt = 1) {
     return new Promise((resolve, reject) => {
       const callbackName = `__massaApi_${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const script = document.createElement("script");
@@ -149,6 +153,7 @@
       function cleanup() {
         window.clearTimeout(timeout);
         delete window[callbackName];
+        script.onerror = null;
         script.remove();
       }
 
@@ -166,8 +171,15 @@
       if (token) url.searchParams.set("token", token);
       script.onerror = () => {
         cleanup();
-        reject(new Error("No s'ha pogut carregar l'API de Google Sheets."));
+        if (attempt < 2) {
+          window.setTimeout(() => {
+            callRemoteApi(method, payload, attempt + 1).then(resolve, reject);
+          }, 700);
+          return;
+        }
+        reject(remoteApiLoadError());
       };
+      script.async = true;
       script.src = url.toString();
       document.head.appendChild(script);
     });

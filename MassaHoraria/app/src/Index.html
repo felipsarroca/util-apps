@@ -644,7 +644,7 @@
                   return method.call(backend, payload);
                 })
                 .then((response) => success(response))
-                .catch((error) => failure(error instanceof Error ? error : new Error(String(error))));
+                .catch((error) => failure(error instanceof Error ? error : new Error(cleanErrorMessage(error))));
             };
           },
         });
@@ -709,7 +709,7 @@
             .withFailureHandler((failure) => {
               button.disabled = false;
               button.textContent = "Entra";
-              error.textContent = failure.message || "No s'ha pogut verificar la clau.";
+              error.textContent = cleanErrorMessage(failure) || "No s'ha pogut verificar la clau.";
               input.select();
             })
             .verifyAccessPasscode({ passcode: input.value });
@@ -741,7 +741,7 @@
               `${escapeHtml(response.data.user.email)}<br>${escapeHtml(response.data.user.role)}`;
             renderCurrentView();
           })
-          .withFailureHandler((error) => showFatal(error.message))
+          .withFailureHandler((error) => showFatal(cleanErrorMessage(error)))
           .getApplicationData();
       }
 
@@ -1016,7 +1016,7 @@
           }
           entries = parseCellValue(value, cell.dataset.subjectId);
         } catch (error) {
-          showToast(error.message);
+          showToast(error);
           const input = cell.querySelector("input");
           if (input) input.focus();
           return;
@@ -1046,7 +1046,7 @@
           })
           .withFailureHandler((error) => {
             state.saving = false;
-            showToast(error.message);
+            showToast(error);
             setSaveState("Error", "bad");
             renderCourse();
           })
@@ -1621,7 +1621,7 @@
         showToast("Canvis desats.");
       }
       function invokeServer(method, payload, success) {
-        google.script.run.withSuccessHandler(success).withFailureHandler((error) => showToast(error.message))[method](payload);
+        google.script.run.withSuccessHandler(success).withFailureHandler((error) => showToast(error))[method](payload);
       }
       function assignmentTypeOptions(selected) {
         return Object.entries(state.data.assignmentTypes).map(([value, item]) =>
@@ -1674,9 +1674,18 @@
       }
       function showToast(message) {
         const toast = document.getElementById("toast");
-        toast.textContent = message;
+        toast.textContent = cleanErrorMessage(message);
         toast.style.display = "block";
         window.setTimeout(() => { toast.style.display = "none"; }, 3500);
+      }
+      function cleanErrorMessage(error) {
+        let text = String(error && error.message ? error.message : error || "");
+        text = text.replace(/^(Error:\s*)+/i, "").trim();
+        const half = text.length / 2;
+        if (text.length % 2 === 0 && text.slice(0, half) === text.slice(half)) {
+          text = text.slice(0, half).trim();
+        }
+        return text;
       }
       function escapeHtml(value) {
         return String(value ?? "")
