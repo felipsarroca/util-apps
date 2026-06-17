@@ -429,9 +429,9 @@
         position: sticky;
         right: 0;
         z-index: 1;
-        width: 66px;
-        min-width: 66px;
-        max-width: 66px;
+        width: 128px;
+        min-width: 128px;
+        max-width: 128px;
         border-left: 3px solid #8fa4b4;
         text-align: center;
         background: #f3f6f8;
@@ -446,6 +446,8 @@
       .inline-actions { display: flex; gap: 5px; }
       .small-button { padding: 5px 7px; border: 1px solid #b7c3ce; border-radius: 3px; background: #fff; }
       .small-button.primary { color: #fff; border-color: var(--navy-2); background: var(--navy-2); }
+      .small-button.danger { color: #fff; border-color: var(--bad); background: var(--bad); }
+      .row-actions { display: flex; justify-content: center; gap: 5px; }
       .metric-positive { color: var(--good); font-weight: bold; }
       .metric-negative { color: var(--bad); font-weight: bold; }
       .metric-zero { color: var(--muted); }
@@ -1350,16 +1352,31 @@
                 <td class="num summary-col total-col"><strong>${formatHours(metrics.total)}</strong></td>
                 <td class="num summary-col">${formatHours(metrics.contract)}</td>
                 <td class="num summary-col difference-col ${differenceClass(metrics.difference)}">${signedHours(metrics.difference)}</td>
-                <td class="action-col"><button class="small-button primary" data-edit-teacher="${teacher.id}">Edita</button></td></tr>`;
+                <td class="action-col"><div class="row-actions">
+                  <button class="small-button primary" data-edit-teacher="${teacher.id}">Edita</button>
+                  <button class="small-button danger" data-delete-teacher="${teacher.id}">× Elimina</button>
+                </div></td></tr>`;
             }).join("")}</tbody>
           </table></div>`;
         document.getElementById("newTeacher").addEventListener("click", () => openTeacherDialog(null));
         bindTeacherEditButtons();
+        bindTeacherDeleteButtons();
       }
 
       function bindTeacherEditButtons() {
         document.querySelectorAll("[data-edit-teacher]").forEach((button) => {
           button.addEventListener("click", () => openTeacherDialog(button.dataset.editTeacher));
+        });
+      }
+
+      function bindTeacherDeleteButtons() {
+        document.querySelectorAll("[data-delete-teacher]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const teacher = state.data.teachers.find((item) => item.id === button.dataset.deleteTeacher);
+            if (!teacher) return;
+            if (!window.confirm(`Vols eliminar ${teacher.name} del curs ${state.data.activeYear.name}?`)) return;
+            invokeServer("deleteTeacherFromYear", { teacherId: teacher.id }, reloadAfterManagement);
+          });
         });
       }
 
@@ -1427,7 +1444,10 @@
                 <td><input data-field="targetHours" type="number" min="0" step="0.5" value="${plan.targetHours}"></td>
                 <td><select data-field="baseType">${assignmentTypeOptions(plan.baseType)}</select></td>
                 <td><input data-field="active" type="checkbox" checked></td>
-                <td><button class="small-button primary" data-save-plan="${plan.id}">Desa</button></td>
+                <td><div class="row-actions">
+                  <button class="small-button primary" data-save-plan="${plan.id}">Desa</button>
+                  <button class="small-button danger" data-delete-plan="${plan.id}">× Elimina</button>
+                </div></td>
               </tr>`;
             }).join("")}</tbody>
           </table></div>`;
@@ -1435,22 +1455,24 @@
           button.addEventListener("click", () => {
             const plan = plans.find((item) => item.id === button.dataset.savePlan);
             const row = button.closest("tr");
-            const subject = state.data.subjects[plan.subjectId];
-            invokeServer("saveCurriculumPlan", {
-              subject: {
-                id: subject.id,
-                name: row.querySelector('[data-field="subjectName"]').value,
-                shortName: row.querySelector('[data-field="subjectShortName"]').value,
-                active: subject.active !== false,
-              },
-              plan: {
-                ...plan,
-                order: Number(row.querySelector('[data-field="order"]').value),
-                targetHours: Number(row.querySelector('[data-field="targetHours"]').value),
-                baseType: row.querySelector('[data-field="baseType"]').value,
-                active: row.querySelector('[data-field="active"]').checked,
-              },
-            }, reloadAfterManagement);
+            saveCurriculumPlanRow(plan, row, false);
+          });
+        });
+        document.querySelectorAll("[data-plan-row]").forEach((row) => {
+          const plan = plans.find((item) => item.id === row.dataset.planRow);
+          if (!plan) return;
+          row.querySelectorAll("input, select").forEach((field) => {
+            field.addEventListener("change", () => saveCurriculumPlanRow(plan, row, true));
+            field.addEventListener("blur", () => saveCurriculumPlanRow(plan, row, true));
+          });
+        });
+        document.querySelectorAll("[data-delete-plan]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const plan = plans.find((item) => item.id === button.dataset.deletePlan);
+            const subject = plan ? state.data.subjects[plan.subjectId] : null;
+            if (!plan || !subject) return;
+            if (!window.confirm(`Vols eliminar ${subject.name} de ${course.name}?`)) return;
+            invokeServer("deleteCurriculumPlan", { planId: plan.id }, reloadAfterManagement);
           });
         });
         document.getElementById("addPlan").addEventListener("click", () => {
@@ -1460,6 +1482,36 @@
             id: "", courseId: course.id, subjectId, order: plans.length + 1,
             targetHours: 0, baseType: "CLASSE", active: true,
           }, reloadAfterManagement);
+        });
+      }
+
+      function saveCurriculumPlanRow(plan, row, silent) {
+        if (!plan || !row) return;
+        const subject = state.data.subjects[plan.subjectId];
+        const payload = {
+          subject: {
+            id: subject.id,
+            name: row.querySelector('[data-field="subjectName"]').value,
+            shortName: row.querySelector('[data-field="subjectShortName"]').value,
+            active: subject.active !== false,
+          },
+          plan: {
+            ...plan,
+            order: Number(row.querySelector('[data-field="order"]').value),
+            targetHours: Number(row.querySelector('[data-field="targetHours"]').value),
+            baseType: row.querySelector('[data-field="baseType"]').value,
+            active: row.querySelector('[data-field="active"]').checked,
+          },
+        };
+        const signature = JSON.stringify(payload);
+        if (silent && row.dataset.lastSubmittedPlan === signature) return;
+        row.dataset.lastSubmittedPlan = signature;
+        invokeServer("saveCurriculumPlan", payload, (response) => {
+          if (!response || !response.ok) return showToast(response?.error || "No s'ha pogut desar.");
+          subject.name = payload.subject.name;
+          subject.shortName = payload.subject.shortName;
+          Object.assign(plan, payload.plan);
+          if (!silent) reloadAfterManagement(response);
         });
       }
 

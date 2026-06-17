@@ -24,6 +24,61 @@ function saveTeacher(payload) {
   });
 }
 
+function deleteTeacherFromYear(payload) {
+  return managementAction_(APP_CONFIG.adminRoles, () => {
+    const user = requireUser_(APP_CONFIG.adminRoles);
+    const data = validateObject_(payload, ["teacherId"]);
+    const teacherId = validateId_(data.teacherId, "teacherId");
+    assertReferenceExists_("Professorat", teacherId);
+    const yearId = activeAcademicYearId_();
+    const now = new Date();
+    let changed = 0;
+    const existingContract = readTable_("Contractes").find(
+      (record) => String(record.CursEscolarId) === yearId && String(record.ProfessorId) === teacherId
+    );
+
+    changed += updateMatchingRecords_("Contractes", (record) =>
+      String(record.CursEscolarId) === yearId && String(record.ProfessorId) === teacherId
+    , (record) => ({
+      ...record,
+      Hores: 0,
+      Actiu: false,
+    }), user, "ELIMINAR");
+    if (!existingContract) {
+      const deletedContractId = `con-${Utilities.getUuid()}`;
+      upsertRecord_("Contractes", deletedContractId, {
+        Id: deletedContractId,
+        CursEscolarId: yearId,
+        ProfessorId: teacherId,
+        Hores: 0,
+        Actiu: false,
+      }, user);
+      changed += 1;
+    }
+
+    changed += updateMatchingRecords_("Assignacions", (record) =>
+      String(record.CursEscolarId) === yearId && String(record.ProfessorId) === teacherId && toBoolean_(record.Activa)
+    , (record) => ({
+      ...record,
+      Activa: false,
+      ActualitzatEl: now,
+      ActualitzatPer: user.email,
+    }), user, "ELIMINAR");
+
+    changed += updateMatchingRecords_("AssignacionsCarrecs", (record) =>
+      String(record.CursEscolarId) === yearId && String(record.ProfessorId) === teacherId && toBoolean_(record.Activa)
+    , (record) => ({
+      ...record,
+      Hores: 0,
+      Activa: false,
+      ActualitzatEl: now,
+      ActualitzatPer: user.email,
+    }), user, "ELIMINAR");
+
+    return { ok: true, teacherId: teacherId, changed: changed };
+  });
+}
+
 function saveCourse(payload) {
   return managementAction_(APP_CONFIG.adminRoles, () => {
     const user = requireUser_(APP_CONFIG.adminRoles);
@@ -119,6 +174,45 @@ function saveCurriculumPlan(payload) {
   });
 }
 
+function deleteCurriculumPlan(payload) {
+  return managementAction_(APP_CONFIG.adminRoles, () => {
+    const user = requireUser_(APP_CONFIG.adminRoles);
+    const data = validateObject_(payload, ["planId"]);
+    const planId = validateId_(data.planId, "planId");
+    const current = findRowById_("PlaEstudis", planId);
+    if (!current) throw new Error("No s'ha trobat la matÃ¨ria del curs.");
+    const plan = rowToObject_(current.headers, current.values);
+    const yearId = activeAcademicYearId_();
+    if (String(plan.CursEscolarId) !== yearId) {
+      throw new Error("La matÃ¨ria no pertany al curs actiu.");
+    }
+    const before = rowToObject_(current.headers, current.values);
+    const next = {
+      ...before,
+      Actiu: false,
+    };
+    current.sheet
+      .getRange(current.row, 1, 1, TABLES.PlaEstudis.length)
+      .setValues([TABLES.PlaEstudis.map((header) => next[header] ?? "")]);
+    appendAudit_(user, "ELIMINAR", "PlaEstudis", planId, before, null);
+
+    const now = new Date();
+    const changedAssignments = updateMatchingRecords_("Assignacions", (record) =>
+      String(record.CursEscolarId) === yearId &&
+      String(record.GrupId) === String(plan.GrupId) &&
+      String(record.MateriaId) === String(plan.MateriaId) &&
+      toBoolean_(record.Activa)
+    , (record) => ({
+      ...record,
+      Activa: false,
+      ActualitzatEl: now,
+      ActualitzatPer: user.email,
+    }), user, "ELIMINAR");
+
+    return { ok: true, planId: planId, changed: 1 + changedAssignments };
+  });
+}
+
 function saveCharge(payload) {
   return managementAction_(APP_CONFIG.adminRoles, () => {
     const user = requireUser_(APP_CONFIG.adminRoles);
@@ -194,6 +288,26 @@ function upsertRecord_(tableName, id, record, user) {
       .appendRow(TABLES[tableName].map((header) => record[header] ?? ""));
     appendAudit_(user, "CREAR", tableName, id, null, record);
   }
+}
+
+function updateMatchingRecords_(tableName, predicate, updateRecord, user, action) {
+  const spreadsheet = getDatabase_();
+  const sheet = spreadsheet.getSheetByName(tableName);
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) return 0;
+  const headers = values[0].map(String);
+  let count = 0;
+  for (let index = 1; index < values.length; index += 1) {
+    const before = rowToObject_(headers, values[index]);
+    if (!predicate(before)) continue;
+    const next = updateRecord(before);
+    sheet
+      .getRange(index + 1, 1, 1, TABLES[tableName].length)
+      .setValues([TABLES[tableName].map((header) => next[header] ?? "")]);
+    appendAudit_(user, action || "ACTUALITZAR", tableName, String(before.Id || ""), before, next);
+    count += 1;
+  }
+  return count;
 }
 
 function upsertContract_(teacherId, hoursValue, user) {

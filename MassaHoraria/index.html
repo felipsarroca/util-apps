@@ -24,11 +24,15 @@
       window.MASSA_APPS_SCRIPT_API_URL = "https://script.google.com/macros/s/AKfycby2zZX1TGkVbHQN3TEl0EQpWDrr00jflOlSWXN1un6AXxYCdutocyE1Xr9lcDH2U2yJ/exec";
     </script>
     <script src="app/src/SeedData.js" defer></script>
-    <script src="static-backend.js?v=20260617-session-token" defer></script>
+    <script src="static-backend.js?v=20260617-delete-controls" defer></script>
     <script defer>
       document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("mount").innerHTML =
           '<iframe title="Massa horària" src="app/src/Index.html"></iframe>';
+      });
+      document.addEventListener("DOMContentLoaded", () => {
+        const frame = document.querySelector("#mount iframe");
+        if (frame) frame.src = "app/src/Index.html?v=20260617-delete-controls";
       });
     </script>
   </head>

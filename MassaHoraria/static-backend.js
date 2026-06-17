@@ -480,8 +480,17 @@
       throw new Error("No hi ha cap curs escolar actiu.");
     }
     const bucket = getBucket(state, activeYear.id);
+    const allYearContracts = clone(bucket.contracts || []);
+    const deletedTeacherIds = new Set(
+      allYearContracts
+        .filter((item) => item.active === false && Number(item.hours || 0) === 0)
+        .map((item) => String(item.teacherId))
+    );
+    const activeContracts = allYearContracts.filter((item) => item.active !== false);
+    const activeAssignments = clone(bucket.assignments || []).filter((item) => item.active !== false);
+    const activeChargeAssignments = clone(bucket.chargeAssignments || []).filter((item) => item.active !== false);
     const teachers = clone(state.teachers || [])
-      .filter((item) => item.active !== false)
+      .filter((item) => item.active !== false && !deletedTeacherIds.has(String(item.id)))
       .map((item) => ({
         id: String(item.id),
         firstName: String(item.firstName || ""),
@@ -528,8 +537,7 @@
         active: item.active !== false,
       }))
       .sort((a, b) => a.order - b.order);
-    const assignments = clone(bucket.assignments || [])
-      .filter((item) => item.active !== false)
+    const assignments = activeAssignments
       .map((item) => ({
         id: String(item.id),
         courseId: String(item.courseId),
@@ -540,8 +548,7 @@
         coverageFactor: Number(item.coverageFactor || 0),
         notes: String(item.notes || ""),
       }));
-    const contracts = clone(bucket.contracts || [])
-      .filter((item) => item.active !== false)
+    const contracts = activeContracts
       .map((item) => ({
         id: String(item.id),
         teacherId: String(item.teacherId),
@@ -564,8 +571,7 @@
         active: item.active !== false,
       }))
       .sort((a, b) => a.order - b.order);
-    const chargeAssignments = clone(bucket.chargeAssignments || [])
-      .filter((item) => item.active !== false)
+    const chargeAssignments = activeChargeAssignments
       .map((item) => ({
         id: String(item.id),
         teacherId: String(item.teacherId),
@@ -748,6 +754,29 @@
     return { ok: true, id };
   }
 
+  function deleteTeacherFromYear(payload) {
+    const state = readState();
+    const year = getYear(state);
+    if (!year) throw new Error("No hi ha cap curs escolar actiu.");
+    const bucket = getBucket(state, year.id);
+    const teacherId = String(payload?.teacherId || "");
+    const hasContract = (bucket.contracts || []).some((item) => String(item.teacherId) === teacherId);
+    bucket.contracts = (bucket.contracts || []).map((item) =>
+      String(item.teacherId) === teacherId ? { ...item, hours: 0, active: false } : item
+    );
+    if (!hasContract) {
+      bucket.contracts.push({ id: uid("con"), teacherId, hours: 0, active: false });
+    }
+    bucket.assignments = (bucket.assignments || []).map((item) =>
+      String(item.teacherId) === teacherId ? { ...item, active: false } : item
+    );
+    bucket.chargeAssignments = (bucket.chargeAssignments || []).map((item) =>
+      String(item.teacherId) === teacherId ? { ...item, hours: 0, active: false } : item
+    );
+    writeState(state);
+    return { ok: true, teacherId };
+  }
+
   function saveCourse(payload) {
     const state = readState();
     const year = getYear(state);
@@ -812,6 +841,26 @@
     const planResult = savePlan(plan);
     if (!planResult.ok) return planResult;
     return { ok: true, subjectId: subjectResult.id, planId: planResult.id };
+  }
+
+  function deleteCurriculumPlan(payload) {
+    const state = readState();
+    const year = getYear(state);
+    if (!year) throw new Error("No hi ha cap curs escolar actiu.");
+    const bucket = getBucket(state, year.id);
+    const planId = String(payload?.planId || "");
+    const plan = (bucket.plans || []).find((item) => String(item.id) === planId);
+    if (!plan) throw new Error("No s'ha trobat la matèria del curs.");
+    bucket.plans = (bucket.plans || []).map((item) =>
+      String(item.id) === planId ? { ...item, active: false } : item
+    );
+    bucket.assignments = (bucket.assignments || []).map((item) =>
+      String(item.courseId) === String(plan.courseId) && String(item.subjectId) === String(plan.subjectId)
+        ? { ...item, active: false }
+        : item
+    );
+    writeState(state);
+    return { ok: true, planId };
   }
 
   function saveCharge(payload) {
@@ -905,10 +954,12 @@
     verifyAccessPasscode: remoteOrLocal("verifyAccessPasscode", verifyAccessPasscode),
     saveCellAssignments: hasRemoteApi() ? saveCellAssignmentsRemote : saveCellAssignments,
     saveTeacher: remoteOrLocal("saveTeacher", saveTeacher),
+    deleteTeacherFromYear: remoteOrLocal("deleteTeacherFromYear", deleteTeacherFromYear),
     saveCourse: remoteOrLocal("saveCourse", saveCourse),
     saveSubject: remoteOrLocal("saveSubject", saveSubject),
     savePlan: remoteOrLocal("savePlan", savePlan),
     saveCurriculumPlan: remoteOrLocal("saveCurriculumPlan", saveCurriculumPlan),
+    deleteCurriculumPlan: remoteOrLocal("deleteCurriculumPlan", deleteCurriculumPlan),
     saveCharge: remoteOrLocal("saveCharge", saveCharge),
     saveRule: remoteOrLocal("saveRule", saveRule),
     saveAcademicYearStatus: remoteOrLocal("saveAcademicYearStatus", saveAcademicYearStatus),

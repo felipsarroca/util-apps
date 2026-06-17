@@ -23,8 +23,20 @@ function buildApplicationData_(user) {
     throw new Error("No hi ha cap curs escolar actiu.");
   }
   const yearId = String(activeYear.Id);
+  const allYearContracts = readTable_("Contractes")
+    .filter((item) => String(item.CursEscolarId) === yearId);
+  const deletedTeacherIds = new Set(
+    allYearContracts
+      .filter((item) => !toBoolean_(item.Actiu) && Number(item.Hores || 0) === 0)
+      .map((item) => String(item.ProfessorId))
+  );
+  const activeContracts = allYearContracts.filter((item) => toBoolean_(item.Actiu));
+  const activeAssignments = readTable_("Assignacions")
+    .filter((item) => String(item.CursEscolarId) === yearId && toBoolean_(item.Activa));
+  const activeChargeAssignments = readTable_("AssignacionsCarrecs")
+    .filter((item) => String(item.CursEscolarId) === yearId && toBoolean_(item.Activa));
   const teachers = readTable_("Professorat")
-    .filter((item) => toBoolean_(item.Actiu))
+    .filter((item) => toBoolean_(item.Actiu) && !deletedTeacherIds.has(String(item.Id)))
     .map((item) => ({
       id: String(item.Id),
       firstName: String(item.Nom || ""),
@@ -65,8 +77,7 @@ function buildApplicationData_(user) {
       baseType: String(item.TipusBase),
       active: toBoolean_(item.Actiu),
     }));
-  const assignments = readTable_("Assignacions")
-    .filter((item) => String(item.CursEscolarId) === yearId && toBoolean_(item.Activa))
+  const assignments = activeAssignments
     .map((item) => ({
       id: String(item.Id),
       courseId: String(item.GrupId),
@@ -77,8 +88,7 @@ function buildApplicationData_(user) {
       coverageFactor: Number(item.FactorCobertura),
       notes: String(item.Observacions || ""),
     }));
-  const contracts = readTable_("Contractes")
-    .filter((item) => String(item.CursEscolarId) === yearId && toBoolean_(item.Actiu))
+  const contracts = activeContracts
     .map((item) => ({
       teacherId: String(item.ProfessorId),
       hours: Number(item.Hores),
@@ -91,8 +101,7 @@ function buildApplicationData_(user) {
       hdcRate: Number(item.PercentatgeHdc),
       active: toBoolean_(item.Actiu),
     }));
-  const chargeAssignments = readTable_("AssignacionsCarrecs")
-    .filter((item) => String(item.CursEscolarId) === yearId && toBoolean_(item.Activa))
+  const chargeAssignments = activeChargeAssignments
     .map((item) => ({
       id: String(item.Id),
       teacherId: String(item.ProfessorId),
