@@ -203,7 +203,13 @@ function saveCellAssignments(payload) {
   try {
     const user = requireWebAccess_(requireUser_(APP_CONFIG.editableRoles));
     const data = validateCellAssignmentsPayload_(payload);
-    return saveCellAssignmentsDirect_(data, user);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(30000);
+    try {
+      return saveCellAssignmentsDirect_(data, user);
+    } finally {
+      lock.releaseLock();
+    }
   } catch (error) {
     return publicError_(error);
   }
@@ -242,12 +248,22 @@ function saveCellAssignmentsDirect_(data, user) {
     return map;
   }, {});
   const now = new Date();
+  const auditRows = [];
 
   existing.forEach((item) => {
     const type = String(item.record.Tipus);
     if (requestedTypes.has(type)) return;
-    sheet.getRange(item.rowNumber, column.Activa + 1).setValue(false);
-    sheet.getRange(item.rowNumber, column.ActualitzatEl + 1, 1, 2).setValues([[now, user.email]]);
+    const before = item.record;
+    const next = {
+      ...before,
+      Activa: false,
+      ActualitzatEl: now,
+      ActualitzatPer: user.email,
+    };
+    sheet
+      .getRange(item.rowNumber, 1, 1, TABLES.Assignacions.length)
+      .setValues([TABLES.Assignacions.map((header) => next[header] ?? "")]);
+    auditRows.push(auditRow_(user, "ELIMINAR", "Assignacions", String(before.Id || ""), before, next));
   });
 
   const appendRows = [];
@@ -269,9 +285,13 @@ function saveCellAssignmentsDirect_(data, user) {
     };
     const rowValues = TABLES.Assignacions.map((header) => record[header]);
     if (current) {
-      sheet.getRange(current.rowNumber, 1, 1, TABLES.Assignacions.length).setValues([rowValues]);
+      if (!sameAssignmentValue_(current.record, record)) {
+        sheet.getRange(current.rowNumber, 1, 1, TABLES.Assignacions.length).setValues([rowValues]);
+        auditRows.push(auditRow_(user, "ACTUALITZAR", "Assignacions", record.Id, current.record, record));
+      }
     } else {
       appendRows.push(rowValues);
+      auditRows.push(auditRow_(user, "CREAR", "Assignacions", record.Id, null, record));
     }
     return {
       id: record.Id,
@@ -288,7 +308,20 @@ function saveCellAssignmentsDirect_(data, user) {
   if (appendRows.length) {
     sheet.getRange(sheet.getLastRow() + 1, 1, appendRows.length, TABLES.Assignacions.length).setValues(appendRows);
   }
+  appendAuditRows_(spreadsheet, auditRows);
   return { ok: true, assignments: saved };
+}
+
+function sameAssignmentValue_(before, after) {
+  return String(before.CursEscolarId) === String(after.CursEscolarId) &&
+    String(before.GrupId) === String(after.GrupId) &&
+    String(before.MateriaId) === String(after.MateriaId) &&
+    String(before.ProfessorId) === String(after.ProfessorId) &&
+    String(before.Tipus) === String(after.Tipus) &&
+    Number(before.Hores) === Number(after.Hores) &&
+    Number(before.FactorCobertura) === Number(after.FactorCobertura) &&
+    String(before.Observacions || "") === String(after.Observacions || "") &&
+    toBoolean_(before.Activa) === toBoolean_(after.Activa);
 }
 
 function validateCellAssignmentsPayload_(payload) {

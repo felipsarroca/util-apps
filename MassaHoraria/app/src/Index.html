@@ -65,10 +65,7 @@
         color: #fff;
         background: var(--navy);
       }
-      .brand { width: 190px; flex: 0 0 190px; display: flex; align-items: center; gap: 9px; }
-      .brand-logo { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 8px; background: rgba(255,255,255,.9); }
-      .brand h1 { margin: 0; font-size: 17px; line-height: 1.05; }
-      .brand p { margin: 3px 0 0; font-size: 11px; opacity: .72; }
+      .motto { width: 190px; flex: 0 0 190px; font-size: 11px; font-style: italic; line-height: 1.15; opacity: .84; }
       .course-select {
         width: 190px;
         padding: 7px 9px;
@@ -92,7 +89,7 @@
         font-size: 11px;
         font-weight: bold;
       }
-      .user { margin-left: auto; text-align: right; font-size: 11px; opacity: .88; }
+      .topbar-spacer { margin-left: auto; }
       .workspace { min-height: 0; display: grid; grid-template-columns: 190px 1fr; }
       .sidebar {
         padding: 12px 9px;
@@ -533,7 +530,7 @@
         .workspace { grid-template-columns: 1fr; }
         .sidebar { display: none; }
         .view-select { display: block; }
-        .brand { width: 155px; flex-basis: 155px; }
+        .motto { width: 155px; flex-basis: 155px; font-size: 10px; }
         .summary-strip { grid-template-columns: repeat(2, 1fr); }
         .app { height: calc(100% - 64px); }
         .felip-app-footer { height: 64px; font-size: 10px; }
@@ -544,7 +541,7 @@
   <body>
     <div class="app">
       <header class="topbar">
-        <div class="brand"><img id="brandLogo" class="brand-logo" alt=""><div><h1 id="brandTitle"><?= appName ?></h1><p id="brandSubtitle"><?= appSubtitle ?></p></div></div>
+        <div class="motto">Serva ordinem.<br>Et ordo servavit te</div>
         <select id="viewSelect" class="view-select" aria-label="Selecciona la vista">
           <option value="course">Vista per curs</option>
           <option value="staff">Resum professorat</option>
@@ -558,7 +555,7 @@
         </select>
         <select id="courseSelect" class="course-select" aria-label="Selecciona el curs"></select>
         <span id="yearStatus" class="year-pill"></span>
-        <div id="userInfo" class="user"></div>
+        <div class="topbar-spacer" aria-hidden="true"></div>
       </header>
       <div class="workspace">
         <aside class="sidebar">
@@ -739,8 +736,6 @@
             document.getElementById("courseSelect").value = state.courseId;
             document.getElementById("yearStatus").textContent =
               `${response.data.activeYear.name} · ${statusLabel(response.data.activeYear.status)}`;
-            document.getElementById("userInfo").innerHTML =
-              `${escapeHtml(response.data.user.email)}<br>${escapeHtml(response.data.user.role)}`;
             renderCurrentView();
           })
           .withFailureHandler((error) => showFatal(cleanErrorMessage(error)))
