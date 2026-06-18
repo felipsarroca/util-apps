@@ -731,9 +731,11 @@
       function loadApplication() {
         google.script.run
           .withSuccessHandler((response) => {
-            if (!response || !response.ok) return showFatal(response?.error || "No s'han pogut carregar les dades.");
+            if (!response || !response.ok || !response.data || !Array.isArray(response.data.courses)) {
+              return handleApplicationLoadError(response?.error || "No s'han pogut carregar les dades.");
+            }
             state.data = response.data;
-            state.courseId = state.courseId || response.data.courses[0]?.id;
+            state.courseId = state.courseId || response.data.courses?.[0]?.id || "";
             document.getElementById("courseSelect").innerHTML = response.data.courses
               .map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`)
               .join("");
@@ -742,11 +744,12 @@
               `${response.data.activeYear.name} · ${statusLabel(response.data.activeYear.status)}`;
             renderCurrentView();
           })
-          .withFailureHandler((error) => showFatal(cleanErrorMessage(error)))
+          .withFailureHandler((error) => handleApplicationLoadError(cleanErrorMessage(error)))
           .getApplicationData();
       }
 
       function renderCurrentView() {
+        if (!state.data || !Array.isArray(state.data.courses)) return;
         document.getElementById("courseSelect").style.display =
           ["course", "curriculum"].includes(state.view) ? "" : "none";
         if (state.view === "course") return renderCourse();
@@ -1696,7 +1699,7 @@
       function reloadAfterManagement(response) {
         if (!response || !response.ok) return showToast(response?.error || "No s'ha pogut desar.");
         closeDialog();
-        loadApplication();
+        if (!response.queued) loadApplication();
         showToast("Canvis desats.");
       }
       function invokeServer(method, payload, success) {
@@ -1750,6 +1753,14 @@
       function formatHours(value) { return Number(value || 0).toLocaleString("ca-ES", { maximumFractionDigits: 2 }); }
       function showFatal(message) {
         document.getElementById("main").innerHTML = `<div class="empty-state"><strong>No es pot obrir l'aplicació</strong><p>${escapeHtml(message)}</p></div>`;
+      }
+      function handleApplicationLoadError(message) {
+        if (state.data && Array.isArray(state.data.courses)) {
+          renderCurrentView();
+          showToast(`No s'ha pogut sincronitzar ara: ${cleanErrorMessage(message)}`);
+          return;
+        }
+        showFatal(message);
       }
       function showToast(message) {
         const toast = document.getElementById("toast");

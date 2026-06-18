@@ -2,8 +2,11 @@
   const STORAGE_KEY = "massa-horaria-static-state-v2";
   const API_TOKEN_KEY = "massa-horaria-api-token-v1";
   const PENDING_WRITES_KEY = "massa-horaria-pending-writes-v1";
+  const PENDING_API_WRITES_KEY = "massa-horaria-pending-api-writes-v1";
   const REMOTE_API_URL = String(window.MASSA_APPS_SCRIPT_API_URL || "").trim();
   const pendingWrites = [];
+  let flushingApiWrites = false;
+  let flushApiWritesTimer = 0;
   const ASSIGNMENT_TYPES = {
     CLASSE: { label: "Classe", coverageFactor: 1 },
     REFORC: { label: "Reforç", coverageFactor: 0 },
@@ -73,6 +76,61 @@
     } catch {
       // Si no hi ha localStorage, la sincronització continua en la sessió actual.
     }
+  }
+
+  function readPendingApiWrites() {
+    try {
+      const parsed = safeParse(window.localStorage.getItem(PENDING_API_WRITES_KEY));
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writePendingApiWrites(items) {
+    try {
+      window.localStorage.setItem(PENDING_API_WRITES_KEY, JSON.stringify(items));
+    } catch {
+      // Si no hi ha localStorage, el canvi optimista continua a l'estat local.
+    }
+  }
+
+  function pendingApiWriteKey(method, payload) {
+    if (method === "saveCurriculumPlan") {
+      const planId = String(payload?.plan?.id || "");
+      const subjectId = String(payload?.subject?.id || payload?.plan?.subjectId || "");
+      return planId && subjectId ? `${method}::${planId}::${subjectId}` : "";
+    }
+    if (method === "saveTeacher" || method === "saveCourse" || method === "saveSubject" ||
+      method === "savePlan" || method === "saveCharge" || method === "saveRule" ||
+      method === "saveAcademicYearStatus") {
+      const id = String(payload?.id || "");
+      return id ? `${method}::${id}` : "";
+    }
+    return "";
+  }
+
+  function rememberPendingApiWrite(method, payload) {
+    const key = pendingApiWriteKey(method, payload);
+    if (!key) return false;
+    const next = {
+      key,
+      method,
+      payload: clone(payload || {}),
+      updatedAt: Date.now(),
+      attempts: 0,
+      nextAttemptAt: 0,
+    };
+    const items = readPendingApiWrites().filter((item) => item.key !== key);
+    items.push(next);
+    writePendingApiWrites(items);
+    return true;
+  }
+
+  function scheduleFlushPendingApiWrites(delay = 750) {
+    if (!hasRemoteApi()) return;
+    if (flushApiWritesTimer) window.clearTimeout(flushApiWritesTimer);
+    flushApiWritesTimer = window.setTimeout(flushPendingApiWrites, delay);
   }
 
   function rememberPendingCellWrite(payload) {
@@ -227,6 +285,46 @@
       .catch(() => callRemoteApiJsonp(method, payload));
   }
 
+  function flushPendingApiWrites() {
+    flushApiWritesTimer = 0;
+    if (flushingApiWrites || !hasRemoteApi()) return;
+    const now = Date.now();
+    const queue = readPendingApiWrites();
+    const item = queue.find((entry) => Number(entry.nextAttemptAt || 0) <= now);
+    if (!item) {
+      if (queue.length) {
+        const nextAt = Math.min(...queue.map((entry) => Number(entry.nextAttemptAt || 0)).filter(Boolean));
+        scheduleFlushPendingApiWrites(Math.max(1000, Math.min(60000, nextAt - now)));
+      }
+      return;
+    }
+
+    flushingApiWrites = true;
+    callRemoteApi(item.method, item.payload)
+      .then((response) => {
+        if (!response || !response.ok) {
+          throw new Error(response?.error || "No s'ha pogut sincronitzar el canvi.");
+        }
+        writePendingApiWrites(
+          readPendingApiWrites().filter((entry) => entry.key !== item.key || entry.updatedAt !== item.updatedAt)
+        );
+      })
+      .catch((error) => {
+        const items = readPendingApiWrites();
+        const current = items.find((entry) => entry.key === item.key);
+        if (current) {
+          current.attempts = Number(current.attempts || 0) + 1;
+          current.lastError = String(error?.message || error || "");
+          current.nextAttemptAt = Date.now() + Math.min(300000, 5000 * Math.pow(2, Math.min(current.attempts, 6)));
+          writePendingApiWrites(items);
+        }
+      })
+      .finally(() => {
+        flushingApiWrites = false;
+        if (readPendingApiWrites().length) scheduleFlushPendingApiWrites(1000);
+      });
+  }
+
   function sendRemoteApiWrite(method, payload) {
     if (!hasRemoteApi()) return;
     const callbackName = `__massaWrite_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -289,6 +387,13 @@
     return callRemoteApi("getApplicationData", payload).then((response) => {
       if (response && response.ok && response.data) {
         response.data = overlayPendingWrites(response.data);
+        if (readPendingApiWrites().length) {
+          try {
+            response.data = overlayPendingWrites(buildData(readState()));
+          } catch {
+            // Si l'estat local no es pot reconstruir, mantenim la resposta remota.
+          }
+        }
       }
       return response;
     });
@@ -298,6 +403,21 @@
     return (payload) => {
       if (hasRemoteApi()) return callRemoteApi(method, payload);
       return localMethod(payload);
+    };
+  }
+
+  function remoteOptimistic(method, localMethod) {
+    return (payload) => {
+      if (!hasRemoteApi()) return localMethod(payload);
+      const key = pendingApiWriteKey(method, payload);
+      if (!key) return callRemoteApi(method, payload);
+      const response = localMethod(payload);
+      if (response && response.ok) {
+        rememberPendingApiWrite(method, payload);
+        scheduleFlushPendingApiWrites();
+        return { ...response, queued: true };
+      }
+      return response;
     };
   }
 
@@ -953,16 +1073,21 @@
     getApplicationData: hasRemoteApi() ? getApplicationDataRemote : getApplicationData,
     verifyAccessPasscode: remoteOrLocal("verifyAccessPasscode", verifyAccessPasscode),
     saveCellAssignments: hasRemoteApi() ? saveCellAssignmentsRemote : saveCellAssignments,
-    saveTeacher: remoteOrLocal("saveTeacher", saveTeacher),
+    saveTeacher: remoteOptimistic("saveTeacher", saveTeacher),
     deleteTeacherFromYear: remoteOrLocal("deleteTeacherFromYear", deleteTeacherFromYear),
-    saveCourse: remoteOrLocal("saveCourse", saveCourse),
-    saveSubject: remoteOrLocal("saveSubject", saveSubject),
-    savePlan: remoteOrLocal("savePlan", savePlan),
-    saveCurriculumPlan: remoteOrLocal("saveCurriculumPlan", saveCurriculumPlan),
+    saveCourse: remoteOptimistic("saveCourse", saveCourse),
+    saveSubject: remoteOptimistic("saveSubject", saveSubject),
+    savePlan: remoteOptimistic("savePlan", savePlan),
+    saveCurriculumPlan: remoteOptimistic("saveCurriculumPlan", saveCurriculumPlan),
     deleteCurriculumPlan: remoteOrLocal("deleteCurriculumPlan", deleteCurriculumPlan),
-    saveCharge: remoteOrLocal("saveCharge", saveCharge),
-    saveRule: remoteOrLocal("saveRule", saveRule),
-    saveAcademicYearStatus: remoteOrLocal("saveAcademicYearStatus", saveAcademicYearStatus),
+    saveCharge: remoteOptimistic("saveCharge", saveCharge),
+    saveRule: remoteOptimistic("saveRule", saveRule),
+    saveAcademicYearStatus: remoteOptimistic("saveAcademicYearStatus", saveAcademicYearStatus),
     createNextAcademicYear: remoteOrLocal("createNextAcademicYear", createNextAcademicYear),
   };
+
+  if (hasRemoteApi()) {
+    scheduleFlushPendingApiWrites(1500);
+    window.addEventListener("online", () => scheduleFlushPendingApiWrites(250));
+  }
 })();
