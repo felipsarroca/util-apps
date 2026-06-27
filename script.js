@@ -55,6 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Eines de gestió'
         },
         {
+            name: 'SynApp',
+            path: 'https://ja.cat/synapp',
+            icon: 'SynApp/favicon.svg',
+            description: "Generador de grups cooperatius per a l'Escola Ramon Pont.",
+            category: 'Eines de gestió'
+        },
+        {
             name: 'DescarregApp',
             path: 'https://ja.cat/descarregapp',
             icon: 'DescarregApp/assets/favicon.svg',
