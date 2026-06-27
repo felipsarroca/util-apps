@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SynApp - Escola Ramon Pont</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section id="accessView" class="access-view" aria-labelledby="accessTitle">
+      <div class="access-panel">
+        <div class="brand-row brand-row-access">
+          <img class="brand-mark" src="favicon.svg" alt="">
+          <h1 id="accessTitle">SynApp</h1>
+        </div>
+        <p class="subtitle access-subtitle"><strong>Generador de grups cooperatius</strong><em>Escola Ramon Pont</em></p>
+        <form id="accessForm" class="access-form">
+          <label for="accessKey">Clau d'accés</label>
+          <div class="access-row">
+            <input id="accessKey" type="password" autocomplete="current-password" placeholder="Escriu la clau">
+            <button class="primary-btn" type="submit">Entra</button>
+          </div>
+          <p id="accessError" class="form-error" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="workspaceView" class="workspace-view is-hidden" aria-labelledby="appTitle">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="brand-row">
+            <img class="brand-mark" src="favicon.svg" alt="">
+            <div>
+              <h1 id="appTitle">SynApp</h1>
+              <p class="subtitle"><strong>Generador de grups cooperatius</strong> - <em>Escola Ramon Pont</em></p>
+            </div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span id="saveState" class="save-state status-local"><span class="save-dot" aria-hidden="true"></span>Mode demo local</span>
+          <button id="lockAppBtn" class="ghost-btn icon-btn-text" type="button"><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 9V7A5 5 0 0 0 7 7v2H5v12h14V9h-2ZM9 9V7a3 3 0 0 1 6 0v2H9Zm8 10H7v-8h10v8Z"/></svg></span>Bloqueja</button>
+        </div>
+      </header>
+
+      <section class="control-strip" aria-label="Configuració principal">
+        <label>
+          Classe
+          <select id="classSelect"></select>
+        </label>
+        <label>
+          Mida
+          <select id="teamSize">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+          </select>
+        </label>
+        <label>
+          Tipus
+          <select id="teamMode">
+            <option value="balanced">Equilibrats</option>
+            <option value="similar">Semblants</option>
+            <option value="random">Aleatoris</option>
+          </select>
+        </label>
+        <label>
+          Sobrants
+          <select id="leftoversMode">
+            <option value="spread">Repartir</option>
+            <option value="small-team">Crear grup petit</option>
+          </select>
+        </label>
+        <button id="generateBtn" class="primary-btn generate-btn icon-btn-text" type="button"><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7l-8-4Zm0 2.2L17.5 8 12 10.8 6.5 8 12 5.2ZM6 9.7l5 2.5v6.1l-5-2.5V9.7Zm7 8.6v-6.1l5-2.5v6.1l-5 2.5Z"/></svg></span>Genera grups</button>
+      </section>
+
+      <div class="main-grid">
+        <section class="panel students-panel is-active" data-tab-panel="students" aria-labelledby="studentsTitle">
+          <div class="panel-header">
+            <div>
+              <h2 id="studentsTitle">1. Prepara l'alumnat</h2>
+              <p>Comprova que la classe és correcta i ajusta les tipologies amb un clic.</p>
+            </div>
+            <button id="addStudentBtn" class="secondary-btn icon-btn-text" type="button"><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2h5Z"/></svg></span>Afegeix</button>
+          </div>
+          <div class="toolbar student-toolbar">
+            <div class="typology-legend" aria-label="Llegenda de tipologies">
+              <span><span class="type-dot type-a">A</span> Autònom</span>
+              <span><span class="type-dot type-b">B</span> Intermedi</span>
+              <span><span class="type-dot type-c">C</span> Suport</span>
+            </div>
+            <select id="studentFilter" aria-label="Filtra l'alumnat">
+              <option value="all">Tots els alumnes</option>
+              <option value="active">Només actius</option>
+              <option value="inactive">Només inactius</option>
+              <option value="A">Tipologia A</option>
+              <option value="B">Tipologia B</option>
+              <option value="C">Tipologia C</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table class="students-table">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Tipologia</th>
+                  <th>Estat</th>
+                </tr>
+              </thead>
+              <tbody id="studentsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel conditions-panel" data-tab-panel="conditions" aria-labelledby="conditionsTitle">
+          <div class="panel-header">
+            <div>
+              <h2 id="conditionsTitle">2. Marca condicions</h2>
+              <p>Clica alumnes per crear incompatibilitats o agrupaments forçats.</p>
+            </div>
+          </div>
+          <form id="conditionForm" class="condition-form">
+            <fieldset class="segmented-field">
+              <legend>Tipus</legend>
+              <input id="conditionType" type="hidden" value="incompatibility">
+              <div class="segmented-control" role="group" aria-label="Tipus de condició">
+                <button class="segment-btn is-active" type="button" data-condition-type="incompatibility">
+                  <span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 5a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm10 0a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM2 19c0-2.2 2.7-4 5-4s5 1.8 5 4v1H2v-1Zm10.7-4.9 1.4-1.4 2.4 2.4 2.4-2.4 1.4 1.4-2.4 2.4 2.4 2.4-1.4 1.4-2.4-2.4-2.4 2.4-1.4-1.4 2.4-2.4-2.4-2.4Z"/></svg></span>
+                  Separa
+                </button>
+                <button class="segment-btn" type="button" data-condition-type="forced">
+                  <span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 11a4 4 0 1 1 3.5-5.9A5.8 5.8 0 0 0 10 7.5c0 1.2.4 2.4 1.1 3.3A4 4 0 0 1 7 11Zm10 0a4 4 0 1 0-3.5-5.9c.3.7.5 1.5.5 2.4s-.2 1.7-.5 2.4A4 4 0 0 0 17 11ZM7 13c-2.7 0-5 1.3-5 3v2h8.5a6.5 6.5 0 0 1 1.6-3.8A8.6 8.6 0 0 0 7 13Zm10 0c-2.7 0-5 1.3-5 3v2h10v-2c0-1.7-2.3-3-5-3Z"/></svg></span>
+                  Agrupa
+                </button>
+              </div>
+            </fieldset>
+            <fieldset class="segmented-field">
+              <legend>Força</legend>
+              <input id="conditionStrength" type="hidden" value="required">
+              <div class="segmented-control" role="group" aria-label="Força de la condició">
+                <button class="segment-btn is-active" type="button" data-condition-strength="required">
+                  <span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 3 6v6c0 5 3.8 9.7 9 10 5.2-.3 9-5 9-10V6l-9-4Zm-1 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.9-4.9 1.4 1.4-6.3 6.3Z"/></svg></span>
+                  Obligatori
+                </button>
+                <button class="segment-btn" type="button" data-condition-strength="preferred">
+                  <span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.1-5H14v2h6V3h-2v2.1A9 9 0 0 0 12 3Z"/></svg></span>
+                  Preferent
+                </button>
+              </div>
+            </fieldset>
+            <div class="wide-field form-field">
+              <div id="selectedConditionChips" class="selected-condition-chips" aria-live="polite"></div>
+              <div id="conditionStudents" class="student-picker" role="listbox" aria-multiselectable="true"></div>
+            </div>
+            <div class="condition-actions wide-field">
+              <button id="clearConditionSelectionBtn" class="ghost-btn" type="button">Neteja selecció</button>
+              <button id="addConditionSubmitBtn" class="secondary-btn" type="submit">Afegeix condició</button>
+            </div>
+            <p id="conditionError" class="form-error wide-field" role="alert"></p>
+          </form>
+          <div id="conditionsList" class="conditions-list"></div>
+        </section>
+
+        <section class="panel results-panel" data-tab-panel="results" aria-labelledby="resultsTitle">
+          <div class="panel-header">
+            <div>
+              <h2 id="resultsTitle">3. Equips generats</h2>
+              <p id="resultsHint">Genera una proposta per veure els equips.</p>
+              <p id="classroomHint" class="field-hint is-hidden">Vista aula activa: pensada per projectar els equips sense controls de preparació.</p>
+            </div>
+            <div class="result-actions">
+              <button id="classroomViewBtn" class="secondary-btn icon-btn-text" type="button" disabled><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v10H4V5Zm2 2v6h12V7H6Zm-1 11h14v2H5v-2Z"/></svg></span>Vista aula</button>
+              <button id="hideTypesBtn" class="secondary-btn icon-btn-text" type="button" disabled><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 6.5c3.8 0 6.7 3.1 8 5.5-.6 1.1-1.6 2.4-2.9 3.4L18.5 17C20 15.7 21.2 14 22 12c-1.8-4.3-5.7-7.5-10-7.5-1.5 0-2.9.4-4.2 1.1l1.5 1.5c.8-.4 1.7-.6 2.7-.6ZM2.7 3.3 1.4 4.6l3 3C3.4 8.8 2.6 10.3 2 12c1.8 4.3 5.7 7.5 10 7.5 1.7 0 3.3-.5 4.7-1.4l2.7 2.7 1.3-1.3-18-18ZM7 10.2l1.5 1.5V12a3.5 3.5 0 0 0 3.5 3.5h.3l1.5 1.5c-.6.2-1.2.3-1.8.3-3.1 0-5.9-2.1-7.6-5.3.6-1.1 1.5-2.2 2.6-3.1v1.3Zm4.9-1.7 3.6 3.6V12A3.5 3.5 0 0 0 12 8.5h-.1Z"/></svg></span>Oculta tipologies</button>
+              <button id="saveTeamsBtn" class="primary-btn icon-btn-text" type="button" disabled><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9h2a7 7 0 1 1 2 4.9V14H5v6h6v-2H8.4A9 9 0 1 0 12 3Zm-1 5v5l4 2 .9-1.8-2.9-1.4V8h-2Z"/></svg></span>Desa</button>
+              <details class="export-menu">
+                <summary class="secondary-btn icon-btn-text"><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2ZM13 4h-2v8.2L7.4 8.6 6 10l6 6 6-6-1.4-1.4-3.6 3.6V4Z"/></svg></span>Exporta</summary>
+                <div class="export-menu-panel">
+                  <button id="copyTeamsBtn" class="ghost-btn icon-btn-text" type="button" disabled><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 7h11v14H8V7Zm2 2v10h7V9h-7ZM5 3h11v2H7v11H5V3Z"/></svg></span>Copia</button>
+                  <button id="exportCsvBtn" class="ghost-btn icon-btn-text" type="button" disabled><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5V3Zm9 2H7v14h10V8h-3V5Zm-5 7h6v2H9v-2Zm0 4h6v2H9v-2Z"/></svg></span>CSV</button>
+                  <button id="exportExcelBtn" class="ghost-btn icon-btn-text" type="button" disabled><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></span>Excel</button>
+                  <button id="printBtn" class="ghost-btn icon-btn-text" type="button" disabled><span class="btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h10v5H7V3Zm2 2v1h6V5H9ZM5 9h14a3 3 0 0 1 3 3v5h-4v4H6v-4H2v-5a3 3 0 0 1 3-3Zm3 7v3h8v-3H8Zm11-4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v3h2v-1h12v1h2v-3Z"/></svg></span>PDF / Imprimeix</button>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div id="teamsGrid" class="teams-grid"></div>
+        </section>
+
+        <section class="panel report-panel" data-tab-panel="results" aria-labelledby="reportTitle">
+          <div class="panel-header">
+            <div>
+              <h2 id="reportTitle">Informe</h2>
+              <p>Resum visual de la classe i compliment dels criteris.</p>
+            </div>
+          </div>
+          <section class="report-overview" aria-label="Indicadors de l'informe">
+            <article class="metric-card">
+              <span class="metric-label"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm10 0a4 4 0 1 1 0-8 4 4 0 0 1 0 8ZM2 21v-2c0-2.7 3.3-5 5-5s5 2.3 5 5v2H2Zm10 0v-2c0-1.4-.6-2.8-1.6-4 1.1-.7 2.4-1 3.6-1 2.7 0 6 2.3 6 5v2h-8Z"/></svg></span>Alumnes</span>
+              <strong id="studentCount">0</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v4H4V5Zm0 5h16v4H4v-4Zm0 5h16v4H4v-4Z"/></svg></span>Tipologies</span>
+              <strong id="typeSummary">0A · 0B · 0C</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label"><span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 5a4 4 0 0 1 4 4c0 1-.4 2-1 2.7l4.3 4.3 2-2L22 19.7 20.7 21l-4.4-4.4-2 2-5.8-5.8A4 4 0 1 1 7 5Z"/></svg></span>Condicions</span>
+              <strong id="conditionSummary">0 oblig. · 0 pref.</strong>
+            </article>
+          </section>
+          <div id="reportContent" class="report-content empty-report">
+            Encara no s'ha generat cap proposta.
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="studentDialog" class="student-dialog">
+    <form id="studentDialogForm" method="dialog">
+      <h3>Afegeix un nou alumne</h3>
+      <div class="dialog-fields">
+        <div class="dialog-field">
+          <label for="newStudentName">Nom i cognoms</label>
+          <input id="newStudentName" type="text" placeholder="Ex: Laia Garcia" required>
+        </div>
+        <div class="dialog-field">
+          <label for="newStudentType">Tipologia de l'alumne</label>
+          <select id="newStudentType">
+            <option value="A">Tipologia A (Autònom / Ajuda)</option>
+            <option value="B" selected>Tipologia B (Funcionament intermedi)</option>
+            <option value="C">Tipologia C (Necessita suport)</option>
+          </select>
+        </div>
+        <div class="dialog-field">
+          <label for="newStudentActive">Estat inicial</label>
+          <select id="newStudentActive">
+            <option value="true" selected>Actiu (entra als grups)</option>
+            <option value="false">Inactiu (exclòs dels grups)</option>
+          </select>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="closeStudentDialogBtn" class="ghost-btn">Cancel·la</button>
+        <button type="submit" class="primary-btn">Afegeix alumne</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="felip-app-footer">
+    <a class="felip-license-image-link"
+       href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca"
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+      <img class="felip-license-image"
+           src="assets/CC_BY-NC-SA.png"
+           alt="Creative Commons BY-NC-SA">
+    </a>
+    <div class="felip-footer-text">
+      <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+      <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
