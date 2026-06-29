@@ -1,6 +1,7 @@
 ﻿const ACCESS_KEY = 'SoL';
 const STORAGE_KEY = 'synapp:demo-state';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJxdr8PCAUH_D7ELdCsBuICU3rbjXs8X_P1gTw2ZXQzgB0kJOvGBGSnTsxP5cg6LmGqA/exec';
+const API_TIMEOUT_MS = 30000;
 
 const demoData = {
   classes: [
@@ -1223,7 +1224,7 @@ async function apiPost(action, payload) {
     const timeout = window.setTimeout(() => {
       cleanup();
       reject(new Error('Temps d’espera superat'));
-    }, 10000);
+    }, API_TIMEOUT_MS);
 
     function cleanup() {
       window.clearTimeout(timeout);
