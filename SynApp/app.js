@@ -1212,6 +1212,40 @@ async function saveStudentActiveRemote(student) {
 }
 
 async function apiPost(action, payload) {
+  try {
+    return await apiFetch(action, payload);
+  } catch (error) {
+    return apiJsonp(action, payload);
+  }
+}
+
+async function apiFetch(action, payload) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const query = new URLSearchParams({
+    key: ACCESS_KEY,
+    action,
+    payload: JSON.stringify(payload || {}),
+    cacheBust: String(Date.now())
+  });
+
+  try {
+    const response = await fetch(`${APPS_SCRIPT_URL}?${query.toString()}`, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-store',
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+async function apiJsonp(action, payload) {
   return new Promise((resolve, reject) => {
     const callback = `__synapp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script = document.createElement('script');
@@ -1219,7 +1253,8 @@ async function apiPost(action, payload) {
       key: ACCESS_KEY,
       action,
       payload: JSON.stringify(payload || {}),
-      callback
+      callback,
+      cacheBust: String(Date.now())
     });
     const timeout = window.setTimeout(() => {
       cleanup();
