@@ -4,7 +4,7 @@
             name: 'Pentabilities',
             path: 'https://ja.cat/pentabilities',
             icon: 'Pentabilities/assets/pentabilities-logo.png',
-            description: 'Aplicacio per gestionar cicles, sessions i valoracions de Pentabilities.',
+            description: 'Aplicació per gestionar cicles, sessions i valoracions de Pentabilities.',
             category: 'Aula i avaluació'
         },
         {
