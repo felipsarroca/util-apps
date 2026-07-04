@@ -1316,6 +1316,16 @@ button {
   object-fit: contain;
 }
 
+@media (min-width: 761px) {
+  .topbar-right > .toolbar {
+    order: 1;
+  }
+
+  .school-brand {
+    order: 2;
+  }
+}
+
 input, select, textarea {
   border-color: #c5d5e1;
   padding: 9px 10px;

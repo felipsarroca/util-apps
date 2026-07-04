@@ -15,6 +15,8 @@ const state = {
   selectedSession: null,
   projectedSession: null,
   dashboard: null,
+  homeStats: null,
+  homeStatsLoading: false,
   ratings: {}
 };
 
@@ -89,6 +91,7 @@ function render() {
 
   root.innerHTML = layout(renderView());
   if (state.view === 'newSession') loadStudentsForCycle();
+  if (state.view === 'home' && state.boot.user.role !== 'student') loadHomeStats();
   updateInstallButton();
 }
 
@@ -165,6 +168,7 @@ function homeView() {
 
   const cycles = state.boot.cycles || [];
   const sessions = state.boot.activeSessions || [];
+  const homeStats = getHomeStatsForDisplay();
   return `
     <section class="teacher-actions">
       <button class="create-action" onclick="go('newCycle')"><span class="plus-icon" aria-hidden="true"></span>Crear un cicle</button>
@@ -173,8 +177,8 @@ function homeView() {
     <section class="dashboard-strip">
       <div class="stat-tile"><span>Cicles</span><strong>${cycles.length}</strong></div>
       <div class="stat-tile"><span>Sessions actives</span><strong>${sessions.length}</strong></div>
-      <div class="stat-tile"><span>Alumnes del grup</span><strong>${PREVIEW.students.length}</strong></div>
-      <div class="stat-tile"><span>Comportaments</span><strong>35</strong></div>
+      <div class="stat-tile"><span>Alumnes del grup</span><strong id="home-evaluated-students">${homeStats.evaluatedStudents}</strong></div>
+      <div class="stat-tile"><span>Comportaments</span><strong id="home-evaluated-behaviors">${homeStats.evaluatedBehaviors}</strong></div>
     </section>
     <section class="grid two">
       <div class="card">
@@ -392,6 +396,47 @@ function editSessionView() {
       </form>
       <div id="message" style="margin-top:12px"></div>
     </section>`;
+}
+
+function getHomeStatsForDisplay() {
+  if (state.homeStats) return state.homeStats;
+  if (!hasGoogleApi && !hasSupabaseConfig) return previewHomeStats();
+  return {
+    evaluatedStudents: PREVIEW.students.length,
+    evaluatedBehaviors: PREVIEW.skills.reduce((total, skill) => total + (skill.behaviors || []).length, 0)
+  };
+}
+
+async function loadHomeStats() {
+  if (state.homeStatsLoading) return;
+  state.homeStatsLoading = true;
+  try {
+    const stats = useSupabase
+      ? await rpc('teacher_home_stats', { p_token: state.token })
+      : hasGoogleApi
+        ? await api('teacher_home_stats')
+        : previewHomeStats();
+    state.homeStats = normalizeHomeStats(stats);
+    updateHomeStatsTiles(state.homeStats);
+  } catch (error) {
+    // Manté els números anteriors si el backend encara no té aquesta funció.
+  } finally {
+    state.homeStatsLoading = false;
+  }
+}
+
+function normalizeHomeStats(stats) {
+  return {
+    evaluatedStudents: Number(stats?.evaluatedStudents ?? stats?.evaluated_students ?? 0),
+    evaluatedBehaviors: Number(stats?.evaluatedBehaviors ?? stats?.evaluated_behaviors ?? 0)
+  };
+}
+
+function updateHomeStatsTiles(stats) {
+  const students = document.querySelector('#home-evaluated-students');
+  const behaviors = document.querySelector('#home-evaluated-behaviors');
+  if (students) students.textContent = String(stats.evaluatedStudents);
+  if (behaviors) behaviors.textContent = String(stats.evaluatedBehaviors);
 }
 
 function sessionCreatedView() {
@@ -1410,6 +1455,19 @@ function previewDashboard() {
       { value: 4, count: 52 },
       { value: 5, count: 28 }
     ]
+  };
+}
+
+function previewHomeStats() {
+  const activeSessionIds = new Set(
+    (PREVIEW.sessions || [])
+      .filter((session) => session.status === 'open' || session.locked)
+      .map((session) => session.id)
+  );
+  const ratings = (PREVIEW.ratings || []).filter((rating) => activeSessionIds.has(rating.sessionId));
+  return {
+    evaluatedStudents: new Set(ratings.map((rating) => rating.evaluatedId).filter(Boolean)).size,
+    evaluatedBehaviors: new Set(ratings.map((rating) => rating.behaviorId).filter(Boolean)).size
   };
 }
 

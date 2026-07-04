@@ -31,6 +31,8 @@ function handleApiAction(action, payload, token) {
     case 'students_by_class':
       requireTeacher(token);
       return getStudentsByClass(payload.classGroup).map(toPublicStudent);
+    case 'teacher_home_stats':
+      return getTeacherHomeStats(token);
     case 'sync_roster_to_supabase':
       return syncPublicRosterToSupabase();
     case 'session_by_code':

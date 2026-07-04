@@ -61,6 +61,19 @@ function addProgressToSessions(sessions) {
   });
 }
 
+function getTeacherHomeStats(token) {
+  const user = requireTeacher(token);
+  const sessions = getTeacherSessionsForUser(user, false)
+    .filter((session) => session.estat === SESSION_STATUS.open);
+  const sessionIds = new Set(sessions.map((session) => session.sessio_id));
+  const evaluations = readRows(SHEETS.evaluations)
+    .filter((row) => sessionIds.has(row.sessio_id));
+  return {
+    evaluatedStudents: new Set(evaluations.map((row) => row.avaluat_id).filter(Boolean)).size,
+    evaluatedBehaviors: new Set(evaluations.map((row) => row.codi_comportament).filter(Boolean)).size
+  };
+}
+
 function buildSessionProgress(details, evaluations) {
   const respondentIds = new Set(evaluations.filter((row) => row.avaluador_tipus === 'alumne').map((row) => row.avaluador_id));
   const totalStudents = details.students.length;
