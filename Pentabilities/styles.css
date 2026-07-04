@@ -1995,7 +1995,7 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 760px) {
   body {
-    padding-bottom: 100px;
+    padding-bottom: 64px;
   }
 
   .topbar {
@@ -2010,10 +2010,7 @@ input:focus, select:focus, textarea:focus {
   }
 
   .school-brand {
-    justify-content: space-between;
-    border-left: 0;
-    border-top: 1px solid #d5e3ea;
-    padding: 10px 0 0;
+    display: none;
   }
 
   .brand-logo {
@@ -2068,6 +2065,19 @@ input:focus, select:focus, textarea:focus {
   .behavior-section .selection-status {
     position: static;
     align-self: center;
+  }
+
+  .session-page .behavior-options {
+    justify-items: stretch;
+  }
+
+  .session-page .behavior-option {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .session-page .behavior-option .behavior-name {
+    text-align: left;
   }
 
   .form-actions {
@@ -2134,14 +2144,33 @@ input:focus, select:focus, textarea:focus {
     align-self: center;
   }
 
+  .rating-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+
+  .rating-label {
+    min-width: 0;
+  }
+
+  .stars {
+    justify-self: end;
+  }
+
+  .star {
+    min-width: 30px;
+    min-height: 30px;
+  }
+
   .felip-app-footer {
     font-size: .576rem;
-    min-height: 76px;
-    align-items: flex-start;
+    min-height: 52px;
+    align-items: center;
+    padding: 5px 10px;
   }
 
   .felip-license-image {
-    width: 66px;
+    width: 62px;
   }
 }
 
