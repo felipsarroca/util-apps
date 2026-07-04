@@ -1,0 +1,36 @@
+# Sistema operatiu i editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Dependències i compilacions
+node_modules/
+dist/
+build/
+.cache/
+.parcel-cache/
+.tmp/
+.chrome-preview-profile/
+preview-*.png
+
+# Entorns i secrets locals
+.env
+.env.*
+!.env.example
+*.local
+
+# Google Apps Script / clasp
+**/.clasp.json
+
+# Supabase local
+**/supabase/.temp/
+**/supabase/.branches/
+**/supabase/.cache/
+
+# Fulls i dreceres locals de Google Drive
+*.gsheet
+*.gdoc
+*.gslides
+*.tmp

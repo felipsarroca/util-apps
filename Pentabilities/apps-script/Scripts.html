@@ -1,0 +1,746 @@
+<script>
+const state = {
+  boot: null,
+  token: '',
+  view: 'home',
+  selectedCycle: null,
+  selectedSession: null,
+  enteredSession: null,
+  lastCreatedSession: null,
+  projectedSession: null,
+  testStudentId: null,
+  testMode: false,
+  ratings: {}
+};
+
+const $ = (selector) => document.querySelector(selector);
+
+function server(functionName, ...args) {
+  if (state.token && !['appBootstrap', 'loginWithEmail', 'logout'].includes(functionName)) {
+    args.push(state.token);
+  }
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler((error) => reject(new Error(error.message || error)))
+      [functionName](...args);
+  });
+}
+
+function render() {
+  const root = $('#app');
+  if (!state.boot) return;
+  setFavicon();
+  if (state.boot.needsLogin || !state.boot.user) {
+    root.innerHTML = loginView();
+    return;
+  }
+  root.innerHTML = layout(renderView());
+}
+
+function setFavicon() {
+  if (!window.PENTABILITIES_LOGO || document.querySelector('link[data-penta-favicon]')) return;
+  const icon = document.createElement('link');
+  icon.rel = 'icon';
+  icon.href = window.PENTABILITIES_LOGO;
+  icon.type = 'image/png';
+  icon.setAttribute('data-penta-favicon', 'true');
+  document.head.appendChild(icon);
+}
+
+function layout(content) {
+  const user = state.boot.user;
+  const teacherActions = user.role !== 'alumne'
+    ? `<button class="secondary" onclick="go('newCycle')">Nou cicle</button><button class="secondary" onclick="go('newSession')">Nova sessió</button>`
+    : '';
+  return `
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand app-brand">
+          <img class="brand-logo" src="${window.PENTABILITIES_LOGO || ''}" alt="Pentabilities">
+          <div class="brand-copy">
+            <h1>Pentabilities</h1>
+            <div class="muted">${escapeHtml(user.name)} · ${roleLabel(user.role)}</div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="school-brand" aria-label="Escola Ramon Pont">
+            <span>Escola Ramon Pont</span>
+            <img class="school-logo" src="${window.SCHOOL_LOGO || ''}" alt="Escola Ramon Pont">
+          </div>
+          <div class="toolbar">
+            <button class="secondary" onclick="go('home')">Inici</button>
+            ${teacherActions}
+            <button class="ghost" onclick="doLogout()">Sortir</button>
+          </div>
+        </div>
+      </header>
+      ${content}
+    </main>
+    ${footer()}
+  `;
+}
+
+function loginView() {
+  const saved = getSavedLogin();
+  return `
+    <main class="login-shell">
+      <section class="login-panel">
+        <div class="login-brand">
+          <img class="login-penta-logo" src="${window.PENTABILITIES_LOGO || ''}" alt="Pentabilities">
+          <h1>Pentabilities</h1>
+        </div>
+        <form class="grid login-form" onsubmit="doLogin(event)">
+          <label>Correu electrònic<input name="email" type="email" autocomplete="email" required placeholder="nom.cognom@ramonpont.cat" value="${escapeHtml(saved.email)}"></label>
+          <label>Contrasenya del professorat<input name="password" type="password" autocomplete="current-password" placeholder="Només professorat"></label>
+          <button id="login-button" type="submit">Entrar</button>
+        </form>
+        <div id="message" style="margin-top:12px"></div>
+        <div class="login-school">
+          <span>Escola Ramon Pont</span>
+          <img class="login-school-logo" src="${window.SCHOOL_LOGO || ''}" alt="Escola Ramon Pont">
+        </div>
+      </section>
+      ${footer()}
+    </main>`;
+}
+
+function renderView() {
+  if (state.view === 'newCycle') return newCycleView();
+  if (state.view === 'newSession') return newSessionView();
+  if (state.view === 'sessionCreated') return sessionCreatedView();
+  if (state.view === 'studentSession') return studentSessionView();
+  if (state.view === 'projectCode') return projectCodeView();
+  if (state.view === 'teacherEvaluation') return teacherEvaluationView();
+  if (state.view === 'dashboard') return dashboardView();
+  return homeView();
+}
+
+function homeView() {
+  const user = state.boot.user;
+  if (user.role === 'alumne') {
+    return `
+      <section class="student-entry">
+        <div class="card student-code-card">
+          <h2>Entrar a una sessió</h2>
+          <p class="muted">Escriu el codi que et dona el professor.</p>
+          <label>Codi de sessió<input id="session-code" class="big-code-input" inputmode="numeric" maxlength="6" placeholder="000000"></label>
+          <div class="toolbar" style="margin-top:12px"><button onclick="enterStudentCode()">Entrar</button></div>
+          <div id="message" style="margin-top:12px"></div>
+        </div>
+        <div class="card compact-info">
+          <h2>Les teves dades</h2>
+          <div class="info-line"><span>Alumne</span><strong>${escapeHtml(user.name)}</strong></div>
+          <div class="info-line"><span>Classe</span><strong>${escapeHtml(user.classe || 'Sense classe assignada')}</strong></div>
+        </div>
+      </section>`;
+  }
+  const cycles = state.boot.cycles || [];
+  const sessions = state.boot.activeSessions || [];
+  return `
+    <section class="teacher-actions">
+      <button onclick="go('newCycle')">Crear un cicle</button>
+      <button class="secondary" onclick="go('newSession')">Crear una sessió</button>
+      <a class="button-link ghost" href="${escapeHtml(state.boot.databaseUrl || '#')}" target="_blank" rel="noopener noreferrer">Obrir graella de dades</a>
+    </section>
+    <section class="grid two">
+      <div class="card">
+        <h2>Cicles</h2>
+        <div class="list">${cycles.length ? cycles.map(cycleCard).join('') : '<p class="muted">Encara no hi ha cicles.</p>'}</div>
+      </div>
+      <div class="card">
+        <h2>Sessions actives</h2>
+        <div class="list">${sessions.length ? sessions.map(sessionCard).join('') : '<p class="muted">Encara no hi ha sessions obertes o en esborrany.</p>'}</div>
+      </div>
+    </section>`;
+}
+
+function cycleCard(cycle) {
+  return `
+    <div class="cycle-row">
+      <div>
+        <span class="row-title">${escapeHtml(cycle.nom_cicle)}</span>
+        <div class="row-meta">${escapeHtml(cycle.classe)} · ${escapeHtml(cycle.estat)}</div>
+      </div>
+      <div class="toolbar">
+        <button class="secondary" onclick="selectCycle('${cycle.cicle_id}')">Nova sessió</button>
+        <button class="ghost" onclick="showCycleDashboard('${cycle.cicle_id}')">Dashboard</button>
+      </div>
+    </div>`;
+}
+
+function sessionCard(session) {
+  const progress = session.progress || {};
+  return `
+    <div class="cycle-row session-row">
+      <div>
+        <span class="row-title">${escapeHtml(session.nom_sessio)}</span>
+        <div class="row-meta">${escapeHtml(session.classe)} / ${escapeHtml(session.estat)}</div>
+        <button class="code-box code-button" onclick="projectCode('${session.sessio_id}')" title="Projectar codi">${escapeHtml(session.codi_acces)}</button>
+        <div class="progress-chips">
+          <span>Enviats: ${progress.respondents ?? 0}</span>
+          <span>Falten: ${progress.pending ?? '-'}</span>
+          <span>Total: ${progress.totalStudents ?? '-'}</span>
+        </div>
+      </div>
+      <div class="toolbar">
+        ${session.estat === 'esborrany' ? `<button onclick="openDraftSession('${session.sessio_id}')">Obrir</button>` : ''}
+        <button onclick="loadTeacherEvaluation('${session.sessio_id}')">Avaluar</button>
+        ${session.estat === 'oberta' ? `<button class="secondary" onclick="loadStudentTest('${session.sessio_id}')">Prova alumne</button>` : ''}
+        <button class="secondary" onclick="copyCode('${session.codi_acces}')">Copiar codi</button>
+        <button class="secondary" onclick="showSessionDashboard('${session.sessio_id}')">Dashboard</button>
+        ${session.estat !== 'tancada' ? `<button class="danger" onclick="closeOpenSession('${session.sessio_id}')">Tancar</button>` : ''}
+      </div>
+    </div>`;
+}
+
+function newCycleView() {
+  return `
+    <section class="form-page cycle-page">
+      <div class="form-hero">
+        <div>
+          <span class="section-kicker">Planificació</span>
+          <h2>Crear un cicle</h2>
+          <p>Defineix el grup, el període i el context de treball.</p>
+        </div>
+        <div class="hero-illustration cycle-illustration" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+      <form id="cycle-form" class="visual-form" onsubmit="saveCycle(event)">
+        <div class="form-section">
+          <h3>Dades bàsiques</h3>
+          <div class="grid two">
+            <label class="field-card">Nom del cicle<input name="nom_cicle" required placeholder="Treball cooperatiu 1r trimestre"></label>
+            <label class="field-card">Grup o classe<select name="classe" required>${state.boot.classes.map((c) => `<option>${escapeHtml(c)}</option>`).join('')}</select></label>
+            <label class="field-card">Data d'inici<input name="data_inici" type="date"></label>
+            <label class="field-card">Data final prevista<input name="data_final" type="date"></label>
+          </div>
+        </div>
+        <div class="form-section accent-section">
+          <h3>Context per al professorat</h3>
+          <label class="field-card wide">Notes del cicle<textarea name="descripcio" placeholder="Objectiu del cicle, projecte, matèria o observacions útils"></textarea></label>
+        </div>
+        <div class="toolbar form-actions"><button>Guardar cicle</button><button type="button" class="ghost" onclick="go('home')">Cancel·lar</button></div>
+      </form>
+      <div id="message" style="margin-top:12px"></div>
+    </section>`;
+}
+
+function newSessionView() {
+  const cycles = (state.boot.cycles || []).filter((cycle) => cycle.estat === 'actiu');
+  if (!cycles.length) return '<section class="card"><h2>Crear una sessió</h2><p class="muted">Primer cal crear un cicle actiu.</p></section>';
+  const selectedCycleId = state.selectedCycle || cycles[0].cicle_id;
+  const cycle = cycles.find((c) => c.cicle_id === selectedCycleId) || cycles[0];
+  return `
+    <section class="form-page session-page">
+      <div class="form-hero">
+        <div>
+          <span class="section-kicker">Aula</span>
+          <h2>Crear una sessió</h2>
+          <p>Tria comportaments, alumnat i estat inicial de la sessió.</p>
+        </div>
+        <div class="hero-illustration session-illustration" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+      <form id="session-form" class="visual-form" onsubmit="saveSession(event)">
+        <div class="form-section">
+          <h3>1. Dades de la sessió</h3>
+          <div class="grid two">
+            <label class="field-card">Cicle<select name="cicle_id" onchange="selectCycle(this.value)">${cycles.map((c) => `<option value="${c.cicle_id}" ${c.cicle_id === cycle.cicle_id ? 'selected' : ''}>${escapeHtml(c.nom_cicle)} / ${escapeHtml(c.classe)}</option>`).join('')}</select></label>
+            <label class="field-card">Nom de la sessió<input name="nom_sessio" required placeholder="Projecte de classe"></label>
+            <label class="field-card">Data<input name="data_sessio" type="date"></label>
+            <label class="field-card">Estat<select name="openNow"><option value="true">Oberta</option><option value="false">Esborrany</option></select></label>
+          </div>
+        </div>
+        <div class="form-section behavior-section">
+          <h3>Comportaments</h3>
+          ${behaviorSelector()}
+        </div>
+        <div class="form-section students-section">
+          <h3>Alumnes per a heteroavaluació</h3>
+          <div id="students-for-session" class="list"><p class="muted">Es carregaran segons la classe del cicle.</p></div>
+        </div>
+        <div class="toolbar form-actions"><button id="create-session-button" type="submit">Crear sessió</button><button type="button" class="ghost" onclick="go('home')">Cancel·lar</button></div>
+      </form>
+      <div id="message" style="margin-top:12px"></div>
+    </section>`;
+}
+
+function sessionCreatedView() {
+  const details = state.lastCreatedSession;
+  if (!details) return homeView();
+  return `
+    <section class="grid two">
+      <div class="card">
+        <h2>Sessió creada</h2>
+        <span class="row-title">${escapeHtml(details.session.nom_sessio)}</span>
+        <div class="row-meta">${escapeHtml(details.cycle.nom_cicle)} / ${escapeHtml(details.session.classe)} / ${escapeHtml(details.session.estat)}</div>
+        <p class="muted" style="margin-top:10px">Codi per projectar a l'aula</p>
+        <button class="code-box code-button large-inline-code" onclick="projectCode('${details.session.sessio_id}')">${escapeHtml(details.session.codi_acces)}</button>
+        <div class="toolbar" style="margin-top:12px">
+          <button onclick="projectCode('${details.session.sessio_id}')">Projectar codi</button>
+          <button onclick="loadTeacherEvaluation('${details.session.sessio_id}')">Avaluar</button>
+          <button class="secondary" onclick="showSessionDashboard('${details.session.sessio_id}')">Dashboard</button>
+          <button class="ghost" onclick="go('home')">Tornar al panell</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Comportaments</h2>
+        <div class="list">${details.behaviors.map((behavior) => `
+          <div class="behavior-row"><span><span class="pill">${escapeHtml(behavior.codi_comportament)}</span> ${escapeHtml(behavior.nom_comportament)}</span></div>
+        `).join('')}</div>
+      </div>
+    </section>`;
+}
+
+function projectCodeView() {
+  const details = state.projectedSession || state.lastCreatedSession;
+  if (!details) return homeView();
+  return `
+    <section class="project-screen">
+      <div class="project-brand">
+        <img src="${window.PENTABILITIES_LOGO || ''}" alt="Pentabilities">
+        <img src="${window.SCHOOL_LOGO || ''}" alt="Escola Ramon Pont">
+      </div>
+      <div class="project-session">${escapeHtml(details.session.nom_sessio)}</div>
+      <div class="project-code">${escapeHtml(details.session.codi_acces)}</div>
+      <div class="project-meta">${escapeHtml(details.session.classe)} / ${escapeHtml(details.session.estat)}</div>
+      <div class="toolbar project-toolbar"><button onclick="go('home')">Tornar</button><button class="secondary" onclick="copyCode('${details.session.codi_acces}')">Copiar codi</button></div>
+    </section>`;
+}
+
+function behaviorSelector() {
+  return `<div class="behavior-selector">${state.boot.skills.map((skill) => `
+    <div class="skill-group" style="--skill-color:${skill.color}">
+      <h3>${escapeHtml(skill.nom_habilitat)}</h3>
+      <div class="behavior-options">
+        ${skill.behaviors.map((behavior) => `
+          <button type="button" class="behavior-option" data-code="${behavior.codi_comportament}" onclick="toggleBehavior(this)">
+            <span class="pill">${escapeHtml(behavior.codi_comportament)}</span>
+            <span class="behavior-name">${escapeHtml(behavior.nom_comportament)}</span>
+          </button>`).join('')}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function studentSessionView() {
+  const details = state.enteredSession;
+  const currentStudentId = state.testMode ? state.testStudentId : state.boot.user.alumne_id;
+  const currentStudent = details.students.find((student) => student.alumne_id === currentStudentId);
+  return `
+    <section class="card">
+      <h2>${escapeHtml(details.session.nom_sessio)}</h2>
+      <p class="muted">${escapeHtml(details.cycle.nom_cicle)} · ${escapeHtml(details.session.classe)}</p>
+      <h3>Primer, avalua’t tu mateix</h3>
+      ${state.testMode ? testStudentSelector(details, currentStudentId) : ''}
+      ${studentRatingCards(currentStudent ? [currentStudent] : [], details.behaviors)}
+      <h3 style="margin-top:18px">Ara avalua els companys que correspongui</h3>
+      ${studentRatingCards(details.students.filter((s) => s.alumne_id !== currentStudentId), details.behaviors)}
+      <div class="toolbar" style="margin-top:14px"><button onclick="submitStudentRatings()">Enviar valoracions</button><button class="secondary" onclick="go('home')">Revisar després</button></div>
+      <div id="message" style="margin-top:12px"></div>
+    </section>`;
+}
+
+function testStudentSelector(details, currentStudentId) {
+  return `
+    <div class="notice" style="margin-bottom:12px">
+      <label>Mode prova docent: alumne simulat
+        <select onchange="changeTestStudent(this.value)">
+          ${details.students.map((student) => `<option value="${student.alumne_id}" ${student.alumne_id === currentStudentId ? 'selected' : ''}>${escapeHtml(student.nom_complet)}</option>`).join('')}
+        </select>
+      </label>
+    </div>`;
+}
+
+function teacherEvaluationView() {
+  const details = state.selectedSession;
+  const selected = new Set(details.heteroStudentIds || []);
+  const initialStudents = selected.size ? details.students.filter((student) => selected.has(student.alumne_id)) : details.students;
+  const toggleButton = selected.size
+    ? '<button id="teacher-student-toggle" class="secondary" onclick="showAllTeacherStudents()">Mostrar tota la classe</button>'
+    : '';
+  return `
+    <section class="card">
+      <h2>Heteroavaluació</h2>
+      <p class="muted">${escapeHtml(details.session.nom_sessio)} · ${escapeHtml(details.session.classe)}</p>
+      <div class="toolbar" style="margin-bottom:12px">${toggleButton}</div>
+      <div id="teacher-students">${studentRatingCards(initialStudents, details.behaviors)}</div>
+      <div class="toolbar" style="margin-top:14px"><button onclick="submitTeacherRatings()">Enviar valoracions</button></div>
+      <div id="message" style="margin-top:12px"></div>
+    </section>`;
+}
+
+function studentRatingCards(students, behaviors) {
+  return `<div class="student-grid">${students.map((student) => `
+    <div class="student-row" data-student-id="${student.alumne_id}">
+      <div class="student-name">${escapeHtml(student.nom_complet)}</div>
+      <div class="ratings-table">${behaviors.map((behavior) => `
+        <div class="rating-line">
+          <span class="rating-label"><span class="pill">${escapeHtml(behavior.codi_comportament)}</span> ${escapeHtml(behavior.nom_comportament)}</span>
+          ${stars(student.alumne_id, behavior.codi_comportament)}
+        </div>`).join('')}</div>
+    </div>`).join('')}</div>`;
+}
+
+function stars(studentId, behaviorCode) {
+  return `<span class="stars" data-student="${studentId}" data-behavior="${behaviorCode}">
+    ${[1,2,3,4,5].map((value) => `<button type="button" class="star ${Number(state.ratings[`${studentId}|${behaviorCode}`]?.value || 0) >= value ? 'on' : ''}" onclick="setRating('${studentId}','${behaviorCode}',${value}, this)">★</button>`).join('')}
+  </span>`;
+}
+
+function dashboardView() {
+  const dashboard = state.dashboard;
+  const behaviorMax = Math.max(...dashboard.byBehavior.map((b) => b.average), 5);
+  const countMax = Math.max(...(dashboard.distribution || []).map((item) => item.count), 1);
+  return `
+    <section class="grid three">
+      <div class="card metric"><span class="muted">Respostes d’alumnes</span><strong>${dashboard.respondents ?? '-'}</strong></div>
+      <div class="card metric"><span class="muted">Pendents</span><strong>${dashboard.pending ?? '-'}</strong></div>
+      <div class="card metric"><span class="muted">Mitjana global</span><strong>${dashboard.globalAverage ?? '-'}</strong></div>
+    </section>
+    <section class="grid two" style="margin-top:10px">
+      ${summaryCard('Mitjana per comportament', dashboard.byBehavior, behaviorMax)}
+      ${summaryCard('Mitjana per habilitat', dashboard.bySkill || [], behaviorMax)}
+      ${summaryCard('Comparativa per tipus', dashboard.byType || [], behaviorMax)}
+      <div class="card">
+        <h2>Distribució de puntuacions</h2>
+        <div class="list">${(dashboard.distribution || []).map((item) => `
+          <div>
+            <div class="behavior-row"><span>${item.value} estrelles</span><span>${item.count}</span></div>
+            <div class="bar"><span style="width:${Math.min(100, item.count / countMax * 100)}%"></span></div>
+          </div>`).join('')}</div>
+      </div>
+    </section>`;
+}
+
+function summaryCard(title, rows, max) {
+  return `
+    <div class="card">
+      <h2>${escapeHtml(title)}</h2>
+      <div class="list">${rows.length ? rows.map((item) => `
+        <div>
+          <div class="behavior-row"><span>${escapeHtml(typeLabel(item.key))}</span><span>${item.average} · ${item.count}</span></div>
+          <div class="bar"><span style="width:${Math.min(100, item.average / max * 100)}%"></span></div>
+        </div>`).join('') : '<p class="muted">Encara no hi ha dades.</p>'}</div>
+    </div>`;
+}
+
+async function boot() {
+  const root = $('#app');
+  const timeout = setTimeout(() => {
+    if (!state.boot && root) root.innerHTML = loginView();
+  }, 3500);
+  try {
+    state.boot = await server('appBootstrap');
+    clearTimeout(timeout);
+    render();
+  } catch (error) {
+    clearTimeout(timeout);
+    $('#app').innerHTML = `<main class="shell"><div class="notice error">${escapeHtml(error.message)}</div></main>${footer()}`;
+  }
+}
+
+async function doLogin(event) {
+  event.preventDefault();
+  const button = $('#login-button');
+  const data = Object.fromEntries(new FormData(event.target).entries());
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Entrant...';
+  }
+  try {
+    const bootData = await server('loginWithEmail', data.email, data.password || '');
+    if (!bootData || !bootData.user || !bootData.token) {
+      throw new Error('No s’ha pogut iniciar la sessió. Torna-ho a provar o revisa que el correu consti a la base de dades.');
+    }
+    state.boot = bootData;
+    state.token = bootData.token || '';
+    saveLogin(data.email, data.password || '');
+    state.view = 'home';
+    state.ratings = {};
+    render();
+  } catch (error) {
+    showMessage(error.message, 'error');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'Entrar';
+    }
+  }
+}
+
+async function doLogout() {
+  if (state.token) await server('logout', state.token);
+  state.boot = { needsLogin: true };
+  state.token = '';
+  state.ratings = {};
+  render();
+}
+
+function go(view) { state.view = view; state.ratings = {}; render(); if (view === 'newSession') loadStudentsForCycle(); }
+function selectCycle(id) { state.selectedCycle = id; state.view = 'newSession'; render(); loadStudentsForCycle(); }
+function toggleBehavior(button) { button.classList.toggle('selected'); }
+function changeTestStudent(studentId) { state.testStudentId = studentId; state.ratings = {}; render(); }
+function copyCode(code) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code);
+  }
+}
+
+async function projectCode(sessioId) {
+  await action(async () => {
+    state.projectedSession = await server('getSessionDetails', sessioId);
+    state.view = 'projectCode';
+    render();
+  });
+}
+
+function setRating(studentId, behaviorCode, value, button) {
+  state.ratings[`${studentId}|${behaviorCode}`] = { avaluat_id: studentId, codi_comportament: behaviorCode, value };
+  [...button.parentElement.children].forEach((star, index) => star.classList.toggle('on', index < value));
+}
+
+function hydrateRatings(details) {
+  state.ratings = {};
+  (details.existingRatings || []).forEach((rating) => {
+    const studentId = rating.avaluat_id;
+    const behaviorCode = rating.codi_comportament;
+    if (studentId && behaviorCode) {
+      state.ratings[`${studentId}|${behaviorCode}`] = { avaluat_id: studentId, codi_comportament: behaviorCode, value: Number(rating.value) };
+    }
+  });
+}
+
+async function refreshBoot() {
+  state.boot = await server('refreshSession');
+  state.token = state.boot.token || state.token;
+  render();
+}
+
+function getSavedLogin() {
+  try {
+    return {
+      email: localStorage.getItem('pentabilities:lastEmail') || '',
+      password: ''
+    };
+  } catch (error) {
+    return { email: '', password: '' };
+  }
+}
+
+function saveLogin(email, password) {
+  try {
+    localStorage.setItem('pentabilities:lastEmail', String(email || '').trim().toLowerCase());
+  } catch (error) {
+    // El navegador pot bloquejar localStorage en alguns contextos d'iframe.
+  }
+}
+
+async function saveCycle(event) {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(event.target).entries());
+  await action(async () => {
+    await server('createCycle', data);
+    await refreshBoot();
+  }, 'Cicle creat correctament.');
+}
+
+async function saveSession(event) {
+  event.preventDefault();
+  const form = event.target;
+  const button = $('#create-session-button');
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.openNow = data.openNow === 'true';
+  data.behaviors = [...form.querySelectorAll('.behavior-option.selected')].map((button) => button.dataset.code);
+  data.heteroStudents = [...form.querySelectorAll('[name="heteroStudent"]:checked')].map((input) => input.value);
+
+  if (!data.nom_sessio || !data.nom_sessio.trim()) {
+    showMessage('Cal escriure el nom de la sessió.', 'error');
+    return;
+  }
+  if (!data.behaviors.length) {
+    showMessage('Cal seleccionar almenys un comportament.', 'error');
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Creant...';
+  }
+  showMessage('Creant la sessió...', 'info');
+  await action(async () => {
+    const details = await server('createSession', data);
+    state.lastCreatedSession = details;
+    await refreshBoot();
+    state.view = 'sessionCreated';
+    render();
+  }, null);
+  if (button) {
+    button.disabled = false;
+    button.textContent = 'Crear sessió';
+  }
+}
+
+async function loadStudentsForCycle() {
+  const cycle = state.boot.cycles.find((c) => c.cicle_id === state.selectedCycle) || state.boot.cycles[0];
+  if (!cycle || !$('#students-for-session')) return;
+  const students = await server('getStudentsByClass', cycle.classe);
+  $('#students-for-session').innerHTML = `<div class="students-check-grid">${students.map((student) => `
+    <label class="student-check-row"><span>${escapeHtml(student.nom_complet)}</span><input type="checkbox" name="heteroStudent" value="${student.alumne_id}"></label>`).join('')}</div>`;
+}
+
+async function enterStudentCode() {
+  await action(async () => {
+    state.enteredSession = await server('getSessionByCode', $('#session-code').value);
+    hydrateRatings(state.enteredSession);
+    state.testMode = false;
+    state.testStudentId = null;
+    state.view = 'studentSession';
+    render();
+  });
+}
+
+async function loadStudentTest(sessioId) {
+  await action(async () => {
+    state.enteredSession = await server('getSessionDetails', sessioId);
+    state.testStudentId = state.enteredSession.students[0]?.alumne_id || null;
+    state.testMode = true;
+    hydrateRatings(state.enteredSession);
+    state.view = 'studentSession';
+    render();
+  });
+}
+
+async function loadTeacherEvaluation(sessioId) {
+  await action(async () => {
+    state.selectedSession = await server('getSessionDetails', sessioId);
+    hydrateRatings(state.selectedSession);
+    state.view = 'teacherEvaluation';
+    render();
+  });
+}
+
+function showAllTeacherStudents() {
+  const details = state.selectedSession;
+  $('#teacher-students').innerHTML = studentRatingCards(details.students, details.behaviors);
+  const button = $('#teacher-student-toggle');
+  if (button) {
+    button.textContent = 'Mostrar només els alumnes seleccionats';
+    button.setAttribute('onclick', 'showSelectedTeacherStudents()');
+  }
+}
+
+function showSelectedTeacherStudents() {
+  const details = state.selectedSession;
+  const selected = new Set(details.heteroStudentIds || []);
+  const students = selected.size ? details.students.filter((student) => selected.has(student.alumne_id)) : details.students;
+  $('#teacher-students').innerHTML = studentRatingCards(students, details.behaviors);
+  const button = $('#teacher-student-toggle');
+  if (button) {
+    button.textContent = 'Mostrar tota la classe';
+    button.setAttribute('onclick', 'showAllTeacherStudents()');
+  }
+}
+
+async function submitStudentRatings() {
+  const ratings = Object.values(state.ratings);
+  await action(async () => {
+    const result = state.testMode
+      ? await server('submitStudentEvaluationsAsTeacher', { sessio_id: state.enteredSession.session.sessio_id, alumne_id: state.testStudentId, ratings })
+      : await server('submitStudentEvaluations', { code: state.enteredSession.session.codi_acces, ratings });
+    showMessage(`Valoracions enviades correctament: ${result.saved}.`, 'success');
+  });
+}
+
+async function submitTeacherRatings() {
+  const ratings = Object.values(state.ratings);
+  await action(async () => {
+    const result = await server('submitTeacherEvaluations', { sessio_id: state.selectedSession.session.sessio_id, ratings });
+    showMessage(`Valoracions enviades correctament: ${result.saved}.`, 'success');
+  });
+}
+
+async function showSessionDashboard(sessioId) {
+  await action(async () => {
+    state.dashboard = await server('getSessionDashboard', sessioId);
+    state.view = 'dashboard';
+    render();
+  });
+}
+
+async function showCycleDashboard(cicleId) {
+  await action(async () => {
+    state.dashboard = await server('getCycleDashboard', cicleId);
+    state.dashboard.respondents = '-';
+    state.dashboard.pending = '-';
+    state.dashboard.globalAverage = '-';
+    state.view = 'dashboard';
+    render();
+  });
+}
+
+async function closeOpenSession(sessioId) {
+  await action(async () => {
+    await server('closeSession', sessioId);
+    await refreshBoot();
+  }, 'Sessió tancada.');
+}
+
+async function openDraftSession(sessioId) {
+  await action(async () => {
+    await server('openSession', sessioId);
+    await refreshBoot();
+  }, 'Sessió oberta.');
+}
+
+async function action(fn, successMessage) {
+  try {
+    await fn();
+    if (successMessage) showMessage(successMessage, 'success');
+  } catch (error) {
+    if (String(error.message || '').includes('sessió ha caducat')) {
+      state.boot = { needsLogin: true };
+      state.token = '';
+      render();
+      showMessage(error.message, 'error');
+      return;
+    }
+    showMessage(error.message, 'error');
+  }
+}
+
+function showMessage(message, type = 'error') {
+  const box = $('#message');
+  if (box) box.innerHTML = `<div class="notice ${type}">${escapeHtml(message)}</div>`;
+}
+
+function roleLabel(role) {
+  return role === 'alumne' ? 'alumne' : role === 'admin' ? 'administrador' : 'professor';
+}
+
+function typeLabel(key) {
+  return {
+    autoavaluacio: 'Autoavaluació',
+    coavaluacio: 'Coavaluació',
+    heteroavaluacio: 'Heteroavaluació'
+  }[key] || key;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+}
+
+function footer() {
+  return `
+    <footer class="felip-app-footer">
+      <a class="felip-license-image-link" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+        <img class="felip-license-image" src="${window.PENTABILITIES_CC_IMAGE || ''}" alt="Creative Commons BY-NC-SA">
+        ${window.PENTABILITIES_CC_IMAGE ? '' : '<span class="cc-fallback">CC BY-NC-SA</span>'}
+      </a>
+      <div class="felip-footer-text">
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>`;
+}
+
+window.addEventListener('load', boot);
+</script>
