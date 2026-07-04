@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const apps = [
         {
             name: 'Pentabilities',
-            path: 'Pentabilities/',
+            path: 'https://ja.cat/pentabilities',
             icon: 'Pentabilities/assets/pentabilities-logo.png',
             description: 'Aplicacio per gestionar cicles, sessions i valoracions de Pentabilities.',
             category: 'Eines de gestió'
