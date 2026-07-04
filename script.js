@@ -9,19 +9,19 @@
         },
         {
             name: "Dashboard d'incidències",
-            path: 'DashboardIncidencies/',
+            path: 'https://ja.cat/comportament',
             description: "Visualitzador de dades d'incidències del centre educatiu.",
             category: 'Gestió de centre'
         },
         {
             name: 'Participem',
-            path: 'Participem/',
+            path: 'https://ja.cat/participem',
             description: "Eina per gestionar la participació de l'alumnat a classe.",
             category: 'Aula i avaluació'
         },
         {
             name: 'Polo App',
-            path: 'acces-polo.html',
+            path: 'https://ja.cat/poloapp',
             icon: 'Polo-App/assets/favicon.svg',
             description: "Registre ràpid del polo de l'alumnat i consulta de resums bàsics.",
             category: 'Gestió de centre'
