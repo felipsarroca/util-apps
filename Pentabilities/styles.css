@@ -1333,11 +1333,12 @@ input:focus, select:focus, textarea:focus {
 }
 
 .login-panel {
+  position: relative;
   width: min(630px, 100%);
   border: 1px solid #c9dbe4;
   border-radius: 8px;
   background: rgba(255,255,255,.97);
-  padding: 22px;
+  padding: 24px 22px 22px;
   box-shadow: 0 16px 38px rgba(31, 111, 139, .14);
 }
 
@@ -1371,25 +1372,26 @@ input:focus, select:focus, textarea:focus {
 }
 
 .login-school {
+  position: absolute;
+  top: 18px;
+  right: 18px;
   display: grid;
   align-items: center;
   justify-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid #e0e8ee;
+  width: 104px;
+  gap: 6px;
   color: #5b6979;
-  font-size: .8rem;
+  font-size: .76rem;
   font-weight: 650;
+  line-height: 1.15;
+  text-align: center;
 }
 
 .login-school-logo {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   max-height: none;
   object-fit: contain;
-  order: -1;
 }
 
 .form-page {
@@ -2025,6 +2027,22 @@ input:focus, select:focus, textarea:focus {
 
   .login-panel {
     padding: 18px;
+  }
+
+  .login-school {
+    top: 12px;
+    right: 12px;
+    width: 88px;
+    font-size: .68rem;
+  }
+
+  .login-school-logo {
+    width: 52px;
+    height: 52px;
+  }
+
+  .login-brand {
+    padding-top: 22px;
   }
 
   .login-penta-logo {

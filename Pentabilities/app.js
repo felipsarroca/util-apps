@@ -141,6 +141,10 @@ function loginView() {
   return `
     <main class="login-shell">
       <section class="login-panel">
+        <div class="login-school">
+          <img class="login-school-logo" src="assets/ramon-pont.png" alt="Escola Ramon Pont">
+          <span>Escola Ramon Pont</span>
+        </div>
         <div class="login-brand">
           <img class="login-penta-logo" src="assets/pentabilities-logo.png" alt="Pentabilities">
           <h1>Pentabilities</h1>
@@ -151,10 +155,6 @@ function loginView() {
           <button id="login-button" type="submit">Entrar</button>
         </form>
         <div id="message" style="margin-top:12px"></div>
-        <div class="login-school">
-          <span>Escola Ramon Pont</span>
-          <img class="login-school-logo" src="assets/ramon-pont.png" alt="Escola Ramon Pont">
-        </div>
       </section>
     </main>`;
 }
