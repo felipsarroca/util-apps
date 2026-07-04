@@ -1296,15 +1296,17 @@ button {
 
 .school-brand {
   display: flex;
+  flex-direction: column-reverse;
   align-items: center;
-  gap: 9px;
+  gap: 5px;
   min-height: 48px;
   border-left: 1px solid #d5e3ea;
   padding-left: 14px;
   color: #274153;
-  font-size: .86rem;
+  font-size: .78rem;
   font-weight: 650;
   white-space: nowrap;
+  text-align: center;
 }
 
 .school-logo {
@@ -2007,6 +2009,10 @@ input:focus, select:focus, textarea:focus {
     align-items: stretch;
     flex-direction: column;
     gap: 9px;
+  }
+
+  .topbar-right > .toolbar {
+    justify-content: flex-end;
   }
 
   .school-brand {
