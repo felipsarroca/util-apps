@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     const apps = [
         {
+            name: 'Pentabilities',
+            path: 'Pentabilities/',
+            icon: 'Pentabilities/assets/pentabilities-logo.png',
+            description: 'Aplicacio per gestionar cicles, sessions i valoracions de Pentabilities.',
+            category: 'Eines de gestió'
+        },
+        {
             name: "Dashboard d'incidències",
             path: 'DashboardIncidencies/',
             description: "Visualitzador de dades d'incidències del centre educatiu.",
