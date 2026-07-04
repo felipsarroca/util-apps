@@ -10,12 +10,14 @@
         {
             name: "Dashboard d'incidències",
             path: 'https://ja.cat/comportament',
+            icon: 'DashboardIncidencies/favicon.svg',
             description: "Visualitzador de dades d'incidències del centre educatiu.",
             category: 'Gestió de centre'
         },
         {
             name: 'Participem',
             path: 'https://ja.cat/participem',
+            icon: 'Participem/favicon.svg',
             description: "Eina per gestionar la participació de l'alumnat a classe.",
             category: 'Aula i avaluació'
         },
