@@ -1,72 +1,72 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     const apps = [
         {
             name: 'Pentabilities',
             path: 'https://ja.cat/pentabilities',
             icon: 'Pentabilities/assets/pentabilities-logo.png',
             description: 'Aplicacio per gestionar cicles, sessions i valoracions de Pentabilities.',
-            category: 'Eines de gestió'
+            category: 'Aula i avaluació'
         },
         {
             name: "Dashboard d'incidències",
             path: 'DashboardIncidencies/',
             description: "Visualitzador de dades d'incidències del centre educatiu.",
-            category: 'Eines de gestió'
+            category: 'Gestió de centre'
         },
         {
             name: 'Participem',
             path: 'Participem/',
             description: "Eina per gestionar la participació de l'alumnat a classe.",
-            category: 'Eines de gestió'
+            category: 'Aula i avaluació'
         },
         {
             name: 'Polo App',
             path: 'acces-polo.html',
             icon: 'Polo-App/assets/favicon.svg',
             description: "Registre ràpid del polo de l'alumnat i consulta de resums bàsics.",
-            category: 'Eines de gestió'
+            category: 'Gestió de centre'
         },
         {
             name: "Gestió d'equips informàtics",
             path: 'https://ja.cat/gestioequips',
             icon: 'Gestio-Equips/favicon.svg',
             description: "Gestió i consulta d'equips informàtics del centre.",
-            category: 'Eines de gestió'
+            category: 'Gestió de centre'
         },
         {
             name: 'Biblioteca de la Sol',
             path: 'https://ja.cat/bibliosol',
             icon: 'BibliotecaSol/assets/logo-sol.svg',
             description: 'Catàleg i gestió de la biblioteca del centre.',
-            category: 'Eines de gestió'
+            category: 'Gestió de centre'
         },
         {
             name: 'BiblioPrompt',
             path: 'https://ja.cat/biblioprompt',
             icon: 'BiblioPrompt/favicon.svg',
             description: 'Biblioteca per recollir, editar i reutilitzar prompts.',
-            category: 'Eines de gestió'
+            category: 'Recursos digitals'
         },
         {
             name: 'AvaluApp',
             path: 'https://ja.cat/avaluapp',
             icon: 'AvaluApp/favicon.svg',
             description: "Anàlisi de qualificacions de grup i informes d'avaluació a partir d'un Excel.",
-            category: 'Eines de gestió'
+            category: 'Aula i avaluació'
         },
         {
             name: 'Massa horària',
             path: 'https://ja.cat/massahoraria',
             icon: 'MassaHoraria/favicon.png',
             description: "Gestió de la massa horària del centre, assignacions per curs i resum del professorat.",
-            category: 'Eines de gestió'
+            category: 'Gestió de centre'
         },
         {
             name: 'SynApp',
             path: 'https://ja.cat/synapp',
             icon: 'SynApp/favicon.svg',
             description: "Generador de grups cooperatius per a l'Escola Ramon Pont.",
-            category: 'Eines de gestió'
+            category: 'Aula i avaluació'
         },
         {
             name: 'DescarregApp',
