@@ -24,6 +24,6 @@ jobs:
             --request POST \
             --header "apikey: $SUPABASE_PUBLISHABLE_KEY" \
             --header "Content-Type: application/json" \
-            --data '{}' \
+            --data '{"p_request":"github-actions"}' \
             "$SUPABASE_URL/rest/v1/rpc/keep_alive")
           echo "$response" | jq -e '.ok == true' >/dev/null
