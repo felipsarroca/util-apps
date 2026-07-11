@@ -1,0 +1,29 @@
+name: Pentabilities Supabase keep alive
+
+on:
+  schedule:
+    - cron: "23 5,13,21 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query Pentabilities database
+        env:
+          SUPABASE_URL: https://obkkgzjowbhxfxrsqske.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_lpLH0NBC4JlzQ_DJBHAm3A_BlEL_QLc
+        run: |
+          response=$(curl --fail-with-body --show-error --silent \
+            --retry 3 \
+            --retry-all-errors \
+            --request POST \
+            --header "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "$SUPABASE_URL/rest/v1/rpc/keep_alive")
+          echo "$response" | jq -e '.ok == true' >/dev/null
