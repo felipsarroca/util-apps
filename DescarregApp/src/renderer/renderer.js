@@ -13,6 +13,7 @@ const videoFormatPanel = document.querySelector("#videoFormatPanel");
 const videoFormat = document.querySelector("#videoFormat");
 const audioQualityPanel = document.querySelector("#audioQualityPanel");
 const audioBitrate = document.querySelector("#audioBitrate");
+const appVersion = document.querySelector("#appVersion");
 const formatButtons = [...document.querySelectorAll(".format-option")];
 
 const state = {
@@ -164,15 +165,11 @@ function renderResults() {
     title.className = "result-title";
     title.textContent = item.title || item.url;
 
-    const url = document.createElement("p");
-    url.className = "result-url";
-    url.textContent = item.url;
-
     const message = document.createElement("p");
     message.className = "result-message";
     message.textContent = item.message || "";
 
-    details.append(title, url, message);
+    details.append(title, message);
 
     if (item.details && item.status === "error") {
       const errorDetails = document.createElement("details");
@@ -338,7 +335,11 @@ async function refreshToolsStatus() {
 }
 
 async function boot() {
-  const preferences = await window.descarregApp.getPreferences();
+  const [appInfo, preferences] = await Promise.all([
+    window.descarregApp.getAppInfo(),
+    window.descarregApp.getPreferences()
+  ]);
+  appVersion.textContent = `v${appInfo.version}`;
   state.outputFormat = preferences.outputFormat || "video";
   state.audioBitrate = preferences.audioBitrate || "320";
   state.videoFormat = preferences.videoFormat || "mp4";
@@ -354,6 +355,9 @@ async function boot() {
   refreshToolsStatus();
 
   window.descarregApp.onDownloadUpdate(applyDownloadUpdate);
+  window.descarregApp.onAppStatus((message) => {
+    globalStatus.textContent = message;
+  });
 }
 
 linksInput.addEventListener("input", () => {

@@ -8,17 +8,34 @@ New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
 New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
 
 $ytDlpUrl = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+$denoZipUrl = "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip"
 $ffmpegZipUrl = "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
 
 $ytDlpPath = Join-Path $toolsDir "yt-dlp.exe"
+$denoZipPath = Join-Path $tempDir "deno.zip"
+$denoExtractDir = Join-Path $tempDir "deno"
 $ffmpegZipPath = Join-Path $tempDir "ffmpeg-release-essentials.zip"
 $ffmpegExtractDir = Join-Path $tempDir "ffmpeg"
 
 Write-Host "Descarregant yt-dlp..."
-& curl.exe -L $ytDlpUrl -o $ytDlpPath
+& curl.exe -fL $ytDlpUrl -o $ytDlpPath
+if ($LASTEXITCODE -ne 0) {
+  throw "No s'ha pogut descarregar yt-dlp."
+}
+
+Write-Host "Descarregant Deno..."
+& curl.exe -fL $denoZipUrl -o $denoZipPath
+if ($LASTEXITCODE -ne 0) {
+  throw "No s'ha pogut descarregar Deno."
+}
+Expand-Archive -LiteralPath $denoZipPath -DestinationPath $denoExtractDir -Force
+Copy-Item -LiteralPath (Join-Path $denoExtractDir "deno.exe") -Destination (Join-Path $toolsDir "deno.exe") -Force
 
 Write-Host "Descarregant FFmpeg..."
-& curl.exe -L $ffmpegZipUrl -o $ffmpegZipPath
+& curl.exe -fL $ffmpegZipUrl -o $ffmpegZipPath
+if ($LASTEXITCODE -ne 0) {
+  throw "No s'ha pogut descarregar FFmpeg."
+}
 
 if (Test-Path $ffmpegExtractDir) {
   Remove-Item -LiteralPath $ffmpegExtractDir -Recurse -Force

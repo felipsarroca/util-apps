@@ -1,9 +1,14 @@
-const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, Menu, net, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
+const { Readable } = require("stream");
+const { pipeline } = require("stream/promises");
 
 const APP_NAME = "DescarregApp";
+const RELEASES_API_URL = "https://api.github.com/repos/felipsarroca/util-apps/releases?per_page=100";
+const RELEASE_TAG_PATTERN = /^descarregapp-v(\d+\.\d+\.\d+)$/i;
+const INSTALLER_ASSET_NAME = "DescarregApp-Setup.exe";
 
 app.disableHardwareAcceleration();
 app.commandLine.appendSwitch("disable-gpu");
@@ -14,6 +19,7 @@ let mainWindow;
 let queueRunning = false;
 let cancelRequested = false;
 let activeDownload = null;
+let updateRunning = false;
 const downloadQueue = [];
 
 function getPlatformFolder() {
@@ -61,9 +67,23 @@ function getToolPaths() {
 
   return {
     ytDlp: getToolPath("yt-dlp"),
+    deno: getToolPath("deno"),
     ffmpeg,
     ffmpegLocation: path.basename(ffmpeg) === ffmpeg ? ffmpeg : path.dirname(ffmpeg)
   };
+}
+
+function getYtDlpRuntimeArgs(tools) {
+  const denoRuntime = path.basename(tools.deno) === tools.deno
+    ? "deno"
+    : `deno:${tools.deno}`;
+
+  return [
+    "--encoding",
+    "utf-8",
+    "--js-runtimes",
+    denoRuntime
+  ];
 }
 
 function getConfigPath() {
@@ -107,6 +127,217 @@ function savePreferences(preferences) {
   fs.mkdirSync(app.getPath("userData"), { recursive: true });
   fs.writeFileSync(getConfigPath(), JSON.stringify(next, null, 2), "utf8");
   return next;
+}
+
+function sendAppStatus(message) {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  mainWindow.webContents.send("app:status", message);
+}
+
+function parseVersion(version) {
+  const parts = String(version).split(".").map((part) => Number(part));
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part) || part < 0)) {
+    return null;
+  }
+
+  return parts;
+}
+
+function compareVersions(left, right) {
+  const leftParts = parseVersion(left);
+  const rightParts = parseVersion(right);
+
+  if (!leftParts || !rightParts) {
+    return 0;
+  }
+
+  for (let index = 0; index < 3; index += 1) {
+    if (leftParts[index] !== rightParts[index]) {
+      return leftParts[index] > rightParts[index] ? 1 : -1;
+    }
+  }
+
+  return 0;
+}
+
+async function getLatestAppRelease() {
+  const response = await net.fetch(RELEASES_API_URL, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      "User-Agent": `${APP_NAME}/${app.getVersion()}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub ha respost amb el codi ${response.status}.`);
+  }
+
+  const releases = await response.json();
+  const candidates = releases
+    .filter((release) => !release.draft && !release.prerelease)
+    .map((release) => {
+      const match = String(release.tag_name || "").match(RELEASE_TAG_PATTERN);
+      if (!match) {
+        return null;
+      }
+
+      const asset = release.assets?.find((item) => item.name === INSTALLER_ASSET_NAME);
+      if (!asset) {
+        return null;
+      }
+
+      return {
+        version: match[1],
+        pageUrl: release.html_url,
+        asset
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => compareVersions(right.version, left.version));
+
+  return candidates[0] || null;
+}
+
+async function downloadInstaller(release) {
+  const updateDir = path.join(app.getPath("temp"), `${APP_NAME}-update-${release.version}`);
+  const installerPath = path.join(updateDir, INSTALLER_ASSET_NAME);
+  await fs.promises.mkdir(updateDir, { recursive: true });
+
+  const response = await net.fetch(release.asset.browser_download_url, {
+    headers: {
+      Accept: "application/octet-stream",
+      "User-Agent": `${APP_NAME}/${app.getVersion()}`
+    }
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`No s'ha pogut descarregar l'instal·lador (codi ${response.status}).`);
+  }
+
+  const totalBytes = Number(response.headers.get("content-length")) || Number(release.asset.size) || 0;
+  let downloadedBytes = 0;
+  const source = Readable.fromWeb(response.body);
+
+  source.on("data", (chunk) => {
+    downloadedBytes += chunk.length;
+    if (totalBytes > 0 && mainWindow && !mainWindow.isDestroyed()) {
+      const progress = Math.min(1, downloadedBytes / totalBytes);
+      mainWindow.setProgressBar(progress);
+      sendAppStatus(`Descarregant l'actualització: ${Math.round(progress * 100)}%`);
+    }
+  });
+
+  try {
+    await pipeline(source, fs.createWriteStream(installerPath));
+  } finally {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setProgressBar(-1);
+    }
+  }
+
+  const stat = await fs.promises.stat(installerPath);
+  if (release.asset.size && stat.size !== release.asset.size) {
+    await fs.promises.rm(installerPath, { force: true });
+    throw new Error("La mida de l'instal·lador descarregat no coincideix amb la publicada.");
+  }
+
+  return installerPath;
+}
+
+async function checkForAppUpdate() {
+  if (updateRunning) {
+    sendAppStatus("Ja s'està comprovant o descarregant una actualització.");
+    return;
+  }
+
+  updateRunning = true;
+  sendAppStatus("Comprovant si hi ha actualitzacions...");
+
+  try {
+    const release = await getLatestAppRelease();
+    const currentVersion = app.getVersion();
+
+    if (!release || compareVersions(release.version, currentVersion) <= 0) {
+      sendAppStatus(`DescarregApp ${currentVersion} està actualitzada.`);
+      await dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "Actualització",
+        message: "Ja tens l'última versió de DescarregApp.",
+        detail: `Versió instal·lada: ${currentVersion}`
+      });
+      return;
+    }
+
+    if (!app.isPackaged) {
+      await dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "Actualització disponible",
+        message: `Hi ha disponible la versió ${release.version}.`,
+        detail: "L'app s'està executant en mode de desenvolupament i no instal·larà l'actualització."
+      });
+      return;
+    }
+
+    if (queueRunning) {
+      await dialog.showMessageBox(mainWindow, {
+        type: "warning",
+        title: "Descàrregues en curs",
+        message: "Espera que acabi la cua abans d'actualitzar DescarregApp."
+      });
+      return;
+    }
+
+    const confirmation = await dialog.showMessageBox(mainWindow, {
+      type: "question",
+      buttons: ["Descarregar i instal·lar", "Ara no"],
+      defaultId: 0,
+      cancelId: 1,
+      title: "Actualització disponible",
+      message: `Hi ha disponible DescarregApp ${release.version}.`,
+      detail: `Versió instal·lada: ${currentVersion}. L'app descarregarà l'instal·lador oficial de GitHub.`
+    });
+
+    if (confirmation.response !== 0) {
+      sendAppStatus("Actualització ajornada.");
+      return;
+    }
+
+    const installerPath = await downloadInstaller(release);
+    const installConfirmation = await dialog.showMessageBox(mainWindow, {
+      type: "question",
+      buttons: ["Instal·lar ara", "Cancel·lar"],
+      defaultId: 0,
+      cancelId: 1,
+      title: "Actualització preparada",
+      message: `DescarregApp ${release.version} ja s'ha descarregat.`,
+      detail: "L'aplicació es tancarà i s'obrirà l'instal·lador."
+    });
+
+    if (installConfirmation.response !== 0) {
+      sendAppStatus("Actualització descarregada però no instal·lada.");
+      return;
+    }
+
+    const installer = spawn(installerPath, [], {
+      detached: true,
+      stdio: "ignore"
+    });
+    installer.unref();
+    app.quit();
+  } catch (error) {
+    sendAppStatus("No s'ha pogut completar l'actualització.");
+    await dialog.showMessageBox(mainWindow, {
+      type: "error",
+      title: "Error d'actualització",
+      message: "No s'ha pogut comprovar o descarregar l'actualització.",
+      detail: error.message
+    });
+  } finally {
+    updateRunning = false;
+  }
 }
 
 function setupApplicationMenu() {
@@ -195,6 +426,20 @@ function setupApplicationMenu() {
       ]
     },
     {
+      label: "Actualitza",
+      submenu: [
+        {
+          label: "Comprova si hi ha actualitzacions",
+          click: () => checkForAppUpdate()
+        },
+        { type: "separator" },
+        {
+          label: `Versió ${app.getVersion()}`,
+          enabled: false
+        }
+      ]
+    },
+    {
       label: "Ajuda",
       submenu: [
         {
@@ -252,8 +497,13 @@ function sendDownloadEvent(payload) {
 function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, videoFormat) {
   const outputTemplate = path.join(destinationFolder, "%(title)s.%(ext)s");
   const commonArgs = [
+    ...getYtDlpRuntimeArgs(tools),
     "--newline",
+    "--no-color",
     "--no-playlist",
+    "--progress",
+    "--progress-template",
+    "download:PROGRESS:%(progress._percent_str)s",
     "--ffmpeg-location",
     tools.ffmpegLocation
   ];
@@ -281,6 +531,8 @@ function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, vid
     "--format-sort-force",
     "--print",
     "before_dl:FORMAT:%(format)s",
+    "--print",
+    "before_dl:DOWNLOADS:%(requested_formats)j",
     "--merge-output-format",
     videoFormat,
     "--remux-video",
@@ -292,7 +544,7 @@ function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, vid
 }
 
 function parseProgress(line) {
-  const percentMatch = line.match(/\[download\]\s+([0-9]+(?:\.[0-9]+)?)%/);
+  const percentMatch = line.match(/(?:^PROGRESS:|\[download\]\s+)(?:\s*)([0-9]+(?:\.[0-9]+)?)%/);
   if (!percentMatch) {
     return null;
   }
@@ -328,9 +580,31 @@ function parseSelectedFormat(line) {
   return line.slice(prefix.length).trim();
 }
 
+function parseDownloadWeights(line) {
+  const prefix = "DOWNLOADS:";
+  if (!line.startsWith(prefix)) {
+    return null;
+  }
+
+  try {
+    const formats = JSON.parse(line.slice(prefix.length));
+    if (!Array.isArray(formats) || formats.length === 0) {
+      return null;
+    }
+
+    return formats.map((format) => {
+      const size = Number(format.filesize || format.filesize_approx);
+      return Number.isFinite(size) && size > 0 ? size : 1;
+    });
+  } catch (error) {
+    return null;
+  }
+}
+
 function fetchTitle(url, tools) {
   return new Promise((resolve) => {
     const child = spawn(tools.ytDlp, [
+      ...getYtDlpRuntimeArgs(tools),
       "--no-playlist",
       "--skip-download",
       "--print",
@@ -341,9 +615,10 @@ function fetchTitle(url, tools) {
     });
 
     let output = "";
+    child.stdout.setEncoding("utf8");
 
     child.stdout.on("data", (chunk) => {
-      output += chunk.toString();
+      output += chunk;
     });
 
     child.on("error", () => resolve(""));
@@ -410,6 +685,9 @@ async function runDownload(job, tools) {
     let lastError = "";
     let completed = false;
     let selectedFormat = "";
+    let downloadWeights = [1];
+    let downloadPartIndex = 0;
+    let lastRawProgress = 0;
 
     sendDownloadEvent({
       id: item.id,
@@ -418,52 +696,97 @@ async function runDownload(job, tools) {
       message: "Iniciant descàrrega"
     });
 
+    let stdoutBuffer = "";
+
+    const processOutputLine = (line) => {
+      const parsedTitle = parseTitle(line);
+      const parsedFormat = parseSelectedFormat(line);
+      const parsedWeights = parseDownloadWeights(line);
+      const rawProgress = parseProgress(line);
+
+      if (parsedTitle) {
+        sendDownloadEvent({
+          id: item.id,
+          title: parsedTitle,
+          status: "downloading"
+        });
+      }
+
+      if (parsedFormat) {
+        selectedFormat = parsedFormat;
+        sendDownloadEvent({
+          id: item.id,
+          status: "downloading",
+          message: `Format triat: ${parsedFormat}`
+        });
+      }
+
+      if (parsedWeights) {
+        downloadWeights = parsedWeights;
+      }
+
+      if (rawProgress !== null) {
+        if (
+          rawProgress + 1 < lastRawProgress
+          && lastRawProgress >= 90
+          && downloadPartIndex < downloadWeights.length - 1
+        ) {
+          downloadPartIndex += 1;
+        }
+
+        lastRawProgress = rawProgress;
+        const totalWeight = downloadWeights.reduce((sum, weight) => sum + weight, 0);
+        const completedWeight = downloadWeights
+          .slice(0, downloadPartIndex)
+          .reduce((sum, weight) => sum + weight, 0);
+        const currentWeight = downloadWeights[downloadPartIndex] || 1;
+        const overallProgress = totalWeight > 0
+          ? ((completedWeight + (currentWeight * rawProgress / 100)) / totalWeight) * 100
+          : rawProgress;
+        const partMessage = downloadWeights.length > 1
+          ? `Descarregant (${downloadPartIndex + 1}/${downloadWeights.length})`
+          : "Descarregant";
+
+        sendDownloadEvent({
+          id: item.id,
+          progress: Math.max(0, Math.min(100, overallProgress)),
+          status: "downloading",
+          message: partMessage
+        });
+      }
+
+      if (line.includes("[ExtractAudio]") || line.includes("[Merger]")) {
+        sendDownloadEvent({
+          id: item.id,
+          status: "downloading",
+          message: "Processant el fitxer"
+        });
+      }
+    };
+
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+
     child.stdout.on("data", (chunk) => {
-      const lines = chunk.toString().split(/\r?\n/).filter(Boolean);
+      stdoutBuffer += chunk;
+      const lines = stdoutBuffer.split(/\r?\n/);
+      stdoutBuffer = lines.pop() || "";
 
       for (const line of lines) {
-        const parsedTitle = parseTitle(line);
-        const parsedFormat = parseSelectedFormat(line);
-        const progress = parseProgress(line);
-
-        if (parsedTitle) {
-          sendDownloadEvent({
-            id: item.id,
-            title: parsedTitle,
-            status: "downloading"
-          });
-        }
-
-        if (parsedFormat) {
-          selectedFormat = parsedFormat;
-          sendDownloadEvent({
-            id: item.id,
-            status: "downloading",
-            message: `Format triat: ${parsedFormat}`
-          });
-        }
-
-        if (progress !== null) {
-          sendDownloadEvent({
-            id: item.id,
-            progress,
-            status: "downloading",
-            message: "Descarregant"
-          });
-        }
-
-        if (line.includes("[ExtractAudio]") || line.includes("[Merger]")) {
-          sendDownloadEvent({
-            id: item.id,
-            status: "downloading",
-            message: "Processant el fitxer"
-          });
+        if (line) {
+          processOutputLine(line);
         }
       }
     });
 
+    child.stdout.on("end", () => {
+      if (stdoutBuffer) {
+        processOutputLine(stdoutBuffer);
+      }
+    });
+
     child.stderr.on("data", (chunk) => {
-      lastError += chunk.toString();
+      lastError += chunk;
     });
 
     child.on("error", (error) => {
@@ -545,14 +868,18 @@ function commandExists(command, versionArgs = ["--version"]) {
 
 async function checkRequiredTools() {
   const tools = getToolPaths();
-  const [hasYtDlp, hasFfmpeg] = await Promise.all([
+  const [hasYtDlp, hasDeno, hasFfmpeg] = await Promise.all([
     commandExists(tools.ytDlp, ["--version"]),
+    commandExists(tools.deno, ["--version"]),
     commandExists(tools.ffmpeg, ["-version"])
   ]);
 
   const missing = [];
   if (!hasYtDlp) {
     missing.push("yt-dlp");
+  }
+  if (!hasDeno) {
+    missing.push("Deno");
   }
   if (!hasFfmpeg) {
     missing.push("ffmpeg");
@@ -637,6 +964,11 @@ app.on("window-all-closed", () => {
 
 ipcMain.handle("preferences:get", () => loadPreferences());
 
+ipcMain.handle("app:info", () => ({
+  name: APP_NAME,
+  version: app.getVersion()
+}));
+
 ipcMain.handle("preferences:save", (_event, preferences) => {
   return savePreferences(preferences);
 });
@@ -707,6 +1039,7 @@ ipcMain.handle("tools:status", async () => {
     missing: toolsCheck.missing,
     tools: {
       ytDlp: toolsCheck.tools.ytDlp,
+      deno: toolsCheck.tools.deno,
       ffmpeg: toolsCheck.tools.ffmpeg
     }
   };

@@ -11,6 +11,8 @@ exports.default = async function afterPack(context) {
 
   await rcedit(exePath, {
     icon: iconPath,
+    "file-version": context.packager.appInfo.version,
+    "product-version": context.packager.appInfo.version,
     "version-string": {
       FileDescription: "DescarregApp",
       ProductName: "DescarregApp",

@@ -1,6 +1,6 @@
 # DescarregApp
 
-DescarregApp és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega i `FFmpeg` per convertir o fusionar fitxers.
+DescarregApp 1.2.0 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
 
 ![Captura principal de DescarregApp](docs/images/descarregapp-main.png)
 
@@ -17,9 +17,11 @@ DescarregApp és una aplicació d'escriptori feta amb Electron per descarregar v
 - Botó per obrir directament la carpeta de descàrrega.
 - Botó per cancel·lar la cua.
 - Resultats amb estat, percentatge i barra de progrés.
+- Progrés real de cada transferència.
 - Detall desplegable d'errors.
 - Preferències persistents.
-- `yt-dlp` i `FFmpeg` inclosos dins l'instal·lador de Windows.
+- Comprovació i instal·lació de noves versions des del menú `Actualitza`.
+- `yt-dlp`, Deno i `FFmpeg` inclosos dins l'instal·lador de Windows.
 
 ## Instal·lació per a usuaris
 
@@ -32,7 +34,7 @@ DescarregApp-Setup.exe
 Quan estigui publicat a GitHub Releases, l'enllaç estable recomanat serà:
 
 ```text
-https://github.com/USUARI/REPOSITORI/releases/latest/download/DescarregApp-Setup.exe
+https://github.com/felipsarroca/util-apps/releases/download/descarregapp-latest/DescarregApp-Setup.exe
 ```
 
 Aquest és l'enllaç ideal per crear un accés directe amb `ja.cat`, per exemple:
@@ -41,7 +43,17 @@ Aquest és l'enllaç ideal per crear un accés directe amb `ja.cat`, per exemple
 https://ja.cat/descarregapp
 ```
 
-No cal instal·lar Node.js, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari final. L'instal·lador ja inclou les eines necessàries.
+No cal instal·lar Node.js, Deno, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari final. L'instal·lador ja inclou les eines necessàries.
+
+## Actualitzacions
+
+El menú `Actualitza > Comprova si hi ha actualitzacions` consulta les releases públiques del repositori i només té en compte les etiquetes amb aquest format:
+
+```text
+descarregapp-v1.2.0
+```
+
+Si hi ha una versió superior, l'app descarrega el fitxer `DescarregApp-Setup.exe`, en comprova la mida i permet obrir l'instal·lador. La primera instal·lació de la versió 1.2.0 s'ha de fer manualment; a partir d'aquesta versió, les actualitzacions es poden iniciar des de l'app.
 
 ## Ús bàsic
 
@@ -121,6 +133,7 @@ DescarregApp/
 ├─ resources/
 │  └─ bin/
 │     └─ win/
+│        ├─ deno.exe
 │        ├─ ffmpeg.exe
 │        └─ yt-dlp.exe
 ├─ scripts/
@@ -149,7 +162,7 @@ Per desenvolupar l'aplicació cal tenir instal·lat:
 - Node.js
 - npm
 
-Els binaris de `yt-dlp` i `FFmpeg` es poden descarregar amb un script del projecte.
+Els binaris de `yt-dlp`, Deno i `FFmpeg` es poden descarregar amb un script del projecte.
 
 ### Instal·lació del projecte
 
@@ -166,6 +179,7 @@ npm.cmd run tools:download
 Això descarrega:
 
 - `resources/bin/win/yt-dlp.exe`
+- `resources/bin/win/deno.exe`
 - `resources/bin/win/ffmpeg.exe`
 
 ### Executar en mode desenvolupament
@@ -209,7 +223,7 @@ npm.cmd run build:win
 
 4. Ves al repositori de GitHub.
 5. Entra a `Releases`.
-6. Crea una nova release, per exemple `v0.1.0`.
+6. Crea una nova release amb el prefix propi de l'app, per exemple `descarregapp-v1.2.0`.
 7. Adjunta aquest fitxer:
 
 ```text
@@ -218,10 +232,14 @@ dist/DescarregApp-Setup.exe
 
 8. Publica la release.
 
-Enllaç directe recomanat per a l'última versió:
+El número de l'etiqueta i la versió de `package.json` han de coincidir. L'actualitzador ignora les releases d'altres aplicacions del repositori.
+
+Quan es publica una release amb el prefix `descarregapp-v`, el workflow `descarregapp-stable-release.yml` copia automàticament l'instal·lador a la release fixa `descarregapp-latest`. Això manté una URL de descàrrega permanent encara que després es publiquin releases d'altres aplicacions.
+
+Pàgina recomanada per obtenir l'última versió:
 
 ```text
-https://github.com/USUARI/REPOSITORI/releases/latest/download/DescarregApp-Setup.exe
+https://github.com/felipsarroca/util-apps/releases/download/descarregapp-latest/DescarregApp-Setup.exe
 ```
 
 Aquest és l'enllaç que pots fer servir a `ja.cat`.
@@ -249,7 +267,7 @@ No cal pujar:
 
 La carpeta `dist/` només serveix per generar l'instal·lador localment. L'instal·lador final s'ha d'adjuntar a una release de GitHub.
 
-Els binaris locals de `yt-dlp` i `FFmpeg` tampoc s'han de pujar al repositori. Especialment `ffmpeg.exe`, que pesa més de 100 MB i GitHub no l'accepta com a fitxer normal. Quan algú vulgui reconstruir l'app des del codi, haurà d'executar:
+Els binaris locals de `yt-dlp`, Deno i `FFmpeg` tampoc s'han de pujar al repositori. Especialment `ffmpeg.exe`, que pesa més de 100 MB i GitHub no l'accepta com a fitxer normal. Quan algú vulgui reconstruir l'app des del codi, haurà d'executar:
 
 ```powershell
 npm.cmd run tools:download

@@ -1,6 +1,6 @@
 {
   "name": "descarregapp",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "description": "Aplicacio d'escriptori per descarregar video i audio amb yt-dlp.",
   "main": "src/main.js",
   "author": "Felip Sarroca",
@@ -62,5 +62,10 @@
       ],
       "category": "Utility"
     }
+  },
+  "allowScripts": {
+    "electron@41.2.1": true,
+    "sharp@0.34.5": true,
+    "electron-winstaller@5.4.0": true
   }
 }

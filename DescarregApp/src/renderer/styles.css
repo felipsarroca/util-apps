@@ -105,6 +105,24 @@ h1 {
   line-height: 1.1;
 }
 
+.brand-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e1f3f0;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 h2 {
   font-size: 20px;
   line-height: 1.2;
@@ -358,16 +376,16 @@ select:focus {
 
 .results-list {
   display: grid;
-  gap: 10px;
+  gap: 7px;
 }
 
 .result-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 132px;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) 118px;
+  gap: 9px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 14px;
+  padding: 9px 10px;
   background: #ffffff;
 }
 
@@ -377,20 +395,23 @@ select:focus {
 
 .result-title {
   overflow-wrap: anywhere;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.25;
 }
 
 .result-url,
 .result-message {
   overflow-wrap: anywhere;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.25;
 }
 
 .result-status {
   display: grid;
   justify-items: end;
   align-content: start;
-  gap: 6px;
+  gap: 4px;
 }
 
 .status-pill {

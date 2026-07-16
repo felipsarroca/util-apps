@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("descarregApp", {
+  getAppInfo: () => ipcRenderer.invoke("app:info"),
   getPreferences: () => ipcRenderer.invoke("preferences:get"),
   savePreferences: (preferences) => ipcRenderer.invoke("preferences:save", preferences),
   selectFolder: () => ipcRenderer.invoke("folder:select"),
@@ -13,5 +14,10 @@ contextBridge.exposeInMainWorld("descarregApp", {
     const listener = (_event, payload) => callback(payload);
     ipcRenderer.on("download:update", listener);
     return () => ipcRenderer.removeListener("download:update", listener);
+  },
+  onAppStatus: (callback) => {
+    const listener = (_event, message) => callback(message);
+    ipcRenderer.on("app:status", listener);
+    return () => ipcRenderer.removeListener("app:status", listener);
   }
 });

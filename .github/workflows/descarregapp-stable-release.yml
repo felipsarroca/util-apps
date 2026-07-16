@@ -1,0 +1,52 @@
+name: Actualitza la descàrrega estable de DescarregApp
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish-stable-download:
+    if: startsWith(github.event.release.tag_name, 'descarregapp-v')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      SOURCE_TAG: ${{ github.event.release.tag_name }}
+      STABLE_TAG: descarregapp-latest
+      INSTALLER_NAME: DescarregApp-Setup.exe
+
+    steps:
+      - name: Descarrega l'instal·lador de la versió publicada
+        run: |
+          mkdir stable-release
+          gh release download "$SOURCE_TAG" \
+            --repo "$REPOSITORY" \
+            --pattern "$INSTALLER_NAME" \
+            --dir stable-release
+
+      - name: Actualitza la descàrrega estable
+        run: |
+          NOTES="Descàrrega estable de DescarregApp. Versió actual: $SOURCE_TAG."
+
+          if gh release view "$STABLE_TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$STABLE_TAG" "stable-release/$INSTALLER_NAME" \
+              --repo "$REPOSITORY" \
+              --clobber
+            gh release edit "$STABLE_TAG" \
+              --repo "$REPOSITORY" \
+              --title "DescarregApp - descàrrega estable" \
+              --notes "$NOTES" \
+              --latest=false
+          else
+            gh release create "$STABLE_TAG" \
+              --repo "$REPOSITORY" \
+              --target "${{ github.event.release.target_commitish }}" \
+              --title "DescarregApp - descàrrega estable" \
+              --notes "$NOTES" \
+              --latest=false
+            gh release upload "$STABLE_TAG" "stable-release/$INSTALLER_NAME" \
+              --repo "$REPOSITORY"
+          fi
