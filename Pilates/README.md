@@ -6,7 +6,7 @@ Aplicació web instal·lable per trobar, seguir i reprendre una selecció de cla
 
 - Recomanació de la sessió següent amb una explicació clara.
 - Repte d'iniciació de 15 dies, progressió per als genolls i progressió intermèdia.
-- Col·leccions de cos complet, principiants, sessions curtes i fonaments.
+- Col·leccions de cos complet, nivell intermedi, principiants, sessions curtes i fonaments.
 - Progrés independent per voltes, repeticions i historial reversible.
 - Reproductor de YouTube en un mode de sessió sense distraccions.
 - Preferits, cerca i filtres.

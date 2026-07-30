@@ -4,6 +4,9 @@ const path = require("path");
 const http = require("http");
 
 const root = path.resolve(__dirname, "..");
+const host = "127.0.0.1";
+const port = Number(process.env.PILATES_TEST_PORT || 4173);
+const baseUrl = `http://${host}:${port}`;
 const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".webmanifest": "application/manifest+json" };
 const server = http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
@@ -14,7 +17,7 @@ const server = http.createServer((request, response) => {
 });
 
 (async () => {
-  await new Promise(resolve => server.listen(4173, "127.0.0.1", resolve));
+  await new Promise(resolve => server.listen(port, host, resolve));
   const browser = await chromium.launch({ headless: true, executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
   const results = { consoleErrors: [], pageErrors: [], checks: [] };
   const check = (condition, label) => {
@@ -27,11 +30,14 @@ const server = http.createServer((request, response) => {
     const page = await context.newPage();
     page.on("console", message => { if (message.type() === "error") results.consoleErrors.push(message.text()); });
     page.on("pageerror", error => results.pageErrors.push(error.message));
-    await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
 
     check(await page.title() === "Pilates a mà", "títol correcte");
     check(await page.locator(".hero-card").count() === 1, "recomanació principal visible");
-    check(await page.locator(".quick-card").count() === 5, "cinc accessos ràpids");
+    check(await page.evaluate(() => window.PILATES_CATALOG.videos.length === 92), "noranta-dues classes al catàleg");
+    check(await page.locator(".quick-card").count() === 6, "sis accessos ràpids");
+    check(await page.locator(".app-footer > div > p").count() === 2, "peu de pàgina en dues línies");
+    check(await page.locator(".app-footer").evaluate(el => getComputedStyle(el).flexDirection === "row"), "icona a l'esquerra del text al peu mòbil");
     check(await page.locator("body").evaluate(el => el.scrollWidth <= el.clientWidth), "sense desbordament horitzontal en mòbil");
     fs.mkdirSync(path.join(__dirname, "artifacts"), { recursive: true });
     await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile-home.png"), fullPage: true });
@@ -90,29 +96,29 @@ const server = http.createServer((request, response) => {
 
     const desktop = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     desktop.on("pageerror", error => results.pageErrors.push(error.message));
-    await desktop.goto("http://127.0.0.1:4173/#avui", { waitUntil: "networkidle" });
+    await desktop.goto(`${baseUrl}/#avui`, { waitUntil: "networkidle" });
     check(await desktop.locator("body").evaluate(el => el.scrollWidth <= el.clientWidth), "sense desbordament horitzontal en escriptori");
     await desktop.screenshot({ path: path.join(__dirname, "artifacts", "desktop.png"), fullPage: true });
 
-    const manifest = await page.request.get("http://127.0.0.1:4173/manifest.webmanifest");
+    const manifest = await page.request.get(`${baseUrl}/manifest.webmanifest`);
     check(manifest.ok(), "manifest accessible");
-    const sw = await page.request.get("http://127.0.0.1:4173/sw.js");
+    const sw = await page.request.get(`${baseUrl}/sw.js`);
     check(sw.ok(), "service worker accessible");
 
     const offlineContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const offlinePage = await offlineContext.newPage();
-    await offlinePage.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+    await offlinePage.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     await offlinePage.evaluate(() => navigator.serviceWorker.ready);
     await offlinePage.reload({ waitUntil: "networkidle" });
     await offlineContext.setOffline(true);
+    check(await offlinePage.locator("#connection-banner").isVisible(), "avís de connexió visible");
     await offlinePage.reload({ waitUntil: "domcontentloaded" });
     check(await offlinePage.locator(".hero-card").count() === 1, "catàleg disponible sense connexió");
-    check(await offlinePage.locator("#connection-banner").isVisible(), "avís de connexió visible");
     await offlineContext.close();
 
     const narrowContext = await browser.newContext({ viewport: { width: 320, height: 720 } });
     const narrowPage = await narrowContext.newPage();
-    await narrowPage.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
+    await narrowPage.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
     await narrowPage.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
     const reflow = await narrowPage.evaluate(() => ({ ok: document.body.scrollWidth <= document.body.clientWidth, body: [document.body.scrollWidth, document.body.clientWidth], offenders: [...document.querySelectorAll("body *")].filter(el => { const r = el.getBoundingClientRect(); return r.right > innerWidth + 1 || r.left < -1; }).slice(0, 8).map(el => `${el.tagName}.${el.className}`) }));
     check(reflow.ok, `reflow sense desbordament a 320 px amb text ampliat: ${JSON.stringify(reflow)}`);
