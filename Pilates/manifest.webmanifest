@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "Pilates a mà",
+  "short_name": "Pilates",
+  "description": "Les teves classes de Pilates, ordenades i sempre a mà.",
+  "lang": "ca",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f3ea",
+  "theme_color": "#164f4a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Continua", "short_name": "Continua", "url": "./#avui", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Explora", "short_name": "Explora", "url": "./#explora", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

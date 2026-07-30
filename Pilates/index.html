@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#164f4a">
+  <meta name="description" content="Les teves classes de Pilates, ordenades i sempre a mà.">
+  <title>Pilates a mà</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://i.ytimg.com">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Salta al contingut</a>
+
+  <header class="app-header">
+    <a class="brand" href="#avui" aria-label="Pilates a mà, inici">
+      <span class="brand-mark"><img src="favicon.svg" alt=""></span>
+      <span><strong>Pilates a mà</strong><small>Les meves classes</small></span>
+    </a>
+    <div class="header-actions">
+      <button class="icon-button install-shortcut" id="install-shortcut" type="button" hidden aria-label="Instal·la l'aplicació" title="Instal·la l'aplicació">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
+      </button>
+      <button class="avatar-button" id="settings-button" type="button" aria-label="Obre la configuració" title="Configuració">FS</button>
+    </div>
+  </header>
+
+  <div class="connection-banner" id="connection-banner" role="status" hidden>
+    Estàs sense connexió. Pots consultar el catàleg i l'historial; els vídeos necessiten Internet.
+  </div>
+
+  <main id="main-content" tabindex="-1">
+    <section class="view active" id="view-avui" data-view="avui" aria-labelledby="today-title">
+      <div class="page-heading">
+        <p class="eyebrow" id="today-date"></p>
+        <h1 id="today-title">Què fem avui?</h1>
+        <p>Continua on ho vas deixar o tria una alternativa que encaixi amb el teu moment.</p>
+      </div>
+      <div id="install-card-slot"></div>
+      <div id="recommendation-slot"></div>
+      <section class="content-section" aria-labelledby="quick-title">
+        <div class="section-heading compact"><div><p class="eyebrow">Tria ràpid</p><h2 id="quick-title">Segons el que necessites</h2></div></div>
+        <div class="quick-grid" id="quick-grid"></div>
+      </section>
+      <section class="content-section" aria-labelledby="recent-title">
+        <div class="section-heading"><div><p class="eyebrow">El teu ritme</p><h2 id="recent-title">Activitat recent</h2></div><button class="text-button" type="button" data-go="historial">Tot l'historial</button></div>
+        <div id="recent-slot"></div>
+      </section>
+    </section>
+
+    <section class="view" id="view-programes" data-view="programes" aria-labelledby="programs-title" hidden>
+      <div class="page-heading"><p class="eyebrow">Pas a pas</p><h1 id="programs-title">Programes</h1><p>Seqüències ordenades per avançar sense haver de decidir cada dia.</p></div>
+      <div class="program-grid" id="program-grid"></div>
+    </section>
+
+    <section class="view" id="view-explora" data-view="explora" aria-labelledby="explore-title" hidden>
+      <div class="page-heading"><p class="eyebrow">Al teu gust</p><h1 id="explore-title">Explora les classes</h1><p>Filtra per nivell, durada o tipus de treball.</p></div>
+      <form class="filters" id="filters" role="search">
+        <label class="search-field"><span class="sr-only">Cerca classes</span><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg><input id="search-input" type="search" placeholder="Cerca una classe…" autocomplete="off"></label>
+        <div class="filter-row" aria-label="Filtres">
+          <select id="level-filter" aria-label="Filtra per nivell"><option value="">Tots els nivells</option><option value="beginner">Iniciació</option><option value="mixed">Iniciació / intermedi</option><option value="intermediate">Intermedi</option><option value="advanced">Avançat</option></select>
+          <select id="duration-filter" aria-label="Filtra per durada"><option value="">Qualsevol durada</option><option value="short">Menys de 20 min</option><option value="medium">20–35 min</option><option value="long">36–50 min</option><option value="extended">Més de 50 min</option></select>
+          <select id="type-filter" aria-label="Filtra per tipus"><option value="">Tots els tipus</option><option value="full-body">Cos complet</option><option value="knee-selection">Cuida els genolls</option><option value="technique">Fonaments</option><option value="no-equipment">Sense material</option></select>
+          <select id="status-filter" aria-label="Filtra per estat"><option value="">Qualsevol estat</option><option value="unseen">No iniciades</option><option value="started">En curs</option><option value="completed">Completades</option><option value="favorite">Preferides</option></select>
+          <button class="text-button clear-filters" id="clear-filters" type="button">Neteja</button>
+        </div>
+      </form>
+      <p class="result-count" id="result-count" aria-live="polite"></p>
+      <div class="video-grid" id="video-grid"></div>
+    </section>
+
+    <section class="view" id="view-historial" data-view="historial" aria-labelledby="history-title" hidden>
+      <div class="page-heading"><p class="eyebrow">Tot el camí</p><h1 id="history-title">Historial</h1><p>Sessions començades, completades i repetides en aquest dispositiu.</p></div>
+      <div class="summary-grid" id="history-summary"></div>
+      <div class="history-list" id="history-list"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+      <img src="assets/cc-by-nc-sa.png" alt="Creative Commons BY-NC-SA 4.0">
+    </a>
+    <div><p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p><p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p></div>
+  </footer>
+
+  <nav class="bottom-nav" aria-label="Navegació principal">
+    <button type="button" data-route="avui" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9h-6v-6H9v6H3z"/></svg><span>Avui</span></button>
+    <button type="button" data-route="programes"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM9 8h6M9 12h6M9 16h4"/></svg><span>Programes</span></button>
+    <button type="button" data-route="explora"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg><span>Explora</span></button>
+    <button type="button" data-route="historial"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 7v5l3 2M4 5v5h5"/><path d="M5.5 17a8 8 0 1 0-.8-9"/></svg><span>Historial</span></button>
+  </nav>
+
+  <dialog class="sheet-dialog program-dialog" id="program-dialog" aria-labelledby="program-dialog-title"><div class="dialog-shell"><div class="dialog-header"><div><p class="eyebrow">Programa</p><h2 id="program-dialog-title"></h2></div><button class="icon-button close-dialog" type="button" aria-label="Tanca"><span aria-hidden="true">×</span></button></div><div id="program-dialog-content"></div></div></dialog>
+
+  <dialog class="session-dialog" id="session-dialog" aria-labelledby="session-title">
+    <div class="session-shell">
+      <header class="session-header"><button class="back-button" id="close-session" type="button"><span aria-hidden="true">←</span> Torna</button><p id="session-context"></p></header>
+      <main class="session-main">
+        <div class="player-frame"><div id="youtube-player"></div><div class="player-placeholder" id="player-placeholder"><img id="session-thumb" alt=""><button class="play-button" id="load-player" type="button"><span aria-hidden="true">▶</span><span>Carrega i reprodueix</span></button></div></div>
+        <div class="session-copy"><div><p class="eyebrow" id="session-meta"></p><h2 id="session-title"></h2><p class="session-reason" id="session-reason"></p></div><button class="favorite-button large" id="session-favorite" type="button" aria-label="Afegeix a preferides">♡</button></div>
+        <div class="resume-note" id="resume-note" hidden></div>
+        <div class="session-controls">
+          <label class="switch-row"><span><strong>Mantén la pantalla encesa</strong><small>Només mentre es reprodueix la classe</small></span><input id="wake-lock-toggle" type="checkbox" role="switch"><span class="switch" aria-hidden="true"></span></label>
+          <div class="session-actions"><a class="button secondary" id="open-youtube" target="_blank" rel="noopener noreferrer">Obre a YouTube</a><button class="button primary" id="mark-complete" type="button">Marca com a feta</button></div>
+        </div>
+        <div class="session-complete" id="session-complete" hidden><span class="complete-icon" aria-hidden="true">✓</span><div><strong>Classe completada</strong><p id="next-session-copy"></p></div><button class="button primary" id="next-session-button" type="button" hidden>Ves a la següent</button></div>
+      </main>
+    </div>
+  </dialog>
+
+  <dialog class="sheet-dialog settings-dialog" id="settings-dialog" aria-labelledby="settings-title"><div class="dialog-shell"><div class="dialog-header"><div><p class="eyebrow">El teu espai</p><h2 id="settings-title">Configuració i dades</h2></div><button class="icon-button close-dialog" type="button" aria-label="Tanca"><span aria-hidden="true">×</span></button></div><div class="settings-content">
+    <section><h3>Preferències</h3><div class="settings-grid"><label>Nivell habitual<select id="pref-level"><option value="beginner">Iniciació</option><option value="mixed">Iniciació / intermedi</option><option value="intermediate">Intermedi</option></select></label><label>Temps habitual<select id="pref-duration"><option value="20">Uns 20 minuts</option><option value="30">Uns 30 minuts</option><option value="45">Uns 45 minuts</option><option value="60">Una hora</option></select></label></div><label class="switch-row inset"><span><strong>Prioritza la selecció per als genolls</strong><small>Basada en els títols publicats pel canal; no és consell mèdic.</small></span><input id="pref-knee" type="checkbox" role="switch"><span class="switch" aria-hidden="true"></span></label></section>
+    <section id="install-settings"><h3>Instal·lació</h3><p id="install-help">Instal·la l'aplicació per obrir-la ràpidament des de la pantalla d'inici.</p><button class="button secondary" id="install-button" type="button">Instal·la l'aplicació</button></section>
+    <section><h3>Afegeix una classe personal</h3><form id="custom-video-form" class="stack-form"><label>Enllaç de YouTube<input id="custom-url" type="url" required placeholder="https://www.youtube.com/watch?v=…"></label><label>Títol<input id="custom-title" type="text" required maxlength="100" placeholder="Nom breu de la classe"></label><div class="settings-grid"><label>Durada aproximada<input id="custom-duration" type="number" min="1" max="180" value="30" required></label><label>Nivell<select id="custom-level"><option value="beginner">Iniciació</option><option value="mixed">Iniciació / intermedi</option><option value="intermediate">Intermedi</option></select></label></div><button class="button secondary" type="submit">Afegeix-la</button></form><div id="custom-video-list"></div></section>
+    <section><h3>Còpia de seguretat</h3><p>L'arxiu inclou l'historial, el progrés, les preferències i les classes personals.</p><div class="button-row"><button class="button secondary" id="export-data" type="button">Exporta les dades</button><label class="button secondary file-button">Importa una còpia<input id="import-data" type="file" accept="application/json"></label></div></section>
+    <section class="danger-zone"><h3>Reinicia l'aplicació</h3><p>Esborra totes les dades desades en aquest dispositiu. El catàleg general no s'elimina.</p><button class="text-button danger" id="reset-data" type="button">Esborra les meves dades</button></section>
+  </div></div></dialog>
+
+  <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title"><form method="dialog"><h2 id="confirm-title">Confirmació</h2><p id="confirm-message"></p><div class="dialog-actions"><button class="button secondary" value="cancel">Cancel·la</button><button class="button primary" id="confirm-accept" value="confirm">Confirma</button></div></form></dialog>
+
+  <dialog class="confirm-dialog" id="import-choice-dialog" aria-labelledby="import-choice-title"><form method="dialog"><h2 id="import-choice-title">Com vols importar la còpia?</h2><p id="import-choice-message"></p><div class="choice-actions"><button class="button secondary" value="cancel">Cancel·la</button><button class="button secondary" value="replace">Substitueix</button><button class="button primary" value="merge">Combina</button></div></form></dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-message"></span><button id="toast-action" type="button" hidden></button></div>
+  <div class="sr-only" id="live-region" aria-live="polite"></div>
+
+  <script src="data/catalog.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

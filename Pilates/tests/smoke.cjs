@@ -1,0 +1,129 @@
+const { chromium } = require("playwright");
+const fs = require("fs");
+const path = require("path");
+const http = require("http");
+
+const root = path.resolve(__dirname, "..");
+const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".webmanifest": "application/manifest+json" };
+const server = http.createServer((request, response) => {
+  const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+  let target = path.resolve(root, `.${pathname === "/" ? "/index.html" : pathname}`);
+  if (!target.startsWith(root) || !fs.existsSync(target) || fs.statSync(target).isDirectory()) target = path.join(root, "index.html");
+  response.writeHead(200, { "Content-Type": types[path.extname(target)] || "application/octet-stream", "Cache-Control": "no-store" });
+  fs.createReadStream(target).pipe(response);
+});
+
+(async () => {
+  await new Promise(resolve => server.listen(4173, "127.0.0.1", resolve));
+  const browser = await chromium.launch({ headless: true, executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" });
+  const results = { consoleErrors: [], pageErrors: [], checks: [] };
+  const check = (condition, label) => {
+    if (!condition) throw new Error(`FALLA: ${label}`);
+    results.checks.push(label);
+  };
+
+  try {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "ca-ES" });
+    const page = await context.newPage();
+    page.on("console", message => { if (message.type() === "error") results.consoleErrors.push(message.text()); });
+    page.on("pageerror", error => results.pageErrors.push(error.message));
+    await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+
+    check(await page.title() === "Pilates a mà", "títol correcte");
+    check(await page.locator(".hero-card").count() === 1, "recomanació principal visible");
+    check(await page.locator(".quick-card").count() === 5, "cinc accessos ràpids");
+    check(await page.locator("body").evaluate(el => el.scrollWidth <= el.clientWidth), "sense desbordament horitzontal en mòbil");
+    fs.mkdirSync(path.join(__dirname, "artifacts"), { recursive: true });
+    await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile-home.png"), fullPage: true });
+
+    await page.getByRole("button", { name: "Programes" }).click();
+    check(await page.locator(".program-card").count() === 3, "tres programes visibles");
+    await page.locator("[data-open-program='beginner-15']").click();
+    check(await page.locator("#program-dialog .program-item").count() === 15, "repte amb quinze sessions ordenades");
+    await page.locator("#program-dialog .program-item").first().getByRole("button").click();
+    check(await page.locator("#session-dialog").evaluate(el => el.open), "mode de sessió obert");
+    check((await page.locator("#session-title").textContent()).includes("Dia 1"), "sessió correcta");
+    await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile-session.png"), fullPage: false });
+    await page.locator("#load-player").click();
+    await page.locator("iframe#youtube-player").waitFor({ state: "attached", timeout: 20000 });
+    check(await page.locator("iframe#youtube-player").count() === 1, "reproductor de YouTube integrat");
+
+    await page.locator("#mark-complete").click();
+    await page.locator("#confirm-dialog").getByRole("button", { name: "Marca-la" }).click();
+    check(await page.locator("#session-complete").isVisible(), "finalització manual confirmada");
+    await page.locator("#close-session").click();
+
+    await page.getByRole("button", { name: "Historial" }).click();
+    check(await page.locator(".history-item").count() === 1, "historial actualitzat");
+    check((await page.locator(".summary-card").first().textContent()).includes("1"), "resum de sessions actualitzat");
+    await page.reload({ waitUntil: "networkidle" });
+    check(await page.locator(".history-item").count() === 1, "historial persistent després de recarregar");
+    await page.locator("[data-undo-session]").click();
+    check((await page.locator(".history-item").first().textContent()).includes("En curs"), "finalització reversible");
+
+    await page.getByLabel("Obre la configuració").click();
+    await page.locator("#custom-url").fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    await page.locator("#custom-title").fill("Classe personal de prova");
+    await page.locator("#custom-video-form").getByRole("button", { name: "Afegeix-la" }).click();
+    check(await page.locator(".custom-item").count() === 1, "classe personal afegida");
+    await page.locator("#settings-dialog .close-dialog").click();
+    await page.getByRole("button", { name: "Explora" }).click();
+    await page.locator("#search-input").fill("Classe personal de prova");
+    check(await page.locator(".video-card").count() === 1, "cerca de classe personal");
+
+    await page.getByLabel("Obre la configuració").click();
+    const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#export-data").click()]);
+    check(download.suggestedFilename().endsWith(".json"), "exportació de còpia JSON");
+    const importPath = path.join(__dirname, "artifacts", "import-test.json");
+    fs.writeFileSync(importPath, JSON.stringify({ app: "Pilates a mà", data: { schemaVersion: 1, preferences: { level: "beginner", duration: 30, prioritizeKnee: true }, favorites: [], sessions: [{ id: "import-session", videoId: "29w3IUe3mQg", startedAt: "2026-07-01T10:00:00.000Z", completedAt: null, completionMethod: null, lastPositionSeconds: 120, maxPositionSeconds: 120, cycleRefs: [] }], programCycles: {}, activeProgramId: "beginner-15", customVideos: [], installDismissedAt: null } }));
+    await page.locator("#import-data").setInputFiles(importPath);
+    await page.locator("#import-choice-dialog").getByRole("button", { name: "Combina" }).click();
+    check(await page.evaluate(() => JSON.parse(localStorage.getItem("pilates-a-ma-state")).sessions.length === 2), "importació combinada sense perdre l'historial");
+    await page.locator("#settings-dialog .close-dialog").click();
+
+    const unnamedButtons = await page.locator("button:not([hidden])").evaluateAll(buttons => buttons.filter(button => !String(button.innerText || button.getAttribute("aria-label") || button.getAttribute("title") || "").trim()).map(button => button.outerHTML));
+    check(unnamedButtons.length === 0, `cap botó sense nom accessible: ${unnamedButtons.join(" | ")}`);
+    const missingAlt = await page.locator("img:not([alt])").count();
+    check(missingAlt === 0, "totes les imatges tenen atribut alt");
+
+    await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile.png"), fullPage: true });
+
+    const desktop = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    desktop.on("pageerror", error => results.pageErrors.push(error.message));
+    await desktop.goto("http://127.0.0.1:4173/#avui", { waitUntil: "networkidle" });
+    check(await desktop.locator("body").evaluate(el => el.scrollWidth <= el.clientWidth), "sense desbordament horitzontal en escriptori");
+    await desktop.screenshot({ path: path.join(__dirname, "artifacts", "desktop.png"), fullPage: true });
+
+    const manifest = await page.request.get("http://127.0.0.1:4173/manifest.webmanifest");
+    check(manifest.ok(), "manifest accessible");
+    const sw = await page.request.get("http://127.0.0.1:4173/sw.js");
+    check(sw.ok(), "service worker accessible");
+
+    const offlineContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const offlinePage = await offlineContext.newPage();
+    await offlinePage.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+    await offlinePage.evaluate(() => navigator.serviceWorker.ready);
+    await offlinePage.reload({ waitUntil: "networkidle" });
+    await offlineContext.setOffline(true);
+    await offlinePage.reload({ waitUntil: "domcontentloaded" });
+    check(await offlinePage.locator(".hero-card").count() === 1, "catàleg disponible sense connexió");
+    check(await offlinePage.locator("#connection-banner").isVisible(), "avís de connexió visible");
+    await offlineContext.close();
+
+    const narrowContext = await browser.newContext({ viewport: { width: 320, height: 720 } });
+    const narrowPage = await narrowContext.newPage();
+    await narrowPage.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
+    await narrowPage.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    const reflow = await narrowPage.evaluate(() => ({ ok: document.body.scrollWidth <= document.body.clientWidth, body: [document.body.scrollWidth, document.body.clientWidth], offenders: [...document.querySelectorAll("body *")].filter(el => { const r = el.getBoundingClientRect(); return r.right > innerWidth + 1 || r.left < -1; }).slice(0, 8).map(el => `${el.tagName}.${el.className}`) }));
+    check(reflow.ok, `reflow sense desbordament a 320 px amb text ampliat: ${JSON.stringify(reflow)}`);
+    await narrowContext.close();
+
+    results.consoleErrors = results.consoleErrors.filter(message => !message.includes("Failed to load resource") && !message.includes("ERR_BLOCKED_BY_CLIENT"));
+    check(results.pageErrors.length === 0, `sense errors JavaScript: ${results.pageErrors.join(" | ")}`);
+    check(results.consoleErrors.length === 0, `sense errors de consola: ${results.consoleErrors.join(" | ")}`);
+    console.log(JSON.stringify(results, null, 2));
+  } finally {
+    await browser.close();
+    await new Promise(resolve => server.close(resolve));
+  }
+})().catch(error => { console.error(error.stack || error); process.exit(1); });
