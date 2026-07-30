@@ -78,6 +78,13 @@
             category: "Eines d'escriptori"
         },
         {
+            name: 'Pilates a mà',
+            path: 'https://ja.cat/pilates',
+            icon: 'Pilates/favicon.svg',
+            description: 'Aplicació per seguir classes de Pilates, reprendre sessions i registrar el progrés.',
+            category: 'Salut i benestar'
+        },
+        {
             name: 'Rentabilitat Híbrid',
             path: 'RentabilitatHibrid/',
             description: 'Calculadora per comparar el cost entre combustible i electricitat.',
