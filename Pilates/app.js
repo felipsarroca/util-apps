@@ -201,7 +201,7 @@
 
     $("#quick-grid").innerHTML = beginnerChallengeCardHtml("today") + CATALOG.collections.map(collection => `
       <button class="quick-card" type="button" data-collection="${collection.id}">
-        <span class="quick-icon" aria-hidden="true">${collectionIcon(collection.icon)}</span>
+        <span class="quick-icon icon-${collection.id}" aria-hidden="true">${collectionIcon(collection.id)}</span>
         <span><strong>${escapeHtml(collection.title)}</strong><small>${escapeHtml(collection.subtitle)}</small></span>
       </button>`).join("");
 
@@ -521,8 +521,15 @@
     $("#custom-video-list").innerHTML = state.customVideos.length ? `<div class="custom-list">${state.customVideos.map(video => `<div class="custom-item"><span>${escapeHtml(video.title)}</span><button type="button" data-delete-custom="${video.id}" aria-label="Elimina ${escapeHtml(video.title)}">Elimina</button></div>`).join("")}</div>` : "";
   }
 
-  function collectionIcon(icon) {
-    return { knee: "◒", body: "✦", clock: "◷", leaf: "⌁", learn: "◎" }[icon] || "•";
+  function collectionIcon(collectionId) {
+    const icons = {
+      knee: `<svg data-quick-icon="knee" viewBox="0 0 24 24"><path d="M8 3v4.3c0 2.2 1.1 3.8 3.1 4.7"/><circle cx="12" cy="13.2" r="2.1"/><path d="M13.6 14.6c1.7 1.2 2.7 3 2.7 5.4M10.6 15 8.8 21"/><path class="accent" d="M9.8 10.7c1.8-1.1 4.2-.8 5.7.7"/></svg>`,
+      "full-body": `<svg data-quick-icon="full-body" viewBox="0 0 24 24"><circle cx="12" cy="4.2" r="2.1"/><path d="M12 6.8v7.1M5 9.2l7 2.6 7-2.6M12 13.9l-4.2 6.4M12 13.9l4.2 6.4"/><path class="accent" d="M8.5 7.8c2.2 1 4.8 1 7 0"/></svg>`,
+      intermediate: `<svg data-quick-icon="intermediate" viewBox="0 0 24 24"><path d="M4 19h4v-4h4v-4h4V7h4"/><path class="accent" d="m14.5 4 5.5 3-3 5.5"/><circle cx="6" cy="11" r="2"/><path d="M7.5 12.3 10 15"/></svg>`,
+      short: `<svg data-quick-icon="short" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4.5l3 1.8M9 3h6"/><path class="accent" d="m17.8 6.3 1.5-1.5M6.2 6.3 4.7 4.8"/></svg>`,
+      foundations: `<svg data-quick-icon="foundations" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M12 7.5v9M8.2 10.5c2.5 1.3 5.1 1.3 7.6 0M9 20h6M12 16.5 9 20M12 16.5l3 3.5"/><path class="accent" d="M5 8.5c-1.5 2.3-1.5 5.2 0 7.5M19 8.5c1.5 2.3 1.5 5.2 0 7.5"/></svg>`
+    };
+    return icons[collectionId] || icons.foundations;
   }
 
   function applyCollection(collectionId) {

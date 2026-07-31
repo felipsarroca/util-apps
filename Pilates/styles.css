@@ -129,7 +129,19 @@ main { width: min(1180px, 100%); margin: 0 auto; }
 .quick-card:nth-child(1) { background: var(--teal-soft); }
 .quick-card:nth-child(2) { background: var(--coral-soft); }
 .quick-card:nth-child(3) { background: var(--gold-soft); }
-.quick-card .quick-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: rgba(255,255,255,.65); font-size: 1.05rem; }
+.quick-card .quick-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: rgba(255,255,255,.72); color: var(--teal-2); }
+.quick-icon svg { width: 28px; height: 28px; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.quick-icon svg .accent { stroke: var(--coral); stroke-width: 2.35; }
+.quick-icon.icon-knee { color: #15776f; background: #d9f1ec; }
+.quick-icon.icon-knee svg .accent { stroke: #e46951; }
+.quick-icon.icon-full-body { color: #b15a2f; background: #ffead8; }
+.quick-icon.icon-full-body svg .accent { stroke: #e39a31; }
+.quick-icon.icon-intermediate { color: #765817; background: #f8edbd; }
+.quick-icon.icon-intermediate svg .accent { stroke: #cc6c35; }
+.quick-icon.icon-short { color: #4261a8; background: #e4ebff; }
+.quick-icon.icon-short svg .accent { stroke: #8c55aa; }
+.quick-icon.icon-foundations { color: #7b4b91; background: #f0e2f4; }
+.quick-icon.icon-foundations svg .accent { stroke: #d45b79; }
 .quick-card > span:last-child { display: block; }
 .quick-card strong { font-family: "Manrope", sans-serif; }
 .quick-card small { display: block; margin-top: 3px; color: var(--muted); }
@@ -396,9 +408,10 @@ dialog::backdrop { background: rgba(8,27,25,.62); backdrop-filter: blur(4px); }
   .section-heading.compact { margin-bottom: 11px; }
   .section-heading.compact h2 { font-size: 1.16rem; }
   .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 0; padding: 0; overflow: visible; }
-  .quick-card, .quick-card:last-child:nth-child(odd) { grid-column: auto; min-height: 76px; height: auto; max-height: none; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: center; align-content: center; padding: 9px 10px; overflow-wrap: anywhere; }
+  .quick-card, .quick-card:last-child:nth-child(odd) { grid-column: auto; min-height: 72px; height: auto; max-height: none; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 8px; align-items: center; align-content: center; padding: 8px 10px; overflow-wrap: anywhere; }
   .quick-card:last-child { grid-column: 1 / -1; }
-  .quick-card .quick-icon { width: 44px; height: 44px; border-radius: 14px; font-size: 1.35rem; }
+  .quick-card .quick-icon { width: 38px; height: 38px; border-radius: 10px; }
+  .quick-card .quick-icon svg { width: 31px; height: 31px; stroke-width: 1.85; }
   .quick-card small { display: none; }
   .quick-card strong { display: block; font-size: .78rem; line-height: 1.05; }
   .beginner-challenge-card { grid-template-columns: 43% minmax(0, 1fr); gap: 0; border-radius: 20px; }

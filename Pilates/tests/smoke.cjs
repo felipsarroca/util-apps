@@ -38,7 +38,9 @@ const server = http.createServer((request, response) => {
     check(await page.locator(".quick-card").count() === 5, "cinc filtres ràpids sense duplicar el repte");
     check(await page.locator("#quick-grid .beginner-challenge-card").count() === 1, "repte de principiants representat per una única targeta");
     check(await page.locator("#quick-grid .challenge-collage img").count() === 3, "imatge composta representativa del repte");
-    check(await page.locator(".quick-card .quick-icon").first().evaluate(el => parseFloat(getComputedStyle(el).width) >= 40), "icones grans als accessos ràpids mòbils");
+    check(await page.locator(".quick-card .quick-icon").first().evaluate(el => parseFloat(getComputedStyle(el).width) <= 40), "contenidor compacte de les icones mòbils");
+    check(await page.locator(".quick-card .quick-icon svg").first().evaluate(el => parseFloat(getComputedStyle(el).width) >= 30), "dibuix de les icones gran i visible");
+    check(await page.locator(".quick-card svg[data-quick-icon]").evaluateAll(icons => new Set(icons.map(icon => icon.dataset.quickIcon)).size === 5), "cinc icones diferents i representatives");
     check(await page.locator(".quick-card small").first().evaluate(el => getComputedStyle(el).display === "none"), "subtítols ocults per aprofitar l'espai mòbil");
     check(await page.locator(".quick-card strong").first().evaluate(el => parseFloat(getComputedStyle(el).lineHeight) / parseFloat(getComputedStyle(el).fontSize) <= 1.1), "interlineat compacte als accessos ràpids");
     check(await page.locator(".app-footer > div > p").count() === 2, "peu de pàgina en dues línies");
