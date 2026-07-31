@@ -44,7 +44,7 @@ const server = http.createServer((request, response) => {
 
     await page.getByRole("button", { name: "Programes" }).click();
     check(await page.locator(".program-card").count() === 3, "tres programes visibles");
-    await page.locator("[data-open-program='beginner-15']").click();
+    await page.locator("#view-programes [data-open-program='beginner-15']").click();
     check(await page.locator("#program-dialog .program-item").count() === 15, "repte amb quinze sessions ordenades");
     await page.locator("#program-dialog .program-item").first().getByRole("button").click();
     check(await page.locator("#session-dialog").evaluate(el => el.open), "mode de sessió obert");
@@ -62,10 +62,26 @@ const server = http.createServer((request, response) => {
     await page.getByRole("button", { name: "Historial" }).click();
     check(await page.locator(".history-item").count() === 1, "historial actualitzat");
     check((await page.locator(".summary-card").first().textContent()).includes("1"), "resum de sessions actualitzat");
+    check(await page.locator(".week-day").count() === 7, "calendari setmanal de set dies");
+    check(await page.locator("#history-insights-title").isVisible(), "indicadors de progrés visibles");
+    check(await page.locator(".history-program-card").count() === 3, "progrés dels tres programes visible");
+    check(Boolean((await page.locator("#history-trend").textContent()).trim()), "comparació setmanal visible");
     await page.reload({ waitUntil: "networkidle" });
     check(await page.locator(".history-item").count() === 1, "historial persistent després de recarregar");
     await page.locator("[data-undo-session]").click();
     check((await page.locator(".history-item").first().textContent()).includes("En curs"), "finalització reversible");
+    check(await page.locator("#history-continue").isVisible(), "sessió en curs destacada per continuar");
+    await page.locator("#history-status-filter").selectOption("completed");
+    check(await page.locator(".history-item").count() === 0, "filtre de sessions completades aplicat");
+    await page.locator("#clear-history-filters").click();
+    check(await page.locator(".history-item").count() === 1, "filtres d'historial reiniciats");
+
+    await page.getByRole("button", { name: "Explora" }).click();
+    await page.locator("#search-input").fill("Pilates");
+    const favoriteTitle = await page.locator(".video-card h3").nth(3).textContent();
+    await page.locator(".video-card").nth(3).locator("[data-favorite]").click();
+    check((await page.locator(".video-card h3").first().textContent()) === favoriteTitle, "favorits sempre al primer lloc dels resultats");
+    await page.locator("#clear-filters").click();
 
     await page.getByLabel("Obre la configuració").click();
     await page.locator("#custom-url").fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");

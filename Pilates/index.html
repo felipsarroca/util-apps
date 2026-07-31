@@ -74,8 +74,30 @@
 
     <section class="view" id="view-historial" data-view="historial" aria-labelledby="history-title" hidden>
       <div class="page-heading"><p class="eyebrow">Tot el camí</p><h1 id="history-title">Historial</h1><p>Sessions començades, completades i repetides en aquest dispositiu.</p></div>
-      <div class="summary-grid" id="history-summary"></div>
-      <div class="history-list" id="history-list"></div>
+      <section class="history-panel history-week-panel" aria-labelledby="history-week-title">
+        <div class="section-heading compact"><div><p class="eyebrow">Regularitat</p><h2 id="history-week-title">Aquesta setmana</h2></div><p class="history-trend" id="history-trend"></p></div>
+        <div class="summary-grid" id="history-summary"></div>
+        <div class="week-strip" id="history-week-strip" aria-label="Activitat dels set dies de la setmana"></div>
+      </section>
+
+      <div class="history-dashboard-grid">
+        <section class="history-panel" id="history-insights" aria-labelledby="history-insights-title"></section>
+        <section class="history-panel" id="history-continue" aria-labelledby="history-continue-title" hidden></section>
+      </div>
+
+      <section class="history-panel" id="history-program-progress" aria-labelledby="history-program-title"></section>
+
+      <section class="history-activity" aria-labelledby="history-activity-title">
+        <div class="section-heading compact"><div><p class="eyebrow">Dia a dia</p><h2 id="history-activity-title">Activitat</h2></div><p class="result-count" id="history-result-count" aria-live="polite"></p></div>
+        <form class="history-filters" id="history-filters">
+          <select id="history-period-filter" aria-label="Filtra l'historial per període"><option value="all">Tot el temps</option><option value="7">Últims 7 dies</option><option value="30">Últims 30 dies</option><option value="365">Últim any</option></select>
+          <select id="history-level-filter" aria-label="Filtra l'historial per nivell"><option value="">Tots els nivells</option><option value="beginner">Iniciació</option><option value="mixed">Iniciació / intermedi</option><option value="intermediate">Intermedi</option><option value="advanced">Intermedi-avançat</option></select>
+          <select id="history-type-filter" aria-label="Filtra l'historial per tipus"><option value="">Tots els tipus</option><option value="full-body">Cos complet</option><option value="knee-selection">Cuida els genolls</option><option value="technique">Fonaments</option><option value="no-equipment">Sense material</option></select>
+          <select id="history-status-filter" aria-label="Filtra l'historial per estat"><option value="">Qualsevol estat</option><option value="completed">Completades</option><option value="started">En curs</option></select>
+          <button class="text-button" id="clear-history-filters" type="button">Neteja</button>
+        </form>
+        <div class="history-groups" id="history-list"></div>
+      </section>
     </section>
   </main>
 

@@ -280,13 +280,188 @@
     </article>`;
   }
 
+  function startOfDay(value) {
+    const date = new Date(value);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function startOfWeek(value = new Date()) {
+    const date = startOfDay(value);
+    date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+    return date;
+  }
+
+  function addDays(value, days) {
+    const date = new Date(value);
+    date.setDate(date.getDate() + days);
+    return date;
+  }
+
+  function dayKey(value) {
+    const date = new Date(value);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  function sessionActivityDate(session) {
+    return new Date(session.completedAt || session.startedAt);
+  }
+
+  function completedMinutes(sessions) {
+    return sessions.reduce((sum, session) => sum + minutes(getVideo(session.videoId)?.duration || 0), 0);
+  }
+
+  function sessionsBetween(sessions, start, end) {
+    return sessions.filter(session => {
+      const date = new Date(session.completedAt);
+      return date >= start && date < end;
+    });
+  }
+
   function renderHistory() {
-    const completed = state.sessions.filter(session => session.completedAt).length;
-    const totalMinutes = state.sessions.filter(session => session.completedAt).reduce((sum, session) => sum + minutes(getVideo(session.videoId)?.duration || 0), 0);
+    const now = new Date();
+    const weekStart = startOfWeek(now);
+    const nextWeek = addDays(weekStart, 7);
+    const previousWeek = addDays(weekStart, -7);
+    const completedSessions = state.sessions.filter(session => session.completedAt && getVideo(session.videoId));
+    const thisWeek = sessionsBetween(completedSessions, weekStart, nextWeek);
+    const lastWeek = sessionsBetween(completedSessions, previousWeek, weekStart);
+    const weekMinutes = completedMinutes(thisWeek);
+    const previousMinutes = completedMinutes(lastWeek);
+    const activeDays = new Set(thisWeek.map(session => dayKey(session.completedAt))).size;
+
+    $("#history-summary").innerHTML = `
+      <div class="summary-card"><strong>${thisWeek.length}</strong><span>${thisWeek.length === 1 ? "sessió feta" : "sessions fetes"}</span></div>
+      <div class="summary-card"><strong>${weekMinutes}</strong><span>minuts complets</span></div>
+      <div class="summary-card"><strong>${activeDays}</strong><span>${activeDays === 1 ? "dia actiu" : "dies actius"}</span></div>`;
+
+    const difference = weekMinutes - previousMinutes;
+    let trend = "Encara no hi ha activitat aquesta setmana.";
+    if (weekMinutes && !previousMinutes) trend = `${weekMinutes} min més que la setmana passada`;
+    else if (difference > 0) trend = `↑ ${difference} min més que la setmana passada`;
+    else if (difference < 0) trend = `↓ ${Math.abs(difference)} min menys que la setmana passada`;
+    else if (weekMinutes) trend = "El mateix temps que la setmana passada";
+    $("#history-trend").textContent = trend;
+
+    const completedByDay = new Map();
+    thisWeek.forEach(session => completedByDay.set(dayKey(session.completedAt), (completedByDay.get(dayKey(session.completedAt)) || 0) + 1));
+    $("#history-week-strip").innerHTML = Array.from({ length: 7 }, (_, index) => {
+      const date = addDays(weekStart, index);
+      const count = completedByDay.get(dayKey(date)) || 0;
+      const isToday = dayKey(date) === dayKey(now);
+      const weekday = new Intl.DateTimeFormat("ca", { weekday: "short" }).format(date).replace(".", "");
+      const label = `${weekday}, ${date.getDate()}: ${count} ${count === 1 ? "sessió" : "sessions"}`;
+      return `<div class="week-day ${count ? "active" : ""} ${isToday ? "today" : ""}" aria-label="${label}"><span>${weekday}</span><strong>${date.getDate()}</strong><i aria-hidden="true">${count || ""}</i></div>`;
+    }).join("");
+
+    renderHistoryInsights(completedSessions);
+    renderHistoryContinue();
+    renderHistoryPrograms();
+    renderHistoryActivity(now);
+  }
+
+  function renderHistoryInsights(completedSessions) {
+    const totalMinutes = completedMinutes(completedSessions);
+    const uniqueVideos = new Set(completedSessions.map(session => session.videoId));
+    const repetitions = Math.max(0, completedSessions.length - uniqueVideos.size);
     const rounds = CATALOG.programs.reduce((sum, program) => sum + completedCycles(program.id), 0);
-    $("#history-summary").innerHTML = `<div class="summary-card"><strong>${completed}</strong><span>sessions fetes</span></div><div class="summary-card"><strong>${totalMinutes}</strong><span>minuts aprox.</span></div><div class="summary-card"><strong>${rounds}</strong><span>voltes completes</span></div>`;
-    const sessions = [...state.sessions].reverse();
-    $("#history-list").innerHTML = sessions.length ? sessions.map(historyItemHtml).join("") : `<div class="empty-state"><strong>El teu historial començarà aquí</strong>Obre una classe i reprodueix-la durant uns segons per crear la primera entrada.</div>`;
+    const repeatCounts = completedSessions.reduce((counts, session) => counts.set(session.videoId, (counts.get(session.videoId) || 0) + 1), new Map());
+    const mostRepeated = [...repeatCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+    const tagLabels = { "full-body": "Cos complet", strength: "Força", mobility: "Mobilitat", core: "Centre abdominal", technique: "Fonaments" };
+    const tagCounts = completedSessions.reduce((counts, session) => {
+      const video = getVideo(session.videoId);
+      Object.keys(tagLabels).forEach(tag => { if (video?.tags.includes(tag)) counts.set(tag, (counts.get(tag) || 0) + 1); });
+      return counts;
+    }, new Map());
+    const practicedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
+    const topLevel = [...completedSessions.reduce((counts, session) => {
+      const level = getVideo(session.videoId)?.level;
+      if (level) counts.set(level, (counts.get(level) || 0) + 1);
+      return counts;
+    }, new Map()).entries()].sort((a, b) => b[1] - a[1])[0];
+
+    $("#history-insights").innerHTML = `
+      <div class="section-heading compact"><div><p class="eyebrow">Perspectiva</p><h2 id="history-insights-title">El teu progrés</h2></div></div>
+      <div class="history-metric-grid">
+        <div><strong>${uniqueVideos.size}</strong><span>classes diferents</span></div>
+        <div><strong>${repetitions}</strong><span>repeticions</span></div>
+        <div><strong>${rounds}</strong><span>voltes completes</span></div>
+      </div>
+      ${completedSessions.length ? `<p class="history-insight-copy">En total: <strong>${completedSessions.length}</strong> sessions i <strong>${totalMinutes}</strong> minuts de classes completades.${topLevel ? ` El nivell més practicat és <strong>${LEVEL_LABELS[topLevel[0]].toLocaleLowerCase("ca")}</strong>.` : ""}${mostRepeated?.[1] > 1 ? ` La classe més repetida és <strong>${escapeHtml(getVideo(mostRepeated[0])?.title || "")}</strong> (${mostRepeated[1]} vegades).` : ""}</p>` : `<p class="history-insight-copy">Quan completis classes, aquí veuràs la varietat, les repeticions i el nivell més practicat.</p>`}
+      ${practicedTags.length ? `<div class="history-tags" aria-label="Tipus de treball practicats">${practicedTags.map(([tag, count]) => `<span>${tagLabels[tag]} · ${count}</span>`).join("")}</div>` : ""}`;
+  }
+
+  function renderHistoryContinue() {
+    const latestByVideo = new Map();
+    state.sessions.forEach(session => latestByVideo.set(session.videoId, session));
+    const inProgress = [...latestByVideo.values()]
+      .filter(session => !session.completedAt && getVideo(session.videoId))
+      .sort((a, b) => sessionActivityDate(b) - sessionActivityDate(a))
+      .slice(0, 3);
+    const container = $("#history-continue");
+    container.hidden = !inProgress.length;
+    if (!inProgress.length) { container.innerHTML = ""; return; }
+    container.innerHTML = `
+      <div class="section-heading compact"><div><p class="eyebrow">Reprèn</p><h2 id="history-continue-title">Continua on ho vas deixar</h2></div></div>
+      <div class="continue-list">${inProgress.map(session => {
+        const video = getVideo(session.videoId);
+        const position = Math.max(session.lastPositionSeconds || 0, session.maxPositionSeconds || 0);
+        const percent = Math.min(100, Math.round((position / video.duration) * 100));
+        return `<article class="continue-card"><img ${thumbAttrs(video.id)} alt="" loading="lazy"><div><strong>${escapeHtml(video.title)}</strong><p>${formatPosition(position)} de ${formatPosition(video.duration)}</p><div class="history-progress" aria-label="${percent}% reproduït"><span style="width:${percent}%"></span></div></div><button class="button secondary" type="button" data-play="${video.id}">Continua</button></article>`;
+      }).join("")}</div>`;
+  }
+
+  function renderHistoryPrograms() {
+    $("#history-program-progress").innerHTML = `
+      <div class="section-heading compact"><div><p class="eyebrow">Seqüències</p><h2 id="history-program-title">Progrés dels programes</h2></div></div>
+      <div class="history-program-grid">${CATALOG.programs.map(program => {
+        const progress = cycleProgress(program.id);
+        const rounds = completedCycles(program.id);
+        return `<button type="button" class="history-program-card" data-open-program="${program.id}"><span><strong>${escapeHtml(program.title)}</strong><small>${rounds ? `${rounds} ${rounds === 1 ? "volta completa" : "voltes completes"}` : progress.cycle ? "Volta en curs" : "Encara no començat"}</small></span><span class="program-percent">${progress.percent}%</span><span class="history-progress"><i style="width:${progress.percent}%"></i></span></button>`;
+      }).join("")}</div>`;
+  }
+
+  function renderHistoryActivity(now = new Date()) {
+    const period = $("#history-period-filter")?.value || "all";
+    const level = $("#history-level-filter")?.value || "";
+    const type = $("#history-type-filter")?.value || "";
+    const status = $("#history-status-filter")?.value || "";
+    const cutoff = period === "all" ? null : new Date(now.getTime() - Number(period) * 86400000);
+    const sessions = state.sessions.filter(session => {
+      const video = getVideo(session.videoId);
+      if (!video) return false;
+      if (cutoff && sessionActivityDate(session) < cutoff) return false;
+      if (level && video.level !== level) return false;
+      if (type && !video.tags.includes(type)) return false;
+      if (status === "completed" && !session.completedAt) return false;
+      if (status === "started" && session.completedAt) return false;
+      return true;
+    }).sort((a, b) => sessionActivityDate(b) - sessionActivityDate(a));
+
+    $("#history-result-count").textContent = `${sessions.length} ${sessions.length === 1 ? "entrada" : "entrades"}`;
+    if (!sessions.length) {
+      $("#history-list").innerHTML = `<div class="empty-state"><strong>${state.sessions.length ? "No hi ha coincidències" : "El teu historial començarà aquí"}</strong>${state.sessions.length ? "Prova de retirar algun filtre." : "Obre una classe i reprodueix-la durant uns segons per crear la primera entrada."}</div>`;
+      return;
+    }
+
+    const groups = new Map();
+    sessions.forEach(session => {
+      const label = historyGroupLabel(sessionActivityDate(session), now);
+      if (!groups.has(label)) groups.set(label, []);
+      groups.get(label).push(session);
+    });
+    $("#history-list").innerHTML = [...groups.entries()].map(([label, entries]) => `
+      <section class="history-group"><h3>${escapeHtml(label)}</h3><div class="history-list">${entries.map(historyItemHtml).join("")}</div></section>`).join("");
+  }
+
+  function historyGroupLabel(value, now = new Date()) {
+    const date = startOfDay(value);
+    if (dayKey(date) === dayKey(now)) return "Avui";
+    const yesterday = addDays(startOfDay(now), -1);
+    if (dayKey(date) === dayKey(yesterday)) return "Ahir";
+    if (date >= startOfWeek(now)) return "Aquesta setmana";
+    const label = new Intl.DateTimeFormat("ca", { month: "long", year: "numeric" }).format(date);
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   function recentItemHtml(session) {
@@ -298,7 +473,9 @@
   function historyItemHtml(session) {
     const video = getVideo(session.videoId);
     if (!video) return "";
-    return `<article class="history-item"><img ${thumbAttrs(video.id)} alt="" loading="lazy"><div><strong>${escapeHtml(video.title)}</strong><p>${formatSessionDate(session)} · ${session.completedAt ? `Completada${session.completionMethod === "manual" ? " manualment" : ""}` : `En curs · ${formatPosition(session.lastPositionSeconds || 0)}`}</p></div><div class="history-actions"><span class="state-icon" aria-hidden="true">${session.completedAt ? "✓" : "↗"}</span>${session.completedAt ? `<button class="undo-session" type="button" data-undo-session="${session.id}" aria-label="Desfés la finalització">Desfés</button>` : ""}</div></article>`;
+    const position = Math.max(session.lastPositionSeconds || 0, session.maxPositionSeconds || 0);
+    const percent = session.completedAt ? 100 : Math.min(100, Math.round((position / video.duration) * 100));
+    return `<article class="history-item"><img ${thumbAttrs(video.id)} alt="" loading="lazy"><div><strong>${escapeHtml(video.title)}</strong><p>${formatSessionDate(session)} · ${session.completedAt ? `Completada${session.completionMethod === "manual" ? " manualment" : ""}` : `En curs · ${formatPosition(position)} de ${formatPosition(video.duration)}`}</p>${!session.completedAt ? `<div class="history-progress" aria-label="${percent}% reproduït"><span style="width:${percent}%"></span></div>` : ""}</div><div class="history-actions"><span class="state-icon" aria-hidden="true">${session.completedAt ? "✓" : "↗"}</span>${session.completedAt ? `<button class="undo-session" type="button" data-undo-session="${session.id}" aria-label="Desfés la finalització">Desfés</button>` : `<button class="resume-history" type="button" data-play="${video.id}">Continua</button>`}</div></article>`;
   }
 
   function formatSessionDate(session) {
@@ -739,6 +916,8 @@
 
     $$("#filters input, #filters select").forEach(control => control.addEventListener("input", renderExplore));
     $("#clear-filters").addEventListener("click", () => clearFilters());
+    $$("#history-filters select").forEach(control => control.addEventListener("input", () => renderHistoryActivity()));
+    $("#clear-history-filters").addEventListener("click", () => { $("#history-filters").reset(); renderHistoryActivity(); });
     $("#settings-button").addEventListener("click", () => showDialog($("#settings-dialog")));
     $("#load-player").addEventListener("click", loadPlayer);
     $("#close-session").addEventListener("click", closeSession);

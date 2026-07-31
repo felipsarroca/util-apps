@@ -10,6 +10,8 @@ Aplicació web instal·lable per trobar, seguir i reprendre una selecció de cla
 - Progrés independent per voltes, repeticions i historial reversible.
 - Reproductor de YouTube en un mode de sessió sense distraccions.
 - Preferits, cerca i filtres.
+- Resultats de cerca amb les classes preferides sempre al davant.
+- Historial amb resum setmanal, calendari, tendències, continuacions, progrés i filtres.
 - Classes personals afegides des del mòbil.
 - Exportació, combinació i restauració de còpies de seguretat.
 - PWA instal·lable amb catàleg i historial disponibles sense connexió.
