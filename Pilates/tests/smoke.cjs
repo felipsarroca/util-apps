@@ -33,7 +33,10 @@ const server = http.createServer((request, response) => {
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
 
     check(await page.title() === "Pilates a mà", "títol correcte");
+    check((await page.locator("#settings-button").textContent()).trim() === "", "capçalera sense el cercle FS");
+    check(await page.locator(".brand strong").evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 24 && getComputedStyle(el).fontFamily.includes("Fraunces")), "marca més gran i amb tipografia destacada");
     check(await page.locator(".hero-card").count() === 1, "recomanació principal visible");
+    check(await page.locator(".hero-card").evaluate(el => el.getBoundingClientRect().height <= 320), "vídeo recomanat més compacte en mòbil");
     check(await page.evaluate(() => window.PILATES_CATALOG.videos.length === 92), "noranta-dues classes al catàleg");
     check(await page.locator(".quick-card").count() === 5, "cinc filtres ràpids sense duplicar el repte");
     check(await page.locator("#quick-grid .beginner-challenge-card").count() === 1, "repte de principiants representat per una única targeta");
@@ -46,6 +49,7 @@ const server = http.createServer((request, response) => {
     check(await page.locator(".quick-card strong").first().evaluate(el => parseFloat(getComputedStyle(el).lineHeight) / parseFloat(getComputedStyle(el).fontSize) <= 1.1), "interlineat compacte als accessos ràpids");
     check(await page.locator(".app-footer > div > p").count() === 2, "peu de pàgina en dues línies");
     check(await page.locator(".app-footer").evaluate(el => getComputedStyle(el).flexDirection === "row"), "icona a l'esquerra del text al peu mòbil");
+    check(await page.locator(".app-footer").evaluate(el => getComputedStyle(el).justifyContent === "flex-start"), "peu de llicència alineat a l'esquerra");
     check(await page.locator("body").evaluate(el => el.scrollWidth <= el.clientWidth), "sense desbordament horitzontal en mòbil");
     fs.mkdirSync(path.join(__dirname, "artifacts"), { recursive: true });
     await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile-home.png"), fullPage: true });
@@ -57,11 +61,17 @@ const server = http.createServer((request, response) => {
 
     await page.locator("#quick-grid [data-collection='full-body']").click();
     check(await page.locator("#view-explora:not([hidden])").count() === 1, "Cos complet obre els resultats directament");
+    check(await page.locator("#filters").evaluate(el => el.scrollWidth <= el.clientWidth), "cercador i filtres complets sense desplaçament lateral");
+    check(await page.locator("#type-filter").evaluate(el => getComputedStyle(el).backgroundImage !== "none"), "fletxes dels desplegables visibles");
+    await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile-explore.png"), fullPage: true });
     check(await page.locator("#explore-program-spotlight:empty").count() === 1, "Cos complet no barreja el repte de principiants");
     check(await page.locator("#video-grid [data-play='tzK-MaaXWPY']").count() === 0, "els vídeos del repte no apareixen individualment a Cos complet");
 
     await page.getByRole("button", { name: "Programes" }).click();
     check(await page.locator(".program-card").count() === 3, "tres programes visibles");
+    check(await page.locator(".program-card").first().evaluate(el => el.getBoundingClientRect().height <= 230), "targetes de programa compactes");
+    check(await page.locator(".program-card .progress-track").first().evaluate(el => parseFloat(getComputedStyle(el).height) >= 14), "progrés dels programes més gruixut");
+    await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile-programs.png"), fullPage: true });
     await page.locator("#view-programes [data-open-program='beginner-15']").click();
     check(await page.locator("#program-dialog .program-item").count() === 15, "repte amb quinze sessions ordenades");
     await page.locator("#program-dialog .program-item").first().getByRole("button").click();
@@ -77,7 +87,12 @@ const server = http.createServer((request, response) => {
     check(await page.locator("#session-complete").isVisible(), "finalització manual confirmada");
     await page.locator("#close-session").click();
 
-    await page.getByRole("button", { name: "Historial" }).click();
+    await page.getByRole("button", { name: "Avui" }).click();
+    check(await page.locator(".recent-item").first().evaluate(el => el.getBoundingClientRect().height <= 72), "activitat recent compacta a Avui");
+    await page.getByRole("button", { name: "Historial", exact: true }).click();
+    check(await page.locator("#view-historial > .page-heading > p").count() === 1, "historial sense subtítol explicatiu redundant");
+    check(await page.locator("#history-filters").evaluate(el => el.scrollWidth <= el.clientWidth), "selectors de Dia a dia visibles sense desplaçament lateral");
+    await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile-history.png"), fullPage: true });
     check(await page.locator(".history-item").count() === 1, "historial actualitzat");
     check((await page.locator(".summary-card").first().textContent()).includes("1"), "resum de sessions actualitzat");
     check(await page.locator(".week-day").count() === 7, "calendari setmanal de set dies");
@@ -137,6 +152,14 @@ const server = http.createServer((request, response) => {
     await desktop.goto(`${baseUrl}/#avui`, { waitUntil: "networkidle" });
     check(await desktop.locator("body").evaluate(el => el.scrollWidth <= el.clientWidth), "sense desbordament horitzontal en escriptori");
     await desktop.screenshot({ path: path.join(__dirname, "artifacts", "desktop.png"), fullPage: true });
+
+    const iosContext = await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1" });
+    const iosPage = await iosContext.newPage();
+    await iosPage.goto(`${baseUrl}/#avui`, { waitUntil: "networkidle" });
+    check(await iosPage.locator(".install-card").evaluate(el => el.getBoundingClientRect().height <= 64), "targeta d'instal·lació compacta");
+    check(await iosPage.locator(".install-card p").count() === 0, "targeta d'instal·lació sense subtítol");
+    check(await iosPage.locator(".install-card .button.primary").isVisible(), "botó d'instal·lació destacat");
+    await iosContext.close();
 
     const manifest = await page.request.get(`${baseUrl}/manifest.webmanifest`);
     check(manifest.ok(), "manifest accessible");

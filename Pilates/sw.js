@@ -1,4 +1,4 @@
-const CACHE_NAME = "pilates-a-ma-v12";
+const CACHE_NAME = "pilates-a-ma-v13";
 const APP_SHELL = [
   "./",
   "./index.html",

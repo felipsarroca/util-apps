@@ -419,7 +419,7 @@
         <div><strong>${repetitions}</strong><span>repeticions</span></div>
         <div><strong>${rounds}</strong><span>voltes completes</span></div>
       </div>
-      ${completedSessions.length ? `<p class="history-insight-copy">En total: <strong>${completedSessions.length}</strong> sessions i <strong>${totalMinutes}</strong> minuts de classes completades.${topLevel ? ` El nivell més practicat és <strong>${LEVEL_LABELS[topLevel[0]].toLocaleLowerCase("ca")}</strong>.` : ""}${mostRepeated?.[1] > 1 ? ` La classe més repetida és <strong>${escapeHtml(getVideo(mostRepeated[0])?.title || "")}</strong> (${mostRepeated[1]} vegades).` : ""}</p>` : `<p class="history-insight-copy">Quan completis classes, aquí veuràs la varietat, les repeticions i el nivell més practicat.</p>`}
+      ${completedSessions.length ? `<p class="history-insight-copy">En total: <strong>${completedSessions.length}</strong> sessions i <strong>${totalMinutes}</strong> minuts.${topLevel ? ` Nivell principal: <strong>${LEVEL_LABELS[topLevel[0]].toLocaleLowerCase("ca")}</strong>.` : ""}${mostRepeated?.[1] > 1 ? ` Més repetida: <strong>${escapeHtml(getVideo(mostRepeated[0])?.title || "")}</strong> (${mostRepeated[1]} vegades).` : ""}</p>` : ""}
       ${practicedTags.length ? `<div class="history-tags" aria-label="Tipus de treball practicats">${practicedTags.map(([tag, count]) => `<span>${tagLabels[tag]} · ${count}</span>`).join("")}</div>` : ""}`;
   }
 
@@ -838,7 +838,7 @@
     $("#install-button").hidden = installed;
     $("#install-help").textContent = installed ? "L'aplicació ja està instal·lada en aquest dispositiu." : isIos() ? "A Safari, toca Compartir i després “Afegir a la pantalla d'inici”." : "Instal·la l'aplicació per obrir-la ràpidament des de la pantalla d'inici.";
     if (installed || dismissedRecently || (!canPrompt && !isIos())) { $("#install-card-slot").innerHTML = ""; return; }
-    $("#install-card-slot").innerHTML = `<aside class="install-card"><span class="install-icon" aria-hidden="true">↓</span><div><strong>Porta Pilates a mà al teu inici</strong><p>${isIos() ? "Toca Compartir i després “Afegir a la pantalla d'inici”." : "Obre-la com qualsevol altra aplicació, sense buscar l'enllaç."}</p></div><button class="dismiss-install" type="button" aria-label="Ara no">×</button>${canPrompt ? '<button class="button secondary install-card-button" type="button">Instal·la</button>' : ""}</aside>`;
+    $("#install-card-slot").innerHTML = `<aside class="install-card"><span class="install-icon" aria-hidden="true">↓</span><strong>Porta Pilates a mà al teu inici</strong><button class="button primary install-card-button" type="button">${isIos() && !canPrompt ? "Com instal·lar" : "Instal·la"}</button><button class="dismiss-install" type="button" aria-label="Ara no">×</button></aside>`;
   }
 
   async function promptInstall() {
