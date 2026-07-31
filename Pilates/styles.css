@@ -396,11 +396,11 @@ dialog::backdrop { background: rgba(8,27,25,.62); backdrop-filter: blur(4px); }
   .section-heading.compact { margin-bottom: 11px; }
   .section-heading.compact h2 { font-size: 1.16rem; }
   .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 0; padding: 0; overflow: visible; }
-  .quick-card, .quick-card:last-child:nth-child(odd) { grid-column: auto; min-height: 76px; height: auto; max-height: none; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 9px; align-items: center; align-content: center; padding: 10px 11px; overflow-wrap: anywhere; }
+  .quick-card, .quick-card:last-child:nth-child(odd) { grid-column: auto; min-height: 76px; height: auto; max-height: none; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: center; align-content: center; padding: 9px 10px; overflow-wrap: anywhere; }
   .quick-card:last-child { grid-column: 1 / -1; }
-  .quick-card .quick-icon { width: 30px; height: 30px; }
-  .quick-card small { margin-top: 1px; font-size: .7rem; line-height: 1.25; }
-  .quick-card strong { font-size: .86rem; line-height: 1.15; }
+  .quick-card .quick-icon { width: 44px; height: 44px; border-radius: 14px; font-size: 1.35rem; }
+  .quick-card small { display: none; }
+  .quick-card strong { display: block; font-size: .78rem; line-height: 1.05; }
   .beginner-challenge-card { grid-template-columns: 43% minmax(0, 1fr); gap: 0; border-radius: 20px; }
   .challenge-collage { min-height: 142px; }
   .challenge-copy { padding: 14px 13px; }
