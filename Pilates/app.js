@@ -364,7 +364,7 @@
 
     $("#history-summary").innerHTML = `
       <div class="summary-card"><strong>${thisWeek.length}</strong><span>${thisWeek.length === 1 ? "sessió feta" : "sessions fetes"}</span></div>
-      <div class="summary-card"><strong>${weekMinutes}</strong><span>minuts complets</span></div>
+      <div class="summary-card"><strong>${weekMinutes}</strong><span>minuts</span></div>
       <div class="summary-card"><strong>${activeDays}</strong><span>${activeDays === 1 ? "dia actiu" : "dies actius"}</span></div>`;
 
     const difference = weekMinutes - previousMinutes;

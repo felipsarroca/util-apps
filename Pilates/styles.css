@@ -234,9 +234,9 @@ main { width: min(1180px, 100%); margin: 0 auto; }
 .history-item .history-actions { display: flex; align-items: center; gap: 6px; }
 .history-item .undo-session { min-width: 44px; min-height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--teal-2); cursor: pointer; }
 .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
-.summary-card { padding: 17px 10px; border-radius: var(--radius-md); background: var(--paper); box-shadow: var(--shadow-sm); text-align: center; }
-.summary-card strong { display: block; font: 800 1.6rem "Manrope", sans-serif; }
-.summary-card span { color: var(--muted); font-size: .75rem; }
+.summary-card { padding: 11px 7px; border-radius: 14px; background: var(--ivory-2); text-align: center; }
+.summary-card strong { display: block; font: 800 1.25rem "Manrope", sans-serif; }
+.summary-card span { color: var(--muted); font-size: .7rem; }
 
 .history-panel { padding: 20px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(255,253,248,.74); box-shadow: var(--shadow-sm); }
 .history-week-panel { margin-bottom: 14px; }
