@@ -133,6 +133,21 @@ main { width: min(1180px, 100%); margin: 0 auto; }
 .quick-card > span:last-child { display: block; }
 .quick-card strong { font-family: "Manrope", sans-serif; }
 .quick-card small { display: block; margin-top: 3px; color: var(--muted); }
+.beginner-challenge-card { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(210px, .9fr) minmax(0, 1.1fr); gap: 18px; align-items: stretch; width: 100%; padding: 0; overflow: hidden; border: 1px solid rgba(169,72,58,.22); border-radius: var(--radius-xl); background: linear-gradient(135deg, #fff4ed, #f6ded2); color: var(--ink); text-align: left; box-shadow: var(--shadow-sm); cursor: pointer; }
+.challenge-collage { position: relative; min-height: 180px; display: grid; grid-template-columns: repeat(3, 1fr); overflow: hidden; background: var(--coral-soft); }
+.challenge-collage::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(7,31,29,.38), transparent 55%); pointer-events: none; }
+.challenge-collage img { width: 100%; height: 100%; object-fit: cover; }
+.challenge-count { position: absolute; z-index: 1; left: 12px; bottom: 10px; padding: 5px 9px; border-radius: 99px; background: rgba(255,253,248,.94); color: var(--teal); font-size: .72rem; font-weight: 850; }
+.challenge-copy { min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 20px 22px 20px 2px; }
+.challenge-copy .eyebrow { margin-bottom: 5px; color: var(--coral-dark); }
+.challenge-copy strong { font: 800 clamp(1.2rem, 3vw, 1.55rem)/1.15 "Manrope", sans-serif; }
+.challenge-copy small { margin-top: 6px; color: var(--muted); line-height: 1.35; }
+.challenge-progress { width: 100%; height: 6px; margin-top: 14px; overflow: hidden; border-radius: 99px; background: rgba(169,72,58,.14); }
+.challenge-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--coral); }
+.challenge-action { margin-top: 9px; color: var(--coral-dark); font-size: .86rem; font-weight: 850; }
+.beginner-challenge-card:hover { border-color: rgba(169,72,58,.45); transform: translateY(-1px); }
+.explore-program-spotlight { margin-top: 16px; }
+.explore-program-spotlight:empty { display: none; }
 @media (max-width: 679px) and (min-width: 371px) {
   .quick-card:last-child:nth-child(odd) { grid-column: 1 / -1; min-height: 105px; }
 }
@@ -380,10 +395,21 @@ dialog::backdrop { background: rgba(8,27,25,.62); backdrop-filter: blur(4px); }
   .content-section { margin-top: 26px; }
   .section-heading.compact { margin-bottom: 11px; }
   .section-heading.compact h2 { font-size: 1.16rem; }
-  .quick-grid { display: flex; gap: 10px; overflow-x: auto; margin-inline: -18px; padding: 0 18px 8px; scroll-snap-type: x proximity; scrollbar-width: none; }
-  .quick-grid::-webkit-scrollbar { display: none; }
-  .quick-card, .quick-card:last-child:nth-child(odd) { min-height: 110px; height: auto; max-height: none; flex: 0 0 148px; align-self: flex-start; padding: 12px 14px; overflow-wrap: anywhere; scroll-snap-align: start; }
+  .quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 0; padding: 0; overflow: visible; }
+  .quick-card, .quick-card:last-child:nth-child(odd) { grid-column: auto; min-height: 76px; height: auto; max-height: none; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 9px; align-items: center; align-content: center; padding: 10px 11px; overflow-wrap: anywhere; }
+  .quick-card:last-child { grid-column: 1 / -1; }
   .quick-card .quick-icon { width: 30px; height: 30px; }
+  .quick-card small { margin-top: 1px; font-size: .7rem; line-height: 1.25; }
+  .quick-card strong { font-size: .86rem; line-height: 1.15; }
+  .beginner-challenge-card { grid-template-columns: 43% minmax(0, 1fr); gap: 0; border-radius: 20px; }
+  .challenge-collage { min-height: 142px; }
+  .challenge-copy { padding: 14px 13px; }
+  .challenge-copy .eyebrow { font-size: .62rem; }
+  .challenge-copy strong { font-size: 1.02rem; }
+  .challenge-copy small { display: -webkit-box; overflow: hidden; font-size: .72rem; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .challenge-progress { margin-top: 9px; }
+  .challenge-action { margin-top: 7px; font-size: .75rem; }
+  .challenge-count { left: 7px; bottom: 7px; padding: 4px 7px; font-size: .64rem; }
   .app-footer { flex-direction: row; justify-content: center; align-items: center; gap: 8px; padding: 12px 10px 10px; text-align: left; font-size: clamp(8px, 2.65vw, 10px); line-height: 1.3; }
   .app-footer > a { flex: 0 0 auto; }
   .app-footer > div { min-width: 0; }
@@ -423,8 +449,10 @@ dialog::backdrop { background: rgba(8,27,25,.62); backdrop-filter: blur(4px); }
   .section-heading { flex-direction: column; align-items: flex-start; }
   .section-heading .text-button { max-width: 100%; white-space: normal; text-align: left; }
   .hero-card { min-height: 390px; }
-  .quick-grid { display: flex; margin-inline: -12px; padding-inline: 12px; }
-  .quick-card { min-height: 108px; height: auto; max-height: none; }
+  .quick-grid { display: grid; margin: 0; padding: 0; }
+  .quick-card { min-height: 72px; height: auto; max-height: none; }
+  .beginner-challenge-card { grid-template-columns: 40% minmax(0, 1fr); }
+  .challenge-collage { min-height: 148px; }
   .bottom-nav span { font-size: .63rem; }
 }
 

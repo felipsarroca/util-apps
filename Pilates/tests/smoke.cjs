@@ -35,12 +35,24 @@ const server = http.createServer((request, response) => {
     check(await page.title() === "Pilates a mà", "títol correcte");
     check(await page.locator(".hero-card").count() === 1, "recomanació principal visible");
     check(await page.evaluate(() => window.PILATES_CATALOG.videos.length === 92), "noranta-dues classes al catàleg");
-    check(await page.locator(".quick-card").count() === 6, "sis accessos ràpids");
+    check(await page.locator(".quick-card").count() === 5, "cinc filtres ràpids sense duplicar el repte");
+    check(await page.locator("#quick-grid .beginner-challenge-card").count() === 1, "repte de principiants representat per una única targeta");
+    check(await page.locator("#quick-grid .challenge-collage img").count() === 3, "imatge composta representativa del repte");
     check(await page.locator(".app-footer > div > p").count() === 2, "peu de pàgina en dues línies");
     check(await page.locator(".app-footer").evaluate(el => getComputedStyle(el).flexDirection === "row"), "icona a l'esquerra del text al peu mòbil");
     check(await page.locator("body").evaluate(el => el.scrollWidth <= el.clientWidth), "sense desbordament horitzontal en mòbil");
     fs.mkdirSync(path.join(__dirname, "artifacts"), { recursive: true });
     await page.screenshot({ path: path.join(__dirname, "artifacts", "mobile-home.png"), fullPage: true });
+
+    await page.locator("#quick-grid .beginner-challenge-card").click();
+    check(await page.locator("#session-dialog").evaluate(el => el.open), "el repte obre directament la sessió que toca");
+    check((await page.locator("#session-title").textContent()).includes("Dia 1"), "el repte comença pel primer dia");
+    await page.locator("#close-session").click();
+
+    await page.locator("#quick-grid [data-collection='full-body']").click();
+    check(await page.locator("#view-explora:not([hidden])").count() === 1, "Cos complet obre els resultats directament");
+    check(await page.locator("#explore-program-spotlight:empty").count() === 1, "Cos complet no barreja el repte de principiants");
+    check(await page.locator("#video-grid [data-play='tzK-MaaXWPY']").count() === 0, "els vídeos del repte no apareixen individualment a Cos complet");
 
     await page.getByRole("button", { name: "Programes" }).click();
     check(await page.locator(".program-card").count() === 3, "tres programes visibles");
@@ -81,6 +93,10 @@ const server = http.createServer((request, response) => {
     const favoriteTitle = await page.locator(".video-card h3").nth(3).textContent();
     await page.locator(".video-card").nth(3).locator("[data-favorite]").click();
     check((await page.locator(".video-card h3").first().textContent()) === favoriteTitle, "favorits sempre al primer lloc dels resultats");
+    await page.locator("#clear-filters").click();
+    await page.locator("#search-input").fill("Pilates para principiantes");
+    check(await page.locator("#explore-program-spotlight .beginner-challenge-card").count() === 1, "la cerca de principiants mostra una sola entrada del repte");
+    check(await page.locator("#video-grid [data-play='tzK-MaaXWPY']").count() === 0, "la cerca no duplica les quinze sessions");
     await page.locator("#clear-filters").click();
 
     await page.getByLabel("Obre la configuració").click();

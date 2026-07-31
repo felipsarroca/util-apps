@@ -110,7 +110,6 @@ window.PILATES_CATALOG = {
     { id: "full-body", title: "Cos complet", subtitle: "Treball global", icon: "body", filter: { tag: "full-body" } },
     { id: "intermediate", title: "Nivell intermedi", subtitle: "Classes per progressar", icon: "body", filter: { level: "intermediate" } },
     { id: "short", title: "Menys de 30 min", subtitle: "Quan tens poc temps", icon: "clock", filter: { maxDuration: 1800 } },
-    { id: "beginner", title: "Principiants", subtitle: "Comença amb confiança", icon: "leaf", filter: { level: "beginner" } },
     { id: "foundations", title: "Aprèn les bases", subtitle: "Respiració i postura", icon: "learn", filter: { tag: "technique" } }
   ]
 };

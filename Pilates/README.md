@@ -40,7 +40,7 @@ El catàleg canònic és a `data/catalog.js`:
 
 - `videos`: cada vídeo existeix una sola vegada i utilitza l'identificador de YouTube.
 - `programs`: contenen l'ordre dels identificadors dels vídeos.
-- `collections`: defineixen agrupacions i filtres, però no dupliquen vídeos.
+- `collections`: defineixen agrupacions i filtres de classes independents, però no dupliquen vídeos. El repte d'iniciació de 15 dies es mostra com una única targeta visual que obre directament la sessió que toca.
 
 Cada vídeo ha de tenir identificador, títol breu, títol original, durada en segons, nivell i etiquetes. La validació en iniciar l'aplicació detecta identificadors duplicats i referències de programes inexistents.
 

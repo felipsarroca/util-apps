@@ -199,7 +199,7 @@
         </div>
       </article>`;
 
-    $("#quick-grid").innerHTML = CATALOG.collections.map(collection => `
+    $("#quick-grid").innerHTML = beginnerChallengeCardHtml("today") + CATALOG.collections.map(collection => `
       <button class="quick-card" type="button" data-collection="${collection.id}">
         <span class="quick-icon" aria-hidden="true">${collectionIcon(collection.icon)}</span>
         <span><strong>${escapeHtml(collection.title)}</strong><small>${escapeHtml(collection.subtitle)}</small></span>
@@ -251,7 +251,15 @@
     const type = $("#type-filter")?.value || "";
     const status = $("#status-filter")?.value || "";
 
-    let videos = allVideos().filter(video => {
+    const beginnerProgram = getProgram("beginner-15");
+    const beginnerIds = new Set(beginnerProgram?.items || []);
+    const challengeHaystack = `${beginnerProgram?.title || ""} ${beginnerProgram?.subtitle || ""} pilates para principiantes pilates per a principiants ${(beginnerProgram?.items || []).map(id => {
+      const video = getVideo(id);
+      return `${video?.title || ""} ${video?.originalTitle || ""}`;
+    }).join(" ")}`.toLocaleLowerCase("ca");
+    const showBeginnerChallenge = !type && !duration && !status && (!level || level === "beginner") && (!search || challengeHaystack.includes(search));
+
+    let videos = allVideos().filter(video => !beginnerIds.has(video.id)).filter(video => {
       const haystack = `${video.title} ${video.originalTitle || ""}`.toLocaleLowerCase("ca");
       if (search && !haystack.includes(search)) return false;
       if (level && video.level !== level) return false;
@@ -266,7 +274,8 @@
       return true;
     });
     videos.sort((a, b) => Number(state.favorites.includes(b.id)) - Number(state.favorites.includes(a.id)) || a.duration - b.duration);
-    $("#result-count").textContent = `${videos.length} ${videos.length === 1 ? "classe" : "classes"}`;
+    $("#explore-program-spotlight").innerHTML = showBeginnerChallenge ? beginnerChallengeCardHtml("explore") : "";
+    $("#result-count").textContent = `${videos.length} ${videos.length === 1 ? "classe" : "classes"}${showBeginnerChallenge ? " + repte de 15 dies" : ""}`;
     $("#video-grid").innerHTML = videos.length ? videos.map(videoCardHtml).join("") : `<div class="empty-state"><strong>No hi ha cap coincidència</strong>Prova de retirar algun filtre o d'escriure una cerca més curta.</div>`;
   }
 
@@ -284,6 +293,29 @@
     const date = new Date(value);
     date.setHours(0, 0, 0, 0);
     return date;
+  }
+
+  function beginnerChallengeCardHtml(context = "explore") {
+    const program = getProgram("beginner-15");
+    if (!program) return "";
+    const progress = cycleProgress(program.id);
+    const nextId = nextInProgram(program.id) || program.items[0];
+    const nextVideo = getVideo(nextId);
+    const representativeIds = [program.items[0], program.items[7], program.items[14]];
+    const action = progress.completed === progress.total ? "Torna a començar" : progress.completed ? `Continua pel dia ${progress.completed + 1}` : "Comença pel dia 1";
+    return `<button class="beginner-challenge-card ${context}" type="button" data-start-program="${program.id}" aria-label="${action}: ${escapeHtml(program.title)}">
+      <span class="challenge-collage" aria-hidden="true">
+        ${representativeIds.map(id => `<img ${thumbAttrs(id)} alt="" loading="lazy">`).join("")}
+        <span class="challenge-count">15 sessions</span>
+      </span>
+      <span class="challenge-copy">
+        <span class="eyebrow">Pilates per a principiants</span>
+        <strong>${escapeHtml(program.title)}</strong>
+        <small>${escapeHtml(nextVideo.title)} · ${minutes(nextVideo.duration)} min</small>
+        <span class="challenge-progress"><span style="width:${progress.percent}%"></span></span>
+        <span class="challenge-action">${action} <span aria-hidden="true">→</span></span>
+      </span>
+    </button>`;
   }
 
   function startOfWeek(value = new Date()) {
@@ -894,6 +926,13 @@
     document.addEventListener("click", event => {
       const route = event.target.closest("[data-route]")?.dataset.route || event.target.closest("[data-go]")?.dataset.go;
       if (route) { navigate(route); return; }
+      const startProgram = event.target.closest("[data-start-program]");
+      if (startProgram) {
+        const programId = startProgram.dataset.startProgram;
+        ensureActiveCycle(programId);
+        startSession(nextInProgram(programId) || getProgram(programId).items[0], programId);
+        return;
+      }
       const play = event.target.closest("[data-play]");
       if (play) { const openDialog = play.closest("dialog"); if (openDialog?.id === "program-dialog") openDialog.close(); startSession(play.dataset.play, play.dataset.program || null); return; }
       const favorite = event.target.closest("[data-favorite]");
