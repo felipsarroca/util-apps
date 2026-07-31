@@ -200,7 +200,7 @@
       </article>`;
 
     $("#quick-grid").innerHTML = beginnerChallengeCardHtml("today") + CATALOG.collections.map(collection => `
-      <button class="quick-card" type="button" data-collection="${collection.id}">
+      <button class="quick-card quick-${collection.id}" type="button" data-collection="${collection.id}">
         <span class="quick-icon icon-${collection.id}" aria-hidden="true">${collectionIcon(collection.id)}</span>
         <span><strong>${escapeHtml(collection.title)}</strong><small>${escapeHtml(collection.subtitle)}</small></span>
       </button>`).join("");

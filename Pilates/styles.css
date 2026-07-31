@@ -129,6 +129,16 @@ main { width: min(1180px, 100%); margin: 0 auto; }
 .quick-card:nth-child(1) { background: var(--teal-soft); }
 .quick-card:nth-child(2) { background: var(--coral-soft); }
 .quick-card:nth-child(3) { background: var(--gold-soft); }
+.quick-card.quick-knee { border-color: #b9ddd6; background: #e7f5f2; }
+.quick-card.quick-full-body { border-color: #edc9ae; background: #fff0e5; }
+.quick-card.quick-intermediate { border-color: #e4cf82; background: #fff5cf; }
+.quick-card.quick-short { border-color: #c8d2ef; background: #eef2ff; }
+.quick-card.quick-foundations { border-color: #dcc5e5; background: #f6ebf8; }
+.quick-card.quick-knee strong { color: #155f59; }
+.quick-card.quick-full-body strong { color: #8d4828; }
+.quick-card.quick-intermediate strong { color: #705515; }
+.quick-card.quick-short strong { color: #3f5792; }
+.quick-card.quick-foundations strong { color: #714384; }
 .quick-card .quick-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: rgba(255,255,255,.72); color: var(--teal-2); }
 .quick-icon svg { width: 28px; height: 28px; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .quick-icon svg .accent { stroke: var(--coral); stroke-width: 2.35; }
