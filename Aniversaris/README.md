@@ -4,7 +4,7 @@ Aplicació Android nativa, privada i sense servidor per consultar els aniversari
 
 ## Estat actual
 
-El projecte és una primera implementació de la versió 1 publicada dins del repositori `felipsarroca/util-apps`. No conté cap clau de signatura definitiva. Les versions de prova es distribueixen com a *pre-release* de GitHub i queden separades de les futures versions estables.
+El projecte és una implementació funcional publicada dins del repositori `felipsarroca/util-apps`. No conté cap clau de signatura definitiva: fins que es prepari Google Play, les versions de prova utilitzen la signatura local de depuració.
 
 Inclou:
 
@@ -14,7 +14,8 @@ Inclou:
 - normalització, deduplicació i detecció de conflictes d’any;
 - memòria cau Room reconstruïble i preferències DataStore;
 - llista circular de dotze mesos, cerca i salt a una data;
-- widget Glance responsive amb estats sense permís/sense dades;
+- dos widgets Glance diferenciats, 3×1 i 4×1, amb quatre aniversaris cadascun;
+- fotos dels contactes a la llista i al widget, amb inicial com a alternativa;
 - actualització a les 00.00.05 amb alarma exacta o alternativa aproximada;
 - reprogramació després de reinici, canvi d’hora i canvi de zona;
 - variants `github` i `play` amb comprovadors d’actualització separats;
@@ -33,10 +34,11 @@ L’entorn local ja està preparat i comprovat amb Android Studio 2026.1.3.7, Te
 
 ## Instal·lació de la versió de prova
 
-1. Obre al mòbil la [pre-release Aniversaris 1.0.0-test.1](https://github.com/felipsarroca/util-apps/releases/tag/aniversaris-v1.0.0-test.1).
-2. Descarrega l’APK adjunt `aniversaris-1.0.0-test.1-debug.apk`.
-3. Si Android ho demana, autoritza temporalment el navegador o el gestor de fitxers a «Instal·lar aplicacions desconegudes».
-4. Instal·la l’APK i segueix l’onboarding abans de concedir accés als contactes.
+1. Des de la versió anterior, obre **Actualitzacions** a la pantalla principal o als ajustos i prem **Cerca actualitzacions**.
+2. També pots obrir al mòbil la [release Aniversaris 1.1.0](https://github.com/felipsarroca/util-apps/releases/tag/aniversaris-v1.1.0).
+3. Descarrega l’APK adjunt `aniversaris-1.1.0-debug.apk`.
+4. Si Android ho demana, autoritza temporalment el navegador o el gestor de fitxers a «Instal·lar aplicacions desconegudes».
+5. Instal·la l’APK sobre la versió anterior. Les preferències es conservaran, però la versió 1.1.0 demanarà confirmar explícitament el compte de Google.
 
 La versió de prova utilitza l’identificador `cat.felipsarroca.aniversaris.debug`, de manera que no interferirà amb la futura versió signada de Google Play.
 
@@ -66,11 +68,11 @@ La versió de prova utilitza l’identificador `cat.felipsarroca.aniversaris.deb
 
 ## Prova amb contactes reals
 
-1. Instal·la `githubDebug` en un dispositiu de prova.
+1. Instal·la o actualitza `githubDebug` en un dispositiu de prova.
 2. Concedeix accés als contactes després de llegir l’explicació.
 3. Confirma que apareix el compte correcte i força una actualització.
 4. Compara el recompte amb Google Contacts, sobretot duplicats i dates sense any.
-5. Afegeix el widget i prova les mides 4×1 i 4×2, mode clar/fosc i text gran.
+5. Afegeix separadament els widgets 3×1 i 4×1; comprova que tots dos mostren quatre files, les fotos i els temes clar/fosc.
 6. Revoca `READ_CONTACTS`: la llista i el widget han de passar a l’estat sense permís.
 7. Prova el canvi de dia, reinici i zona horària en el Xiaomi/HyperOS real.
 

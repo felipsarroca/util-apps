@@ -9,17 +9,17 @@ import androidx.work.WorkerParameters
 import cat.felipsarroca.aniversaris.AniversarisApplication
 import cat.felipsarroca.aniversaris.domain.birthdays.RefreshReason
 import cat.felipsarroca.aniversaris.domain.birthdays.RefreshResult
-import cat.felipsarroca.aniversaris.widget.BirthdayWidget
+import cat.felipsarroca.aniversaris.widget.BirthdayWidgets
 import java.util.concurrent.TimeUnit
 
 class SafetyWork(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val app = applicationContext as AniversarisApplication
-        BirthdayWidget.updateAll(applicationContext)
+        BirthdayWidgets.updateAll(applicationContext)
         return when (app.container.repository.refresh(RefreshReason.DAY_CHANGED)) {
             is RefreshResult.Error -> Result.retry()
             else -> {
-                BirthdayWidget.updateAll(applicationContext)
+                BirthdayWidgets.updateAll(applicationContext)
                 Result.success()
             }
         }

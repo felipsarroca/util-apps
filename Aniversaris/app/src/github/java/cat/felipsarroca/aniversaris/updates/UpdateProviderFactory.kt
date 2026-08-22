@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.JSONObject
 import java.io.IOException
 
 object UpdateProviderFactory {
@@ -34,8 +33,7 @@ private class GitHubUpdateProvider(private val client: OkHttpClient = OkHttpClie
                             !it.optBoolean("prerelease") &&
                             it.optString("tag_name").startsWith(tagPrefix)
                     } ?: return@withContext UpdateCheckResult.UpToDate
-                val versionName = json.optString("tag_name").removePrefix("v")
-                    .removePrefix(tagPrefix)
+                val versionName = json.optString("tag_name").removePrefix(tagPrefix)
                 val body = json.optString("body")
                 val versionCode = Regex("(?im)^\\s*versionCode\\s*:\\s*(\\d+)\\s*$").find(body)?.groupValues?.get(1)?.toIntOrNull()
                     ?: return@withContext UpdateCheckResult.Error("La release no declara versionCode")

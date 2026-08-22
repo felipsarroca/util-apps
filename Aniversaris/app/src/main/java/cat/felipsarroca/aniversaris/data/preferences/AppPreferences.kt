@@ -17,6 +17,7 @@ private val Context.dataStore by preferencesDataStore("aniversaris_preferences")
 
 data class UserPreferences(
     val selectedAccount: ContactAccount?,
+    val accountConfirmed: Boolean,
     val leapDayRule: LeapDayRule,
     val widgetTheme: String,
     val widgetAlpha: Float,
@@ -32,6 +33,7 @@ class AppPreferences(private val context: Context) {
         val accountType = prefs[Keys.ACCOUNT_TYPE]
         UserPreferences(
             selectedAccount = if (accountName != null && accountType != null) ContactAccount(accountName, accountType) else null,
+            accountConfirmed = prefs[Keys.ACCOUNT_CONFIRMED] ?: false,
             leapDayRule = runCatching { LeapDayRule.valueOf(prefs[Keys.LEAP_RULE] ?: "FEB_28") }.getOrDefault(LeapDayRule.FEB_28),
             widgetTheme = prefs[Keys.WIDGET_THEME] ?: "SYSTEM",
             widgetAlpha = (prefs[Keys.WIDGET_ALPHA] ?: 0.72f).coerceIn(0.55f, 0.90f),
@@ -43,9 +45,10 @@ class AppPreferences(private val context: Context) {
     }
 
     suspend fun current(): UserPreferences = values.first()
-    suspend fun setAccount(account: ContactAccount) = context.dataStore.edit {
+    suspend fun setAccount(account: ContactAccount, confirmed: Boolean = true) = context.dataStore.edit {
         it[Keys.ACCOUNT_NAME] = account.name
         it[Keys.ACCOUNT_TYPE] = account.type
+        it[Keys.ACCOUNT_CONFIRMED] = confirmed
     }
     suspend fun setOnboardingComplete() = context.dataStore.edit { it[Keys.ONBOARDING] = true }
     suspend fun setLastRefresh(value: Long) = context.dataStore.edit { it[Keys.LAST_REFRESH] = value }
@@ -57,6 +60,7 @@ class AppPreferences(private val context: Context) {
     private object Keys {
         val ACCOUNT_NAME = stringPreferencesKey("selected_account_name")
         val ACCOUNT_TYPE = stringPreferencesKey("selected_account_type")
+        val ACCOUNT_CONFIRMED = booleanPreferencesKey("selected_account_confirmed")
         val LEAP_RULE = stringPreferencesKey("leap_day_rule")
         val WIDGET_THEME = stringPreferencesKey("widget_theme")
         val WIDGET_ALPHA = floatPreferencesKey("widget_alpha")

@@ -12,11 +12,14 @@ import cat.felipsarroca.aniversaris.domain.birthdays.RefreshReason
 import cat.felipsarroca.aniversaris.domain.birthdays.RefreshResult
 import cat.felipsarroca.aniversaris.domain.birthdays.UpcomingBirthday
 import cat.felipsarroca.aniversaris.scheduling.DayChangeScheduler
-import cat.felipsarroca.aniversaris.widget.BirthdayWidget
+import cat.felipsarroca.aniversaris.widget.BirthdayWidgets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -26,6 +29,7 @@ data class MainUiState(
     val onboardingCompleted: Boolean = false,
     val accounts: List<ContactAccount> = emptyList(),
     val selectedAccount: ContactAccount? = null,
+    val accountConfirmed: Boolean = false,
     val birthdays: List<UpcomingBirthday> = emptyList(),
     val query: String = "",
     val loading: Boolean = false,
@@ -38,16 +42,22 @@ data class MainUiState(
     val leapDayRule: cat.felipsarroca.aniversaris.domain.birthdays.LeapDayRule = cat.felipsarroca.aniversaris.domain.birthdays.LeapDayRule.FEB_28,
     val updateMessage: String? = null,
     val updateUrl: String? = null,
+    val displayFrom: LocalDate = LocalDate.now(),
 )
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as AniversarisApplication
     private val container = app.container
     private val mutable = MutableStateFlow(MainUiState())
+    private val birthdaysFromSelectedDate = mutable
+        .map { it.displayFrom }
+        .distinctUntilChanged()
+        .flatMapLatest(container.repository::observeUpcoming)
     val state: StateFlow<MainUiState> = combine(
         mutable,
         container.preferences.values,
-        container.repository.observeUpcoming(LocalDate.now()),
+        birthdaysFromSelectedDate,
     ) { local, prefs, birthdays ->
         val filtered = if (local.query.isBlank()) birthdays else birthdays.filter {
             BirthdayNormalizer.normalizeName(it.displayName).contains(BirthdayNormalizer.normalizeName(local.query))
@@ -55,6 +65,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         local.copy(
             onboardingCompleted = prefs.onboardingCompleted,
             selectedAccount = prefs.selectedAccount,
+            accountConfirmed = prefs.accountConfirmed,
             birthdays = filtered,
             lastRefreshAt = prefs.lastRefreshAt,
             widgetAlpha = prefs.widgetAlpha,
@@ -76,6 +87,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setQuery(value: String) { mutable.value = mutable.value.copy(query = value) }
 
+    fun setDisplayFrom(date: LocalDate) {
+        mutable.value = mutable.value.copy(displayFrom = date, query = "")
+    }
+
     fun selectAccount(account: ContactAccount) = viewModelScope.launch {
         container.preferences.setAccount(account)
         refresh(RefreshReason.ACCOUNT_CHANGED)
@@ -83,22 +98,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setWidgetAlpha(value: Float) = viewModelScope.launch {
         container.preferences.setWidgetAlpha(value)
-        BirthdayWidget.updateAll(app)
+        BirthdayWidgets.updateAll(app)
     }
 
     fun setWidgetTheme(value: String) = viewModelScope.launch {
         container.preferences.setWidgetTheme(value)
-        BirthdayWidget.updateAll(app)
+        BirthdayWidgets.updateAll(app)
     }
 
     fun setShowAvatars(value: Boolean) = viewModelScope.launch {
         container.preferences.setShowAvatars(value)
-        BirthdayWidget.updateAll(app)
+        BirthdayWidgets.updateAll(app)
     }
 
     fun setLeapRule(value: cat.felipsarroca.aniversaris.domain.birthdays.LeapDayRule) = viewModelScope.launch {
         container.preferences.setLeapRule(value)
-        BirthdayWidget.updateAll(app)
+        BirthdayWidgets.updateAll(app)
     }
 
     fun checkUpdates() = viewModelScope.launch {
@@ -130,19 +145,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             is RefreshResult.Error -> "No s’ha pogut actualitzar. Es conserven les últimes dades."
         }
         mutable.value = mutable.value.copy(loading = false, message = message)
-        BirthdayWidget.updateAll(app)
+        BirthdayWidgets.updateAll(app)
     }
 
     private fun loadAccountsAndRefresh() = viewModelScope.launch {
-        val accounts = runCatching { container.contactsDataSource.listAccounts() }.getOrDefault(emptyList())
+        val detected = runCatching { container.contactsDataSource.listAccounts() }.getOrDefault(emptyList())
+        val googleAccounts = detected.filter { it.type.equals("com.google", ignoreCase = true) }
+        val accounts = googleAccounts.ifEmpty { detected }
         mutable.value = mutable.value.copy(accounts = accounts)
         val prefs = container.preferences.current()
         val selected = prefs.selectedAccount?.takeIf(accounts::contains)
             ?: accounts.firstOrNull { it.name.equals(PREFERRED_ACCOUNT, true) && it.type == "com.google" }
             ?: accounts.firstOrNull { it.type == "com.google" }
             ?: accounts.firstOrNull()
-        if (selected != null && selected != prefs.selectedAccount) container.preferences.setAccount(selected)
-        if (selected != null) refresh(RefreshReason.APP_OPEN)
+        if (selected != null && selected != prefs.selectedAccount) container.preferences.setAccount(selected, confirmed = false)
+        if (selected != null && prefs.accountConfirmed) refresh(RefreshReason.APP_OPEN)
     }
 
     private companion object { const val PREFERRED_ACCOUNT = "felip.sarroca@gmail.com" }
