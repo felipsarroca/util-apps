@@ -94,3 +94,7 @@ La versió de prova utilitza l’identificador `cat.felipsarroca.aniversaris.deb
 No s’envien dades de contactes a cap servidor. Les úniques connexions previstes són la comprovació d’actualitzacions de GitHub o Google Play segons la variant. La base local i DataStore queden exclosos de còpies i transferències del sistema.
 
 Vegeu també [PRIVACITAT.md](PRIVACITAT.md) i [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md).
+
+## Publicació a Google Play
+
+La guia de continuïtat, els textos de la fitxa i la plantilla de política de privacitat es troben a [docs/GOOGLE_PLAY.md](docs/GOOGLE_PLAY.md) i [docs/play-store/](docs/play-store/).
