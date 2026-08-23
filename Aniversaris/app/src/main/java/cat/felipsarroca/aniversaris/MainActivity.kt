@@ -56,7 +56,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -165,7 +164,6 @@ class MainActivity : ComponentActivity() {
         var searching by remember { mutableStateOf(false) }
         var showDatePicker by remember { mutableStateOf(false) }
         var menu by remember { mutableStateOf(false) }
-        val context = LocalContext.current
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -208,7 +206,6 @@ class MainActivity : ComponentActivity() {
             ) {
                 StatusLine(state, onSettings)
                 WidgetSpotlight(onSettings)
-                UpdateSpotlight(state, viewModel::checkUpdates) { url -> context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
                 if (state.displayFrom != LocalDate.now()) DateFocusBanner(state.displayFrom) { viewModel.setDisplayFrom(LocalDate.now()) }
                 when {
                     state.loading && state.birthdays.isEmpty() -> LoadingState()
@@ -258,26 +255,6 @@ class MainActivity : ComponentActivity() {
                     Text("3×1 compacte o 4×1 amb més espai per als noms", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
                 Text("Configura", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            }
-        }
-    }
-
-    @Composable
-    private fun UpdateSpotlight(state: MainUiState, onCheck: () -> Unit, onInstall: (String) -> Unit) {
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        ) {
-            Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.SystemUpdateAlt, null, tint = MaterialTheme.colorScheme.tertiary)
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text("Actualitzacions", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
-                    Text(state.updateMessage ?: "Comprova si hi ha una versió nova", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                state.updateUrl?.let { url -> Button(onClick = { onInstall(url) }) { Text("Instal·la") } }
-                    ?: FilledTonalButton(onClick = onCheck) { Text("Cerca") }
             }
         }
     }
@@ -373,7 +350,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun SettingsScreen(state: MainUiState, onBack: () -> Unit, onAccount: (ContactAccount) -> Unit) {
         var accountsOpen by remember { mutableStateOf(false) }
-        var sliderAlpha by remember(state.widgetAlpha) { mutableFloatStateOf(state.widgetAlpha) }
+        var sliderTransparency by remember(state.widgetAlpha) { mutableFloatStateOf(1f - state.widgetAlpha) }
         val context = LocalContext.current
         Scaffold(topBar = { SimpleTopBar("Ajustos", onBack) }) { padding ->
             LazyColumn(
@@ -382,15 +359,48 @@ class MainActivity : ComponentActivity() {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item {
+                    SettingsCard(
+                        Icons.Rounded.SystemUpdateAlt,
+                        "Actualitzacions de l’app",
+                        containerColor = if (state.updateUrl != null) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer,
+                    ) {
+                        Text("Versió ${BuildConfig.VERSION_NAME} · canal ${BuildConfig.UPDATE_SOURCE}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            state.updateMessage ?: "L’app comprova automàticament si hi ha una versió nova quan s’inicia.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        state.updateUrl?.let { url ->
+                            Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }, modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Rounded.SystemUpdateAlt, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Descarrega i instal·la l’actualització")
+                            }
+                        }
+                        OutlinedButton(onClick = viewModel::checkUpdates, enabled = !state.checkingUpdates, modifier = Modifier.fillMaxWidth()) {
+                            if (state.checkingUpdates) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                            else Icon(Icons.Rounded.Refresh, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(if (state.checkingUpdates) "Comprovant…" else "Torna a cercar actualitzacions")
+                        }
+                        Text("La comprovació es fa en segon pla i no alenteix l’obertura. No s’hi envia cap dada dels contactes.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                item {
                     SettingsCard(Icons.Rounded.Widgets, "Widget") {
-                        Text("Afegeix des del selector de widgets del mòbil la modalitat Aniversaris 3×1 o Aniversaris 4×1. Totes dues mostren exactament quatre aniversaris.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Afegeix des del selector de widgets del mòbil la modalitat Aniversaris 3×1 o Aniversaris 4×1. Totes dues mostren exactament quatre aniversaris.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             WidgetSizeOption("3×1", "Compacte", Modifier.weight(1f))
                             WidgetSizeOption("4×1", "Noms més amplis", Modifier.weight(1f))
                         }
-                        WidgetPreview(state.widgetTheme, sliderAlpha)
-                        Text("Transparència · ${(sliderAlpha * 100).roundToInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Slider(value = sliderAlpha, onValueChange = { sliderAlpha = it }, onValueChangeFinished = { viewModel.setWidgetAlpha(sliderAlpha) }, valueRange = .55f..0.90f)
+                        WidgetPreview(state.widgetTheme, 1f - sliderTransparency)
+                        Text("Transparència · ${(sliderTransparency * 100).roundToInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Slider(
+                            value = sliderTransparency,
+                            onValueChange = { sliderTransparency = it },
+                            onValueChangeFinished = { viewModel.setWidgetAlpha(1f - sliderTransparency) },
+                            valueRange = 0f..1f,
+                        )
                         Text("Color", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                             listOf("SYSTEM" to "Sistema", "DARK" to "Fosc", "LIGHT" to "Clar").forEach { (value, label) ->
@@ -405,30 +415,15 @@ class MainActivity : ComponentActivity() {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Fotos dels contactes", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                                Text("Mostra la foto o, si no n’hi ha, la inicial.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Mostra la foto o, si no n’hi ha, la inicial.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Switch(checked = state.showAvatars, onCheckedChange = viewModel::setShowAvatars)
                         }
                     }
                 }
                 item {
-                    SettingsCard(Icons.Rounded.SystemUpdateAlt, "Actualitzacions de l’app") {
-                        Text("Versió ${BuildConfig.VERSION_NAME} · canal ${BuildConfig.UPDATE_SOURCE}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Button(onClick = viewModel::checkUpdates, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Rounded.SystemUpdateAlt, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Cerca actualitzacions")
-                        }
-                        state.updateMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        state.updateUrl?.let { url ->
-                            Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }, modifier = Modifier.fillMaxWidth()) { Text("Descarrega i instal·la l’actualització") }
-                        }
-                        Text("Android et demanarà confirmar la descàrrega i la instal·lació. Les dades de contactes no s’inclouen en aquesta comprovació.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                item {
                     SettingsCard(Icons.Rounded.AccountCircle, "Compte de Google") {
-                        Text("Només es llegeixen els aniversaris del compte seleccionat.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Només es llegeixen les dates dels contactes del compte seleccionat.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Box {
                             OutlinedButton(onClick = { accountsOpen = true }, modifier = Modifier.fillMaxWidth()) { Text(state.selectedAccount?.name ?: "Tria un compte", maxLines = 1, overflow = TextOverflow.Ellipsis) }
                             DropdownMenu(accountsOpen, { accountsOpen = false }) {
@@ -443,7 +438,7 @@ class MainActivity : ComponentActivity() {
                 }
                 item {
                     SettingsCard(Icons.Rounded.Schedule, "Actualització del dia") {
-                        Text(if (state.exactAlarmGranted) "Alarma exacta disponible." else "L’actualització pot arribar uns minuts tard.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (state.exactAlarmGranted) "Alarma exacta disponible." else "L’actualització pot arribar uns minuts tard.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         if (!state.exactAlarmGranted) TextButton(onClick = {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, "package:${context.packageName}".toUri()))
                         }) { Text("Permet alarmes i recordatoris") }
@@ -451,7 +446,7 @@ class MainActivity : ComponentActivity() {
                 }
                 item {
                     SettingsCard(Icons.Rounded.CalendarMonth, "Aniversaris del 29 de febrer") {
-                        Text("Tria quan es mostraran en anys no bixests.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Tria quan es mostraran en anys no bixests.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(selected = state.leapDayRule == LeapDayRule.FEB_28, onClick = { viewModel.setLeapRule(LeapDayRule.FEB_28) }, label = { Text("28 de febrer") })
                             FilterChip(selected = state.leapDayRule == LeapDayRule.MAR_1, onClick = { viewModel.setLeapRule(LeapDayRule.MAR_1) }, label = { Text("1 de març") })
@@ -460,7 +455,7 @@ class MainActivity : ComponentActivity() {
                 }
                 item {
                     SettingsCard(Icons.Rounded.Security, "Privadesa") {
-                        Text("Només es llegeixen el nom, la data d’aniversari i la miniatura del compte triat. Tot es processa al dispositiu.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Només es llegeixen el nom, les dates desades i la miniatura del compte triat. Tot es processa al dispositiu.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -468,8 +463,13 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun SettingsCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, content: @Composable ColumnScope.() -> Unit) {
-        Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+    private fun SettingsCard(
+        icon: androidx.compose.ui.graphics.vector.ImageVector,
+        title: String,
+        containerColor: Color = MaterialTheme.colorScheme.surface,
+        content: @Composable ColumnScope.() -> Unit,
+    ) {
+        Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = containerColor)) {
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
@@ -505,7 +505,7 @@ class MainActivity : ComponentActivity() {
         Surface(modifier, shape = RoundedCornerShape(15.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
             Column(Modifier.padding(12.dp)) {
                 Text(size, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
             }
         }
     }

@@ -42,6 +42,7 @@ data class MainUiState(
     val leapDayRule: cat.felipsarroca.aniversaris.domain.birthdays.LeapDayRule = cat.felipsarroca.aniversaris.domain.birthdays.LeapDayRule.FEB_28,
     val updateMessage: String? = null,
     val updateUrl: String? = null,
+    val checkingUpdates: Boolean = false,
     val displayFrom: LocalDate = LocalDate.now(),
 )
 
@@ -75,7 +76,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MainUiState())
 
-    init { permissionStateChanged() }
+    init {
+        permissionStateChanged()
+        performUpdateCheck(automatic = true)
+    }
 
     fun permissionStateChanged() {
         val granted = ContextCompat.checkSelfPermission(app, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
@@ -116,10 +120,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         BirthdayWidgets.updateAll(app)
     }
 
-    fun checkUpdates() = viewModelScope.launch {
-        mutable.value = mutable.value.copy(updateMessage = "Comprovant…", updateUrl = null)
+    fun checkUpdates() = performUpdateCheck(automatic = false)
+
+    private fun performUpdateCheck(automatic: Boolean) = viewModelScope.launch {
+        mutable.value = mutable.value.copy(
+            checkingUpdates = true,
+            updateMessage = if (automatic) "Comprovant automàticament si hi ha actualitzacions…" else "Comprovant…",
+            updateUrl = null,
+        )
         val result = cat.felipsarroca.aniversaris.updates.UpdateProviderFactory.create(app).check()
         mutable.value = mutable.value.copy(
+            checkingUpdates = false,
             updateMessage = when (result) {
                 cat.felipsarroca.aniversaris.updates.UpdateCheckResult.UpToDate -> "Ja tens l’última versió."
                 cat.felipsarroca.aniversaris.updates.UpdateCheckResult.Offline -> "Sense connexió. Torna-ho a provar més tard."

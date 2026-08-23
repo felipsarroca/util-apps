@@ -30,11 +30,15 @@ object NextOccurrenceCalculator {
         return UpcomingBirthday(
             id = entity.id,
             lookupKey = entity.lookupKey,
-            displayName = entity.displayName,
+            displayName = entity.eventLabel?.takeIf(String::isNotBlank)?.let {
+                "${entity.displayName} (${it.lowercase()})"
+            } ?: entity.displayName,
             photoThumbnailUri = entity.photoThumbnailUri,
             nextDate = next,
             daysRemaining = ChronoUnit.DAYS.between(today, next),
-            ageTurning = entity.birthYear?.takeUnless { entity.hasYearConflict }?.let { next.year - it },
+            ageTurning = entity.birthYear
+                ?.takeIf { entity.eventLabel.isNullOrBlank() && !entity.hasYearConflict }
+                ?.let { next.year - it },
         )
     }
 }

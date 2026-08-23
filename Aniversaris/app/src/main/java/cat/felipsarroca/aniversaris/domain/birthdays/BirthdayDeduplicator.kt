@@ -22,6 +22,7 @@ object BirthdayDeduplicator {
     private fun shouldMerge(a: Candidate, b: Candidate): Boolean {
         if (a.row.accountName != b.row.accountName || a.row.accountType != b.row.accountType) return false
         if (a.date.day != b.date.day || a.date.month != b.date.month) return false
+        if (normalizedLabel(a.row.eventLabel) != normalizedLabel(b.row.eventLabel)) return false
         if (a.row.sourceRowId == b.row.sourceRowId) return true
         val sameContact = a.row.contactId != null && a.row.contactId == b.row.contactId
         val sameLookup = !a.row.lookupKey.isNullOrBlank() && a.row.lookupKey == b.row.lookupKey
@@ -41,6 +42,7 @@ object BirthdayDeduplicator {
             lookupKeys = group.mapNotNull { it.row.lookupKey }.toSet(),
             displayName = BirthdayNormalizer.normalizeSpaces(preferred.row.displayName),
             normalizedName = BirthdayNormalizer.normalizeName(preferred.row.displayName),
+            eventLabel = preferred.row.eventLabel?.let(BirthdayNormalizer::normalizeSpaces),
             day = preferred.date.day,
             month = preferred.date.month,
             birthYear = years.singleOrNull(),
@@ -50,4 +52,6 @@ object BirthdayDeduplicator {
             accountType = preferred.row.accountType,
         )
     }
+
+    private fun normalizedLabel(value: String?): String = value?.let(BirthdayNormalizer::normalizeName).orEmpty()
 }

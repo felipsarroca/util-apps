@@ -111,7 +111,7 @@ private fun WidgetContent(
     Column(
         modifier = GlanceModifier.fillMaxSize().appWidgetBackground()
             .background(ColorProvider(Color(background))).cornerRadius(18.dp)
-            .padding(horizontal = if (layout == WidgetLayout.FOUR_BY_ONE) 11.dp else 8.dp, vertical = 4.dp)
+            .padding(horizontal = if (layout == WidgetLayout.FOUR_BY_ONE) 7.dp else 5.dp, vertical = 1.dp)
             .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
     ) {
         when {
@@ -135,13 +135,13 @@ private fun BirthdayRow(
 ) {
     val highlight = item.daysRemaining == 0L
     val compact = layout == WidgetLayout.THREE_BY_ONE
-    Row(modifier = GlanceModifier.fillMaxWidth().height(18.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = GlanceModifier.fillMaxWidth().height(15.dp), verticalAlignment = Alignment.CenterVertically) {
         if (showAvatar) {
             if (photo != null) {
-                Image(ImageProvider(photo), item.displayName, GlanceModifier.size(16.dp).cornerRadius(8.dp), contentScale = ContentScale.Crop)
+                Image(ImageProvider(photo), item.displayName, GlanceModifier.size(15.dp).cornerRadius(8.dp), contentScale = ContentScale.Crop)
             } else {
-                Box(GlanceModifier.size(16.dp).cornerRadius(8.dp).background(ColorProvider(Color(0xFFE86850))), contentAlignment = Alignment.Center) {
-                    Text(item.displayName.take(1).uppercase(), style = TextStyle(color = ColorProvider(Color.White), fontWeight = FontWeight.Bold, fontSize = 9.sp))
+                Box(GlanceModifier.size(15.dp).cornerRadius(8.dp).background(ColorProvider(Color(0xFFE86850))), contentAlignment = Alignment.Center) {
+                    Text(item.displayName.take(1).uppercase(), style = TextStyle(color = ColorProvider(Color.White), fontWeight = FontWeight.Bold, fontSize = 10.sp))
                 }
             }
             Spacer(GlanceModifier.width(if (compact) 3.dp else 5.dp))
@@ -150,19 +150,19 @@ private fun BirthdayRow(
             item.displayName,
             modifier = GlanceModifier.defaultWeight(),
             maxLines = 1,
-            style = TextStyle(color = ColorProvider(primaryText), fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal, fontSize = if (compact) 11.sp else 12.sp),
+            style = TextStyle(color = ColorProvider(primaryText), fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal, fontSize = if (compact) 12.sp else 13.sp),
         )
         Text(
             proximity(item),
-            modifier = GlanceModifier.width(if (compact) 46.dp else 56.dp),
+            modifier = GlanceModifier.width(if (compact) 43.dp else 48.dp),
             maxLines = 1,
-            style = TextStyle(color = ColorProvider(if (highlight) Color(0xFFE86850) else secondaryText), fontSize = if (compact) 10.sp else 11.sp, textAlign = TextAlign.End),
+            style = TextStyle(color = ColorProvider(if (highlight) Color(0xFFE86850) else secondaryText), fontSize = if (compact) 11.sp else 12.sp, textAlign = TextAlign.End),
         )
         Text(
             item.ageTurning?.let { "$it a." } ?: "—",
-            modifier = GlanceModifier.width(if (compact) 34.dp else 42.dp),
+            modifier = GlanceModifier.width(if (compact) 34.dp else 38.dp),
             maxLines = 1,
-            style = TextStyle(color = ColorProvider(secondaryText), fontSize = if (compact) 10.sp else 11.sp, textAlign = TextAlign.End),
+            style = TextStyle(color = ColorProvider(secondaryText), fontSize = if (compact) 11.sp else 12.sp, textAlign = TextAlign.End),
         )
     }
 }

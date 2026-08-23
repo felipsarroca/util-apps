@@ -11,6 +11,7 @@ data class BirthdayEntity(
     val rawContactIds: Set<Long>,
     val displayName: String,
     val normalizedName: String,
+    val eventLabel: String?,
     val day: Int,
     val month: Int,
     val birthYear: Int?,

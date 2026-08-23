@@ -48,7 +48,7 @@ class DefaultBirthdayRepository(
             val now = System.currentTimeMillis()
             val entities = processed.birthdays.map { item ->
                 val stableParts = (item.lookupKeys.ifEmpty { item.rawContactIds.map(Long::toString).toSet() }).sorted()
-                val stableId = sha256((stableParts + "${item.month}-${item.day}").joinToString("|"))
+                val stableId = sha256((stableParts + "${item.month}-${item.day}" + item.eventLabel.orEmpty()).joinToString("|"))
                 BirthdayEntity(
                     id = stableId,
                     lookupKey = item.lookupKeys.sorted().firstOrNull(),
@@ -56,6 +56,7 @@ class DefaultBirthdayRepository(
                     rawContactIds = item.rawContactIds,
                     displayName = item.displayName,
                     normalizedName = item.normalizedName,
+                    eventLabel = item.eventLabel,
                     day = item.day,
                     month = item.month,
                     birthYear = item.birthYear,

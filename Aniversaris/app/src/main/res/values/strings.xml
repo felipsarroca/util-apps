@@ -2,6 +2,6 @@
     <string name="app_name">Aniversaris</string>
     <string name="widget_name_3x1">Aniversaris 3×1</string>
     <string name="widget_name_4x1">Aniversaris 4×1</string>
-    <string name="widget_description">Mostra els quatre aniversaris més pròxims.</string>
+    <string name="widget_description">Mostra les quatre dates de contacte més pròximes.</string>
     <string name="widget_open_app">Obre Aniversaris per preparar el widget</string>
 </resources>

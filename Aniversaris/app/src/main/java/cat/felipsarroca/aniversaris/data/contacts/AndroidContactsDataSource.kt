@@ -44,10 +44,9 @@ class AndroidContactsDataSource(private val resolver: ContentResolver) : Contact
         val result = mutableListOf<RawBirthday>()
         rawIds.chunked(800).forEach { ids ->
             val placeholders = ids.joinToString(",") { "?" }
-            val selection = "${Data.RAW_CONTACT_ID} IN ($placeholders) AND ${Data.MIMETYPE}=? AND ${Event.TYPE}=?"
+            val selection = "${Data.RAW_CONTACT_ID} IN ($placeholders) AND ${Data.MIMETYPE}=?"
             val args = ids.map(Long::toString).toMutableList().apply {
                 add(Event.CONTENT_ITEM_TYPE)
-                add(Event.TYPE_BIRTHDAY.toString())
             }.toTypedArray()
             resolver.query(Data.CONTENT_URI, PROJECTION, selection, args, null)?.use { cursor ->
                 while (cursor.moveToNext()) {
@@ -58,7 +57,8 @@ class AndroidContactsDataSource(private val resolver: ContentResolver) : Contact
                         lookupKey = cursor.getString(3),
                         displayName = cursor.getString(4)?.ifBlank { "Sense nom" } ?: "Sense nom",
                         rawDate = cursor.getString(5) ?: continue,
-                        photoThumbnailUri = cursor.getString(6),
+                        eventLabel = labelFor(cursor.getInt(6), cursor.getString(7)),
+                        photoThumbnailUri = cursor.getString(8),
                         accountName = account.name,
                         accountType = account.type,
                     )
@@ -76,7 +76,17 @@ class AndroidContactsDataSource(private val resolver: ContentResolver) : Contact
             Data.LOOKUP_KEY,
             Data.DISPLAY_NAME,
             Event.START_DATE,
+            Event.TYPE,
+            Event.LABEL,
             Data.PHOTO_THUMBNAIL_URI,
         )
+
+        fun labelFor(type: Int, customLabel: String?): String? = when (type) {
+            Event.TYPE_BIRTHDAY -> null
+            Event.TYPE_ANNIVERSARY -> customLabel?.trim()?.takeIf(String::isNotEmpty) ?: "aniversari"
+            Event.TYPE_CUSTOM -> customLabel?.trim()?.takeIf(String::isNotEmpty) ?: "altra data"
+            Event.TYPE_OTHER -> customLabel?.trim()?.takeIf(String::isNotEmpty) ?: "altra data"
+            else -> customLabel?.trim()?.takeIf(String::isNotEmpty) ?: "altra data"
+        }
     }
 }

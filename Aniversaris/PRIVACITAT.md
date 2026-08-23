@@ -4,11 +4,11 @@
 
 ## Dades que tracta l’app
 
-Aniversaris llegeix del compte de contactes triat el nom, la data d’aniversari, identificadors tècnics necessaris per evitar duplicats i, opcionalment, la miniatura del contacte. No llegeix telèfons, correus, adreces, notes ni historial de comunicacions.
+Aniversaris llegeix del compte de contactes triat el nom, les dates especials i les seves etiquetes, identificadors tècnics necessaris per evitar duplicats i, opcionalment, la miniatura del contacte. No llegeix telèfons, correus, adreces, notes ni historial de comunicacions.
 
 ## Finalitat i tractament
 
-Les dades s’utilitzen exclusivament per ordenar els aniversaris, calcular la pròxima data i l’edat que es complirà, mostrar la llista i actualitzar el widget. Tot el tractament es fa localment al dispositiu.
+Les dades s’utilitzen exclusivament per ordenar els aniversaris i altres dates etiquetades, calcular-ne la pròxima data i, quan correspon, l’edat que es complirà, mostrar la llista i actualitzar el widget. Tot el tractament es fa localment al dispositiu.
 
 ## Comunicacions i tercers
 

@@ -36,7 +36,7 @@ class AppPreferences(private val context: Context) {
             accountConfirmed = prefs[Keys.ACCOUNT_CONFIRMED] ?: false,
             leapDayRule = runCatching { LeapDayRule.valueOf(prefs[Keys.LEAP_RULE] ?: "FEB_28") }.getOrDefault(LeapDayRule.FEB_28),
             widgetTheme = prefs[Keys.WIDGET_THEME] ?: "SYSTEM",
-            widgetAlpha = (prefs[Keys.WIDGET_ALPHA] ?: 0.72f).coerceIn(0.55f, 0.90f),
+            widgetAlpha = (prefs[Keys.WIDGET_ALPHA] ?: 0.72f).coerceIn(0f, 1f),
             showAvatars = prefs[Keys.SHOW_AVATARS] ?: true,
             updateFrequency = prefs[Keys.UPDATE_FREQUENCY] ?: "WEEKLY",
             lastRefreshAt = prefs[Keys.LAST_REFRESH],
@@ -54,7 +54,7 @@ class AppPreferences(private val context: Context) {
     suspend fun setLastRefresh(value: Long) = context.dataStore.edit { it[Keys.LAST_REFRESH] = value }
     suspend fun setLeapRule(value: LeapDayRule) = context.dataStore.edit { it[Keys.LEAP_RULE] = value.name }
     suspend fun setWidgetTheme(value: String) = context.dataStore.edit { it[Keys.WIDGET_THEME] = value }
-    suspend fun setWidgetAlpha(value: Float) = context.dataStore.edit { it[Keys.WIDGET_ALPHA] = value.coerceIn(.55f, .90f) }
+    suspend fun setWidgetAlpha(value: Float) = context.dataStore.edit { it[Keys.WIDGET_ALPHA] = value.coerceIn(0f, 1f) }
     suspend fun setShowAvatars(value: Boolean) = context.dataStore.edit { it[Keys.SHOW_AVATARS] = value }
 
     private object Keys {
