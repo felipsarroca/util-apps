@@ -40,3 +40,17 @@ Eines / Productivitat.
 ## Notes de la primera versió
 
 Primera versió de Google Play d’Aniversaris, amb consulta de dates dels contactes, selecció de compte, widgets 3×1 i 4×1, fotos, mode fosc i actualització automàtica.
+
+## Captures preparades
+
+Les captures anonimitzades per pujar a la fitxa són a `screenshots/`:
+
+- `widget-4x1.png`: widget principal amb quatre dates.
+- `widget-pantalla-inici.png`: widget integrat a la pantalla d’inici.
+- `llista-dates.png`: pantalla principal amb dates agrupades.
+- `configuracio-widget.png`: selecció de mida i transparència del widget.
+- `configuracio-compte.png`: compte de Google seleccionat.
+- `configuracio-fosca.png`: opcions de color i privacitat.
+- `calendari.png`: consulta d’una data concreta.
+
+Totes les captures han de tornar-se a revisar visualment abans de pujar-les si es modifica l’app o es prenen captures noves.
