@@ -104,21 +104,22 @@ private fun WidgetContent(
     layout: WidgetLayout,
 ) {
     val context = LocalContext.current
-    val background = if (dark) android.graphics.Color.argb((alpha * 255).roundToInt(), 20, 17, 16)
-    else android.graphics.Color.argb((alpha * 255).roundToInt(), 255, 250, 248)
-    val primaryText = if (dark) Color.White else Color(0xFF2A1915)
-    val secondaryText = if (dark) Color(0xFFDDD5D1) else Color(0xFF6F5A54)
+    val background = if (dark) android.graphics.Color.argb((alpha * 255).roundToInt(), 20, 30, 49)
+    else android.graphics.Color.argb((alpha * 255).roundToInt(), 255, 253, 251)
+    val primaryText = if (dark) Color(0xFFF7F9FF) else Color(0xFF192033)
+    val secondaryText = if (dark) Color(0xFFD1D8E8) else Color(0xFF596174)
+    val highlightBackground = Color(android.graphics.Color.argb((alpha * 0.20f * 255).roundToInt(), 255, 118, 95))
     Column(
         modifier = GlanceModifier.fillMaxSize().appWidgetBackground()
-            .background(ColorProvider(Color(background))).cornerRadius(18.dp)
-            .padding(horizontal = if (layout == WidgetLayout.FOUR_BY_ONE) 7.dp else 5.dp, vertical = 1.dp)
+            .background(ColorProvider(Color(background))).cornerRadius(20.dp)
+            .padding(horizontal = if (layout == WidgetLayout.FOUR_BY_ONE) 8.dp else 6.dp, vertical = 2.dp)
             .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
     ) {
         when {
             !hasPermission -> WidgetMessage("Dona accés als contactes", primaryText)
             birthdays.isEmpty() -> WidgetMessage("Obre Aniversaris per preparar el widget", primaryText)
             else -> birthdays.take(4).forEach { item ->
-                BirthdayRow(item, photos[item.id], showAvatars, layout, primaryText, secondaryText)
+                BirthdayRow(item, photos[item.id], showAvatars, layout, primaryText, secondaryText, highlightBackground)
             }
         }
     }
@@ -132,37 +133,50 @@ private fun BirthdayRow(
     layout: WidgetLayout,
     primaryText: Color,
     secondaryText: Color,
+    highlightBackground: Color,
 ) {
     val highlight = item.daysRemaining == 0L
     val compact = layout == WidgetLayout.THREE_BY_ONE
-    Row(modifier = GlanceModifier.fillMaxWidth().height(15.dp), verticalAlignment = Alignment.CenterVertically) {
+    val baseModifier = GlanceModifier.fillMaxWidth().height(16.dp).cornerRadius(8.dp).padding(horizontal = 2.dp)
+    val rowModifier = if (highlight) baseModifier.background(ColorProvider(highlightBackground)) else baseModifier
+    Row(modifier = rowModifier, verticalAlignment = Alignment.CenterVertically) {
         if (showAvatar) {
             if (photo != null) {
-                Image(ImageProvider(photo), item.displayName, GlanceModifier.size(15.dp).cornerRadius(8.dp), contentScale = ContentScale.Crop)
+                Image(ImageProvider(photo), item.displayName, GlanceModifier.size(16.dp).cornerRadius(8.dp), contentScale = ContentScale.Crop)
             } else {
-                Box(GlanceModifier.size(15.dp).cornerRadius(8.dp).background(ColorProvider(Color(0xFFE86850))), contentAlignment = Alignment.Center) {
+                Box(GlanceModifier.size(16.dp).cornerRadius(8.dp).background(ColorProvider(monogramColor(item.displayName))), contentAlignment = Alignment.Center) {
                     Text(item.displayName.take(1).uppercase(), style = TextStyle(color = ColorProvider(Color.White), fontWeight = FontWeight.Bold, fontSize = 10.sp))
                 }
             }
-            Spacer(GlanceModifier.width(if (compact) 3.dp else 5.dp))
+            Spacer(GlanceModifier.width(if (compact) 3.dp else 4.dp))
+        }
+        if (!compact) {
+            Text(
+                shortDate(item),
+                modifier = GlanceModifier.width(42.dp),
+                maxLines = 1,
+                style = TextStyle(color = ColorProvider(secondaryText), fontSize = 11.sp, fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal),
+            )
+            Spacer(GlanceModifier.width(3.dp))
         }
         Text(
             item.displayName,
             modifier = GlanceModifier.defaultWeight(),
             maxLines = 1,
-            style = TextStyle(color = ColorProvider(primaryText), fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal, fontSize = if (compact) 12.sp else 13.sp),
+            style = TextStyle(color = ColorProvider(primaryText), fontWeight = if (highlight) FontWeight.Bold else FontWeight.Medium, fontSize = if (compact) 12.sp else 13.sp),
+        )
+        Spacer(GlanceModifier.width(3.dp))
+        Text(
+            compactProximity(item, compact),
+            modifier = GlanceModifier.width(if (compact) 39.dp else 38.dp),
+            maxLines = 1,
+            style = TextStyle(color = ColorProvider(if (highlight) Color(0xFFFF806A) else secondaryText), fontSize = if (compact) 11.sp else 11.sp, fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal, textAlign = TextAlign.End),
         )
         Text(
-            proximity(item),
-            modifier = GlanceModifier.width(if (compact) 43.dp else 48.dp),
+            item.ageTurning?.toString().orEmpty(),
+            modifier = GlanceModifier.width(if (compact) 24.dp else 27.dp),
             maxLines = 1,
-            style = TextStyle(color = ColorProvider(if (highlight) Color(0xFFE86850) else secondaryText), fontSize = if (compact) 11.sp else 12.sp, textAlign = TextAlign.End),
-        )
-        Text(
-            item.ageTurning?.let { "$it a." } ?: "—",
-            modifier = GlanceModifier.width(if (compact) 34.dp else 38.dp),
-            maxLines = 1,
-            style = TextStyle(color = ColorProvider(secondaryText), fontSize = if (compact) 11.sp else 12.sp, textAlign = TextAlign.End),
+            style = TextStyle(color = ColorProvider(primaryText), fontSize = if (compact) 12.sp else 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End),
         )
     }
 }
@@ -172,9 +186,16 @@ private fun WidgetMessage(text: String, color: Color) {
     Text(text, style = TextStyle(color = ColorProvider(color), fontSize = 12.sp))
 }
 
-private fun proximity(item: UpcomingBirthday): String = when (item.daysRemaining) {
+private fun compactProximity(item: UpcomingBirthday, compact: Boolean): String = when (item.daysRemaining) {
     0L -> "Avui"
     1L -> "Demà"
-    in 2L..6L -> "${item.daysRemaining} dies"
-    else -> item.nextDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("ca")))
+    in 2L..99L -> "${item.daysRemaining} d"
+    else -> if (compact) item.nextDate.format(DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("ca"))) else "+99 d"
+}
+
+private fun shortDate(item: UpcomingBirthday): String = item.nextDate.format(DateTimeFormatter.ofPattern("dd/MM"))
+
+private fun monogramColor(name: String): Color {
+    val colors = listOf(Color(0xFFE86850), Color(0xFF5C6BC0), Color(0xFF00897B), Color(0xFF9C5A9C), Color(0xFFB06A24))
+    return colors[kotlin.math.abs(name.hashCode()) % colors.size]
 }

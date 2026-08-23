@@ -486,14 +486,32 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun WidgetPreview(theme: String, alpha: Float) {
         val dark = theme == "DARK" || (theme == "SYSTEM" && androidx.compose.foundation.isSystemInDarkTheme())
-        val background = if (dark) Color(0xFF171210).copy(alpha = alpha) else Color(0xFFFFFAF8).copy(alpha = alpha)
-        val foreground = if (dark) Color.White else Color(0xFF2A1915)
+        val background = if (dark) Color(0xFF141E31).copy(alpha = alpha) else Color(0xFFFFFDFB).copy(alpha = alpha)
+        val foreground = if (dark) Color(0xFFF7F9FF) else Color(0xFF192033)
+        val secondary = if (dark) Color(0xFFD1D8E8) else Color(0xFF596174)
+        val rows = listOf(
+            listOf("24/08", "Paula Moya Postigo", "Avui", "24"),
+            listOf("26/08", "Èric Sánchez González", "2 d", "13"),
+            listOf("28/08", "Marta García Pérez", "4 d", "39"),
+            listOf("01/09", "David González Saba", "8 d", "47"),
+        )
         Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = .35f)).padding(8.dp)) {
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(background).padding(horizontal = 12.dp, vertical = 7.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                listOf("Anna Puig" to "Avui", "Jordi Serra" to "Demà", "Marta Soler" to "3 dies", "Pau Costa" to "12 set.").forEach { (name, date) ->
-                    Row(Modifier.fillMaxWidth()) {
-                        Text(name, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = foreground)
-                        Text(date, style = MaterialTheme.typography.labelSmall, color = foreground.copy(alpha = .72f))
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(background).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                rows.forEachIndexed { index, row ->
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                            .background(if (index == 0) Color(0xFFFF765F).copy(alpha = alpha * .20f) else Color.Transparent)
+                            .padding(horizontal = 3.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(Modifier.size(18.dp).clip(CircleShape).background(monogramColor(row[1])), contentAlignment = Alignment.Center) {
+                            Text(row[1].take(1), style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.width(5.dp))
+                        Text(row[0], Modifier.width(44.dp), style = MaterialTheme.typography.labelMedium, color = secondary)
+                        Text(row[1], Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, color = foreground, fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Medium)
+                        Text(row[2], Modifier.width(42.dp), style = MaterialTheme.typography.labelMedium, color = if (index == 0) Color(0xFFFF806A) else secondary)
+                        Text(row[3], Modifier.width(25.dp), style = MaterialTheme.typography.bodyMedium, color = foreground, fontWeight = FontWeight.Bold)
                     }
                 }
             }

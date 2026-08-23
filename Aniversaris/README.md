@@ -15,7 +15,7 @@ Inclou:
 - normalització, deduplicació i detecció de conflictes d’any;
 - memòria cau Room reconstruïble i preferències DataStore;
 - llista circular de dotze mesos, cerca i salt a una data;
-- dos widgets Glance diferenciats, 3×1 i 4×1, amb quatre aniversaris cadascun;
+- dos widgets Glance diferenciats, 3×1 i 4×1, amb quatre aniversaris cadascun, columnes compactes i fila d’avui ressaltada;
 - fotos dels contactes a la llista i al widget, amb inicial com a alternativa;
 - actualització a les 00.00.05 amb alarma exacta o alternativa aproximada;
 - reprogramació després de reinici, canvi d’hora i canvi de zona;
@@ -36,8 +36,8 @@ L’entorn local ja està preparat i comprovat amb Android Studio 2026.1.3.7, Te
 ## Instal·lació de la versió de prova
 
 1. Des de la versió anterior, obre **Ajustos**. L’app ja haurà comprovat automàticament si hi ha una actualització.
-2. També pots obrir al mòbil la [release Aniversaris 1.2.0](https://github.com/felipsarroca/util-apps/releases/tag/aniversaris-v1.2.0).
-3. Descarrega l’APK adjunt `aniversaris-1.2.0-debug.apk`.
+2. També pots obrir al mòbil la [release Aniversaris 1.3.0](https://github.com/felipsarroca/util-apps/releases/tag/aniversaris-v1.3.0).
+3. Descarrega l’APK adjunt `aniversaris-1.3.0-debug.apk`.
 4. Si Android ho demana, autoritza temporalment el navegador o el gestor de fitxers a «Instal·lar aplicacions desconegudes».
 5. Instal·la l’APK sobre la versió anterior. Les preferències i les dades locals es conservaran.
 

@@ -5,6 +5,7 @@ import android.provider.ContactsContract.CommonDataKinds.Event
 import android.provider.ContactsContract.Data
 import android.provider.ContactsContract.RawContacts
 import cat.felipsarroca.aniversaris.domain.birthdays.ContactAccount
+import cat.felipsarroca.aniversaris.domain.birthdays.BirthdayNormalizer
 import cat.felipsarroca.aniversaris.domain.birthdays.RawBirthday
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -81,12 +82,13 @@ class AndroidContactsDataSource(private val resolver: ContentResolver) : Contact
             Data.PHOTO_THUMBNAIL_URI,
         )
 
-        fun labelFor(type: Int, customLabel: String?): String? = when (type) {
-            Event.TYPE_BIRTHDAY -> null
-            Event.TYPE_ANNIVERSARY -> customLabel?.trim()?.takeIf(String::isNotEmpty) ?: "aniversari"
-            Event.TYPE_CUSTOM -> customLabel?.trim()?.takeIf(String::isNotEmpty) ?: "altra data"
-            Event.TYPE_OTHER -> customLabel?.trim()?.takeIf(String::isNotEmpty) ?: "altra data"
-            else -> customLabel?.trim()?.takeIf(String::isNotEmpty) ?: "altra data"
-        }
     }
 }
+
+internal fun labelFor(type: Int, customLabel: String?): String? {
+    if (type == Event.TYPE_BIRTHDAY || type == Event.TYPE_ANNIVERSARY) return null
+    val label = customLabel?.trim()?.takeIf(String::isNotEmpty) ?: return "altra data"
+    return label.takeUnless { BirthdayNormalizer.normalizeName(it) in HIDDEN_EVENT_LABELS }
+}
+
+private val HIDDEN_EVENT_LABELS = setOf("aniversari", "anniversary", "birthday", "cumpleanos")
