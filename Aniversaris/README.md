@@ -36,10 +36,13 @@ L’entorn local ja està preparat i comprovat amb Android Studio 2026.1.3.7, Te
 ## Instal·lació de la versió de prova
 
 1. Des de la versió anterior, obre **Ajustos**. L’app ja haurà comprovat automàticament si hi ha una actualització.
-2. També pots obrir al mòbil la [release Aniversaris 1.5.0](https://github.com/felipsarroca/util-apps/releases/tag/aniversaris-v1.5.0).
-3. Descarrega l’APK adjunt `aniversaris-1.5.0-debug.apk`.
-4. Si Android ho demana, autoritza temporalment el navegador o el gestor de fitxers a «Instal·lar aplicacions desconegudes».
-5. Instal·la l’APK sobre la versió anterior. Les preferències i les dades locals es conservaran.
+2. També pots obrir al mòbil [ja.cat/app-aniversaris](https://ja.cat/app-aniversaris), que apunta sempre a l’APK de la darrera release.
+3. Alternativament, pots obrir la [release Aniversaris 1.5.0](https://github.com/felipsarroca/util-apps/releases/tag/aniversaris-v1.5.0).
+4. Descarrega l’APK adjunt `aniversaris-1.5.0-debug.apk`.
+5. Si Android ho demana, autoritza temporalment el navegador o el gestor de fitxers a «Instal·lar aplicacions desconegudes».
+6. Instal·la l’APK sobre la versió anterior. Les preferències i les dades locals es conservaran.
+
+L’àlies estable [ja.cat/app-aniversaris](https://ja.cat/app-aniversaris) es manté actualitzat amb la darrera release d’Aniversaris.
 
 La versió de prova utilitza l’identificador `cat.felipsarroca.aniversaris.debug`, de manera que no interferirà amb la futura versió signada de Google Play.
 

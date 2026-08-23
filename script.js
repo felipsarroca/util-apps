@@ -85,6 +85,13 @@
             category: 'Salut i benestar'
         },
         {
+            name: 'Aniversaris',
+            path: 'https://ja.cat/app-aniversaris',
+            icon: 'Aniversaris/icona.svg',
+            description: 'Aplicació Android instal·lable en format APK per consultar aniversaris i altres dates dels contactes, també amb widget.',
+            category: 'Aplicacions mòbils'
+        },
+        {
             name: 'Rentabilitat Híbrid',
             path: 'RentabilitatHibrid/',
             description: 'Calculadora per comparar el cost entre combustible i electricitat.',
