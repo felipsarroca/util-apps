@@ -114,6 +114,7 @@ private fun WidgetContent(
             .background(ColorProvider(Color(background))).cornerRadius(20.dp)
             .padding(horizontal = if (layout == WidgetLayout.FOUR_BY_ONE) 8.dp else 6.dp, vertical = 2.dp)
             .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         when {
             !hasPermission -> WidgetMessage("Dona accés als contactes", primaryText)
@@ -137,7 +138,7 @@ private fun BirthdayRow(
 ) {
     val highlight = item.daysRemaining == 0L
     val compact = layout == WidgetLayout.THREE_BY_ONE
-    val baseModifier = GlanceModifier.fillMaxWidth().height(16.dp).cornerRadius(8.dp).padding(horizontal = 2.dp)
+    val baseModifier = GlanceModifier.fillMaxWidth().height(18.dp).cornerRadius(8.dp).padding(horizontal = 2.dp)
     val rowModifier = if (highlight) baseModifier.background(ColorProvider(highlightBackground)) else baseModifier
     Row(modifier = rowModifier, verticalAlignment = Alignment.CenterVertically) {
         if (showAvatar) {
