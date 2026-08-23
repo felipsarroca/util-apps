@@ -37,7 +37,7 @@ object NextOccurrenceCalculator {
             nextDate = next,
             daysRemaining = ChronoUnit.DAYS.between(today, next),
             ageTurning = entity.birthYear
-                ?.takeIf { entity.eventLabel.isNullOrBlank() && !entity.hasYearConflict }
+                ?.takeUnless { entity.hasYearConflict }
                 ?.let { next.year - it },
         )
     }

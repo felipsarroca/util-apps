@@ -177,7 +177,7 @@ private fun BirthdayRow(
             item.ageTurning?.toString().orEmpty(),
             modifier = GlanceModifier.width(if (compact) 24.dp else 27.dp),
             maxLines = 1,
-            style = TextStyle(color = ColorProvider(primaryText), fontSize = if (compact) 12.sp else 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End),
+            style = TextStyle(color = ColorProvider(if (highlight) Color(0xFFFF806A) else primaryText), fontSize = if (compact) 12.sp else 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End),
         )
     }
 }

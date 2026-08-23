@@ -27,7 +27,7 @@ class NextOccurrenceCalculatorTest {
         assertEquals(LocalDate.of(2026, 3, 1), NextOccurrenceCalculator.nextDate(29, 2, today, LeapDayRule.MAR_1))
     }
 
-    @Test fun `afegeix letiqueta de les altres dates al nom`() {
+    @Test fun `afegeix letiqueta i calcula els anys de les altres dates`() {
         val entity = BirthdayEntity(
             id = "sant-felip",
             lookupKey = "felip",
@@ -48,6 +48,6 @@ class NextOccurrenceCalculatorTest {
         )
         val result = NextOccurrenceCalculator.calculate(entity, LocalDate.of(2026, 1, 1), LeapDayRule.FEB_28)
         assertEquals("Felip Sarroca i Gil (sant)", result?.displayName)
-        assertEquals(null, result?.ageTurning)
+        assertEquals(46, result?.ageTurning)
     }
 }

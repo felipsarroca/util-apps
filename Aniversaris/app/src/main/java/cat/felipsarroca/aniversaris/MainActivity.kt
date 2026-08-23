@@ -297,6 +297,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun BirthdayRow(person: UpcomingBirthday, displayFrom: LocalDate) {
         val context = LocalContext.current
+        val isToday = person.nextDate == LocalDate.now()
         Row(
             Modifier.fillMaxWidth().clickable(enabled = person.lookupKey != null) {
                 person.lookupKey?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, it))) }
@@ -309,7 +310,13 @@ class MainActivity : ComponentActivity() {
                 Text(person.displayName, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = if (person.nextDate == displayFrom) FontWeight.Bold else FontWeight.Medium)
                 Text(proximityText(person, displayFrom), style = MaterialTheme.typography.bodySmall, color = if (person.nextDate == displayFrom) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            person.ageTurning?.let { Text("$it anys", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            person.ageTurning?.let {
+                Text(
+                    "$it anys",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (isToday) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         HorizontalDivider(Modifier.padding(start = 78.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
     }

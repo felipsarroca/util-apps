@@ -11,7 +11,7 @@ Inclou:
 - onboarding i explicació prèvia al permís `READ_CONTACTS`;
 - selecció del compte de contactes, amb preferència per `felip.sarroca@gmail.com`;
 - lectura limitada a nom, dates especials, etiquetes, identificadors i miniatura;
-- compatibilitat amb diverses dates del mateix contacte, com aniversari i sant;
+- compatibilitat amb diverses dates del mateix contacte, com aniversari, sant o defunció, amb càlcul dels anys quan consta l’any d’origen;
 - normalització, deduplicació i detecció de conflictes d’any;
 - memòria cau Room reconstruïble i preferències DataStore;
 - llista circular de dotze mesos, cerca i salt a una data;
@@ -36,8 +36,8 @@ L’entorn local ja està preparat i comprovat amb Android Studio 2026.1.3.7, Te
 ## Instal·lació de la versió de prova
 
 1. Des de la versió anterior, obre **Ajustos**. L’app ja haurà comprovat automàticament si hi ha una actualització.
-2. També pots obrir al mòbil la [release Aniversaris 1.4.0](https://github.com/felipsarroca/util-apps/releases/tag/aniversaris-v1.4.0).
-3. Descarrega l’APK adjunt `aniversaris-1.4.0-debug.apk`.
+2. També pots obrir al mòbil la [release Aniversaris 1.5.0](https://github.com/felipsarroca/util-apps/releases/tag/aniversaris-v1.5.0).
+3. Descarrega l’APK adjunt `aniversaris-1.5.0-debug.apk`.
 4. Si Android ho demana, autoritza temporalment el navegador o el gestor de fitxers a «Instal·lar aplicacions desconegudes».
 5. Instal·la l’APK sobre la versió anterior. Les preferències i les dades locals es conservaran.
 

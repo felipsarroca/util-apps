@@ -12,8 +12,8 @@ android {
         applicationId = "cat.felipsarroca.aniversaris"
         minSdk = 26
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.4.0"
+        versionCode = 6
+        versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         buildConfigField("String", "GITHUB_REPOSITORY", "\"felipsarroca/util-apps\"")
