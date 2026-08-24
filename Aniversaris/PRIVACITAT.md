@@ -1,6 +1,6 @@
-# Política de privadesa — esborrany local
+# Política de privadesa
 
-> Aquest document és un esborrany. Abans de publicar l’app s’ha de convertir en una pàgina HTML pública i afegir-hi un correu de contacte.
+Última actualització: 24 d’agost de 2026.
 
 ## Dades que tracta l’app
 
@@ -18,6 +18,6 @@ No hi ha anuncis, analítica, compte propi ni venda o cessió de dades. Segons l
 
 La memòria cau local és reconstruïble. Si es revoca el permís de contactes o s’esborren les dades de l’app, la memòria cau sensible s’elimina. La base de dades i les preferències no s’inclouen en còpies al núvol ni transferències de dispositiu.
 
-## Responsable
+## Responsable i contacte
 
-Felip Sarroca. Correu de contacte pendent d’afegir abans de la publicació.
+Felip Sarroca. Correu de contacte: [felip.sarroca@gmail.com](mailto:felip.sarroca@gmail.com).
