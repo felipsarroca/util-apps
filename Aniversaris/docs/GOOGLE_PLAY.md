@@ -71,7 +71,7 @@ keyAlias=aniversaris-upload
 keyPassword=********
 ```
 
-Abans de generar l’AAB caldrà connectar aquest fitxer amb la configuració `signingConfigs.release` de Gradle, sense escriure cap secret al codi.
+El projecte ja llegeix automàticament aquest fitxer i aplica la signatura al tipus `release`; no cal escriure cap secret al codi. Si el fitxer no existeix, la compilació de desenvolupament continua funcionant però no s’ha de pujar cap AAB de producció.
 
 ### 3. Compilar l’AAB
 
