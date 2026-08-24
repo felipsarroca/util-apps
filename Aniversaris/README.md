@@ -66,7 +66,7 @@ La versió de GitHub és una APK instal·lable directament en un mòbil Android:
 3. Si Android ho demana, autoritza temporalment el navegador o el gestor de fitxers a instal·lar aplicacions desconegudes.
 4. Instal·la l’APK sobre la versió anterior per conservar les dades i preferències locals.
 
-La variant GitHub utilitza un canal d’actualització propi. La variant de Google Play utilitzarà Play In-App Updates i no descarregarà APK externes.
+La variant GitHub utilitza un canal d’actualització propi. La variant de Google Play utilitza Play In-App Updates i no descarrega APK externes.
 
 ## Posada en marxa del projecte
 
@@ -86,7 +86,7 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\gradlew.bat testGithubDebugUnitTest testPlayDebugUnitTest lintGithubDebug lintPlayDebug assembleGithubDebug assemblePlayDebug --no-daemon --max-workers=2
 ```
 
-Per preparar la versió de Google Play caldrà configurar primer la signatura de producció i després executar `bundlePlayRelease`. No es desa cap clau privada al repositori.
+Per preparar una actualització de Google Play cal configurar la signatura local i executar `bundlePlayRelease`. No es desa cap clau privada al repositori.
 
 ## Privacitat i permisos
 
@@ -111,10 +111,10 @@ També pots consultar la [fitxa preparada](docs/play-store/fitxa.md) i el [check
 
 ## Estat del projecte
 
-- Versió GitHub actual: **1.5.0** (`versionCode 6`).
-- Identificador Play previst: `cat.felipsarroca.aniversaris`.
-- Primer canal: GitHub Releases, per a proves personals.
-- Canal futur: Google Play amb la mateixa seqüència de versions.
+- Versió actual: **1.6.0** (`versionCode 7`).
+- Identificador Play: `cat.felipsarroca.aniversaris`.
+- Canal directe: GitHub Releases, per a instal·lació personal.
+- Canal Play: prova interna activa, amb la mateixa seqüència global de `versionCode`.
 
 ## Autoria i llicència
 

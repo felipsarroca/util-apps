@@ -6,7 +6,7 @@ Aniversaris
 
 ## Descripció breu
 
-Consulta aniversaris i dates dels contactes amb un widget clar i personalitzable.
+Consulta aniversaris i dates dels contactes amb un widget clar i personalitzable
 
 ## Descripció completa
 
@@ -37,9 +37,9 @@ Aplicació creada per Felip Sarroca.
 
 Eines / Productivitat.
 
-## Notes de la primera versió
+## Notes de la versió 1.6.0
 
-Primera versió de Google Play d’Aniversaris, amb consulta de dates dels contactes, selecció de compte, widgets 3×1 i 4×1, fotos, mode fosc i actualització automàtica.
+Millora de la targeta de configuració dels widgets i presentació més clara de la versió de l’app.
 
 ## Captures preparades
 
@@ -54,3 +54,12 @@ Les captures anonimitzades per pujar a la fitxa són a `screenshots/`:
 - `calendari.png`: consulta d’una data concreta.
 
 Totes les captures han de tornar-se a revisar visualment abans de pujar-les si es modifica l’app o es prenen captures noves.
+
+## Recursos preparats per a Google Play
+
+Els fitxers finals, adaptats als requisits de la fitxa, són a `assets/`:
+
+- `feature-graphic-1024x500.png`: gràfic promocional de 1.024 × 500 píxels.
+- `phone-screenshots/`: cinc captures anonimitzades de 1.080 × 1.920 píxels, en format vertical 9:16 i sense deformació.
+
+Per evitar elements de tercers a la fitxa pública, la selecció recomanada mostra la llista de dates, la configuració del widget, el compte, el mode fosc i el calendari. Les captures de la pantalla d’inici es conserven com a documentació, però no són la selecció principal per a Google Play.

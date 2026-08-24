@@ -2,14 +2,15 @@
 
 Document de continuïtat per reprendre la publicació quan Google hagi verificat la identitat del compte de Play Console.
 
-Última revisió: 23 d’agost de 2026.
+Última revisió: 25 d’agost de 2026.
 
 ## Estat actual
 
-- Compte de Play Console: verificació d’identitat pendent.
+- Compte de Play Console: identitat verificada.
 - Nom públic: **Aniversaris**.
 - Identificador definitiu: `cat.felipsarroca.aniversaris`.
-- Versió preparada al repositori: `1.5.0`, `versionCode 6`.
+- Versió publicada al canal intern: `1.5.0`, `versionCode 6`.
+- Actualització preparada al repositori: `1.6.0`, `versionCode 7`.
 - Variant de Google Play: `play`.
 - SDK objectiu actual: 37. Compleix el requisit actual d’API objectiu de Google Play.
 - Permisos declarats: `READ_CONTACTS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `INTERNET` i `ACCESS_NETWORK_STATE`.
@@ -72,6 +73,12 @@ keyPassword=********
 ```
 
 El projecte ja llegeix automàticament aquest fitxer i aplica la signatura al tipus `release`; no cal escriure cap secret al codi. Si el fitxer no existeix, la compilació de desenvolupament continua funcionant però no s’ha de pujar cap AAB de producció.
+
+Per crear-lo de manera segura, amb entrada oculta, validació de la clau i ACL restringida:
+
+```powershell
+.\scripts\configura-signatura-local.ps1
+```
 
 ### 3. Compilar l’AAB
 
@@ -165,13 +172,14 @@ No s’ha d’utilitzar una URL local ni una pàgina que requereixi permisos de 
 
 El text preparat és a `docs/play-store/fitxa.md`.
 
-Materials pendents de preparar o seleccionar:
+Materials preparats:
 
 - icona de l’app: `icona1024.png`;
-- mínim dues captures de mòbil amb la pantalla de dates i el widget;
-- una captura clara del widget 3×1 o 4×1;
-- gràfic promocional, només si Play Console el demana;
-- correu de contacte i URL de privacitat.
+- cinc captures de mòbil anonimitzades a `docs/play-store/assets/phone-screenshots/`;
+- gràfic promocional de 1.024 × 500 a `docs/play-store/assets/`;
+- correu de contacte i URL HTTPS de privacitat publicats.
+
+Les captures de la pantalla principal i d'actualitzacions s'han de renovar amb la 1.6.0 abans de substituir-les a la fitxa, perquè reflecteixin la disposició corregida i no mostrin el nom del canal de distribució.
 
 ## Enllaços oficials
 
@@ -184,4 +192,5 @@ Materials pendents de preparar o seleccionar:
 
 - 23/08/2026: compte de Play Console creat; verificació d’identitat pendent.
 - 23/08/2026: projecte revisat; variant `play` preparada, però encara falta configurar la signatura de producció.
-- Pròxima acció: quan arribi la verificació, crear la fitxa i configurar Play App Signing.
+- 24/08/2026: identitat verificada, fitxa creada i `1.5.0` (`versionCode 6`) publicada a prova interna.
+- 25/08/2026: `1.6.0` (`versionCode 7`) compilada, amb tests i lint superats; pendent de signar l'AAB amb la clau d'upload i pujar-lo a Play.

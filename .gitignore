@@ -12,6 +12,7 @@ build/
 .cache/
 .parcel-cache/
 .tmp/
+.scratch/
 .chrome-preview-profile/
 preview-*.png
 

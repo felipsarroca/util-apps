@@ -2,33 +2,36 @@
 
 ## Abans de Play Console
 
-- [ ] Identitat del compte verificada.
-- [ ] Correu de contacte confirmat.
-- [ ] Política de privacitat revisada i publicada amb URL HTTPS.
-- [ ] Captures de pantalla de l’app i dels widgets preparades.
+- [x] Identitat del compte verificada.
+- [x] Correu de contacte confirmat i publicat a la fitxa.
+- [x] Política de privacitat revisada i publicada amb URL HTTPS.
+- [x] Captures anonimitzades preparades en format 9:16 (1.080 × 1.920).
+- [x] Gràfic promocional preparat (1.024 × 500).
 - [ ] Clau d’upload creada i guardada en dues còpies xifrades.
 - [ ] `keystore.properties` creat només localment.
-- [ ] Cap clau o contrasenya dins Git.
+- [x] Cap clau o contrasenya dins Git.
 
 ## Fitxa de l’app
 
-- [ ] Nom: Aniversaris.
-- [ ] Descripció breu i completa copiades de `fitxa.md`.
-- [ ] Categoria: Eines / Productivitat.
-- [ ] Icona 512×512 o la mida que demani Play Console.
-- [ ] Política de privacitat introduïda.
-- [ ] Formulari de seguretat de dades revisat.
-- [ ] Classificació de contingut completada.
-- [ ] Públic objectiu completat.
-- [ ] Declaració d’anuncis: no conté anuncis.
-- [ ] Instruccions d’accés a l’app completades si Play les demana.
+- [x] Nom: Aniversaris.
+- [x] Descripció breu i completa desades com a esborrany a Google Play.
+- [x] Categoria: Eines.
+- [x] Icona 512×512 preparada.
+- [x] Política de privacitat introduïda.
+- [x] Formulari de seguretat de dades completat i desat, pendent d’enviar a revisió amb la resta de canvis.
+- [x] Classificació de contingut completada: PEGI 3 a Europa i ESRB per a tots els públics.
+- [x] Públic objectiu definit per a 13 anys o més.
+- [x] Declaració d’anuncis: no conté anuncis.
+- [x] Instruccions d’accés completades: tota la funcionalitat està disponible sense cap accés especial.
+- [x] Declaracions d’aplicació governamental, funcions financeres i salut completades.
+- [x] Declaració d’identificador de publicitat: el codi i el manifest combinat confirmen que no s’utilitza `AD_ID`, i s’ha desat la resposta «No» a Play Console.
 
 ## Build i proves
 
-- [ ] `versionCode` superior a l’últim publicat.
-- [ ] `bundlePlayRelease` completat sense errors.
+- [x] `versionCode` 7, superior al 6 publicat al canal intern.
+- [x] `bundlePlayRelease` completat sense errors.
 - [ ] AAB signat amb la clau d’upload.
-- [ ] Proves unitàries i lint superats.
+- [x] Proves unitàries i lint de les variants GitHub i Play superats.
 - [ ] Instal·lació des de prova interna.
 - [ ] Permís `READ_CONTACTS` i selecció de compte verificats.
 - [ ] Dates múltiples, anys, fotos i dates d’avui verificats.
@@ -46,7 +49,7 @@
 ## Producció
 
 - [ ] Producció habilitada per Google.
-- [ ] Notes de versió escrites.
+- [x] Notes de versió 1.6.0 escrites.
 - [ ] Publicació inicial gradual revisada.
 - [ ] URL de Google Play comprovada.
 - [ ] Actualitzacions futures amb `versionCode` creixent.

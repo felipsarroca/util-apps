@@ -1,0 +1,1 @@
+Millora de la targeta de configuració dels widgets i presentació més clara de la versió de l'app.

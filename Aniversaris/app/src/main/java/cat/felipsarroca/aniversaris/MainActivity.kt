@@ -250,9 +250,9 @@ class MainActivity : ComponentActivity() {
                     Icon(Icons.Rounded.Widgets, null, Modifier.padding(10.dp).size(25.dp), tint = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(Modifier.width(13.dp))
-                Column(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f).padding(end = 12.dp)) {
                     Text("Tria el teu widget", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("3×1 compacte o 4×1 amb més espai per als noms", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("3×1 compacte o 4×1 amb noms més amplis", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
                 Text("Configura", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             }
@@ -371,7 +371,7 @@ class MainActivity : ComponentActivity() {
                         "Actualitzacions de l’app",
                         containerColor = if (state.updateUrl != null) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer,
                     ) {
-                        Text("Versió ${BuildConfig.VERSION_NAME} · canal ${BuildConfig.UPDATE_SOURCE}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Versió ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             state.updateMessage ?: "L’app comprova automàticament si hi ha una versió nova quan s’inicia.",
                             style = MaterialTheme.typography.bodyMedium,
