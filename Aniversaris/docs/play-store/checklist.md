@@ -8,7 +8,7 @@
 - [x] Captures anonimitzades preparades en format 9:16 (1.080 × 1.920).
 - [x] Gràfic promocional preparat (1.024 × 500).
 - [ ] Clau d’upload creada i guardada en dues còpies xifrades.
-- [ ] `keystore.properties` creat només localment.
+- [x] `keystore.properties` creat només localment.
 - [x] Cap clau o contrasenya dins Git.
 
 ## Fitxa de l’app
@@ -30,7 +30,7 @@
 
 - [x] `versionCode` 7, superior al 6 publicat al canal intern.
 - [x] `bundlePlayRelease` completat sense errors.
-- [ ] AAB signat amb la clau d’upload.
+- [x] AAB signat amb la clau d’upload.
 - [x] Proves unitàries i lint de les variants GitHub i Play superats.
 - [ ] Instal·lació des de prova interna.
 - [ ] Permís `READ_CONTACTS` i selecció de compte verificats.

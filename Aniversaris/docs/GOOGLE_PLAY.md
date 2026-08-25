@@ -193,4 +193,4 @@ Les captures de la pantalla principal i d'actualitzacions s'han de renovar amb l
 - 23/08/2026: compte de Play Console creat; verificació d’identitat pendent.
 - 23/08/2026: projecte revisat; variant `play` preparada, però encara falta configurar la signatura de producció.
 - 24/08/2026: identitat verificada, fitxa creada i `1.5.0` (`versionCode 6`) publicada a prova interna.
-- 25/08/2026: `1.6.0` (`versionCode 7`) compilada, amb tests i lint superats; pendent de signar l'AAB amb la clau d'upload i pujar-lo a Play.
+- 25/08/2026: `1.6.0` (`versionCode 7`) compilada, amb tests i lint superats; AAB signat i verificat amb la clau d'upload, preparat per pujar-lo a Play.
