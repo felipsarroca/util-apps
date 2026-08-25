@@ -17,6 +17,9 @@
 - [x] Descripció breu i completa desades com a esborrany a Google Play.
 - [x] Categoria: Eines.
 - [x] Icona 512×512 preparada.
+- [x] Icona 512×512, imatge destacada 1.024×500 i cinc captures anonimitzades pujades a la fitxa catalana.
+- [x] Recursos visuals revisats i etiquetats individualment com a creats o editats amb assistència d’IA.
+- [x] Fitxa predeterminada completada i desada amb l’estat «A punt per enviar a revisió».
 - [x] Política de privacitat introduïda.
 - [x] Formulari de seguretat de dades completat i desat, pendent d’enviar a revisió amb la resta de canvis.
 - [x] Classificació de contingut completada: PEGI 3 a Europa i ESRB per a tots els públics.
