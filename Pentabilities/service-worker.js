@@ -1,7 +1,8 @@
-const CACHE_NAME = 'pentabilities-v3';
+const CACHE_NAME = 'pentabilities-google-auth-v2';
 const APP_SHELL = [
   './',
   './index.html',
+  './privacy.html',
   './styles.css',
   './app.js',
   './config.js',
@@ -29,14 +30,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (event.request.mode === 'navigate') {
+    const isPrivacyPage = new URL(event.request.url).pathname.endsWith('/privacy.html');
+    const cacheKey = isPrivacyPage ? './privacy.html' : './index.html';
     event.respondWith(
       fetch(event.request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(cacheKey, copy));
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match(cacheKey))
     );
     return;
   }

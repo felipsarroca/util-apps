@@ -48,7 +48,7 @@ Els objectius principals són:
 
 ## Funcionalitats principals
 
-- Registre d'entrada per al professorat.
+- Accés amb Google limitat als comptes vinculats a usuaris autoritzats.
 - Creació i gestió de cicles d'avaluació.
 - Creació de sessions associades a un cicle i a un grup classe.
 - Selecció dels comportaments que s'observaran en cada sessió.
@@ -63,7 +63,7 @@ Els objectius principals són:
 
 ## Flux d'ús
 
-1. El professor entra a l'app amb el seu correu i contrasenya de professorat.
+1. L'usuari entra amb el compte de Google vinculat al seu usuari intern.
 2. Crea un cicle o selecciona un cicle ja existent.
 3. Crea una sessió vinculada al cicle.
 4. Tria els comportaments Pentabilities que vol observar.
@@ -115,11 +115,11 @@ El frontend és una aplicació web estàtica formada principalment per:
 
 ### Google Apps Script
 
-La carpeta `apps-script/` conté el backend de Google Apps Script. Aquest backend fa de pont amb Google Sheets i exposa serveis per gestionar autenticació, cicles, sessions, alumnes, valoracions i dades de quadre de comandament.
+La carpeta `apps-script/` conté la integració amb Google Sheets i una implementació anterior de la interfície. L'aplicació canònica publicada a GitHub Pages autentica els usuaris mitjançant Supabase Auth.
 
 ### Supabase
 
-La carpeta `supabase/` conté la configuració i les migracions SQL del projecte Supabase. S'utilitza per estructurar dades, reforçar consultes, aplicar polítiques de seguretat i mantenir l'evolució de l'esquema de base de dades sota control.
+La carpeta `supabase/` conté la configuració i les migracions SQL del projecte Supabase. Supabase és el backend de dades i d'autenticació de l'aplicació canònica. Google autentica la identitat i la taula `app_user_identities` decideix quin usuari intern li correspon.
 
 ## Estructura del projecte
 
@@ -195,6 +195,7 @@ El frontend pot necessitar valors com:
 - URL pública del desplegament de Google Apps Script.
 - URL del projecte Supabase.
 - Clau pública anònima de Supabase.
+- Domini de Google suggerit a la pantalla de selecció de compte.
 
 La clau pública de Supabase del frontend pot ser visible al navegador, però ha d'estar protegida amb polítiques RLS, permisos correctes i funcions controlades a la base de dades. No s'ha de posar mai una clau `service_role` dins del frontend.
 
@@ -287,6 +288,8 @@ supabase db push
 
 En aquest projecte és especialment important comprovar el compte i el projecte de Supabase abans d'aplicar migracions, perquè pot haver-hi més d'un compte o projecte disponible.
 
+La configuració completa de Google OAuth, el hook d'autorització i l'ordre de desplegament es documenten a `docs/SUPABASE_GOOGLE_AUTH.md`.
+
 ## Seguretat
 
 Criteris bàsics de seguretat del projecte:
@@ -324,8 +327,11 @@ L'aplicació pot gestionar informació vinculada a alumnat, professorat, session
 Abans de pujar canvis a GitHub, és recomanable comprovar:
 
 - L'app carrega correctament a `http://127.0.0.1:8000/Pentabilities/`.
-- La pantalla d'entrada es mostra bé.
-- El professor pot entrar correctament.
+- La pantalla d'entrada amb Google es mostra bé.
+- Un compte vinculat pot entrar i recupera el seu usuari intern correcte.
+- Un compte del mateix domini però no vinculat no pot entrar.
+- La sessió es restaura després de tancar i tornar a obrir el navegador.
+- L'opció «Sortir» elimina la sessió.
 - Es poden veure els cicles i les sessions actives.
 - Es pot crear una sessió.
 - Es pot obrir la pantalla d'avaluació.

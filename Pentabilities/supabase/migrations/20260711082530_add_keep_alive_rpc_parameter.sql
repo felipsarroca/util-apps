@@ -14,4 +14,4 @@ $$;
 revoke all on function public.keep_alive(text) from public;
 grant execute on function public.keep_alive(text) to anon;
 
-notify pgrst, 'reload schema';
+notify pgrst, 'reload schema';;

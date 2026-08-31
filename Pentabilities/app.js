@@ -1,14 +1,15 @@
 ﻿const config = window.PENTABILITIES_CONFIG || {};
 const googleScriptUrl = String(config.googleScriptUrl || '').trim();
 const hasGoogleApi = Boolean(googleScriptUrl);
-const hasSupabaseConfig = Boolean(config.supabaseUrl && config.supabaseAnonKey && window.supabase);
-const useSupabase = hasSupabaseConfig;
+const useSupabase = Boolean(config.supabaseUrl && config.supabaseAnonKey);
+const hasSupabaseConfig = Boolean(useSupabase && window.supabase);
 const db = hasSupabaseConfig ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
 let deferredInstallPrompt = null;
 
 const state = {
   boot: null,
-  token: safeStorageGet('pentabilities:token'),
+  authSession: null,
+  authError: '',
   view: 'home',
   selectedCycleId: null,
   enteredSession: null,
@@ -34,7 +35,7 @@ async function api(action, payload = {}) {
   const response = await fetch(googleScriptUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action, payload, token: state.token || '' })
+    body: JSON.stringify({ action, payload, token: '' })
   });
   const result = await response.json();
   if (!result.ok) throw new Error(result.error || 'Error de comunicació amb Google Sheets.');
@@ -42,39 +43,43 @@ async function api(action, payload = {}) {
 }
 
 async function boot() {
-  if (!useSupabase && hasGoogleApi) {
-    if (!state.token) {
-      state.boot = { needsLogin: true };
-      render();
-      return;
-    }
-    try {
-      state.boot = await api('app_bootstrap');
-    } catch (error) {
-      safeStorageRemove('pentabilities:token');
-      state.token = '';
-      state.boot = { needsLogin: true };
-    }
+  if (useSupabase && !hasSupabaseConfig) {
+    state.authError = 'No s’ha pogut carregar el servei d’autenticació. Revisa la connexió i torna-ho a provar.';
+    state.boot = { needsLogin: true };
     render();
     return;
   }
-  if (!hasSupabaseConfig) {
-    state.boot = state.token ? previewBoot(state.token === 'preview-teacher', safeStorageGet('pentabilities:lastEmail')) : { needsLogin: true };
+  if (!useSupabase) {
+    state.authError = 'Cal configurar Supabase Auth per poder entrar a Pentabilities.';
+    state.boot = { needsLogin: true };
     render();
     return;
   }
 
-  if (!state.token) {
+  const { data, error } = await db.auth.getSession();
+  if (error) {
+    state.authError = 'No s’ha pogut comprovar la sessió. Torna-ho a provar.';
+    state.authSession = null;
+    state.boot = { needsLogin: true };
+    render();
+    return;
+  }
+
+  state.authSession = data.session;
+  if (!state.authSession) {
     state.boot = { needsLogin: true };
     render();
     return;
   }
 
   try {
-    state.boot = await rpc('app_bootstrap', { p_token: state.token });
+    state.boot = await rpc('app_bootstrap');
+    state.authError = '';
+    triggerRosterSyncBackground();
   } catch (error) {
-    safeStorageRemove('pentabilities:token');
-    state.token = '';
+    state.authError = authErrorMessage(error);
+    await db.auth.signOut({ scope: 'local' });
+    state.authSession = null;
     state.boot = { needsLogin: true };
   }
   render();
@@ -140,7 +145,34 @@ function layout(content) {
 }
 
 function loginView() {
-  const savedEmail = safeStorageGet('pentabilities:lastEmail');
+  if (useSupabase) {
+    const message = state.authError
+      ? `<div class="notice error">${escapeHtml(state.authError)}</div>`
+      : '';
+    return `
+      <main class="login-shell">
+        <section class="login-panel">
+          <div class="login-school">
+            <img class="login-school-logo" src="assets/ramon-pont.png" alt="Escola Ramon Pont">
+            <span>Escola Ramon Pont</span>
+          </div>
+          <div class="login-brand">
+            <img class="login-penta-logo" src="assets/pentabilities-logo.png" alt="Pentabilities">
+            <h1>Pentabilities</h1>
+          </div>
+          <div class="login-google-panel">
+            <p>Entra amb el compte de Google vinculat al teu usuari de Pentabilities.</p>
+            <button id="login-button" class="google-login-button" type="button" onclick="loginWithGoogle()">
+              <span class="google-login-mark" aria-hidden="true">G</span>
+              Inicia la sessió amb Google
+            </button>
+            <p class="login-help">Només hi poden accedir els comptes autoritzats per l’escola.</p>
+          </div>
+          <div id="message" style="margin-top:12px">${message}</div>
+        </section>
+      </main>`;
+  }
+
   return `
     <main class="login-shell">
       <section class="login-panel">
@@ -152,12 +184,7 @@ function loginView() {
           <img class="login-penta-logo" src="assets/pentabilities-logo.png" alt="Pentabilities">
           <h1>Pentabilities</h1>
         </div>
-        <form class="grid login-form" onsubmit="login(event)">
-          <label>Correu electrònic<input name="email" type="email" autocomplete="email" required placeholder="nom.cognom@ramonpont.cat" value="${escapeHtml(savedEmail)}"></label>
-          <label>Contrasenya del professorat<input name="password" type="password" autocomplete="current-password" placeholder="Només professorat"></label>
-          <button id="login-button" type="submit">Entrar</button>
-        </form>
-        <div id="message" style="margin-top:12px"></div>
+        <div id="message"><div class="notice error">${escapeHtml(state.authError || 'L’autenticació no està configurada.')}</div></div>
       </section>
     </main>`;
 }
@@ -412,7 +439,7 @@ async function loadHomeStats() {
   state.homeStatsLoading = true;
   try {
     const stats = useSupabase
-      ? await rpc('teacher_home_stats', { p_token: state.token })
+      ? await rpc('teacher_home_stats')
       : hasGoogleApi
         ? await api('teacher_home_stats')
         : previewHomeStats();
@@ -858,51 +885,47 @@ function miniBar(label, value, color) {
   return `<span class="mini-bar"><em>${escapeHtml(label)}</em><i><b style="width:${width}%;background:${color}"></b></i><strong>${score(value)}</strong></span>`;
 }
 
-async function login(event) {
-  event.preventDefault();
+async function loginWithGoogle() {
   const button = document.querySelector('#login-button');
-  const form = new FormData(event.target);
-  const email = String(form.get('email') || '').trim().toLowerCase();
-  const password = String(form.get('password') || '');
-  setButtonLoading(button, 'Entrant...');
+  setButtonLoading(button, 'Connectant amb Google...');
+  state.authError = '';
 
   try {
-    if (!useSupabase && hasGoogleApi) {
-      state.boot = await api('login', { email, password });
-      state.token = state.boot.token;
-      safeStorageSet('pentabilities:token', state.token);
-    } else if (hasSupabaseConfig) {
-      state.boot = await rpc('app_login', { p_email: email, p_password: password });
-      state.token = state.boot.token;
-      safeStorageSet('pentabilities:token', state.token);
-    } else {
-      state.boot = previewBoot(Boolean(password), email);
-      state.token = password ? 'preview-teacher' : 'preview-student';
-      safeStorageSet('pentabilities:token', state.token);
-    }
-    safeStorageSet('pentabilities:lastEmail', email);
-    state.view = 'home';
-    state.ratings = {};
-    render();
-    triggerRosterSyncBackground();
+    if (!db) throw new Error('No s’ha pogut carregar el servei d’autenticació.');
+    const redirectUrl = new URL(window.location.href);
+    redirectUrl.search = '';
+    redirectUrl.hash = '';
+    const hostedDomain = String(config.googleHostedDomain || 'ramonpont.cat').trim();
+    const queryParams = { prompt: 'select_account' };
+    if (hostedDomain) queryParams.hd = hostedDomain;
+
+    const { error } = await db.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl.toString(),
+        queryParams
+      }
+    });
+    if (error) throw error;
   } catch (error) {
-    showMessage(error.message, 'error');
-  } finally {
-    resetButton(button, 'Entrar');
+    state.authError = authErrorMessage(error);
+    showMessage(state.authError, 'error');
+    resetButton(button, 'Inicia la sessió amb Google');
   }
 }
 
 async function logout() {
-  if (!useSupabase && hasGoogleApi && state.token) {
+  if (db) {
     try {
-      await api('logout');
+      await db.auth.signOut();
     } catch (error) {
-      // Igualment es tanca la sessió local.
+      // La interfície també es tanca si el navegador queda temporalment fora de línia.
     }
+    state.authSession = null;
+    state.authError = '';
   }
   safeStorageRemove('pentabilities:token');
   state.boot = { needsLogin: true };
-  state.token = '';
   state.ratings = {};
   render();
 }
@@ -954,14 +977,23 @@ function hydrateRatings(details) {
 }
 
 async function refreshBoot() {
-  if (!useSupabase && hasGoogleApi) {
-    state.boot = await api('refresh');
-    state.token = state.boot.token || state.token;
-  } else if (hasSupabaseConfig) {
-    state.boot = await rpc('app_bootstrap', { p_token: state.token });
+  if (hasSupabaseConfig) {
+    state.boot = await rpc('app_bootstrap');
   } else {
-    state.boot = previewBoot(state.boot.user.role !== 'student', state.boot.user.email);
+    throw new Error('Supabase Auth no està disponible.');
   }
+}
+
+function authErrorMessage(error) {
+  const message = String(error?.message || '').trim();
+  const normalized = message.toLowerCase();
+  if (normalized.includes('not authorized') || normalized.includes('no està autoritzat') || normalized.includes('no està vinculat')) {
+    return 'Aquest compte de Google no està autoritzat per entrar a Pentabilities.';
+  }
+  if (normalized.includes('oauth') || normalized.includes('provider')) {
+    return 'No s’ha pogut iniciar la sessió amb Google. Torna-ho a provar.';
+  }
+  return message || 'No s’ha pogut iniciar la sessió.';
 }
 
 async function saveCycle(event) {
@@ -971,7 +1003,7 @@ async function saveCycle(event) {
     if (!useSupabase && hasGoogleApi) {
       state.boot = await api('create_cycle', data);
     } else if (hasSupabaseConfig) {
-      state.boot = await rpc('create_cycle', { p_token: state.token, p_data: data });
+      state.boot = await rpc('create_cycle', { p_data: data });
     } else {
       const cycle = {
         id: `cycle-${Date.now()}`,
@@ -1009,7 +1041,7 @@ async function saveSession(event) {
   setButtonLoading(button, 'Creant...');
   await action(async () => {
     const details = useSupabase
-      ? await rpc('create_session', { p_token: state.token, p_data: data })
+      ? await rpc('create_session', { p_data: data })
       : hasGoogleApi
         ? await api('create_session', data)
         : createPreviewSession(data);
@@ -1029,7 +1061,7 @@ async function loadStudentsForCycle() {
   if (!cycle || !box) return;
   try {
     const students = useSupabase
-      ? await rpc('students_by_class', { p_token: state.token, p_class_group: cycle.classGroup })
+      ? await rpc('students_by_class', { p_class_group: cycle.classGroup })
       : hasGoogleApi
         ? await api('students_by_class', { classGroup: cycle.classGroup })
         : PREVIEW.students;
@@ -1048,7 +1080,7 @@ async function enterStudentCode() {
   const input = document.querySelector('#session-code');
   await action(async () => {
     state.enteredSession = useSupabase
-      ? await rpc('session_by_code', { p_token: state.token, p_code: input.value })
+      ? await rpc('session_by_code', { p_code: input.value })
       : hasGoogleApi
         ? await api('session_by_code', { code: input.value })
         : previewSessionDetails();
@@ -1063,7 +1095,6 @@ async function submitStudentRatings() {
   await action(async () => {
     const result = useSupabase
       ? await rpc('submit_student_evaluations', {
-        p_token: state.token,
         p_code: state.enteredSession.session.accessCode,
         p_ratings: ratings
       })
@@ -1078,7 +1109,7 @@ async function submitStudentRatings() {
 async function loadTeacherEvaluation(sessionId) {
   await action(async () => {
     state.selectedSession = useSupabase
-      ? await rpc('session_details', { p_token: state.token, p_session_id: sessionId })
+      ? await rpc('session_details', { p_session_id: sessionId })
       : hasGoogleApi
         ? await api('session_details', { sessionId })
         : previewSessionDetails(sessionId);
@@ -1117,7 +1148,6 @@ async function submitTeacherRatings() {
   await action(async () => {
     const result = useSupabase
       ? await rpc('submit_teacher_evaluations', {
-        p_token: state.token,
         p_session_id: state.selectedSession.session.id,
         p_ratings: ratings
       })
@@ -1132,7 +1162,7 @@ async function submitTeacherRatings() {
 async function showSessionDashboard(sessionId) {
   await action(async () => {
     state.dashboard = useSupabase
-      ? await rpc('session_dashboard', { p_token: state.token, p_session_id: sessionId })
+      ? await rpc('session_dashboard', { p_session_id: sessionId })
       : hasGoogleApi
         ? await api('session_dashboard', { sessionId })
         : previewDashboard();
@@ -1144,7 +1174,7 @@ async function showSessionDashboard(sessionId) {
 async function editSession(sessionId) {
   await action(async () => {
     state.selectedSession = useSupabase
-      ? await rpc('session_details', { p_token: state.token, p_session_id: sessionId })
+      ? await rpc('session_details', { p_session_id: sessionId })
       : hasGoogleApi
         ? await api('session_details', { sessionId })
         : previewSessionDetails(sessionId);
@@ -1183,7 +1213,7 @@ async function saveEditedSession(event) {
   setButtonLoading(button, 'Guardant...');
   await action(async () => {
     const details = useSupabase
-      ? await rpc('update_session', { p_token: state.token, p_session_id: session.id, p_data: data })
+      ? await rpc('update_session', { p_session_id: session.id, p_data: data })
       : hasGoogleApi
         ? await api('update_session', { sessionId: session.id, data })
         : updatePreviewSession(session.id, data);
@@ -1200,7 +1230,7 @@ async function duplicateSession(sessionId) {
     const source = (state.boot.activeSessions || []).find((session) => session.id === sessionId);
     const name = source ? `Còpia de ${source.name}` : null;
     const details = useSupabase
-      ? await rpc('duplicate_session', { p_token: state.token, p_session_id: sessionId, p_name: name })
+      ? await rpc('duplicate_session', { p_session_id: sessionId, p_name: name })
       : hasGoogleApi
         ? await api('duplicate_session', { sessionId, name })
         : duplicatePreviewSession(sessionId, name);
@@ -1216,7 +1246,7 @@ async function deleteSession(sessionId) {
   const confirmed = confirm('Vols eliminar aquesta sessió? Aquesta acció esborrarà també les valoracions associades i no es pot desfer.');
   if (!confirmed) return;
   await action(async () => {
-    if (useSupabase) state.boot = await rpc('delete_session', { p_token: state.token, p_session_id: sessionId });
+    if (useSupabase) state.boot = await rpc('delete_session', { p_session_id: sessionId });
     else if (hasGoogleApi) state.boot = await api('delete_session', { sessionId });
     else {
       PREVIEW.sessions = PREVIEW.sessions.filter((session) => session.id !== sessionId);
@@ -1230,7 +1260,7 @@ async function deleteSession(sessionId) {
 
 async function lockSession(sessionId) {
   await action(async () => {
-    if (useSupabase) await rpc('lock_session', { p_token: state.token, p_session_id: sessionId });
+    if (useSupabase) await rpc('lock_session', { p_session_id: sessionId });
     else if (hasGoogleApi) await api('lock_session', { sessionId });
     else {
       const session = PREVIEW.sessions.find((item) => item.id === sessionId);
@@ -1245,7 +1275,7 @@ async function lockSession(sessionId) {
 
 async function unlockSession(sessionId) {
   await action(async () => {
-    if (useSupabase) await rpc('unlock_session', { p_token: state.token, p_session_id: sessionId });
+    if (useSupabase) await rpc('unlock_session', { p_session_id: sessionId });
     else if (hasGoogleApi) await api('unlock_session', { sessionId });
     else {
       const session = PREVIEW.sessions.find((item) => item.id === sessionId);
@@ -1261,7 +1291,7 @@ async function unlockSession(sessionId) {
 async function showCycleDashboard(cycleId) {
   await action(async () => {
     state.dashboard = useSupabase
-      ? await rpc('cycle_dashboard', { p_token: state.token, p_cycle_id: cycleId })
+      ? await rpc('cycle_dashboard', { p_cycle_id: cycleId })
       : hasGoogleApi
         ? await api('cycle_dashboard', { cycleId })
         : previewDashboard();
@@ -1272,7 +1302,7 @@ async function showCycleDashboard(cycleId) {
 
 async function closeSession(sessionId) {
   await action(async () => {
-    if (useSupabase) await rpc('close_session', { p_token: state.token, p_session_id: sessionId });
+    if (useSupabase) await rpc('close_session', { p_session_id: sessionId });
     else if (hasGoogleApi) await api('close_session', { sessionId });
     await refreshBoot();
     state.view = 'home';
@@ -1282,7 +1312,7 @@ async function closeSession(sessionId) {
 
 async function openSession(sessionId) {
   await action(async () => {
-    if (useSupabase) await rpc('open_session', { p_token: state.token, p_session_id: sessionId });
+    if (useSupabase) await rpc('open_session', { p_session_id: sessionId });
     else if (hasGoogleApi) await api('open_session', { sessionId });
     await refreshBoot();
     state.view = 'home';
@@ -1320,11 +1350,19 @@ async function action(fn, successMessage) {
     await fn();
     if (successMessage) showMessage(successMessage, 'success');
   } catch (error) {
-    if (String(error.message || '').toLowerCase().includes('caducat')) {
-      safeStorageRemove('pentabilities:token');
-      state.token = '';
+    const normalized = String(error.message || '').toLowerCase();
+    const isAuthFailure = normalized.includes('jwt')
+      || normalized.includes('cal iniciar la sessió amb un compte')
+      || normalized.includes('la sessió ha caducat')
+      || normalized.includes('no està autoritzat')
+      || normalized.includes('no està vinculat');
+    if (useSupabase && isAuthFailure) {
+      state.authError = authErrorMessage(error);
+      await db.auth.signOut({ scope: 'local' });
+      state.authSession = null;
       state.boot = { needsLogin: true };
       render();
+      return;
     }
     showMessage(error.message, 'error');
   }
@@ -1772,6 +1810,17 @@ if ('serviceWorker' in navigator) {
       // La instal·lació PWA no ha de bloquejar l'ús de l'app.
     });
     refreshInstallAvailability();
+  });
+}
+
+if (db) {
+  db.auth.onAuthStateChange((event, session) => {
+    state.authSession = session;
+    if (event === 'SIGNED_OUT' && state.boot?.user) {
+      state.boot = { needsLogin: true };
+      state.ratings = {};
+      render();
+    }
   });
 }
 

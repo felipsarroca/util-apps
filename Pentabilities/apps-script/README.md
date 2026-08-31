@@ -20,6 +20,6 @@ Aplicació web interna per gestionar cicles, sessions i valoracions Pentabilitie
 - Google Sheets: base de dades principal.
 - `docs/`: desplegament, seguretat, model de dades, guia del professorat i pla de proves.
 
-## Estat de Supabase
+## Estat dins l'arquitectura actual
 
-Supabase queda descartat de moment perquè el compte gratuït no permet crear un tercer projecte actiu. La carpeta `supabase/` es conserva només com a material de treball no actiu.
+L'aplicació canònica publicada a GitHub Pages utilitza Supabase com a backend i Supabase Auth per a l'accés amb Google. Aquesta carpeta conserva la integració amb Google Sheets i una implementació anterior de la interfície. El seu sistema de contrasenya no s'ha d'utilitzar com a autenticació de la versió canònica.

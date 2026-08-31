@@ -1,0 +1,20 @@
+-- Compatibilitat temporal durant el tall d'OAuth.
+grant execute on function public.app_login(text, text) to anon;
+grant execute on function public.app_bootstrap(uuid) to anon;
+grant execute on function public.teacher_home_stats(uuid) to anon;
+grant execute on function public.create_cycle(uuid, jsonb) to anon;
+grant execute on function public.create_session(uuid, jsonb) to anon;
+grant execute on function public.students_by_class(uuid, text) to anon;
+grant execute on function public.session_by_code(uuid, text) to anon;
+grant execute on function public.session_details(uuid, uuid) to anon;
+grant execute on function public.submit_student_evaluations(uuid, text, jsonb) to anon;
+grant execute on function public.submit_teacher_evaluations(uuid, uuid, jsonb) to anon;
+grant execute on function public.open_session(uuid, uuid) to anon;
+grant execute on function public.close_session(uuid, uuid) to anon;
+grant execute on function public.session_dashboard(uuid, uuid) to anon;
+grant execute on function public.cycle_dashboard(uuid, uuid) to anon;
+grant execute on function public.update_session(uuid, uuid, jsonb) to anon;
+grant execute on function public.duplicate_session(uuid, uuid, text) to anon;
+grant execute on function public.delete_session(uuid, uuid) to anon;
+grant execute on function public.lock_session(uuid, uuid) to anon;
+grant execute on function public.unlock_session(uuid, uuid) to anon;

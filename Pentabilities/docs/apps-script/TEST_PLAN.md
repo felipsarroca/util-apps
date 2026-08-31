@@ -1,5 +1,20 @@
 # Pla de prova
 
+## Autenticació de l'aplicació canònica
+
+- [ ] La pantalla només ofereix «Inicia la sessió amb Google» quan Supabase està configurat.
+- [ ] Un alumne vinculat entra amb el rol i el grup correctes.
+- [ ] Un professor vinculat entra amb el rol correcte.
+- [ ] Un administrador vinculat entra amb el rol correcte.
+- [ ] Un compte `@ramonpont.cat` no inclòs a la llista és rebutjat.
+- [ ] Un compte autoritzat però amb `app_users.active = false` és rebutjat.
+- [ ] Dos usuaris interns no poden compartir el mateix compte Google.
+- [ ] En recarregar la pàgina es conserva la sessió.
+- [ ] La sessió es conserva en mode PWA.
+- [ ] «Sortir» elimina la sessió i torna a la pantalla d'accés.
+- [ ] Després de canviar `provider_email`, el compte anterior perd l'accés.
+- [ ] Cap RPC de negoci amb signatura antiga és executable pel rol `anon`.
+
 ## Prova mínima
 
 1. Entrar com a professor.

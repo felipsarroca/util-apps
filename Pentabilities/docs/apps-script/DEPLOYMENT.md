@@ -1,6 +1,6 @@
 # Desplegament
 
-## Arquitectura acordada
+## Arquitectura d'aquesta implementació
 
 L'app queda basada en Google Apps Script i Google Sheets.
 
@@ -8,7 +8,9 @@ L'app queda basada en Google Apps Script i Google Sheets.
 - Google Sheets és la base de dades principal.
 - Les pestanyes editables permeten mantenir alumnat, correus i professorat.
 - Les pestanyes internes desen cicles, sessions, comportaments seleccionats i valoracions.
-- Supabase queda aturat perquè el compte gratuït no permet crear un tercer projecte actiu.
+- La interfície d'Apps Script es conserva com a implementació anterior.
+
+L'aplicació canònica publicada a GitHub Pages utilitza Supabase i autenticació amb Google. El seu desplegament es descriu a `../SUPABASE_GOOGLE_AUTH.md`.
 
 ## Configuració necessària
 
@@ -54,4 +56,4 @@ Pestanyes internes:
 
 ## Notes sobre Supabase
 
-La carpeta `supabase/` queda com a material de treball no actiu. No és necessària per desplegar ni fer servir l'app actual.
+Aquest procediment només desplega la implementació d'Apps Script. No configura ni publica l'aplicació canònica de GitHub Pages i Supabase.

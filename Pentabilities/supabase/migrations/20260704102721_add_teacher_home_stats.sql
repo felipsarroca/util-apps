@@ -33,4 +33,4 @@ begin
 end;
 $$;
 
-grant execute on function public.teacher_home_stats(uuid) to anon;
+grant execute on function public.teacher_home_stats(uuid) to anon;;
