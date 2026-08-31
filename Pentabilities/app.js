@@ -163,7 +163,7 @@ function loginView() {
           <div class="login-google-panel">
             <p>Entra amb el compte de Google vinculat al teu usuari de Pentabilities.</p>
             <button id="login-button" class="google-login-button" type="button" onclick="loginWithGoogle()">
-              <span class="google-login-mark" aria-hidden="true">G</span>
+              <img class="google-login-icon" src="assets/google.svg" alt="" aria-hidden="true">
               Inicia la sessió amb Google
             </button>
             <p class="login-help">Només hi poden accedir els comptes autoritzats per l’escola.</p>

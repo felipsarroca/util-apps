@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pentabilities-google-auth-v2';
+const CACHE_NAME = 'pentabilities-google-auth-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const APP_SHELL = [
   './assets/pwa-icon-512.png',
   './assets/pentabilities.png',
   './assets/ramon-pont.png',
+  './assets/google.svg',
   './assets/cc-by-nc-sa.png'
 ];
 
