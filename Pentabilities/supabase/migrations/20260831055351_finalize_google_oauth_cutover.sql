@@ -1,0 +1,20 @@
+-- Tanca la compatibilitat temporal un cop OAuth és operatiu en producció.
+revoke execute on function public.app_login(text, text) from public, anon, authenticated;
+revoke execute on function public.app_bootstrap(uuid) from public, anon, authenticated;
+revoke execute on function public.teacher_home_stats(uuid) from public, anon, authenticated;
+revoke execute on function public.create_cycle(uuid, jsonb) from public, anon, authenticated;
+revoke execute on function public.create_session(uuid, jsonb) from public, anon, authenticated;
+revoke execute on function public.students_by_class(uuid, text) from public, anon, authenticated;
+revoke execute on function public.session_by_code(uuid, text) from public, anon, authenticated;
+revoke execute on function public.session_details(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.submit_student_evaluations(uuid, text, jsonb) from public, anon, authenticated;
+revoke execute on function public.submit_teacher_evaluations(uuid, uuid, jsonb) from public, anon, authenticated;
+revoke execute on function public.open_session(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.close_session(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.session_dashboard(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.cycle_dashboard(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.update_session(uuid, uuid, jsonb) from public, anon, authenticated;
+revoke execute on function public.duplicate_session(uuid, uuid, text) from public, anon, authenticated;
+revoke execute on function public.delete_session(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.lock_session(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.unlock_session(uuid, uuid) from public, anon, authenticated;
