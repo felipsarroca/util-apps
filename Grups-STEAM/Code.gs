@@ -98,12 +98,13 @@ function readStudents_(source, emailByName) {
     groups.forEach((group, index) => {
       const name = (row[index + 1] || "").trim();
       if (!name || /^\d+$/.test(name)) return;
-      const key = [studentKey_(name), group, course].join("\u0001");
+      const nameKey = studentKey_(name);
+      const key = [nameKey, group, course].join("\u0001");
       students.push({
         name,
         group,
         course,
-        email: emailByName.get(key) || "",
+        email: emailByName.get(nameKey) || "",
         key,
       });
     });
