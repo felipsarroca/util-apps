@@ -5,8 +5,10 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,Segoe UI,Roboto,Arial}
-.topbar{background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;padding:14px 20px;position:sticky;top:0;z-index:2}
-.topbar h1{margin:0;font-size:20px;letter-spacing:.3px}
+.topbar{background:linear-gradient(105deg,#6d28d9,#2563eb);color:#fff;padding:11px 20px;position:sticky;top:0;z-index:2;box-shadow:0 3px 12px rgba(37,45,120,.18)}
+.brand{display:flex;align-items:center;gap:10px;max-width:1100px;margin:0 auto}
+.brand-icon{width:34px;height:34px;display:block;border-radius:9px;box-shadow:0 2px 5px rgba(0,0,0,.2);background:#fff}
+.topbar h1{margin:0;font-size:20px;line-height:1.2;letter-spacing:.2px;font-weight:700}
 .container{max-width:1100px;margin:20px auto;padding:0 16px}
 .uploader{margin-bottom:20px}
 .dropzone{position:relative;background:linear-gradient(135deg,#f1f5ff,#fff);border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;outline:none}
@@ -91,6 +93,9 @@ code{background:#eef2ff;padding:1px 6px;border-radius:6px}
   .stats .sum{font-size:16px}
   .stats .total-row{grid-column:1/-1;margin-top:4px}
   .topbar{position:static}
+  .brand{gap:9px}
+  .brand-icon{width:32px;height:32px}
+  .topbar h1{font-size:19px}
   .workspace{scroll-margin-top:0}
 }
 @media(max-width:480px){
