@@ -40,6 +40,24 @@
 }
 </script>
   <script type="module" crossorigin src="/util-apps/DashboardIncidencies/assets/index-BCkAtcHQ.js"></script>
+  <script>
+    // El dashboard sempre analitza la pestanya de dades, encara que l'URL
+    // enganxada s'hagi copiat des de Resum o des d'una pestanya de curs.
+    const dashboardFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const requestedUrl = typeof input === 'string' ? input : input?.url;
+      const sheetMatch = requestedUrl?.match(
+        /^https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)\/export\?/
+      );
+
+      if (sheetMatch) {
+        const buidatUrl = `https://docs.google.com/spreadsheets/d/${sheetMatch[1]}/gviz/tq?tqx=out:csv&sheet=Buidat`;
+        return dashboardFetch(buidatUrl, init);
+      }
+
+      return dashboardFetch(input, init);
+    };
+  </script>
 </head>
   <body class="bg-brand-background">
     <div id="root"></div>
