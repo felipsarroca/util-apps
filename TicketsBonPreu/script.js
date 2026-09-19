@@ -9,7 +9,7 @@ const LS_KEYS = {
 };
 
 // Categories and colors
-const CATEGORIES = ['menjar', 'higiene personal', 'neteja de la llar', 'altres'];
+const CATEGORIES = ['menjar', 'neteja de la llar', 'higiene personal', 'altres'];
 const CAT_CLASS = {
   'menjar': 'color-menjar',
   'higiene personal': 'color-higiene',
@@ -33,6 +33,11 @@ const KEYWORDS = {
 // State
 let productMap = loadJSON(LS_KEYS.productMap, {}); // { normalized_name: category }
 let tickets = loadJSON(LS_KEYS.tickets, []);      // [{id, dateISO, items:[{name, price, category}]}]
+let activeTicketId = loadJSON('bp_active_ticket', null);
+let processing = false;
+let workerPromise;
+let workerMode;
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 // Init UI
 window.addEventListener('DOMContentLoaded', () => {
@@ -44,12 +49,12 @@ window.addEventListener('DOMContentLoaded', () => {
   ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('focus'); }));
   ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('focus'); }));
   dz.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files));
-  dz.addEventListener('click', () => { fi.value=''; fi.click(); });
+  dz.addEventListener('click', (e) => { if (e.target !== fi) { fi.value=''; fi.click(); } });
+  dz.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fi.click(); } });
   fi.addEventListener('change', () => handleFiles(fi.files));
 
   clearBtn.addEventListener('click', () => {
-    if (!confirm('Segur que vols esborrar les dades guardades?')) return;
-    productMap = {};
+    if (!confirm('Esborrar tots els tiquets? Es conservaran les categories que has ensenyat a l’app.')) return;
     tickets = [];
     persist();
     renderAll();
@@ -57,21 +62,22 @@ window.addEventListener('DOMContentLoaded', () => {
 
   exportBtn.addEventListener('click', () => exportCSV());
 
+  for (const ticket of tickets) classifyItems(ticket.items);
   renderAll();
 });
 
 function handleFiles(fileList){
-  const files = Array.from(fileList || []).filter(f => /jpe?g$/i.test(f.name));
-  const dbg = byId('debug');
-  if (dbg){
-    dbg.classList.remove('hidden');
-    dbg.textContent = files.length ? `Detectats ${files.length} fitxer(s): ` + files.map(f=>f.name).join(', ') : 'Cap fitxer JPG detectat';
-  }
+  if (processing) return;
+  const files = Array.from(fileList || []).filter(f => /\.(jpe?g|png|webp)$/i.test(f.name));
   if (!files.length) return;
   processFilesSequentially(files);
 }
 
 async function processFilesSequentially(files){
+  processing = true;
+  byId('fileInput').disabled = true;
+  byId('clearDataBtn').disabled = true;
+  const errors = [];
   const progress = byId('progress');
   progress.classList.remove('hidden');
   progress.innerHTML = `<div class="label">Processant ${files.length} imatge(s)...</div><div class="progressbar"><div class="bar" style="width:0%"></div></div>`;
@@ -84,43 +90,54 @@ async function processFilesSequentially(files){
       startOcrProgressTimer();
       const text = await ocrImage(files[i]);
       const ticket = parseTicket(text, files[i].name);
+      if (!ticket.items.length) throw new Error('No s’han pogut llegir els articles.');
       classifyItems(ticket.items);
       tickets.push(ticket);
+      activeTicketId = ticket.id;
       persist();
       renderAll();
       stopOcrProgressTimer(true);
     }catch(err){
       console.error(err);
+      errors.push(files[i].name);
       stopOcrProgressTimer(false);
-      progress.innerHTML = `<div class="label">Error amb ${files[i].name}: ${err?.message || err}</div>`;
+      progress.textContent = `Error amb ${files[i].name}: ${err?.message || err}`;
     }
   }
-  progress.innerHTML = '<div class="label">Fet!</div>';
-  setTimeout(()=>progress.classList.add('hidden'), 1200);
+  processing = false;
+  byId('fileInput').disabled = false;
+  byId('clearDataBtn').disabled = false;
+  progress.textContent = errors.length ? `No s’ha pogut llegir: ${errors.join(', ')}. Torna-ho a provar.` : 'Fet!';
+  if (!errors.length) setTimeout(()=>{ if (!processing) progress.classList.add('hidden'); }, 1200);
 }
 
 async function ocrImage(file){
   const prepped = await preprocessImage(file);
-  if (!window.Tesseract){
-    throw new Error("Tesseract no s'ha carregat. Prova obrint amb un servidor local.");
-  }
-  // Via directa amb Tesseract.recognize i logger (sense passar funcions al Worker)
-  try{
-    const { data } = await Tesseract.recognize(
-      prepped,
-      'cat+spa+eng'
-    );
-    updateOcrProgress('fet', 1);
-    return (data && data.text) ? data.text : '';
-  }catch(err){
-    console.warn('Falla unpkg, reintentant amb jsDelivr', err);
-    setProgressLabel('Reintentant OCR (cdn alternatiu)...');
-    const { data } = await Tesseract.recognize(
-      prepped,
-      'cat+spa+eng'
-    );
-    updateOcrProgress('fet', 1);
-    return (data && data.text) ? data.text : '';
+  if (!window.Tesseract) throw new Error("Tesseract no s’ha carregat.");
+  try {
+    const mode = prepped.dataset.digital === 'true' ? 'digital' : 'photo';
+    if (workerPromise && mode !== workerMode) {
+      await (await workerPromise).terminate();
+      workerPromise = null;
+    }
+    if (!workerPromise) {
+      workerMode = mode;
+      // The legacy recognizer reads small monospaced digital prices more accurately.
+      workerPromise = mode === 'digital'
+        ? Tesseract.createWorker('eng', 0, { legacyCore: true, legacyLang: true })
+        : Tesseract.createWorker('cat+spa+eng');
+    }
+    const worker = await workerPromise;
+    await worker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' });
+    const { data } = await worker.recognize(prepped);
+    if (!data.text.trim()) throw new Error('No s’ha trobat text.');
+    return data.text;
+  } catch (error) {
+    if (workerPromise) {
+      try { await (await workerPromise).terminate(); } catch (_) { /* Failed initialization */ }
+    }
+    workerPromise = null;
+    throw error;
   }
 }
 
@@ -131,7 +148,7 @@ function setProgressLabel(text){
   el.classList.remove('hidden');
   const hasBar = !!el.querySelector('.progressbar');
   if (!hasBar){
-    el.innerHTML = `<div class="label">${text}</div><div class="progressbar"><div class="bar" style="width:0%"></div></div>`;
+    el.innerHTML = `<div class="label">${escapeHTML(text)}</div><div class="progressbar"><div class="bar" style="width:0%"></div></div>`;
   }else{
     const label = el.querySelector('.label');
     if (label) label.textContent = text;
@@ -146,7 +163,7 @@ function updateOcrProgress(status, frac){
   if (!el) return;
   el.classList.remove('hidden');
   if (!el.querySelector('.progressbar')){
-    el.innerHTML = `<div class="label">${label}</div><div class="progressbar"><div class="bar" style="width:${pct}%"></div></div>`;
+    el.innerHTML = `<div class="label">${escapeHTML(label)}</div><div class="progressbar"><div class="bar" style="width:${pct}%"></div></div>`;
   }else{
     const l = el.querySelector('.label');
     const bar = el.querySelector('.progressbar .bar');
@@ -191,38 +208,48 @@ function stopOcrProgressTimer(success){
   if (success){ updateOcrProgress('fet', 1); }
 }
 
-// Image preprocessing: denoise + scale for OCR
-async function preprocessImage(file, targetWidth = 1800){
+// Crop white margins and keep lossless pixels for small digital receipt text.
+async function preprocessImage(file){
   const img = await fileToImage(file);
-  const scale = Math.max(1, targetWidth / img.width);
-  const w = Math.round(img.width * scale);
-  const h = Math.round(img.height * scale);
-  const canvas = document.createElement('canvas');
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0,0,w,h);
-  ctx.drawImage(img, 0, 0, w, h);
-
-  // Simple grayscale to improve contrast
-  const imgData = ctx.getImageData(0,0,w,h);
-  const d = imgData.data;
-  for (let i=0;i<d.length;i+=4){
-    const v = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-    const bw = v > 200 ? 255 : (v < 120 ? 0 : v);
-    d[i]=d[i+1]=d[i+2]=bw;
+  const source = document.createElement('canvas');
+  source.width = img.width; source.height = img.height;
+  const ctx = source.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, source.width, source.height);
+  ctx.drawImage(img, 0, 0);
+  const { data } = ctx.getImageData(0, 0, source.width, source.height);
+  let left = source.width, right = -1, top = source.height, bottom = -1;
+  let whitePixels = 0;
+  for (let y = 0; y < source.height; y++) {
+    for (let x = 0; x < source.width; x++) {
+      const i = (y * source.width + x) * 4;
+      if (data[i] > 245 && data[i+1] > 245 && data[i+2] > 245) whitePixels++;
+      if (data[i] + data[i+1] + data[i+2] < 540) {
+        left = Math.min(left, x); right = Math.max(right, x);
+        top = Math.min(top, y); bottom = Math.max(bottom, y);
+      }
+    }
   }
-  ctx.putImageData(imgData,0,0);
-
-  return await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+  if (right < left) throw new Error('La imatge és buida.');
+  const width = right-left+1, height = bottom-top+1;
+  const digital = img.width <= 1000 && img.height/img.width > 2 && whitePixels/(img.width*img.height) > 0.7;
+  const scale = digital ? 3 : Math.min(4, Math.max(1, 1200/width));
+  const canvas = document.createElement('canvas');
+  canvas.dataset.digital = String(digital);
+  canvas.width = Math.round(width*scale)+40;
+  canvas.height = Math.round(height*scale)+40;
+  const out = canvas.getContext('2d');
+  out.fillStyle = '#fff'; out.fillRect(0, 0, canvas.width, canvas.height);
+  out.imageSmoothingEnabled = true; out.imageSmoothingQuality = digital ? 'low' : 'high';
+  out.drawImage(source, left, top, width, height, 20, 20, canvas.width-40, canvas.height-40);
+  return canvas;
 }
-
 function fileToImage(file){
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
+    const url = URL.createObjectURL(file);
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imatge no vàlida.')); };
+    img.src = url;
   });
 }
 
@@ -235,11 +262,12 @@ function parseTicket(text, filename){
 
   const items = [];
   for (const raw of lines){
-    if (/total|desglossament|iva|copia|pagament|compte|descomptes|subtotal/i.test(raw)) continue;
-    const m = raw.match(/(.+?)\s+(-?\d+[\.,]\d{2})$/);
+    if (/^desglossament\b/i.test(raw)) break;
+    if (/^(?:total|iva|c[oò]pia|pagament|compte|descomptes|subtotal)\b/i.test(raw)) continue;
+    const m = raw.match(/(.+?)\s+(-?\d+[\.,-]\s*\d{1,2})\s*€?$/);
     if (!m) continue;
     const name = cleanName(m[1]);
-    const price = parseFloat(m[2].replace(',', '.'));
+    const price = parseFloat(m[2].replace(/\s/g, '').replace(/(\d)[,-](?=\d)/, '$1.'));
     if (name.length < 2 || isNaN(price)) continue;
     items.push({ name, price, category: 'altres' });
   }
@@ -257,23 +285,15 @@ function cleanName(s){
   return s.replace(/\s{2,}/g,' ').replace(/[\u2022\u00B7]+/g,' ').trim();
 }
 
-function dedupKey(name){
-  // Normalize: lowercase, remove diacritics, remove digits and unit tokens
-  const norm = name.toLowerCase()
-    .normalize('NFD').replace(/[^\w\s]/g,' ')
-    .replace(/\d+[\w%]*/g,' ') // numbers and units
-    .replace(/\b(kg|g|gr|ml|l|cl|u|pack|km0|eco|ecologic|ecologica|bonpreu|la|el|de|del|km)\b/g,' ')
-    .replace(/\s+/g,' ').trim();
-  // Keep first 3 tokens as a coarse key
-  return norm.split(' ').slice(0,3).join(' ');
-}
+function dedupKey(name){ return normalizeKey(name); }
 
 function dedupItems(items){
   const map = new Map();
   for (const it of items){
     const k = dedupKey(it.name);
-    const cur = map.get(k) || { name: it.name, price: 0, category: 'altres' };
-    cur.price += it.price;
+    const cur = map.get(k) || { name: it.name, price: 0, category: 'altres', quantity: 0 };
+    cur.price = Math.round((cur.price + it.price)*100)/100;
+    cur.quantity += 1;
     if (it.name.length > cur.name.length) cur.name = it.name;
     map.set(k, cur);
   }
@@ -291,25 +311,62 @@ function normalizeKey(name){
   return name.toLowerCase().normalize('NFD').replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
 }
 
+function containsPhrase(key, phrase){
+  return (` ${key} `).includes(` ${normalizeKey(phrase)} `);
+}
+function keywordMatch(key,word){
+  if (containsPhrase(key,word)) return true;
+  return word.length >= 6 && !word.includes(' ') && key.split(' ').some(token => token.length >= 6 && oneCharacterApart(token,word));
+}
 function guessCategory(name){
   const key = normalizeKey(name);
-  for (const [cat, words] of Object.entries(KEYWORDS)){
-    if (words.some(w => key.includes(w))) return cat;
+  if (/\bdent[i1l]f[a-z0-9]*\b/.test(key)) return 'higiene personal';
+  const hygiene = ['dentifrica','dentifric','dental','pasta dents','oxigenada','higienic','paper higienic','paper de vater','gel dutxa','gel de bany','gel mans','sabo mans','sabo corporal','mocadors'];
+  const cleaning = ['netejador','netejadora','wc','escombraries','sabo roba','sabo plats','paper de cuina','paper cuina'];
+  if (cleaning.some(w => keywordMatch(key,w))) return 'neteja de la llar';
+  if (hygiene.some(w => keywordMatch(key,w))) return 'higiene personal';
+  for (const cat of ['neteja de la llar','higiene personal','menjar']) {
+    if (KEYWORDS[cat].filter(w => w !== 'gel').some(w => keywordMatch(key,w))) return cat;
   }
-  return 'altres';
+  const foods = ['quefir','kefir','gyoza','xiao long bao','canelons','carbasso','carbassa','ceba','cebes','peskitos','pessic','edam','gouda','guacamole','refresc','mousse','llimona','llimones','gelat','gelats','cornetto','xocolata','pastanagues','sobaos','llom','llonganissa','gulins','raviolis','rotllets','croquetes','beguda','espin','espinacs','pit','varetes','nous','espaguetis','lluc','banana','bananes','brots','ruca','all','gublins','gulins','pebrot','panet','pilotilles','mandonguilles','burger','hamburguesa','pastanagues','curat','rain blanc','rain vermell','pastis','cirerol'];
+  if (foods.some(w => containsPhrase(key,w))) return 'menjar';
+  // One OCR character may vary in a long word (mocadors/hocadors, tomàquet/toméquet).
+  const tokens = key.split(' ').filter(w => w.length >= 6);
+  const matches = new Set();
+  for (const [cat, words] of Object.entries(KEYWORDS)) {
+    for (const word of [...words, ...(cat === 'menjar' ? foods : [])]) {
+      if (word.length < 6 || word.includes(' ')) continue;
+      if (tokens.some(token => oneCharacterApart(token, word))) matches.add(cat);
+    }
+  }
+  return matches.size === 1 ? [...matches][0] : 'altres';
 }
-
-// Fuzzy suggestion using trigram Jaccard over learned names
+function oneCharacterApart(a,b){
+  if (Math.abs(a.length-b.length)>1) return false;
+  if (a.length>b.length) return oneCharacterApart(b,a);
+  let i=0, j=0, differences=0;
+  while (i<a.length && j<b.length) {
+    if (a[i]===b[j]) { i++; j++; }
+    else { if (++differences>1) return false; if (a.length===b.length) i++; j++; }
+  }
+  return differences + (b.length-j) <= 1;
+}
+// Conservative matching: explicit corrections win, ambiguous variants stay separate.
 function fuzzySuggest(name){
   const key = normalizeKey(name);
-  const gramsA = trigrams(key);
-  let bestScore = 0; let bestCat = 'altres';
-  for (const k of Object.keys(productMap)){
-    const s = jaccard(gramsA, trigrams(k));
-    if (s > bestScore){ bestScore = s; bestCat = productMap[k]; }
+  if (key.length < 10) return null;
+  const scores = new Map();
+  for (const [learned,category] of Object.entries(productMap)) {
+    if (!CATEGORIES.includes(category)) continue;
+    const other = normalizeKey(learned);
+    if (Math.min(key.length,other.length)/Math.max(key.length,other.length) < 0.8) continue;
+    const score = jaccard(trigrams(key),trigrams(other));
+    scores.set(category,Math.max(scores.get(category)||0,score));
   }
-  if (bestScore >= 0.35) return { score: bestScore, category: bestCat };
-  return null;
+  const ranked = [...scores].sort((a,b)=>b[1]-a[1]);
+  if (!ranked.length || ranked[0][1] < 0.78) return null;
+  if (ranked[1] && ranked[0][1]-ranked[1][1] < 0.12) return null;
+  return {category:ranked[0][0],score:ranked[0][1]};
 }
 
 function trigrams(s){
@@ -328,7 +385,7 @@ function jaccard(a, b){
 function classifyItems(items){
   for (const it of items){
     const k = normalizeKey(it.name);
-    it.category = productMap[k] || guessCategory(it.name);
+    it.category = productMap[k] || fuzzySuggest(it.name)?.category || guessCategory(it.name);
   }
 }
 
@@ -340,115 +397,66 @@ function setCategoryForItem(ticketId, index, category){
   const key = normalizeKey(it.name);
   // Aprenentatge
   productMap[key] = category;
-  // Propaga la categoria a tots els productes equivalents ja existents
-  for (const tk of tickets){
-    for (const item of tk.items){
-      if (normalizeKey(item.name) === key){
-        item.category = category;
-      }
-    }
-  }
+  for (const tk of tickets) classifyItems(tk.items);
   persist();
-  renderAll();
+  renderAggregate(); renderHistory();
+  document.querySelectorAll('select[data-tid]').forEach(select => {
+    const ticket = tickets.find(t => t.id === select.dataset.tid);
+    select.value = ticket.items[Number(select.dataset.idx)].category;
+  });
 }
 
 function persist(){
+  saveJSON('bp_active_ticket', activeTicketId);
   saveJSON(LS_KEYS.productMap, productMap);
   saveJSON(LS_KEYS.tickets, tickets);
 }
 
-function renderAll(){
-  renderAggregate();
-  renderTickets();
+function sortedTickets(){
+  return [...tickets].sort((a,b)=>b.dateISO.localeCompare(a.dateISO)||Number(b.id.split('_')[0])-Number(a.id.split('_')[0]));
 }
-
+function activeTicket(){ return tickets.find(t=>t.id===activeTicketId); }
+function renderAll(){
+  if (!activeTicket()) activeTicketId = sortedTickets()[0]?.id || null;
+  saveJSON('bp_active_ticket',activeTicketId);
+  renderAggregate(); renderTickets(); renderHistory();
+}
 function renderAggregate(){
   const root = byId('aggregateCards');
-  root.innerHTML = '';
-
-  if (!tickets.length){
-    root.innerHTML = '<div class="card">Encara no hi ha tiquets.</div>';
-    return;
-  }
-
-  const catEmoji = { 'menjar':'🍎', 'higiene personal':'🧼', 'neteja de la llar':'🧽', 'altres':'🧩' };
-
-  const sorted = [...tickets].sort((a,b)=>{
-    if (a.dateISO !== b.dateISO) return b.dateISO.localeCompare(a.dateISO);
-    return Number(b.id.split('_')[0]) - Number(a.id.split('_')[0]);
-  });
-  for (const t of sorted){
-    const totals = sumByCategory(t.items);
-    const sum = Object.values(totals).reduce((a,b)=>a+b,0);
-    const el = document.createElement('div');
-    el.className = 'card';
-    el.innerHTML = `
-      <h3>${t.dateISO} · <code>${t.file || 'tiquet'}</code></h3>
-      <div class="row"><span><span class="emoji">${catEmoji['menjar']}</span>Menjar</span><span class="sum">${formatEur(totals['menjar'])}</span></div>
-      <div class="row"><span><span class="emoji">${catEmoji['higiene personal']}</span>Higiene personal</span><span class="sum">${formatEur(totals['higiene personal'])}</span></div>
-      <div class="row"><span><span class="emoji">${catEmoji['neteja de la llar']}</span>Neteja de la llar</span><span class="sum">${formatEur(totals['neteja de la llar'])}</span></div>
-      <div class="row"><span><span class="emoji">${catEmoji['altres']}</span>Altres</span><span class="sum">${formatEur(totals['altres'])}</span></div>
-      <div class="row" style="border-top:1px dashed var(--border);padding-top:6px"><strong>Total</strong><strong>${formatEur(sum)}</strong></div>
-    `;
-    root.appendChild(el);
-  }
+  const t = activeTicket();
+  if (!t) { root.innerHTML = '<div class="card">Afegeix un tiquet per començar.</div>'; return; }
+  const totals = sumByCategory(t.items);
+  const emoji = {'menjar':'🍎','neteja de la llar':'🧽','higiene personal':'🧼','altres':'🧩'};
+  root.innerHTML = `<div class="card">${CATEGORIES.map(cat=>`<div class="row"><span>${emoji[cat]} ${cat[0].toUpperCase()+cat.slice(1)}</span><strong class="sum">${formatEur(totals[cat])}</strong></div>`).join('')}<div class="row total-row"><strong>Total</strong><strong>${formatEur(Object.values(totals).reduce((a,b)=>a+b,0))}</strong></div></div>`;
 }
-
 function renderTickets(){
   const root = byId('ticketsList');
-  root.innerHTML = '';
-  const sorted = [...tickets].sort((a,b)=>{
-    if (a.dateISO !== b.dateISO) return b.dateISO.localeCompare(a.dateISO);
-    return Number(b.id.split('_')[0]) - Number(a.id.split('_')[0]);
-  });
-  for (const t of sorted){
-    const el = document.createElement('div');
-    el.className = 'ticket';
-    const totals = sumByCategory(t.items);
-    const pills = `
-      <span class="pill ${CAT_CLASS['menjar']}">Menjar: ${formatEur(totals['menjar'])}</span>
-      <span class="pill ${CAT_CLASS['higiene personal']}">Higiene: ${formatEur(totals['higiene personal'])}</span>
-      <span class="pill ${CAT_CLASS['neteja de la llar']}">Neteja: ${formatEur(totals['neteja de la llar'])}</span>
-      <span class="pill ${CAT_CLASS['altres']}">Altres: ${formatEur(totals['altres'])}</span>
-    `;
-    el.innerHTML = `
-      <div class="ticket-head">
-        <div>
-          <div><strong>${t.dateISO}</strong> · <code>${t.file || 'tiquet'}</code></div>
-          <div class="totals">${pills}</div>
-        </div>
-        <div><button class="btn btn-secondary" data-del="${t.id}">Esborra</button></div>
-      </div>
-      <div class="items">
-        ${t.items.map((it, idx)=> itemRowHTML(t.id, idx, it)).join('')}
-      </div>
-    `;
-    el.addEventListener('click', (ev)=>{
-      const del = ev.target.closest('button[data-del]');
-      if (del){
-        if (confirm('Esborrar aquest tiquet?')){
-          tickets = tickets.filter(x=>x.id!==t.id);
-          persist();
-          renderAll();
-        }
-      }
-    });
-    root.appendChild(el);
-  }
+  const t = activeTicket();
+  if (!t) { root.innerHTML = ''; return; }
+  root.innerHTML = `<div class="ticket"><div class="ticket-head"><div><strong>${escapeHTML(t.dateISO)}</strong><div class="filename">${escapeHTML(t.file||'tiquet')}</div></div><button class="btn btn-secondary" id="deleteTicket">Esborra</button></div><div class="items">${t.items.map((it,i)=>itemRowHTML(t.id,i,it)).join('')}</div></div>`;
+  byId('deleteTicket').onclick = () => {
+    if (!confirm('Esborrar aquest tiquet?')) return;
+    tickets = tickets.filter(x=>x.id!==t.id);
+    persist(); renderAll();
+  };
 }
-
-function itemRowHTML(ticketId, index, it){
-  const opts = CATEGORIES.map(c => `<option value="${c}" ${c===it.category?'selected':''}>${c}</option>`).join('');
-  return `
-    <div class="item">
-      <div class="name">${it.name}</div>
-      <div>${formatEur(it.price)}</div>
-      <div><select data-tid="${ticketId}" data-idx="${index}">${opts}</select></div>
-      <div>
-        <span class="pill ${CAT_CLASS[it.category]}">${it.category}</span>
-      </div>
-    </div>
-  `;
+function renderHistory(){
+  const root = byId('historyList');
+  const previous = sortedTickets().filter(t=>t.id!==activeTicketId);
+  byId('historyLabel').textContent = `Altres tiquets (${previous.length})`;
+  root.innerHTML = previous.length ? previous.map(t=>`<button class="history-row" data-open="${escapeHTML(t.id)}"><span>${escapeHTML(t.dateISO)}</span><span class="filename">${escapeHTML(t.file||'tiquet')}</span><strong>${formatEur(t.items.reduce((sum,it)=>sum+it.price,0))}</strong></button>`).join('') : '<p>No hi ha altres tiquets.</p>';
+  root.querySelectorAll('[data-open]').forEach(button=>{
+    button.onclick = () => {
+      activeTicketId = button.dataset.open;
+      byId('history').open = false;
+      renderAll();
+      byId('workspace').scrollIntoView({behavior:'smooth',block:'start'});
+    };
+  });
+}
+function itemRowHTML(ticketId,index,it){
+  const opts = CATEGORIES.map(c=>`<option value="${c}" ${c===it.category?'selected':''}>${c}</option>`).join('');
+  return `<div class="item"><div class="name">${escapeHTML(it.name)}${it.quantity>1?` <small>×${it.quantity}</small>`:''}</div><div class="price">${formatEur(it.price)}</div><select aria-label="Categoria de ${escapeHTML(it.name)}" data-tid="${escapeHTML(ticketId)}" data-idx="${index}">${opts}</select></div>`;
 }
 
 // Delegate select changes

@@ -62,3 +62,42 @@ code{background:#eef2ff;padding:1px 6px;border-radius:6px}
 .emoji{font-size:18px;margin-right:6px}
 
 .ticket-head strong{font-size:15px}
+
+.workspace{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start;scroll-margin-top:70px}
+.stats{position:sticky;top:68px}
+.row{gap:12px;color:var(--fg);padding:5px 0}
+.sum,.price{white-space:nowrap;font-variant-numeric:tabular-nums}
+.sum{font-size:20px}
+.total-row{border-top:1px dashed var(--border);margin-top:10px;padding-top:10px}
+.item{grid-template-columns:minmax(0,1fr) 85px 170px;gap:10px;padding:10px 0}
+.item .name{white-space:normal;overflow-wrap:anywhere}
+.item small{color:var(--muted);white-space:nowrap}
+.filename{overflow-wrap:anywhere;color:var(--muted);font-size:13px}
+.history{margin-top:20px;border:1px solid var(--border);background:var(--card);border-radius:10px;padding:12px}
+.history summary{cursor:pointer;font-weight:600}
+#historyList{max-height:320px;overflow:auto;margin-top:8px}
+.history-row{width:100%;display:grid;grid-template-columns:100px minmax(0,1fr) 90px;gap:12px;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--border);padding:12px 4px;cursor:pointer;color:var(--fg);font:inherit}
+.history-row:hover{background:#f1f5ff}
+.history-row strong{text-align:right;white-space:nowrap}
+.btn:focus-visible,select:focus-visible,summary:focus-visible,.history-row:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+.controls{flex-wrap:wrap}
+@media(max-width:800px){
+  .workspace{grid-template-columns:1fr;gap:8px}
+  .stats{top:0;z-index:3;background:var(--bg);padding:8px 0}
+  .stats h2{display:none}
+  .stats .card{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;padding:10px}
+  .stats .row{font-size:12px;margin:0;padding:3px 0;gap:6px}
+  .stats .sum{font-size:16px}
+  .stats .total-row{grid-column:1/-1;margin-top:4px}
+  .topbar{position:static}
+  .workspace{scroll-margin-top:0}
+}
+@media(max-width:480px){
+  .container{padding:0 10px}
+  .item{grid-template-columns:minmax(0,1fr) 80px}
+  .item select{grid-column:1/-1}
+  .price{text-align:right}
+  .history-row{grid-template-columns:1fr auto;gap:4px}
+  .history-row .filename{grid-row:2;grid-column:1/-1}
+  .dropzone{padding:14px}
+}

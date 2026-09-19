@@ -1,88 +1,50 @@
-Analitzador de tiquets Bonpreu
-==============================
+# Analitzador de tiquets Bonpreu
 
-Aplicació web (sense servidor) per gestionar i analitzar tiquets del supermercat Bonpreu a partir d’imatges JPG. Fa OCR al navegador, classifica productes en categories, suma despeses i exporta a CSV. Les dades es guarden localment a `localStorage`.
+App web per separar les despeses de cada compra en **menjar, neteja de la llar, higiene personal i altres**. Funciona al navegador i conserva els tiquets i les correccions al mateix navegador i adreça web.
 
-Funcionalitats
---------------
+## Ús
 
-- Càrrega de tiquets: arrossega un o diversos JPG o selecciona’ls des del diàleg.
-- OCR al navegador: preprocessat bàsic (escala i blanc-i-negre) i lectura amb Tesseract.js (ca, es, en).
-- Extracció de dades: data del tiquet i línies “nom … preu”. Duplicats consolidades per clau normalitzada.
-- Classificació en 4 categories: menjar, higiene personal, neteja de la llar, altres.
-- Aprenentatge automàtic: si canvies la categoria d’un producte, queda guardada i s’aplica a:
-  - totes les aparicions existents del mateix producte, i
-  - les futures compres amb el mateix nom (normalitzat).
-- Ordenació: els tiquets es mostren en ordre invers (els més recents a dalt). Si hi ha la mateixa data, es prioritza l’últim processat.
-- Resum per tiquet: sumes per categoria i total del tiquet.
-- Exportació: descarrega totes les línies a CSV (`data;fitxer;nom;preu;categoria`).
-- Indicador de progrés: barra i percentatge durant l’OCR; canvia de color segons fase.
-- Dades locals: es pot netejar tot amb el botó “neteja dades guardades”.
+1. Arrossega imatges JPG, PNG o WebP, o selecciona-les amb el botó de càrrega.
+2. El darrer tiquet importat queda actiu. Consulta els imports al resum i canvia les categories amb els selectors dels articles.
+3. Obre **Altres tiquets** per seleccionar una compra anterior. L’historial es plega quan la selecciones.
+4. **Exporta CSV** descarrega els articles de totes les compres.
 
-Com s’utilitza
---------------
+El resum queda visible mentre recorres els articles. Al mòbil es presenta en format compacte. La categoria es modifica sense reconstruir la llista, per mantenir la posició i el focus.
 
-1. Obre `index.html` amb Chrome/Edge (recomanat).
-2. Arrossega JPG de tiquets a la zona o fes clic per seleccionar.
-3. Espera l’OCR: veuràs el progrés. En acabar, apareixerà el tiquet amb els ítems i el resum.
-4. Si cal, ajusta categories amb el selector; els canvis s’apliquen a totes les aparicions equivalents i es recorden per al futur.
-5. Opcional: exporta a CSV o neteja dades.
+## Lectura i classificació
 
-Execució local (recomanat)
---------------------------
+- Retalla marges blancs, amplia la lletra petita i processa els píxels sense recompressió JPEG.
+- Detecta imatges estretes amb fons blanc i hi aplica el reconeixedor clàssic de Tesseract, que ha llegit millor els preus de les dues mostres digitals. Per a altres imatges utilitza el reconeixedor habitual amb català, castellà i anglès.
+- Reutilitza el motor OCR entre imatges consecutives del mateix tipus.
+- Agrupa només noms complets equivalents i indica les repeticions amb ×2, ×3, etc. L’import agrupat és la suma de les aparicions.
+- Identifica les capçaleres fiscals sense eliminar articles que continguin fragments com «iva» dins del nom.
+- Classifica per paraules completes i prioritza expressions específiques d’higiene i neteja.
+- Les correccions explícites tenen preferència. Les variants molt properes del nom també poden recuperar-les, sempre que no hi hagi categories en conflicte.
+- Els noms ja desats aprofiten les regles noves en obrir l’app. Per tornar a llegir una imatge cal importar-la de nou; les agrupacions antigues no es poden reconstruir sense l’original.
 
-Alguns navegadors limiten els Web Workers/WASM si obres directament el fitxer (`file://`). Si tens cap problema de càrrega de l’OCR, serveix la carpeta amb un servidor local i obre la URL http:
+No incorpora informes de desquadraments ni llistes de revisió. El total visible és la suma dels articles llegits; no es concilia amb el total imprès ni es reparteixen descomptes entre categories.
 
-- Python 3: `python -m http.server 5500` i obre `http://localhost:5500`
-- Node: `npx serve -l 5500` i obre `http://localhost:5500`
+## Dades
 
-Persistència i privacitat
--------------------------
+Es mantenen les claus anteriors de `localStorage`, per conservar tiquets i categories apreses. **Esborra tots els tiquets** conserva l’aprenentatge. Les dades no se sincronitzen entre navegadors ni ordinadors. El CSV exporta articles, no és una còpia completa de la memòria de categories.
 
-- Tot el processament es fa al navegador; no s’envien imatges ni dades a cap servidor propi.
-- L’aplicació descarrega, quan cal, els binaris de Tesseract (script/wasm) des d’un CDN (connexió a Internet necessària la primera vegada).
-- Les dades (tiquets i mapa de productes→categoria) es guarden a `localStorage` del navegador.
+Les imatges es processen localment. Cal connexió per descarregar Tesseract.js i els seus models d’idioma. La lectura de lletra molt petita pot continuar tenint errors.
 
-Classificació i aprenentatge
-----------------------------
+## Execució local
 
-- Regles inicials per paraules clau (heurística) i clau normalitzada del nom per aprenentatge.
-- En canviar la categoria d’un ítem:
-  - es desa al mapa d’aprenentatge (`productMap`), i
-  - s’actualitzen totes les línies del mateix producte ja guardades.
-- No hi ha suggeriments automàtics de canvi: el canvi és directe i s’aplica globalment.
+Des de la carpeta del projecte:
 
-Indicador de progrés d’OCR
---------------------------
+```sh
+python -m http.server 5500
+```
 
-- Barra i percentatge visibles mentre dura l’OCR.
-- Colors per fase (càrrega, reconeixement, finalitzat).
-- En alguns navegadors el percentatge és estimat per evitar limitacions tècniques amb el Worker; la barra segueix indicant activitat i finalització.
+Obre `http://localhost:5500`. Utilitza la mateixa adreça i navegador per recuperar les dades desades.
 
-Resolució de problemes
-----------------------
+## Comprovacions
 
-- “Failed to execute 'importScripts' on 'Worker' … wasm … failed to load” o l’OCR no arrenca:
-  - Fes “hard reload” (Ctrl+F5) o obre via servidor local (vegeu “Execució local”).
-  - Comprova la connexió a Internet (cal per baixar Tesseract la primera vegada).
-- La barra es mou però no apareix cap tiquet:
-  - Revisa la consola (F12) i comprova errors de càrrega.
-  - Torna a provar amb servidor local.
-- Noms estranys o decimals incorrectes:
-  - Assegura bona qualitat de la foto (enfocada, plana, contrast).
-  - Pots editar la categoria; el sistema ho recordarà.
+```sh
+node --test tests/receipts.test.cjs
+node --check script.js
+```
 
-Tecnologies
------------
-
-- Tesseract.js 5 (OCR, ca+es+en)
-- HTML/CSS/JS sense frameworks
-- Emmagatzematge local (`localStorage`)
-
-Estructura
-----------
-
-- `index.html`: interfície i inclusió de Tesseract.js
-- `styles.css`: estil i colors (inclou barra de progrés)
-- `script.js`: lògica (OCR, parseig, classificació, aprenentatge, render, exportació)
-- `favicon.svg`: icona de l’aplicació
+Les proves cobreixen confusions entre menjar, higiene i neteja; variants de noms apresos; agrupacions; lectura de preus; i representació segura dels noms.

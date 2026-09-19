@@ -16,27 +16,31 @@
 
     <main class="container">
       <section class="uploader">
-        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Arrossega els JPG aquí o fes clic per seleccionar">
-          <p><strong>Arrossega els tiquets (JPG)</strong> o fes clic per seleccionar</p>
-          <input id="fileInput" type="file" accept=".jpg,.jpeg,image/jpeg,image/jpg" multiple />
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Arrossega els JPG o PNG aquí o fes clic per seleccionar">
+          <p><strong>Arrossega els tiquets (JPG o PNG)</strong> o fes clic per seleccionar</p>
+          <input id="fileInput" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple />
         </div>
         <div class="controls">
-          <button id="clearDataBtn" class="btn btn-secondary">Neteja dades guardades</button>
+          <button id="clearDataBtn" class="btn btn-secondary">Esborra tots els tiquets</button>
           <button id="exportCsvBtn" class="btn">Exporta CSV</button>
         </div>
         <div id="progress" class="progress hidden"></div>
-        <div id="debug" class="progress hidden"></div>
       </section>
 
-      <section class="stats">
-        <h2>Resum per tiquet</h2>
-        <div id="aggregateCards" class="cards"></div>
-      </section>
-
-      <section class="tickets">
-        <h2>Tiquets processats</h2>
-        <div id="ticketsList" class="tickets-list"></div>
-      </section>
+      <details id="history" class="history">
+        <summary id="historyLabel">Altres tiquets</summary>
+        <div id="historyList"></div>
+      </details>
+      <div id="workspace" class="workspace">
+        <aside class="stats">
+          <h2>Resum del tiquet</h2>
+          <div id="aggregateCards" aria-live="polite"></div>
+        </aside>
+        <section class="tickets">
+          <h2>Tiquet actiu</h2>
+          <div id="ticketsList" class="tickets-list"></div>
+        </section>
+      </div>
     </main>
 
     <footer class="footer">
