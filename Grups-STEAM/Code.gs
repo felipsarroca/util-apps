@@ -61,10 +61,6 @@ function syncStudentSheetsLocked_() {
 
   const emailByName = readEmailMap_(roster);
   const students = readStudents_(source, emailByName);
-  const missingEmails = students.filter((student) => !student.email);
-  if (missingEmails.length > 0) {
-    throw new Error("Falta el correu d'un o més alumnes; s'atura la sincronització per no sobreescriure cap adreça.");
-  }
   const byRosterOrder = sortStudents_(students, ["course", "name"]);
   writeRoster_(roster, byRosterOrder);
 
