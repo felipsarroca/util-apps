@@ -403,6 +403,9 @@ function setCategoryForItem(ticketId, index, category){
   document.querySelectorAll('select[data-tid]').forEach(select => {
     const ticket = tickets.find(t => t.id === select.dataset.tid);
     select.value = ticket.items[Number(select.dataset.idx)].category;
+    const badge = select.closest('.item').querySelector('.category-badge');
+    badge.textContent = select.value;
+    badge.className = `pill category-badge ${CAT_CLASS[select.value]}`;
   });
 }
 
@@ -456,7 +459,7 @@ function renderHistory(){
 }
 function itemRowHTML(ticketId,index,it){
   const opts = CATEGORIES.map(c=>`<option value="${c}" ${c===it.category?'selected':''}>${c}</option>`).join('');
-  return `<div class="item"><div class="name">${escapeHTML(it.name)}${it.quantity>1?` <small>×${it.quantity}</small>`:''}</div><div class="price">${formatEur(it.price)}</div><select aria-label="Categoria de ${escapeHTML(it.name)}" data-tid="${escapeHTML(ticketId)}" data-idx="${index}">${opts}</select></div>`;
+  return `<div class="item"><div class="name">${escapeHTML(it.name)}${it.quantity>1?` <small>×${it.quantity}</small>`:''}</div><div class="price">${formatEur(it.price)}</div><select aria-label="Categoria de ${escapeHTML(it.name)}" data-tid="${escapeHTML(ticketId)}" data-idx="${index}">${opts}</select><span class="pill category-badge ${CAT_CLASS[it.category]}">${escapeHTML(it.category)}</span></div>`;
 }
 
 // Delegate select changes

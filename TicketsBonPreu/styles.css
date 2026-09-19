@@ -69,7 +69,8 @@ code{background:#eef2ff;padding:1px 6px;border-radius:6px}
 .sum,.price{white-space:nowrap;font-variant-numeric:tabular-nums}
 .sum{font-size:20px}
 .total-row{border-top:1px dashed var(--border);margin-top:10px;padding-top:10px}
-.item{grid-template-columns:minmax(0,1fr) 85px 170px;gap:10px;padding:10px 0}
+.item{grid-template-columns:minmax(0,1fr) 75px 155px 110px;gap:10px;padding:10px 0}
+.category-badge{justify-self:end;max-width:110px;text-align:center}
 .item .name{white-space:normal;overflow-wrap:anywhere}
 .item small{color:var(--muted);white-space:nowrap}
 .filename{overflow-wrap:anywhere;color:var(--muted);font-size:13px}
@@ -94,10 +95,14 @@ code{background:#eef2ff;padding:1px 6px;border-radius:6px}
 }
 @media(max-width:480px){
   .container{padding:0 10px}
-  .item{grid-template-columns:minmax(0,1fr) 80px}
-  .item select{grid-column:1/-1}
   .price{text-align:right}
   .history-row{grid-template-columns:1fr auto;gap:4px}
   .history-row .filename{grid-row:2;grid-column:1/-1}
   .dropzone{padding:14px}
+}
+@media(max-width:600px), (min-width:801px) and (max-width:1000px){
+  .item{grid-template-columns:minmax(0,1fr) 110px}
+  .item select{grid-column:1;min-width:0}
+  .category-badge{grid-column:2}
+  .price{text-align:right}
 }
