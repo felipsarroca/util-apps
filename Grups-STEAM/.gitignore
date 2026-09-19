@@ -1,0 +1,12 @@
+# Fitxers locals de clasp i drecera de Google Drive: no es publiquen a GitHub.
+.clasp.json
+.clasp-correct/
+*.gsheet
+*.gdoc
+*.gslides
+
+# Fitxers locals i temporals.
+.env
+.env.*
+*.tmp
+node_modules/
