@@ -36,12 +36,22 @@ function syncNow() {
 function installSyncTrigger() {
   const spreadsheet = SpreadsheetApp.getActive();
   ScriptApp.getProjectTriggers()
-    .filter((trigger) => trigger.getHandlerFunction() === "handleSourceEdit")
+    .filter((trigger) => ["onEdit", "handleSourceEdit"].includes(trigger.getHandlerFunction()))
     .forEach((trigger) => ScriptApp.deleteTrigger(trigger));
   ScriptApp.newTrigger("handleSourceEdit").forSpreadsheet(spreadsheet).onEdit().create();
 }
 
 function syncStudentSheets() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    syncStudentSheetsLocked_();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function syncStudentSheetsLocked_() {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const source = spreadsheet.getSheetByName(CONFIG.sourceSheet);
   const roster = spreadsheet.getSheetByName(CONFIG.rosterSheet);
