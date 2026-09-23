@@ -51,7 +51,7 @@ No cal instal·lar Node.js, Deno, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari fin
 
 - En iniciar-se, l'app consulta les versions publicades en segon pla. Si n'hi ha una de nova, convida a descarregar-la i instal·lar-la. Si ja està al dia o no hi ha connexió, no mostra cap avís. La instal·lació requereix sempre una decisió de l'usuari.
 - El monitor de GitHub Actions prova cada dia descàrregues breus de vídeo MP4 i àudio MP3 de YouTube i 3Cat amb la versió de `yt-dlp` inclosa a l'app. Obre una incidència si falla una font i la tanca quan es recupera. També avisa si es publica una versió nova de `yt-dlp`.
-- Els bloquejos de robots, les restriccions geogràfiques i els errors de xarxa del servidor de proves queden marcats com a resultat inconcloent per evitar una falsa alarma de compatibilitat.
+- Els bloquejos de robots, les restriccions geogràfiques i els errors de xarxa del servidor de proves queden marcats com a resultat inconcloent. El monitor obre una incidència específica perquè se sàpiga que aquesta font no es pot verificar des de GitHub; no la presenta com una fallada confirmada de l'app.
 
 Aquestes proves detecten problemes en els casos representatius, però cap aplicació pot garantir que tots els vídeos de tots els serveis continuïn disponibles o descarregables. Les restriccions de drets, l'autenticació i els canvis dels serveis poden requerir una nova versió de l'app.
 

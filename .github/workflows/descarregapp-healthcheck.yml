@@ -40,6 +40,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
           YOUTUBE_STATUS: ${{ steps.health.outputs.youtube_status }}
           CAT3_STATUS: ${{ steps.health.outputs.cat3_status }}
         run: |
@@ -55,11 +56,17 @@ jobs:
             ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$TITLE in:title" --json number -q '.[0].number')
             if [ "$STATUS" = failed ] && [ -z "$ISSUE" ]; then
               printf 'La prova diària de vídeo o MP3 de %s ha fallat amb el motor inclòs a DescarregApp.\n\nRevisa el registre de GitHub Actions i prepara una versió nova si el problema és de yt-dlp.\n' "$NAME" > issue_body.md
-              gh issue create --repo "$REPOSITORY" --title "$TITLE" --body-file issue_body.md
+              gh issue create --repo "$REPOSITORY" --title "$TITLE" --body-file issue_body.md --assignee "$OWNER"
             elif [ "$STATUS" = ok ] && [ -n "$ISSUE" ]; then
               gh issue close "$ISSUE" --repo "$REPOSITORY" --comment "La prova diària de vídeo i MP3 torna a funcionar."
-            elif [ "$STATUS" = inconclusive ]; then
-              echo "Prova inconclusa de $NAME; es conserva l'estat de la incidència."
+            fi
+            MONITOR_TITLE="[MONITOR] No es pot verificar $NAME des de GitHub Actions"
+            MONITOR_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$MONITOR_TITLE in:title" --json number -q '.[0].number')
+            if [ "$STATUS" = inconclusive ] && [ -z "$MONITOR_ISSUE" ]; then
+              printf 'El servidor de GitHub no pot completar la prova de %s per un bloqueig anti-robot, una restricció geogràfica o un error de xarxa. Això no confirma que l’app falli, però deixa aquesta font sense vigilància efectiva.\n\nProva `npm run tools:health` des d’un equip amb connexió normal i revisa les noves versions de yt-dlp.\n' "$NAME" > issue_body.md
+              gh issue create --repo "$REPOSITORY" --title "$MONITOR_TITLE" --body-file issue_body.md --assignee "$OWNER"
+            elif [ "$STATUS" = ok ] && [ -n "$MONITOR_ISSUE" ]; then
+              gh issue close "$MONITOR_ISSUE" --repo "$REPOSITORY" --comment "La prova diària torna a verificar la descàrrega."
             fi
           done
       - name: Notifica una nova versió de yt-dlp
@@ -67,6 +74,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
           LATEST: ${{ steps.health.outputs.latest_version }}
           RELEASE_URL: ${{ steps.health.outputs.release_url }}
         run: |
@@ -74,7 +82,7 @@ jobs:
           ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$TITLE in:title" --json number -q '.[0].number')
           if [ -z "$ISSUE" ]; then
             printf 'Hi ha una [nova versió de yt-dlp](%s). Revisa si cal actualitzar el motor, valida les descàrregues i publica una nova versió de DescarregApp.\n' "$RELEASE_URL" > issue_body.md
-            gh issue create --repo "$REPOSITORY" --title "$TITLE" --body-file issue_body.md
+            gh issue create --repo "$REPOSITORY" --title "$TITLE" --body-file issue_body.md --assignee "$OWNER"
           fi
       - name: Marca la comprovació com a fallida si cal
         if: always()
