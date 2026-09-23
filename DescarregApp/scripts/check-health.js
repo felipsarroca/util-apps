@@ -28,9 +28,10 @@ function classifyFailure(message) {
 function probe(sample, format, tools) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "descarregapp-health-"));
   const runtime = path.basename(tools.deno) === tools.deno ? "deno" : `deno:${tools.deno}`;
+  const ffmpegArgs = tools.ffmpeg === "ffmpeg" ? [] : ["--ffmpeg-location", tools.ffmpeg];
   const args = [
     "--ignore-config", "--quiet", "--no-warnings", "--js-runtimes", runtime, "--no-playlist",
-    "--no-part", "--no-overwrites", "--ffmpeg-location", tools.ffmpeg,
+    "--no-part", "--no-overwrites", ...ffmpegArgs,
     "--download-sections", "*0-2",
     "-o", path.join(directory, "probe.%(ext)s")
   ];
