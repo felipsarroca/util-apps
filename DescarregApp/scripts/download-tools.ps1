@@ -7,7 +7,8 @@ $tempDir = Join-Path $root ".tools-temp"
 New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
 New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
 
-$ytDlpUrl = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+$toolVersions = Get-Content -Raw (Join-Path $PSScriptRoot "tool-versions.json") | ConvertFrom-Json
+$ytDlpUrl = "https://github.com/yt-dlp/yt-dlp/releases/download/$($toolVersions.ytDlp.version)/yt-dlp.exe"
 $denoZipUrl = "https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip"
 $ffmpegZipUrl = "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
 
@@ -18,10 +19,15 @@ $ffmpegZipPath = Join-Path $tempDir "ffmpeg-release-essentials.zip"
 $ffmpegExtractDir = Join-Path $tempDir "ffmpeg"
 
 Write-Host "Descarregant yt-dlp..."
-& curl.exe -fL $ytDlpUrl -o $ytDlpPath
+$ytDlpTempPath = Join-Path $tempDir "yt-dlp.exe"
+& curl.exe -fL $ytDlpUrl -o $ytDlpTempPath
 if ($LASTEXITCODE -ne 0) {
   throw "No s'ha pogut descarregar yt-dlp."
 }
+if ((Get-FileHash -LiteralPath $ytDlpTempPath -Algorithm SHA256).Hash -ne $toolVersions.ytDlp.sha256) {
+  throw "La suma SHA-256 de yt-dlp no coincideix amb la versio validada."
+}
+Copy-Item -LiteralPath $ytDlpTempPath -Destination $ytDlpPath -Force
 
 Write-Host "Descarregant Deno..."
 & curl.exe -fL $denoZipUrl -o $denoZipPath

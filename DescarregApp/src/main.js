@@ -79,6 +79,7 @@ function getYtDlpRuntimeArgs(tools) {
     : `deno:${tools.deno}`;
 
   return [
+    "--ignore-config",
     "--encoding",
     "utf-8",
     "--js-runtimes",
@@ -638,7 +639,7 @@ function fetchTitle(url, tools) {
   });
 }
 
-async function runDownload(job, tools) {
+async function runDownload(job, tools, attempt = 0) {
   const { item, options } = job;
 
   if (cancelRequested) {
@@ -655,7 +656,7 @@ async function runDownload(job, tools) {
     id: item.id,
     status: "downloading",
     progress: 0,
-    message: "Llegint el títol"
+    message: attempt > 0 ? "Renovant l'enllaç després d'un error 403" : "Llegint el títol"
   });
 
   const title = await fetchTitle(item.url, tools);
@@ -831,6 +832,10 @@ async function runDownload(job, tools) {
           progress: 100,
           message: selectedFormat ? `Completat. Format: ${selectedFormat}` : "Completat"
         });
+      } else if (attempt === 0 && /HTTP Error 403/i.test(lastError)) {
+        // Extract fresh media URLs once; retrying the same expired URL cannot help.
+        resolve(runDownload(job, tools, attempt + 1));
+        return;
       } else {
         sendDownloadEvent({
           id: item.id,
@@ -846,6 +851,9 @@ async function runDownload(job, tools) {
 }
 
 function cleanError(errorText) {
+  if (/HTTP Error 403|HTTP Error 401|HTTP Error 429/i.test(errorText)) {
+    return "El servidor ha rebutjat la descàrrega. Comprova si hi ha actualitzacions al menú Actualitza. Si continua fallant, consulta el detall de l'error.";
+  }
   const lines = errorText
     .split(/\r?\n/)
     .map((line) => line.trim())

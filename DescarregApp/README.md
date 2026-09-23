@@ -1,6 +1,6 @@
 # DescarregApp
 
-DescarregApp 1.2.0 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
+DescarregApp 1.3.0 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
 
 ![Captura principal de DescarregApp](docs/images/descarregapp-main.png)
 
@@ -46,6 +46,19 @@ https://ja.cat/descarregapp
 No cal instal·lar Node.js, Deno, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari final. L'instal·lador ja inclou les eines necessàries.
 
 ## Actualitzacions
+
+### Novetats de la versió 1.3.0
+
+- Actualitza `yt-dlp` de `2026.07.04` a `2026.08.19` per incorporar els canvis de compatibilitat amb YouTube. Amb l'enllaç de prova `SSqgaFE9igo`, el motor antic retornava HTTP 403 i el nou completa la descàrrega de vídeo i àudio.
+- Manté Deno i FFmpeg, que ja funcionaven correctament.
+- Aïlla les descàrregues de configuracions externes de `yt-dlp` amb `--ignore-config`.
+- Mostra una indicació per comprovar actualitzacions quan el servidor rebutja la descàrrega.
+- Davant d'un HTTP 403, torna a obtenir els enllaços i reintenta la descàrrega una sola vegada. Si persisteix, mostra l'error.
+- Fixa la versió i SHA-256 del motor a `scripts/tool-versions.json`. `npm run build:win` comprova el binari abans de generar l'instal·lador.
+
+El motor inclòs no s'actualitza sol: el menú `Actualitza` actualitza l'aplicació completa. Per preparar futures versions, cal revisar la versió i la suma oficial del motor, executar `npm run tools:download` i validar una descàrrega real abans de distribuir l'instal·lador. Els enllaços amb vídeo i llista continuen descarregant només el vídeo indicat.
+
+### Funcionament de l'actualitzador
 
 El menú `Actualitza > Comprova si hi ha actualitzacions` consulta les releases públiques del repositori i només té en compte les etiquetes amb aquest format:
 
