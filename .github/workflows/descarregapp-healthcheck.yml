@@ -1,9 +1,8 @@
-name: DescarregApp - Monitor de salut i actualitzacions de yt-dlp
+name: DescarregApp - monitor de descàrregues
 
 on:
   schedule:
-    # Executa cada dilluns i dijous a les 06:00 UTC (8:00h CEST)
-    - cron: "0 6 * * 1,4"
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -12,114 +11,72 @@ permissions:
 
 jobs:
   healthcheck:
-    name: Comprovació de yt-dlp i descàrregues de YouTube
     runs-on: ubuntu-latest
     steps:
-      - name: Baixa el codi
-        uses: actions/checkout@v4
-
-      - name: Configura Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Configura Deno
-        uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-
-      - name: Prepara el motor yt-dlp per al test
-        id: prepare-ytdlp
+      - name: Prepara el motor inclòs a l'app
         run: |
-          CURRENT_VERSION=$(node -e "console.log(require('./DescarregApp/scripts/tool-versions.json').ytDlp.version)")
-          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-          echo "Descarregant yt-dlp versió $CURRENT_VERSION..."
-          curl -L -s --fail "https://github.com/yt-dlp/yt-dlp/releases/download/$CURRENT_VERSION/yt-dlp" -o yt-dlp-bin
+          VERSION=$(node -e "console.log(require('./DescarregApp/scripts/tool-versions.json').ytDlp.version)")
+          curl -fL --retry 3 "https://github.com/yt-dlp/yt-dlp/releases/download/$VERSION/yt-dlp" -o yt-dlp-bin
           chmod +x yt-dlp-bin
-
-      - name: Executa la comprovació de salut
+          command -v ffmpeg
+      - name: Prova vídeo i àudio de YouTube i 3Cat
         id: health
         continue-on-error: true
         working-directory: DescarregApp
+        run: node scripts/check-health.js --bin ../yt-dlp-bin --deno deno --ffmpeg ffmpeg
+      - name: Obre o tanca incidències segons el resultat
+        if: always() && steps.health.outputs.youtube_status != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          YOUTUBE_STATUS: ${{ steps.health.outputs.youtube_status }}
+          CAT3_STATUS: ${{ steps.health.outputs.cat3_status }}
         run: |
-          node scripts/check-health.js --bin ../yt-dlp-bin --deno deno
-
-      - name: Notifica nova versió de yt-dlp si està disponible
+          for SERVICE in youtube cat3; do
+            if [ "$SERVICE" = youtube ]; then
+              NAME=YouTube
+              STATUS="$YOUTUBE_STATUS"
+            else
+              NAME=3Cat
+              STATUS="$CAT3_STATUS"
+            fi
+            TITLE="[ALERTA] DescarregApp no pot descarregar de $NAME"
+            ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$TITLE in:title" --json number -q '.[0].number')
+            if [ "$STATUS" = failed ] && [ -z "$ISSUE" ]; then
+              printf 'La prova diària de vídeo o MP3 de %s ha fallat amb el motor inclòs a DescarregApp.\n\nRevisa el registre de GitHub Actions i prepara una versió nova si el problema és de yt-dlp.\n' "$NAME" > issue_body.md
+              gh issue create --repo "$REPOSITORY" --title "$TITLE" --body-file issue_body.md
+            elif [ "$STATUS" = ok ] && [ -n "$ISSUE" ]; then
+              gh issue close "$ISSUE" --repo "$REPOSITORY" --comment "La prova diària de vídeo i MP3 torna a funcionar."
+            elif [ "$STATUS" = inconclusive ]; then
+              echo "Prova inconclusa de $NAME; es conserva l'estat de la incidència."
+            fi
+          done
+      - name: Notifica una nova versió de yt-dlp
         if: steps.health.outputs.has_new_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-          LATEST_VERSION: ${{ steps.health.outputs.latest_version }}
-          CURRENT_VERSION: ${{ steps.health.outputs.current_version }}
+          LATEST: ${{ steps.health.outputs.latest_version }}
           RELEASE_URL: ${{ steps.health.outputs.release_url }}
         run: |
-          ISSUE_TITLE="Nova versió de yt-dlp disponible: $LATEST_VERSION"
-          EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
-
-          if [ -z "$EXISTING_ISSUE" ]; then
-            cat <<EOF > issue_body.md
-          S'ha detectat una nova versió del motor **yt-dlp** a GitHub:
-
-          - **Versió actual a DescarregApp:** \`$CURRENT_VERSION\`
-          - **Nova versió publicada:** [\`$LATEST_VERSION\`]($RELEASE_URL)
-
-          Per actualitzar el motor a DescarregApp:
-          1. Actualitza la versió i el hash SHA-256 a \`DescarregApp/scripts/tool-versions.json\`.
-          2. Executa \`npm run tools:download\`.
-          3. Executa \`npm run tools:health\` per verificar la descàrrega.
-          4. Genera i publica la nova versió de l'app.
-          EOF
-
-            gh issue create --repo "$REPOSITORY" \
-              --title "$ISSUE_TITLE" \
-              --body-file issue_body.md
-            echo "Issue creat: $ISSUE_TITLE"
-          else
-            echo "Ja existeix una incidència oberta (#$EXISTING_ISSUE) per a aquesta versió."
+          TITLE="Nova versió de yt-dlp disponible: $LATEST"
+          ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$TITLE in:title" --json number -q '.[0].number')
+          if [ -z "$ISSUE" ]; then
+            printf 'Hi ha una [nova versió de yt-dlp](%s). Revisa si cal actualitzar el motor, valida les descàrregues i publica una nova versió de DescarregApp.\n' "$RELEASE_URL" > issue_body.md
+            gh issue create --repo "$REPOSITORY" --title "$TITLE" --body-file issue_body.md
           fi
-
-      - name: Notifica fallada de descàrrega de YouTube (Error 403 Forbidden)
-        if: steps.health.outputs.is_403_forbidden == 'true'
+      - name: Marca la comprovació com a fallida si cal
+        if: always()
         env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          CURRENT_VERSION: ${{ steps.health.outputs.current_version }}
+          YOUTUBE_STATUS: ${{ steps.health.outputs.youtube_status }}
+          CAT3_STATUS: ${{ steps.health.outputs.cat3_status }}
         run: |
-          ISSUE_TITLE="[ALERTA] La descàrrega de YouTube està fallant a DescarregApp (Error 403)"
-          EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
-
-          if [ -z "$EXISTING_ISSUE" ]; then
-            cat <<EOF > alert_body.md
-          ⚠️ **Atenció:** El test periòdic ha detectat **HTTP Error 403: Forbidden** descarregant de YouTube amb el motor actual (**yt-dlp $CURRENT_VERSION**).
-
-          Això indica que YouTube ha canviat els seus clients o signatures i cal actualitzar yt-dlp a una versió més recent.
-
-          Revisa els registres de GitHub Actions per al detall complet.
-          EOF
-
-            gh issue create --repo "$REPOSITORY" \
-              --title "$ISSUE_TITLE" \
-              --body-file alert_body.md
-            echo "Alerta creada: $ISSUE_TITLE"
-          else
-            echo "Ja existeix un issue d'alerta obert (#$EXISTING_ISSUE)."
-          fi
-
-      - name: Tanca l'alerta anterior si ja no hi ha error 403
-        if: steps.health.outputs.is_403_forbidden != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          ISSUE_TITLE="[ALERTA] La descàrrega de YouTube està fallant a DescarregApp (Error 403)"
-          EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
-          if [ -n "$EXISTING_ISSUE" ]; then
-            gh issue close "$EXISTING_ISSUE" --repo "$REPOSITORY" --comment "El test ha confirmat que ja no es produeix l'error 403."
-            echo "Alerta tancada automàticament (#$EXISTING_ISSUE)."
-          fi
-
-      - name: Conclou amb error si s'ha detectat error 403
-        if: steps.health.outputs.is_403_forbidden == 'true'
-        run: |
-          echo "S'ha detectat un error 403 Forbidden crític a YouTube."
-          exit 1
+          if [ "$YOUTUBE_STATUS" = failed ] || [ "$CAT3_STATUS" = failed ]; then exit 1; fi
+          if [ -z "$YOUTUBE_STATUS" ] || [ -z "$CAT3_STATUS" ]; then exit 1; fi

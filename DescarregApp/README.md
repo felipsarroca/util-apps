@@ -1,6 +1,6 @@
 # DescarregApp
 
-DescarregApp 1.3.0 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
+DescarregApp 1.4.0 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
 
 ![Captura principal de DescarregApp](docs/images/descarregapp-main.png)
 
@@ -20,7 +20,7 @@ DescarregApp 1.3.0 és una aplicació d'escriptori feta amb Electron per descarr
 - Progrés real de cada transferència.
 - Detall desplegable d'errors.
 - Preferències persistents.
-- Comprovació i instal·lació de noves versions des del menú `Actualitza`.
+- Comprovació silenciosa de noves versions en iniciar l'app, amb avís si n'hi ha una de disponible; també es pot comprovar des del menú `Actualitza`.
 - `yt-dlp`, Deno i `FFmpeg` inclosos dins l'instal·lador de Windows.
 
 ## Instal·lació per a usuaris
@@ -47,6 +47,14 @@ No cal instal·lar Node.js, Deno, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari fin
 
 ## Actualitzacions
 
+### Novetats de la versió 1.4.0
+
+- En iniciar-se, l'app consulta les versions publicades en segon pla. Si n'hi ha una de nova, convida a descarregar-la i instal·lar-la. Si ja està al dia o no hi ha connexió, no mostra cap avís. La instal·lació requereix sempre una decisió de l'usuari.
+- El monitor de GitHub Actions prova cada dia descàrregues breus de vídeo MP4 i àudio MP3 de YouTube i 3Cat amb la versió de `yt-dlp` inclosa a l'app. Obre una incidència si falla una font i la tanca quan es recupera. També avisa si es publica una versió nova de `yt-dlp`.
+- Els bloquejos de robots, les restriccions geogràfiques i els errors de xarxa del servidor de proves queden marcats com a resultat inconcloent per evitar una falsa alarma de compatibilitat.
+
+Aquestes proves detecten problemes en els casos representatius, però cap aplicació pot garantir que tots els vídeos de tots els serveis continuïn disponibles o descarregables. Les restriccions de drets, l'autenticació i els canvis dels serveis poden requerir una nova versió de l'app.
+
 ### Novetats de la versió 1.3.0
 
 - Actualitza `yt-dlp` de `2026.07.04` a `2026.08.19` per incorporar els canvis de compatibilitat amb YouTube. Amb l'enllaç de prova `SSqgaFE9igo`, el motor antic retornava HTTP 403 i el nou completa la descàrrega de vídeo i àudio.
@@ -56,14 +64,14 @@ No cal instal·lar Node.js, Deno, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari fin
 - Davant d'un HTTP 403, torna a obtenir els enllaços i reintenta la descàrrega una sola vegada. Si persisteix, mostra l'error.
 - Fixa la versió i SHA-256 del motor a `scripts/tool-versions.json`. `npm run build:win` comprova el binari abans de generar l'instal·lador.
 
-El motor inclòs no s'actualitza sol: el menú `Actualitza` actualitza l'aplicació completa. Per preparar futures versions, cal revisar la versió i la suma oficial del motor, executar `npm run tools:download` i validar una descàrrega real abans de distribuir l'instal·lador. Els enllaços amb vídeo i llista continuen descarregant només el vídeo indicat.
+El motor inclòs no s'actualitza sol: l'actualitzador renova l'aplicació completa. Per preparar futures versions, cal revisar la versió i la suma oficial del motor, executar `npm run tools:download` i validar una descàrrega real abans de distribuir l'instal·lador. Els enllaços amb vídeo i llista continuen descarregant només el vídeo indicat.
 
 ### Funcionament de l'actualitzador
 
-El menú `Actualitza > Comprova si hi ha actualitzacions` consulta les releases públiques del repositori i només té en compte les etiquetes amb aquest format:
+L'app fa la mateixa consulta en iniciar-se i des del menú `Actualitza > Comprova si hi ha actualitzacions`. Només té en compte les releases públiques amb etiquetes d'aquest format:
 
 ```text
-descarregapp-v1.2.0
+descarregapp-v1.4.0
 ```
 
 Si hi ha una versió superior, l'app descarrega el fitxer `DescarregApp-Setup.exe`, en comprova la mida i permet obrir l'instal·lador. La primera instal·lació de la versió 1.2.0 s'ha de fer manualment; a partir d'aquesta versió, les actualitzacions es poden iniciar des de l'app.

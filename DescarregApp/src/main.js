@@ -169,7 +169,8 @@ async function getLatestAppRelease() {
     headers: {
       Accept: "application/vnd.github+json",
       "User-Agent": `${APP_NAME}/${app.getVersion()}`
-    }
+    },
+    signal: AbortSignal.timeout(15000)
   });
 
   if (!response.ok) {
@@ -248,20 +249,21 @@ async function downloadInstaller(release) {
   return installerPath;
 }
 
-async function checkForAppUpdate() {
+async function checkForAppUpdate({ silent = false } = {}) {
   if (updateRunning) {
-    sendAppStatus("Ja s'està comprovant o descarregant una actualització.");
+    if (!silent) sendAppStatus("Ja s'està comprovant o descarregant una actualització.");
     return;
   }
 
   updateRunning = true;
-  sendAppStatus("Comprovant si hi ha actualitzacions...");
+  if (!silent) sendAppStatus("Comprovant si hi ha actualitzacions...");
 
   try {
     const release = await getLatestAppRelease();
     const currentVersion = app.getVersion();
 
     if (!release || compareVersions(release.version, currentVersion) <= 0) {
+      if (silent) return;
       sendAppStatus(`DescarregApp ${currentVersion} està actualitzada.`);
       await dialog.showMessageBox(mainWindow, {
         type: "info",
@@ -329,6 +331,10 @@ async function checkForAppUpdate() {
     installer.unref();
     app.quit();
   } catch (error) {
+    if (silent) {
+      console.warn("No s'ha pogut comprovar les actualitzacions en iniciar l'app:", error);
+      return;
+    }
     sendAppStatus("No s'ha pogut completar l'actualització.");
     await dialog.showMessageBox(mainWindow, {
       type: "error",
@@ -956,6 +962,11 @@ async function processQueue(tools) {
 app.whenReady().then(() => {
   setupApplicationMenu();
   createWindow();
+
+  // Consulta la release en segon pla; només interromp l'usuari si n'hi ha una de nova.
+  mainWindow.webContents.once("did-finish-load", () => {
+    setTimeout(() => checkForAppUpdate({ silent: true }), 3000);
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
