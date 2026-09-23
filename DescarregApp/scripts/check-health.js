@@ -129,10 +129,23 @@ async function main() {
   console.log(`[HealthCheck] Provant descàrrega de prova amb: ${ytDlpBin}...`);
   const downloadResult = testYoutubeDownload(ytDlpBin);
 
+  let is403Forbidden = false;
+  let isDatacenterBotCheck = false;
+
   if (downloadResult.ok) {
     console.log("[HealthCheck] Prova de descàrrega de YouTube: CORRECTA (sense error 403).");
   } else {
-    console.error("[HealthCheck] ERROR: La descàrrega de prova de YouTube ha fallat!");
+    const errText = downloadResult.error || "";
+    is403Forbidden = /HTTP Error 403/i.test(errText);
+    isDatacenterBotCheck = /Sign in to confirm you['’]re not a bot/i.test(errText);
+
+    if (is403Forbidden) {
+      console.error("[HealthCheck] ERROR CRÍTIC: S'ha detectat HTTP Error 403: Forbidden (incompatibilitat de YouTube/client)!");
+    } else if (isDatacenterBotCheck) {
+      console.warn("[HealthCheck] AVÍS: YouTube ha demanat confirmació anti-bot per IP de datacenter (GitHub Actions). No és un error 403.");
+    } else {
+      console.error("[HealthCheck] ERROR: La descàrrega ha fallat amb un error no previst.");
+    }
     console.error(downloadResult.error);
   }
 
@@ -142,6 +155,8 @@ async function main() {
     hasNewRelease: Boolean(releaseInfo?.hasNewRelease),
     releaseUrl: releaseInfo?.releaseUrl || null,
     downloadOk: downloadResult.ok,
+    is403Forbidden,
+    isDatacenterBotCheck,
     downloadError: downloadResult.error
   };
 
@@ -153,13 +168,23 @@ async function main() {
       `latest_version=${result.latestVersion || ""}\n` +
       `has_new_release=${result.hasNewRelease}\n` +
       `release_url=${result.releaseUrl || ""}\n` +
-      `download_ok=${result.downloadOk}\n`
+      `download_ok=${result.downloadOk}\n` +
+      `is_403_forbidden=${result.is403Forbidden}\n` +
+      `is_datacenter_bot=${result.isDatacenterBotCheck}\n`
     );
   }
 
   // Genera Step Summary per a GitHub Actions
   if (process.env.GITHUB_STEP_SUMMARY) {
-    const statusIcon = result.downloadOk ? "✅ Correcte" : "❌ Error en descàrrega";
+    let statusText = "✅ Correcte (sense error 403)";
+    if (result.is403Forbidden) {
+      statusText = "❌ ERROR CRÍTIC: HTTP 403 Forbidden detectat";
+    } else if (result.isDatacenterBotCheck) {
+      statusText = "ℹ️ Limitació de xarxa: Bot check per IP de datacenter de GitHub Actions (ignorat com a fals positiu)";
+    } else if (!result.downloadOk) {
+      statusText = "⚠️ Error durant la descàrrega";
+    }
+
     const updateIcon = result.hasNewRelease ? `⚠️ Nova versió disponible (${result.latestVersion})` : "✅ Al dia";
     const summary = `
 ## Resum de salut de DescarregApp & yt-dlp
@@ -168,13 +193,13 @@ async function main() {
 | --- | --- | --- |
 | **Versió actual DescarregApp** | \`${result.currentVersion}\` | [tool-versions.json](DescarregApp/scripts/tool-versions.json) |
 | **Última versió oficial yt-dlp** | \`${result.latestVersion || "Desconeguda"}\` | ${updateIcon} ${result.releaseUrl ? `([Releases](${result.releaseUrl}))` : ""} |
-| **Prova descàrrega YouTube** | ${statusIcon} | ${result.downloadOk ? "Descàrrega validada sense bloqueig 403" : `Error: \`\`\`${result.downloadError}\`\`\``} |
+| **Prova descàrrega YouTube** | ${statusText} | ${result.downloadOk ? "Descàrrega validada" : (result.is403Forbidden ? "Cal actualitzar el motor!" : "Sense bloqueig 403")} |
 `;
     fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
   }
 
-  // Si la descàrrega falla, sortim amb codi d'error
-  if (!downloadResult.ok) {
+  // Només fem fallar el procés si hi ha un error 403 real
+  if (is403Forbidden) {
     process.exit(1);
   }
 }

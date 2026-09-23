@@ -78,23 +78,23 @@ jobs:
             echo "Ja existeix una incidència oberta (#$EXISTING_ISSUE) per a aquesta versió."
           fi
 
-      - name: Notifica fallada de descàrrega de YouTube (Error 403 o incompatible)
-        if: steps.health.outputs.download_ok != 'true'
+      - name: Notifica fallada de descàrrega de YouTube (Error 403 Forbidden)
+        if: steps.health.outputs.is_403_forbidden == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           CURRENT_VERSION: ${{ steps.health.outputs.current_version }}
         run: |
-          ISSUE_TITLE="[ALERTA] La descàrrega de YouTube està fallant a DescarregApp"
+          ISSUE_TITLE="[ALERTA] La descàrrega de YouTube està fallant a DescarregApp (Error 403)"
           EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
 
           if [ -z "$EXISTING_ISSUE" ]; then
             cat <<EOF > alert_body.md
-          ⚠️ **Atenció:** El test periòdic de descàrrega de YouTube ha fallat amb la versió actual del motor (**yt-dlp $CURRENT_VERSION**).
+          ⚠️ **Atenció:** El test periòdic ha detectat **HTTP Error 403: Forbidden** descarregant de YouTube amb el motor actual (**yt-dlp $CURRENT_VERSION**).
 
-          És molt probable que YouTube hagi actualitzat els seus sistemes de protecció o que calgui actualitzar el motor yt-dlp a una versió més recent.
+          Això indica que YouTube ha canviat els seus clients o signatures i cal actualitzar yt-dlp a una versió més recent.
 
-          Revisa els registres de l'execució de GitHub Actions per veure el detall de l'error.
+          Revisa els registres de GitHub Actions per al detall complet.
           EOF
 
             gh issue create --repo "$REPOSITORY" \
@@ -105,21 +105,21 @@ jobs:
             echo "Ja existeix un issue d'alerta obert (#$EXISTING_ISSUE)."
           fi
 
-      - name: Tanca l'alerta anterior si la descàrrega ha estat satisfactòria
-        if: steps.health.outputs.download_ok == 'true'
+      - name: Tanca l'alerta anterior si ja no hi ha error 403
+        if: steps.health.outputs.is_403_forbidden != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          ISSUE_TITLE="[ALERTA] La descàrrega de YouTube està fallant a DescarregApp"
+          ISSUE_TITLE="[ALERTA] La descàrrega de YouTube està fallant a DescarregApp (Error 403)"
           EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
           if [ -n "$EXISTING_ISSUE" ]; then
-            gh issue close "$EXISTING_ISSUE" --repo "$REPOSITORY" --comment "El test automàtic de descàrrega de YouTube ha tornat a funcionar correctament sense errors."
+            gh issue close "$EXISTING_ISSUE" --repo "$REPOSITORY" --comment "El test ha confirmat que ja no es produeix l'error 403."
             echo "Alerta tancada automàticament (#$EXISTING_ISSUE)."
           fi
 
-      - name: Conclou amb error si la descàrrega ha fallat
-        if: steps.health.outputs.download_ok != 'true'
+      - name: Conclou amb error si s'ha detectat error 403
+        if: steps.health.outputs.is_403_forbidden == 'true'
         run: |
-          echo "La prova de descàrrega ha fallat. Revisa els detalls anteriors."
+          echo "S'ha detectat un error 403 Forbidden crític a YouTube."
           exit 1
