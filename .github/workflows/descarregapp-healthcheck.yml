@@ -39,7 +39,7 @@ jobs:
         run: |
           node scripts/check-health.js --bin ../yt-dlp-bin
 
-      - name: Crea Issue si hi ha una nova versió de yt-dlp
+      - name: Notifica nova versió de yt-dlp si està disponible
         if: steps.health.outputs.has_new_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -52,24 +52,28 @@ jobs:
           EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
 
           if [ -z "$EXISTING_ISSUE" ]; then
+            cat <<EOF > issue_body.md
+          S'ha detectat una nova versió del motor **yt-dlp** a GitHub:
+
+          - **Versió actual a DescarregApp:** \`$CURRENT_VERSION\`
+          - **Nova versió publicada:** [\`$LATEST_VERSION\`]($RELEASE_URL)
+
+          Per actualitzar el motor a DescarregApp:
+          1. Actualitza la versió i el hash SHA-256 a \`DescarregApp/scripts/tool-versions.json\`.
+          2. Executa \`npm run tools:download\`.
+          3. Executa \`npm run tools:health\` per verificar la descàrrega.
+          4. Genera i publica la nova versió de l'app.
+          EOF
+
             gh issue create --repo "$REPOSITORY" \
               --title "$ISSUE_TITLE" \
-              --body "S'ha detectat una nova versió del motor **yt-dlp** a GitHub:
-
-- **Versió actual a DescarregApp:** \`$CURRENT_VERSION\`
-- **Nova versió publicada:** [\`$LATEST_VERSION\`]($RELEASE_URL)
-
-Per actualitzar el motor a DescarregApp:
-1. Actualitza la versió i el hash SHA-256 a \`DescarregApp/scripts/tool-versions.json\`.
-2. Executa \`npm run tools:download\`.
-3. Executa \`npm run tools:health\` per verificar la descàrrega.
-4. Genera i publica la nova versió de l'app."
+              --body-file issue_body.md
             echo "Issue creat: $ISSUE_TITLE"
           else
             echo "Ja existeix una incidència oberta (#$EXISTING_ISSUE) per a aquesta versió."
           fi
 
-      - name: Crea Issue si la descàrrega de YouTube falla (Error 403 o incompatible)
+      - name: Notifica fallada de descàrrega de YouTube (Error 403 o incompatible)
         if: steps.health.outputs.download_ok != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -80,13 +84,17 @@ Per actualitzar el motor a DescarregApp:
           EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
 
           if [ -z "$EXISTING_ISSUE" ]; then
+            cat <<EOF > alert_body.md
+          ⚠️ **Atenció:** El test periòdic de descàrrega de YouTube ha fallat amb la versió actual del motor (**yt-dlp $CURRENT_VERSION**).
+
+          És molt probable que YouTube hagi actualitzat els seus sistemes de protecció o que calgui actualitzar el motor yt-dlp a una versió més recent.
+
+          Revisa els registres de l'execució de GitHub Actions per veure el detall de l'error.
+          EOF
+
             gh issue create --repo "$REPOSITORY" \
               --title "$ISSUE_TITLE" \
-              --body "⚠️ **Atenció:** El test periòdic de descàrrega de YouTube ha fallat amb la versió actual del motor (**yt-dlp $CURRENT_VERSION**).
-
-És molt probable que YouTube hagi actualitzat els seus sistemes de protecció o que calgui actualitzar el motor yt-dlp a una versió més recent.
-
-Revisa els registres de l'execució de GitHub Actions per veure el detall de l'error."
+              --body-file alert_body.md
             echo "Alerta creada: $ISSUE_TITLE"
           else
             echo "Ja existeix un issue d'alerta obert (#$EXISTING_ISSUE)."
