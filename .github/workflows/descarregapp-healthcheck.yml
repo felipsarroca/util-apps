@@ -20,6 +20,10 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - name: Instal·la FFmpeg per a les proves
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
       - name: Prepara el motor inclòs a l'app
         run: |
           VERSION=$(node -e "console.log(require('./DescarregApp/scripts/tool-versions.json').ytDlp.version)")
