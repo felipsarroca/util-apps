@@ -23,6 +23,11 @@ jobs:
         with:
           node-version: 20
 
+      - name: Configura Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Prepara el motor yt-dlp per al test
         id: prepare-ytdlp
         run: |
@@ -37,7 +42,7 @@ jobs:
         continue-on-error: true
         working-directory: DescarregApp
         run: |
-          node scripts/check-health.js --bin ../yt-dlp-bin
+          node scripts/check-health.js --bin ../yt-dlp-bin --deno deno
 
       - name: Notifica nova versió de yt-dlp si està disponible
         if: steps.health.outputs.has_new_release == 'true'
@@ -98,6 +103,19 @@ jobs:
             echo "Alerta creada: $ISSUE_TITLE"
           else
             echo "Ja existeix un issue d'alerta obert (#$EXISTING_ISSUE)."
+          fi
+
+      - name: Tanca l'alerta anterior si la descàrrega ha estat satisfactòria
+        if: steps.health.outputs.download_ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          ISSUE_TITLE="[ALERTA] La descàrrega de YouTube està fallant a DescarregApp"
+          EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
+          if [ -n "$EXISTING_ISSUE" ]; then
+            gh issue close "$EXISTING_ISSUE" --repo "$REPOSITORY" --comment "El test automàtic de descàrrega de YouTube ha tornat a funcionar correctament sense errors."
+            echo "Alerta tancada automàticament (#$EXISTING_ISSUE)."
           fi
 
       - name: Conclou amb error si la descàrrega ha fallat

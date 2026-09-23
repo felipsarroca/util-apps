@@ -47,13 +47,32 @@ function resolveYtDlpBin() {
   return "yt-dlp";
 }
 
+function resolveDenoBin() {
+  const denoArgIndex = process.argv.indexOf("--deno");
+  if (denoArgIndex !== -1 && process.argv[denoArgIndex + 1]) {
+    return process.argv[denoArgIndex + 1];
+  }
+
+  if (process.platform === "win32") {
+    const localWin = path.join(__dirname, "../resources/bin/win/deno.exe");
+    if (fs.existsSync(localWin)) {
+      return localWin;
+    }
+  }
+
+  return "deno";
+}
+
 function testYoutubeDownload(ytDlpBin) {
   const probeFile = path.join(__dirname, `probe_${Date.now()}`);
   const testUrl = "https://www.youtube.com/watch?v=SSqgaFE9igo";
+  const denoBin = resolveDenoBin();
 
   try {
     const args = [
       "--ignore-config",
+      "--js-runtimes",
+      denoBin,
       "--no-playlist",
       "-f",
       "bv*+ba/b",
