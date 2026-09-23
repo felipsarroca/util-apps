@@ -1,0 +1,99 @@
+name: DescarregApp - Monitor de salut i actualitzacions de yt-dlp
+
+on:
+  schedule:
+    # Executa cada dilluns i dijous a les 06:00 UTC (8:00h CEST)
+    - cron: "0 6 * * 1,4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  healthcheck:
+    name: Comprovació de yt-dlp i descàrregues de YouTube
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixa el codi
+        uses: actions/checkout@v4
+
+      - name: Configura Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepara el motor yt-dlp per al test
+        id: prepare-ytdlp
+        run: |
+          CURRENT_VERSION=$(node -e "console.log(require('./DescarregApp/scripts/tool-versions.json').ytDlp.version)")
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Descarregant yt-dlp versió $CURRENT_VERSION..."
+          curl -L -s --fail "https://github.com/yt-dlp/yt-dlp/releases/download/$CURRENT_VERSION/yt-dlp" -o yt-dlp-bin
+          chmod +x yt-dlp-bin
+
+      - name: Executa la comprovació de salut
+        id: health
+        continue-on-error: true
+        working-directory: DescarregApp
+        run: |
+          node scripts/check-health.js --bin ../yt-dlp-bin
+
+      - name: Crea Issue si hi ha una nova versió de yt-dlp
+        if: steps.health.outputs.has_new_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          LATEST_VERSION: ${{ steps.health.outputs.latest_version }}
+          CURRENT_VERSION: ${{ steps.health.outputs.current_version }}
+          RELEASE_URL: ${{ steps.health.outputs.release_url }}
+        run: |
+          ISSUE_TITLE="Nova versió de yt-dlp disponible: $LATEST_VERSION"
+          EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
+
+          if [ -z "$EXISTING_ISSUE" ]; then
+            gh issue create --repo "$REPOSITORY" \
+              --title "$ISSUE_TITLE" \
+              --body "S'ha detectat una nova versió del motor **yt-dlp** a GitHub:
+
+- **Versió actual a DescarregApp:** \`$CURRENT_VERSION\`
+- **Nova versió publicada:** [\`$LATEST_VERSION\`]($RELEASE_URL)
+
+Per actualitzar el motor a DescarregApp:
+1. Actualitza la versió i el hash SHA-256 a \`DescarregApp/scripts/tool-versions.json\`.
+2. Executa \`npm run tools:download\`.
+3. Executa \`npm run tools:health\` per verificar la descàrrega.
+4. Genera i publica la nova versió de l'app."
+            echo "Issue creat: $ISSUE_TITLE"
+          else
+            echo "Ja existeix una incidència oberta (#$EXISTING_ISSUE) per a aquesta versió."
+          fi
+
+      - name: Crea Issue si la descàrrega de YouTube falla (Error 403 o incompatible)
+        if: steps.health.outputs.download_ok != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          CURRENT_VERSION: ${{ steps.health.outputs.current_version }}
+        run: |
+          ISSUE_TITLE="[ALERTA] La descàrrega de YouTube està fallant a DescarregApp"
+          EXISTING_ISSUE=$(gh issue list --repo "$REPOSITORY" --state open --search "$ISSUE_TITLE" --json number -q '.[0].number')
+
+          if [ -z "$EXISTING_ISSUE" ]; then
+            gh issue create --repo "$REPOSITORY" \
+              --title "$ISSUE_TITLE" \
+              --body "⚠️ **Atenció:** El test periòdic de descàrrega de YouTube ha fallat amb la versió actual del motor (**yt-dlp $CURRENT_VERSION**).
+
+És molt probable que YouTube hagi actualitzat els seus sistemes de protecció o que calgui actualitzar el motor yt-dlp a una versió més recent.
+
+Revisa els registres de l'execució de GitHub Actions per veure el detall de l'error."
+            echo "Alerta creada: $ISSUE_TITLE"
+          else
+            echo "Ja existeix un issue d'alerta obert (#$EXISTING_ISSUE)."
+          fi
+
+      - name: Conclou amb error si la descàrrega ha fallat
+        if: steps.health.outputs.download_ok != 'true'
+        run: |
+          echo "La prova de descàrrega ha fallat. Revisa els detalls anteriors."
+          exit 1
