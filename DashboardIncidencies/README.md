@@ -6,7 +6,9 @@ Aplicació estàtica per analitzar la pestanya **Buidat** d'un Google Sheets de 
 
 Enganxa un enllaç normal del full de càlcul, com ara `https://docs.google.com/spreadsheets/d/ID/edit?gid=123`. La pestanya que tingui oberta l'enllaç és indiferent: l'aplicació llegeix **Buidat**. El full ha de ser accessible sense iniciar sessió (per exemple, «Qualsevol persona amb l'enllaç» amb permís de lector). L'enllaç es desa al navegador per a la sessió següent; les files no es desen ni s'envien a cap servidor de l'app.
 
-La pestanya ha d'incloure les capçaleres `Alumne`, `Curs`, `Tipus` i `Quantitat`. Les files sense `Tipus` s'ignoren. Els tipus desconeguts o cursos no reconeguts es descarten amb un avís. Quan `Quantitat` és buida, `-` o no és numèrica, es compta com a 1 i es mostra un avís.
+La pestanya ha d'incloure les capçaleres `Alumne`, `Curs`, `Tipus` i `Quantitat`. Les files sense `Tipus` s'ignoren. Els tipus desconeguts o cursos no reconeguts es descarten amb un avís. Quan `Quantitat` és buida, `-` o no és numèrica, es compta com a 1, sense mostrar un avís per cada càrrega.
+
+Els botons de curs i tipus permeten seleccionar diverses opcions alhora. La llista d'alumnes també admet selecció múltiple. Els xips mostren els filtres actius i permeten treure'ls individualment.
 
 ## Estructura
 
