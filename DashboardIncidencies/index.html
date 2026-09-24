@@ -1,67 +1,75 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html lang="ca">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quadre de Comandament d'IncidÃ¨ncies</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#173f91" />
+    <title>Dashboard d'incidències · Escola Ramon Pont</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'brand-primary': '#1e40af',
-              'brand-secondary': '#3b82f6',
-              'brand-accent': '#10b981',
-              'brand-background': '#f1f5f9',
-              'brand-card': '#ffffff',
-              'brand-text-primary': '#1e293b',
-              'brand-text-secondary': '#475569',
-            },
-            boxShadow: {
-              'soft-3d': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1), inset 0 -2px 0 0 rgba(0, 0, 0, 0.05)',
-              'soft-3d-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.1), inset 0 -3px 0 0 rgba(0, 0, 0, 0.08)',
-            }
-          }
-        }
-      }
+      // Una URL nova evita que el navegador reutilitzi una còpia incompleta dels estils.
+      const stylesheet = document.createElement("link");
+      stylesheet.rel = "stylesheet";
+      stylesheet.href = `./styles.css?v=${Date.now()}`;
+      document.head.append(stylesheet);
     </script>
-
-  <script type="importmap">
-{
-  "imports": {
-    "recharts": "https://aistudiocdn.com/recharts@^3.1.2",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "react": "https://aistudiocdn.com/react@^19.1.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "papaparse": "https://aistudiocdn.com/papaparse@^5.5.3"
-  }
-}
-</script>
-  <script type="module" crossorigin src="/util-apps/DashboardIncidencies/assets/index-BCkAtcHQ.js"></script>
-  <script>
-    // El dashboard sempre analitza la pestanya de dades, encara que l'URL
-    // enganxada s'hagi copiat des de Resum o des d'una pestanya de curs.
-    const dashboardFetch = window.fetch.bind(window);
-    window.fetch = (input, init) => {
-      const requestedUrl = typeof input === 'string' ? input : input?.url;
-      const sheetMatch = requestedUrl?.match(
-        /^https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)\/export\?/
-      );
-
-      if (sheetMatch) {
-        const buidatUrl = `https://docs.google.com/spreadsheets/d/${sheetMatch[1]}/gviz/tq?tqx=out:csv&sheet=Buidat`;
-        return dashboardFetch(buidatUrl, init);
-      }
-
-      return dashboardFetch(input, init);
-    };
-  </script>
-</head>
-  <body class="bg-brand-background">
-    <div id="root"></div>
-</body>
+    <script type="module" src="./src/app.js?v=3"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">▥</span>
+        <div>
+          <h1>Dashboard d'incidències</h1>
+          <p>
+            Anàlisi de dades escolars ·
+            <strong>Escola Ramon Pont (Terrassa)</strong>
+          </p>
+        </div>
+      </div>
+      <button
+        id="change-sheet"
+        class="button button-light"
+        type="button"
+        hidden
+      >
+        Canvia el full
+      </button>
+    </header>
+    <main id="app" class="main" aria-live="polite"></main>
+    <footer class="felip-app-footer">
+      <a
+        class="felip-license-image-link"
+        href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Llicència Creative Commons BY-NC-SA 4.0"
+        ><img
+          class="felip-license-image"
+          src="./assets/CC_BY-NC-SA.png"
+          alt="Creative Commons BY-NC-SA"
+      /></a>
+      <div class="felip-footer-text">
+        <p>
+          Aplicació creada per
+          <a
+            href="https://ja.cat/felipsarroca"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Felip Sarroca</a
+          >
+          amb assistència de la IA
+        </p>
+        <p>
+          Obra sota llicència
+          <a
+            href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca"
+            target="_blank"
+            rel="noopener noreferrer"
+            >CC BY-NC-SA 4.0</a
+          >
+        </p>
+      </div>
+    </footer>
+  </body>
 </html>
-
-

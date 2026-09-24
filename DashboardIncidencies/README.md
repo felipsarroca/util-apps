@@ -1,104 +1,19 @@
-# 📊 Dashboard d'Incidències
+# Dashboard d'incidències
 
-Aplicació web per visualitzar i analitzar les incidències del centre **Ramon Pont** de manera clara i interactiva.  
-Està dissenyada perquè el professorat pugui veure de forma ràpida l’estat de la classe, els alumnes amb més incidències i l’evolució general.
+Aplicació estàtica per analitzar la pestanya **Buidat** d'un Google Sheets de l'Escola Ramon Pont. Publicació: https://felipsarroca.github.io/util-apps/DashboardIncidencies/
 
-🌐 Aplicació publicada:  
-[https://felipsarroca.github.io/util-apps/DashboardIncidencies/](https://felipsarroca.github.io/util-apps/DashboardIncidencies/)
+## Ús
 
----
+Enganxa un enllaç normal del full de càlcul, com ara `https://docs.google.com/spreadsheets/d/ID/edit?gid=123`. La pestanya que tingui oberta l'enllaç és indiferent: l'aplicació llegeix **Buidat**. El full ha de ser accessible sense iniciar sessió (per exemple, «Qualsevol persona amb l'enllaç» amb permís de lector). L'enllaç es desa al navegador per a la sessió següent; les files no es desen ni s'envien a cap servidor de l'app.
 
-## 🚀 Funcionalitats
+La pestanya ha d'incloure les capçaleres `Alumne`, `Curs`, `Tipus` i `Quantitat`. Les files sense `Tipus` s'ignoren. Els tipus desconeguts o cursos no reconeguts es descarten amb un avís. Quan `Quantitat` és buida, `-` o no és numèrica, es compta com a 1 i es mostra un avís.
 
-- Lectura automàtica de dades des d’un **Google Sheets** (pestanya *Buidat*).
-- Visualització en gràfics i taules de:
-  - Absències
-  - Retards
-  - Deures no fets
-  - Altres incidències
-- Filtres per alumne i per tipus d’incidència.
-- Configuració inicial senzilla: només cal enganxar l’URL del full de càlcul.
-- Disseny modern i responsiu amb **TailwindCSS** i **Recharts**.
+## Estructura
 
----
+- `index.html`: estructura de la pàgina i peu corporatiu.
+- `styles.css`: disseny i adaptació a pantalles petites.
+- `src/data.js`: enllaços, lectura CSV, validació i normalització.
+- `src/app.js`: estat, filtres, indicadors, gràfics, taules i exportació.
+- `tests/data.test.js`: proves de lectura i tractament de dades.
 
-## 🛠️ Tecnologies utilitzades
-
-- [Vite](https://vitejs.dev/) (React + TypeScript)
-- [TailwindCSS](https://tailwindcss.com/)
-- [Recharts](https://recharts.org/)
-- [PapaParse](https://www.papaparse.com/) (per processar CSV)
-- GitHub Pages (desplegament)
-
----
-
-## 📋 Requisits
-
-- **Google Sheets** amb una pestanya anomenada `Buidat`.
-- El full ha d’estar compartit com a *"Qualsevol amb l’enllaç (lector)"* o publicat al web, perquè l’aplicació hi pugui accedir.
-- Node.js ≥ 18 (només necessari si vols recompilar el projecte).
-
----
-
-## ▶️ Ús
-
-1. Accedeix a l’aplicació:  
-   [https://felipsarroca.github.io/util-apps/DashboardIncidencies/](https://felipsarroca.github.io/util-apps/DashboardIncidencies/)
-
-2. A la primera pantalla, enganxa l’URL del teu Google Sheets (pestanya *Buidat*).
-
-3. Desa la configuració i explora els gràfics i taules.
-
----
-
-## 🔧 Desenvolupament i build
-
-Si vols modificar el projecte:
-
-```bash
-# Clona el repositori
-git clone https://github.com/felipsarroca/util-apps.git
-
-# Entra a la carpeta del projecte (codi font original)
-cd DashboardIncidencies-src
-
-# Instal·la dependències
-npm install
-
-# Executa en mode desenvolupament
-npm run dev
-
-# Crea el build de producció
-npm run build
-````
-
-El build resultant es copia a la carpeta:
-
-```
-util-apps/DashboardIncidencies/
-```
-
-que és la que es publica a GitHub Pages.
-
----
-
-## 📂 Estructura del projecte
-
-```
-DashboardIncidencies-src/   # Codi font amb React + Vite
-  ├── src/                  # Components i lògica
-  ├── index.html            # Arrel del projecte
-  └── vite.config.ts        # Configuració Vite (amb base per GitHub Pages)
-
-util-apps/
-  └── DashboardIncidencies/ # Build final publicat (index.html + assets/)
-```
-
----
-
-## ✨ Autoria
-
-Projecte creat per **Felip Sarroca i Gil** per a l’Escola Ramon Pont (Terrassa), amb l’objectiu de facilitar la gestió i seguiment de les incidències del centre educatiu.
-
-```
-
+No cal compilar ni instal·lar dependències. Per provar-la en local (cal Node.js), executa `npm run serve` i obre `http://localhost:4173`. Per executar les proves: `npm test`. GitHub Pages serveix aquests mateixos fitxers directament.
