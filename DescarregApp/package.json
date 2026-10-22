@@ -1,12 +1,13 @@
 {
   "name": "descarregapp",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Aplicacio d'escriptori per descarregar video i audio amb yt-dlp.",
   "main": "src/main.js",
   "author": "Felip Sarroca",
   "license": "CC-BY-NC-SA-4.0",
   "scripts": {
     "start": "electron .",
+    "test:layout": "electron scripts/test-window-layout.js",
     "icons:generate": "node scripts/generate-icon.js",
     "tools:download": "powershell -ExecutionPolicy Bypass -File scripts/download-tools.ps1",
     "build": "electron-builder",

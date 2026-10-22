@@ -412,6 +412,10 @@ function setupApplicationMenu() {
           label: "Redueix",
           role: "zoomOut"
         },
+        {
+          label: "Ajusta automàticament a la finestra",
+          click: () => mainWindow?.adaptiveLayout.reset()
+        },
         { type: "separator" },
         {
           label: "Pantalla completa",
@@ -461,11 +465,14 @@ function setupApplicationMenu() {
 }
 
 function createWindow() {
+  const { screen } = require("electron");
+  const { attachAdaptiveLayout } = require("./window-layout");
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   mainWindow = new BrowserWindow({
-    width: 1320,
-    height: 800,
-    minWidth: 1040,
-    minHeight: 680,
+    width: Math.min(1320, width),
+    height: Math.min(800, height),
+    minWidth: Math.min(800, width),
+    minHeight: Math.min(500, height),
     title: APP_NAME,
     icon: path.join(app.getAppPath(), "assets", "icon.ico"),
     backgroundColor: "#f7f9fb",
@@ -477,6 +484,8 @@ function createWindow() {
       sandbox: false
     }
   });
+
+  mainWindow.adaptiveLayout = attachAdaptiveLayout(mainWindow, screen);
 
   mainWindow.once("ready-to-show", () => {
     mainWindow.maximize();
