@@ -4,7 +4,7 @@
   "private": true,
   "description": "Ruleta aleatòria en català, autònoma i sense dependències en execució",
   "scripts": {
-    "test": "npm run library:check && node tests/browser.cjs && node tests/touch.cjs && node tests/library.cjs",
+    "test": "npm run library:check && node tests/browser.cjs && node tests/touch.cjs && node tests/library.cjs && node tests/labels.cjs",
     "library:build": "node scripts/build-library.cjs",
     "library:check": "node scripts/build-library.cjs --check"
   },

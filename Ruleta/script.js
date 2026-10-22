@@ -204,6 +204,103 @@
     $("exportHistoryButton").disabled = !state.history.length;
     renderRoster();
   }
+  // Fit labels to the usable wedge, leaving room for the hub and sector borders.
+  function wheelLabel(text, radius, count, baseFont, pixelRatio) {
+    const padding = Math.max(2 * pixelRatio, radius * 0.012);
+    const hub = Math.max(radius * 0.24, 22 * pixelRatio + padding);
+    if (count > 2) {
+      baseFont = Math.min(
+        baseFont,
+        (radius * 0.62 * Math.tan(Math.PI / count) - padding) / 0.7,
+      );
+    }
+    const minimum = Math.min(
+      baseFont,
+      Math.max(11 * pixelRatio, baseFont * 0.74),
+    );
+    const words = text.trim().split(/\s+/u);
+    const setFont = (font) => {
+      ctx.font = `650 ${font}px Segoe UI, sans-serif`;
+    };
+    function area(font, lines) {
+      const extent = font * (lines === 2 ? 1.29 : 0.7);
+      const right = Math.min(
+        radius * 0.9,
+        Math.sqrt(Math.max(0, (radius - padding) ** 2 - extent ** 2)),
+      );
+      const left = Math.max(
+        hub,
+        count > 2 ? (extent + padding) / Math.tan(Math.PI / count) : hub,
+      );
+      return { right, width: Math.max(0, right - left) };
+    }
+    function wrap(width) {
+      let best = null;
+      for (let split = 1; split < words.length; split++) {
+        const lines = [
+          words.slice(0, split).join(" "),
+          words.slice(split).join(" "),
+        ];
+        const widths = lines.map((line) => ctx.measureText(line).width);
+        if (Math.max(...widths) <= width) {
+          const balance = Math.abs(widths[0] - widths[1]);
+          if (!best || balance < best.balance) best = { lines, balance };
+        }
+      }
+      return best?.lines;
+    }
+    // Prefer a complete label; reduce at most 26%, never below 11 CSS px
+    // unless the original type is already smaller in a densely populated wheel.
+    for (let attempt = 0; attempt <= 6; attempt++) {
+      const font = baseFont - ((baseFont - minimum) * attempt) / 6;
+      setFont(font);
+      const single = area(font, 1);
+      if (ctx.measureText(text).width <= single.width)
+        return { font, lines: [text], right: single.right };
+      const double = area(font, 2);
+      const lines = wrap(double.width);
+      if (lines) return { font, lines, right: double.right };
+    }
+    setFont(minimum);
+    const segmenter = Intl.Segmenter
+      ? new Intl.Segmenter("ca", { granularity: "grapheme" })
+      : null;
+    function shorten(value, width) {
+      if (ctx.measureText(value).width <= width) return value;
+      const chars = segmenter
+        ? Array.from(segmenter.segment(value), (part) => part.segment)
+        : Array.from(value);
+      while (
+        chars.length &&
+        ctx.measureText(chars.join("") + "…").width > width
+      )
+        chars.pop();
+      return chars.length
+        ? chars.join("").trimEnd() + "…"
+        : ctx.measureText("…").width <= width
+          ? "…"
+          : "";
+    }
+    const single = area(minimum, 1);
+    const fallback = {
+      font: minimum,
+      lines: [shorten(text, single.width)],
+      right: single.right,
+    };
+    const double = area(minimum, 2);
+    // Only use two shortened lines if they reveal more of the original wording.
+    for (let split = 1; split < words.length; split++) {
+      const first = words.slice(0, split).join(" ");
+      if (ctx.measureText(first).width > double.width) break;
+      const second = shorten(words.slice(split).join(" "), double.width);
+      if (!second) continue;
+      if (first.length + second.length > fallback.lines.join("").length) {
+        fallback.lines = [first, second];
+        fallback.right = double.right;
+      }
+    }
+    return fallback;
+  }
   function drawWheel() {
     const rect = canvas.getBoundingClientRect();
     const size = Math.max(
@@ -246,15 +343,25 @@
           n > 48
             ? size * 0.028
             : Math.min(size * 0.043, Math.max(size * 0.021, (size * 1.55) / n));
-        ctx.font = `650 ${font}px Segoe UI, sans-serif`;
+        const label =
+          n > 48
+            ? { font, lines: [String(i + 1)], right: r * 0.89 }
+            : wheelLabel(entry, r, n, font, size / rect.width);
+        ctx.font = `650 ${label.font}px Segoe UI, sans-serif`;
         ctx.fillStyle = "#122b29";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-        let label = n > 48 ? String(i + 1) : entry;
-        const maxWidth = r * 0.67;
-        while (ctx.measureText(label).width > maxWidth && label.length > 1)
-          label = label.slice(0, -2) + "…";
-        ctx.fillText(label, r * 0.89, 0);
+        if (n <= 48) {
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, r, -step / 2, step / 2);
+          ctx.closePath();
+          ctx.clip();
+        }
+        label.lines.forEach((line, index) => {
+          const y = (index - (label.lines.length - 1) / 2) * label.font * 1.18;
+          ctx.fillText(line, label.right, y);
+        });
         ctx.restore();
       });
     }
@@ -1063,4 +1170,3 @@
       "No s’han pogut recuperar les dades desades. Pots importar una còpia.",
     );
 })();
-

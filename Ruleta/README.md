@@ -1,4 +1,4 @@
-﻿# Ruleta App
+# Ruleta App
 
 **Tria un nom. Encén una conversa. Posa l’aula en moviment.**
 
@@ -63,7 +63,7 @@ La roda es dimensiona segons **l’amplada i l’alçada útils** de la finestra
 
 Els controls principals tenen una alçada mínima de 44 píxels. Hi ha focus visible, diàlegs modals, dreceres de teclat i una creu SVG centrada. Si el sistema demana moviment reduït, s’ometen el gir llarg i el confeti. L’àudio s’activa després d’una interacció de l’usuari, d’acord amb el comportament dels navegadors.
 
-Els noms llargs s’abreugen als sectors, però es conserven sencers a la llista i al resultat. Amb més de 48 opcions es mostren referències numèriques espaiades per evitar encavalcaments.
+Els textos dels sectors aprofiten fins a dues línies equilibrades. La mida de la lletra s’ajusta moderadament i es deixen marges respecte de les vores i del botó central; només es mostren punts suspensius quan el text complet no hi cap. El text original es conserva sencer a la llista i al resultat. Amb més de 48 opcions es mostren referències numèriques espaiades per evitar encavalcaments.
 
 ## Com funciona l’atzar
 
