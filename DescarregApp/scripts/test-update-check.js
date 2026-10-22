@@ -25,7 +25,7 @@ async function check(releases, silent, networkError = false) {
   };
   const context = vm.createContext({
     require: name => name === "electron" ? electron : require(name),
-    process, __dirname: path.join(__dirname, "../src"), console: { warn() {} }
+    process, AbortSignal, __dirname: path.join(__dirname, "../src"), console: { warn() {} }
   });
   vm.runInContext(fs.readFileSync(path.join(__dirname, "../src/main.js"), "utf8"), context);
   vm.runInContext("mainWindow = { isDestroyed: () => false, webContents: { send: (_channel, value) => record(value) } }", Object.assign(context, { record: value => statuses.push(value) }));

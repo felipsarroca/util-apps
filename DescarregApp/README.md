@@ -1,6 +1,6 @@
 # DescarregApp
 
-DescarregApp 1.4.0 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
+DescarregApp 1.5.0 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
 
 ![Captura principal de DescarregApp](docs/images/descarregapp-main.png)
 
@@ -47,6 +47,13 @@ No cal instal·lar Node.js, Deno, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari fin
 
 ## Actualitzacions
 
+### Novetats de la versió 1.5.0
+
+- Actualitza `yt-dlp` de `2026.08.19` a `2026.10.21`, amb correccions de compatibilitat de YouTube i altres serveis.
+- Incorpora la correcció de seguretat dels executables de `yt-dlp` anunciada a les [notes oficials de la versió](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.10.21).
+- Inclou el nou executable oficial, verificat amb la suma SHA-256 publicada. L'actualització arriba mitjançant l'instal·lador complet de DescarregApp.
+- Manté les versions de Deno i FFmpeg ja incloses a l'app.
+
 ### Novetats de la versió 1.4.0
 
 - En iniciar-se, l'app consulta les versions publicades en segon pla. Si n'hi ha una de nova, convida a descarregar-la i instal·lar-la. Si ja està al dia o no hi ha connexió, no mostra cap avís. La instal·lació requereix sempre una decisió de l'usuari.
@@ -71,7 +78,7 @@ El motor inclòs no s'actualitza sol: l'actualitzador renova l'aplicació comple
 L'app fa la mateixa consulta en iniciar-se i des del menú `Actualitza > Comprova si hi ha actualitzacions`. Només té en compte les releases públiques amb etiquetes d'aquest format:
 
 ```text
-descarregapp-v1.4.0
+descarregapp-v1.5.0
 ```
 
 Si hi ha una versió superior, l'app descarrega el fitxer `DescarregApp-Setup.exe`, en comprova la mida i permet obrir l'instal·lador. La primera instal·lació de la versió 1.2.0 s'ha de fer manualment; a partir d'aquesta versió, les actualitzacions es poden iniciar des de l'app.
