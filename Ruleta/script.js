@@ -69,6 +69,8 @@
     confetti: true,
     dark: false,
     activity: null,
+    classes: [],
+    favorites: [],
   };
   let loadFailed = false;
   try {
@@ -85,6 +87,25 @@
           title: saved.activity.title.slice(0, 70),
           instructions: saved.activity.instructions.slice(0, 2000),
         };
+      state.classes = Array.isArray(saved.classes)
+        ? saved.classes
+            .filter(
+              (c) =>
+                c &&
+                typeof c.id === "string" &&
+                typeof c.name === "string" &&
+                c.name.trim() &&
+                c.name.length <= 40 &&
+                validEntries(c.entries) &&
+                c.entries.length,
+            )
+            .slice(0, 50)
+        : [];
+      state.favorites = Array.isArray(saved.favorites)
+        ? [
+            ...new Set(saved.favorites.filter((id) => typeof id === "string")),
+          ].slice(0, 100)
+        : [];
       state.entries = saved.entries;
       state.base = saved.base;
       state.history = Array.isArray(saved.history)
@@ -133,9 +154,11 @@
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
       $("saveStatus").textContent = "● Desat només en aquest navegador";
+      return true;
     } catch {
       $("saveStatus").textContent =
         "No s’ha pogut desar. Desa una còpia per conservar-ho.";
+      return false;
     }
   }
   function checkpoint() {
@@ -203,6 +226,11 @@
         : "";
     $("exportHistoryButton").disabled = !state.history.length;
     renderRoster();
+    for (const button of $("classList").querySelectorAll("button"))
+      button.disabled = spinning;
+    $("saveClassButton").disabled =
+      spinning || invalidDraft || !state.base.length;
+    $("className").disabled = spinning;
   }
   // Fit labels to the usable wedge, leaving room for the hub and sector borders.
   function wheelLabel(text, radius, count, baseFont, pixelRatio) {
@@ -653,6 +681,86 @@
     if (editingList) $("entriesInput").focus();
   });
 
+  function renderClasses() {
+    $("classCount").textContent = state.classes.length
+      ? `(${state.classes.length})`
+      : "";
+    $("classList").replaceChildren(
+      ...state.classes.map((group) => {
+        const row = document.createElement("div");
+        row.className = "saved-class";
+        const load = document.createElement("button");
+        load.className = "load-class";
+        load.textContent = group.name;
+        load.title = `${group.entries.length} participants · Comença una nova ronda`;
+        load.addEventListener("click", () => {
+          if (spinning) return;
+          checkpoint();
+          state.entries = [...group.entries];
+          state.base = [...group.entries];
+          state.title = group.name;
+          state.activity = null;
+          editingList = false;
+          $("className").value = group.name;
+          changed();
+          toast(
+            `${group.name}: ${group.entries.length} participants recuperats. Pots desfer el canvi.`,
+          );
+        });
+        const remove = document.createElement("button");
+        remove.className = "remove-class";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", `Elimina la classe ${group.name}`);
+        remove.addEventListener("click", () => {
+          if (spinning) return;
+          state.classes = state.classes.filter((c) => c.id !== group.id);
+          save();
+          renderClasses();
+          $("className").focus();
+        });
+        row.append(load, remove);
+        return row;
+      }),
+    );
+  }
+  $("saveClassForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (spinning || invalidDraft || !state.base.length) return;
+    const name = $("className").value.trim();
+    if (!name) return;
+    const existing = state.classes.find(
+      (c) => c.name.toLocaleLowerCase("ca") === name.toLocaleLowerCase("ca"),
+    );
+    if (!existing && state.classes.length >= 50) {
+      toast(
+        "Pots desar fins a 50 classes. Elimina’n alguna abans d’afegir-ne una altra.",
+      );
+      return;
+    }
+    const group = {
+      id: existing?.id || crypto.randomUUID(),
+      name,
+      entries: [...state.base],
+    };
+    if (existing) state.classes[state.classes.indexOf(existing)] = group;
+    else state.classes.push(group);
+    const persisted = save();
+    renderClasses();
+    if (!persisted) {
+      toast(
+        "No s’ha pogut desar la classe al navegador. Desa una còpia de la llista.",
+      );
+      return;
+    }
+    toast(
+      existing
+        ? "Classe actualitzada amb la llista completa."
+        : "Classe desada en aquest navegador.",
+    );
+  });
+  renderClasses();
+  $("savedClasses").open = state.classes.length > 0;
+
   const libraryThemes = (window.RULETA_LIBRARY?.themes || []).filter(
     (theme) =>
       theme &&
@@ -679,11 +787,12 @@
   function selectTheme(theme, focus = false) {
     selectedTheme = theme;
     $("themeDetail").hidden = !theme;
-    for (const button of $("themeCards").querySelectorAll("button"))
+    for (const button of $("themeCards").querySelectorAll(".theme-card"))
       button.setAttribute(
         "aria-pressed",
         String(button.dataset.theme === theme?.id),
       );
+    $("loadThemeButton").disabled = $("downloadThemeButton").disabled = !theme;
     if (!theme) return;
     $("themeMeta").textContent =
       `${theme.category} · ${theme.entries.length} opcions`;
@@ -705,7 +814,10 @@
       level = $("themeLevel").value;
     const matches = libraryThemes.filter(
       (t) =>
-        (!category || t.category === category) &&
+        (!category ||
+          (category === "__favorites"
+            ? state.favorites.includes(t.id)
+            : t.category === category)) &&
         (!level || t.levels.includes(level)) &&
         (!query ||
           searchText(
@@ -714,6 +826,13 @@
     );
     $("themeCards").replaceChildren(
       ...matches.map((theme) => {
+        const shell = document.createElement("div");
+        shell.className = "theme-card-shell";
+        shell.dataset.color = String(
+          [...new Set(libraryThemes.map((t) => t.category))].indexOf(
+            theme.category,
+          ),
+        );
         const button = document.createElement("button");
         button.className = "theme-card";
         button.dataset.theme = theme.id;
@@ -725,7 +844,29 @@
         description.textContent = theme.description;
         button.append(label, title, description);
         button.addEventListener("click", () => selectTheme(theme, true));
-        return button;
+        const star = document.createElement("button");
+        const favorite = state.favorites.includes(theme.id);
+        star.className = "theme-star";
+        star.dataset.favorite = theme.id;
+        star.textContent = favorite ? "★" : "☆";
+        star.setAttribute("aria-pressed", String(favorite));
+        star.setAttribute(
+          "aria-label",
+          `${favorite ? "Treu de preferides" : "Marca com a preferida"}: ${theme.title}`,
+        );
+        star.addEventListener("click", () => {
+          state.favorites = favorite
+            ? state.favorites.filter((id) => id !== theme.id)
+            : [...state.favorites, theme.id];
+          save();
+          filterThemes();
+          const next = Array.from(
+            $("themeCards").querySelectorAll(".theme-star"),
+          ).find((b) => b.dataset.favorite === theme.id);
+          (next || $("themeCategory")).focus();
+        });
+        shell.append(button, star);
+        return shell;
       }),
     );
     $("themeCount").textContent =

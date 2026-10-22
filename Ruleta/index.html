@@ -10,9 +10,9 @@
     />
     <title>Ruleta App</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=3.2" />
     <script src="data/library.js" defer></script>
-    <script src="script.js?v=3.1" defer></script>
+    <script src="script.js?v=3.2" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -22,8 +22,8 @@
             class="brand-icon"
             src="favicon.svg"
             alt=""
-            width="40"
-            height="40"
+            width="60"
+            height="60"
           /><span>ruleta<span class="brand-dot">.</span></span></a
         >
         <nav class="header-actions" aria-label="Visualització">
@@ -129,12 +129,38 @@
                 ></span
               ><span aria-hidden="true">→</span>
             </button>
+            <details id="savedClasses" class="saved-classes">
+              <summary>Les meves classes <span id="classCount"></span></summary>
+              <div
+                id="classList"
+                class="class-list"
+                aria-label="Classes desades"
+              ></div>
+              <form id="saveClassForm" class="save-class-form">
+                <label for="className" class="sr-only">Nom de la classe</label>
+                <input
+                  id="className"
+                  placeholder="Nom de la classe: 2n A…"
+                  maxlength="40"
+                  required
+                />
+                <button id="saveClassButton" type="submit" class="quiet">
+                  Desa
+                </button>
+              </form>
+              <p class="field-note">
+                Desa la llista completa. Clica una classe per començar una nova
+                ronda. El mateix nom actualitza la classe.
+              </p>
+            </details>
             <details id="activityHelp" class="activity-help" hidden>
               <summary>Com es juga</summary>
               <p id="activityInstructions"></p>
             </details>
             <div
-              id="entryRoster" tabindex="0" role="region"
+              id="entryRoster"
+              tabindex="0"
+              role="region"
               class="entry-roster"
               aria-label="Opcions pendents i triades"
               hidden
@@ -360,6 +386,7 @@
           ><span class="sr-only">Àmbit</span
           ><select id="themeCategory">
             <option value="">Tots els àmbits</option>
+            <option value="__favorites">★ Preferides</option>
           </select></label
         >
         <label

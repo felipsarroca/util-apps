@@ -28,11 +28,19 @@ Amb **Evita repeticions**, l’opció triada desapareix automàticament de la ro
 - Amb repeticions permeses, cada línia és una participació: duplicar-la n’augmenta la probabilitat. L’app avisa dels duplicats i permet eliminar-los.
 - **Edita** obre l’editor. Modificar-lo estableix una nova llista i reactiva les opcions; afegir una activitat des de la biblioteca conserva les retirades.
 
+## Les teves classes, a un clic
+
+Obre **Les meves classes**, escriu el nom del grup i prem **Desa**. Es guarda la llista completa, incloses les persones que ja han sortit. Clica el nom d’una classe per recuperar tots els participants i començar una nova ronda; **Desfer** permet tornar a l’estat anterior.
+
+Pots desar fins a 50 classes. Desar amb el mateix nom actualitza la llista; la creu elimina la classe desada sense alterar la ruleta actual. Les classes es conserven en aquest navegador i dispositiu. L’exportació JSON continua desant la llista actual, no totes les classes juntes.
+
 ## Una biblioteca per a l’aula
 
 30 temes, amb 20 entrades cadascun, repartits en sis àmbits: conversa, expressió, creativitat, llengua, descoberta i convivència. Són propostes pròpies en català, pensades per a primària i ESO, amb indicacions per conduir cada dinàmica.
 
 ![Biblioteca d’activitats amb cerca, filtres i previsualització](docs/images/biblioteca.png)
+
+Marca l’estrella d’una activitat per guardar-la com a **preferida**. Selecciona **★ Preferides** al menú d’àmbits per veure només les marcades; les estrelles es conserven entre sessions en aquest navegador. Cada àmbit té un fons pastel suau, també adaptat al tema fosc.
 
 Cerca activitats, filtra pel nivell i l’àmbit, consulta’n les instruccions i carrega **6, 12 o totes les opcions**. Pots substituir la llista, ampliar-la o descarregar l’activitat en JSON. Les mostres es trien aleatòriament.
 
