@@ -1,0 +1,36 @@
+﻿{
+  "schemaVersion": 1,
+  "category": "Conversa i coneixença",
+  "themes": [
+    {
+      "id": "dues-veritats", "title": "Dues veritats i una mentida", "levels": ["primaria-mitja", "primaria-superior", "eso"],
+      "description": "Pistes quotidianes per descobrir quina afirmació és inventada.",
+      "instructions": "Sobre el tema triat, digues dues coses certes i una d'inventada. El grup pregunta i endevina. Pots parlar d'un personatge fictici amb una fitxa prèvia o passar torn. No cal compartir secrets ni dades personals.",
+      "entries": ["Un menjar que m'agrada", "Un animal que conec bé", "Una habilitat que estic aprenent", "Un llibre o un conte", "Un joc que sé explicar", "Una paraula que em fa gràcia", "Una cosa que m'agrada dibuixar", "Un objecte que faig servir a l'aula", "Un personatge de ficció", "Una curiositat sobre plantes", "Una activitat del pati", "Un so que sé reconèixer", "Una pel·lícula d'animació", "Una cosa que sé construir", "Un repte que voldria provar", "Una combinació de sabors", "Una manera de passar una tarda", "Una descoberta feta a classe", "Un lloc imaginari", "Una cosa que m'agradaria inventar"]
+    },
+    {
+      "id": "que-prefereixes", "title": "Què prefereixes?", "levels": ["primaria-inicial", "primaria-mitja", "primaria-superior", "eso"],
+      "description": "Dilemes impossibles per triar, riure i argumentar.",
+      "instructions": "Tria una de les dues opcions i explica el perquè. No hi ha una resposta correcta. Podeu defensar l'opció contrària en una segona ronda.",
+      "entries": ["Parlar amb arbres o entendre els ocells?", "Una motxilla voladora o unes sabates submarines?", "Viure en un castell de llibres o en un far de vidre?", "Tenir un drac petit o un robot jardiner?", "Dibuixar sons o escoltar colors?", "Explorar el fons del mar o una lluna llunyana?", "Una biblioteca infinita o un taller d'invents?", "Poder fer-te petit o poder fer-te gegant?", "Una pluja de confeti o una neu de pètals?", "Inventar un esport o crear un idioma?", "Un pati amb laberint o un pati amb teatre?", "Viatjar en globus o en tren solar?", "Un llapis que explica contes o una goma que canta?", "Tenir un mapa del futur o una finestra al passat?", "Construir una ciutat flotant o un bosc vertical?", "Un dia sense rellotges o un dia sense pantalles?", "Una bicicleta per a deu o deu patinets connectats?", "Un concert de grills o un ballet de pingüins?", "Cuinar per a gegants o dissenyar cases per a fades?", "Trobar una porta secreta o un missatge en una ampolla?"]
+    },
+    {
+      "id": "si-fossis", "title": "Si fossis…", "levels": ["primaria-inicial", "primaria-mitja", "primaria-superior", "eso"],
+      "description": "Comparacions imaginatives per expressar gustos i idees.",
+      "instructions": "Completa la frase i justifica la teva elecció. Pots respondre sobre tu o sobre un personatge inventat. Acceptem totes les respostes respectuoses.",
+      "entries": ["Si fossis un animal…", "Si fossis una eina…", "Si fossis un color…", "Si fossis un paisatge…", "Si fossis un instrument musical…", "Si fossis un vehicle…", "Si fossis un invent…", "Si fossis un personatge de conte…", "Si fossis un tipus de núvol…", "Si fossis una planta…", "Si fossis un edifici…", "Si fossis un joc de taula…", "Si fossis una paraula…", "Si fossis una estació de l'any…", "Si fossis un planeta imaginari…", "Si fossis una peça d'un trencaclosques…", "Si fossis una recepta…", "Si fossis una porta…", "Si fossis un so…", "Si fossis una superhabilitat útil per a l'escola…"]
+    },
+    {
+      "id": "converses-llamp", "title": "Converses llampec", "levels": ["primaria-mitja", "primaria-superior", "eso"],
+      "description": "Una pregunta, trenta segons i moltes respostes possibles.",
+      "instructions": "Parleu en parelles durant mig minut per persona. Escolta i després resumeix una idea de l'altra persona. Es pot passar torn.",
+      "entries": ["Quin invent falta al pati?", "Com seria un dia amb dues llunes?", "Quina pregunta faries a un arbre centenari?", "Quin objecte mereix un museu?", "Quina regla inventaries per a un joc nou?", "Com seria una escola dins d'un vaixell?", "Quin títol posaries a aquesta setmana?", "Quina cosa petita pot millorar un dia?", "Quin so posaries a una estrella?", "Com explicaries internet a un viatger del passat?", "Quin objecte seria un bon protagonista?", "Quina assignatura imaginària crearies?", "Què posaries en una capsa per al futur?", "Com seria una biblioteca sense parets?", "Quin superpoder seria útil per cooperar?", "Què preguntaries a un inventor?", "Com saludaria un extraterrestre educat?", "Quin nom posaries a un bosc nou?", "Què aprendria un robot durant l'esbarjo?", "Quin repte divertit pot fer tot el grup?"]
+    },
+    {
+      "id": "punts-en-comu", "title": "Punts en comú", "levels": ["primaria-mitja", "primaria-superior", "eso"],
+      "description": "Petites missions per trobar acords en grup.",
+      "instructions": "En grups de tres o quatre, proposeu una resposta compartida. Tothom ha de poder opinar. Si no hi ha acord, conserveu les alternatives i expliqueu-les.",
+      "entries": ["Un animal per a la mascota del grup", "Un nom per a un equip d'exploradors", "Tres materials per construir una cabana imaginària", "Un joc de pati que puguem explicar", "Un llibre o conte que voldríem descobrir", "Una millora senzilla per a l'aula", "Un invent que ens facilitaria cooperar", "Un lloc imaginari que visitaríem", "Una pregunta que ens desperti curiositat", "Un color i un símbol per a una bandera", "Una activitat tranquil·la per compartir", "Una manera de donar la benvinguda", "Un títol per a una història del grup", "Un objecte per a una exposició", "Una regla justa per repartir torns", "Una idea per reduir residus", "Una paraula que ens representi com a equip", "Un repte artístic que vulguem provar", "Una cosa que podem ensenyar a un altre grup", "Una manera de celebrar un esforç col·lectiu"]
+    }
+  ]
+}

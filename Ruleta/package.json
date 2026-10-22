@@ -1,0 +1,14 @@
+{
+  "name": "ruleta-felip",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Ruleta aleatòria en català, autònoma i sense dependències en execució",
+  "scripts": {
+    "test": "npm run library:check && node tests/browser.cjs && node tests/touch.cjs && node tests/library.cjs",
+    "library:build": "node scripts/build-library.cjs",
+    "library:check": "node scripts/build-library.cjs --check"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}
