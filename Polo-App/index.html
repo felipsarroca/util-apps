@@ -13,7 +13,7 @@
   <link rel="icon" href="assets/icon-192.png?v=20260325" type="image/png">
   <link rel="shortcut icon" href="assets/icon-192.png?v=20260325" type="image/png">
   <link rel="apple-touch-icon" href="assets/icon-192.png?v=20260325">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20261023">
 </head>
 <body>
   <main class="app">
@@ -47,6 +47,10 @@
       </section>
 
       <section class="panel hidden" id="students-panel">
+        <div class="students-head">
+          <p class="students-title" id="students-title"></p>
+          <p class="students-hint">Toca &#10003; per marcar. Per desfer-ho, mantén premut &#10005; 3 segons.</p>
+        </div>
         <div id="students-list"></div>
       </section>
     </section>
@@ -54,56 +58,56 @@
     <section class="hidden" id="consultations-screen">
       <section class="panel">
         <div class="panel-top">
-          <div>
-            <h2 class="section-title">Consultes</h2>
-            <p class="section-help">1. Tria el tipus de resultat. 2. Filtra per curs, alumne o dia quan convingui.</p>
-          </div>
+          <h2 class="section-title">Consultes</h2>
           <button class="secondary-button back-button" id="back-to-register" type="button">↩ Tornar</button>
         </div>
 
-        <div class="consultation-grid">
-          <button class="consultation-button" type="button" data-report="course">
-            <span class="consultation-title">Dades per curs</span>
-            <span class="consultation-text">Veure ràpidament quin curs acumula més registres.</span>
-          </button>
-
-          <button class="consultation-button" type="button" data-report="student">
-            <span class="consultation-title">Dades per alumne</span>
-            <span class="consultation-text">Buscar alumnes i detectar casos recurrents.</span>
-          </button>
-
-          <button class="consultation-button" type="button" data-report="weekday">
-            <span class="consultation-title">Dades per dia</span>
-            <span class="consultation-text">Filtrar per dia de la setmana i veure patrons.</span>
-          </button>
-
-          <button class="consultation-button" type="button" data-report="overview">
-            <span class="consultation-title">Vista general</span>
-            <span class="consultation-text">Resum global de tota l'ESO en una sola vista.</span>
-          </button>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-top">
-          <div>
-            <h2 class="section-title" id="report-title">Consulta seleccionada</h2>
-            <p class="section-help" id="report-subtitle">Selecciona una opció per veure el resum.</p>
+        <div class="filter-block">
+          <p class="filter-label">Període</p>
+          <div class="chip-row" id="period-chips" role="group" aria-label="Període">
+            <button class="chip" type="button" data-period="week">Setmana</button>
+            <button class="chip" type="button" data-period="month">Mes</button>
+            <button class="chip" type="button" data-period="term">Trimestre</button>
+            <button class="chip" type="button" data-period="year">Curs</button>
+            <button class="chip" type="button" data-period="all">Tot</button>
           </div>
         </div>
 
-        <div class="report-filters hidden" id="report-filters"></div>
+        <div class="filter-block">
+          <p class="filter-label">Grup</p>
+          <div class="chip-row" id="course-chips" role="group" aria-label="Grup">
+            <button class="chip" type="button" data-course-filter="">Tota l'ESO</button>
+            <button class="chip" type="button" data-course-filter="1r ESO">1r</button>
+            <button class="chip" type="button" data-course-filter="2n ESO">2n</button>
+            <button class="chip" type="button" data-course-filter="3r ESO">3r</button>
+            <button class="chip" type="button" data-course-filter="4t ESO">4t</button>
+          </div>
+        </div>
+      </section>
 
+      <nav class="view-tabs" id="view-tabs" aria-label="Tipus de consulta">
+        <button class="view-tab" type="button" data-view="summary">Resum</button>
+        <button class="view-tab" type="button" data-view="ranking">Rànquing</button>
+        <button class="view-tab" type="button" data-view="courses">Cursos</button>
+        <button class="view-tab" type="button" data-view="days">Dies</button>
+      </nav>
+
+      <section class="panel">
         <div id="report-content">
-          <div class="empty-state">
-            <p class="empty-title">Encara no has triat cap consulta.</p>
-            <p class="empty-text">Aquí veurem resums clars i filtres per localitzar millor la informació.</p>
+          <p class="report-note">Carregant dades...</p>
+        </div>
+
+        <div class="report-footer">
+          <p class="report-meta" id="report-meta"></p>
+          <div class="report-footer__actions">
+            <button class="secondary-button" id="refresh-report" type="button">Actualitza</button>
+            <button class="share-button" id="share-report" type="button">Comparteix</button>
           </div>
         </div>
       </section>
     </section>
 
-    <div class="status hidden" id="status-box"></div>
+    <div class="status hidden" id="status-box" role="status" aria-live="polite"></div>
   </main>
 
   <aside class="install-banner hidden" id="install-banner" aria-live="polite">
@@ -118,6 +122,6 @@
     </div>
   </aside>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20261023"></script>
 </body>
 </html>

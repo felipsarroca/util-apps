@@ -43,8 +43,11 @@ Captures fetes a partir de la web publicada el 25 de març de 2026.
 
 - mostra els cursos `1r ESO`, `2n ESO`, `3r ESO` i `4t ESO`
 - en tocar un curs, carrega la llista d'alumnes actius d'aquell grup
-- cada alumne apareix amb un botó d'acció per marcar la incidència
-- si l'alumne ja ha estat registrat aquell dia, el botó queda desactivat
+- l'alumnat de tots els cursos es carrega en una sola crida en obrir l'app i es desa al dispositiu, de manera que en tocar un curs la llista apareix a l'instant
+- cada alumne apareix amb un botó d'acció per marcar la incidència; el canvi es mostra immediatament i es confirma amb el servidor en segon pla
+- sota el nom es mostra quantes vegades s'ha registrat l'alumne aquest curs escolar (en taronja a partir de 3)
+- si s'ha marcat un alumne per error, mantenint premut el botó vermell 3 segons es desfà el registre del dia
+- els avisos floten a la part inferior i no desplacen la llista
 
 ### Control de duplicats
 
@@ -54,12 +57,21 @@ Captures fetes a partir de la web publicada el 25 de març de 2026.
 
 ### Consultes i resultats
 
-L'espai de consultes ofereix quatre tipus de resum:
+L'espai de consultes descarrega totes les dades en una sola crida i calcula els resums al mòbil, de manera que canviar de filtre és instantani.
 
-- `Vista general`: resum global amb total de registres, curs amb més incidències, alumne amb més incidències i darrer dia amb registre.
-- `Dades per curs`: comparativa entre cursos, amb filtre per classe.
-- `Dades per alumne`: cerca per nom i filtre per curs, amb historial desplegable de dies registrats.
-- `Dades per dia`: recompte per dia de la setmana per detectar patrons.
+Filtres comuns:
+
+- `Període`: setmana, mes, trimestre (set.–des., gen.–març, abr.–juny), curs escolar o tot l'historial
+- `Grup`: tota l'ESO o un sol curs
+
+Vistes:
+
+- `Resum`: registres, alumnes diferents (i percentatge sobre l'alumnat), reincidents (3 o més registres), registres d'avui amb noms, els cinc primers del rànquing (amb empats) i evolució de les darreres 8 setmanes.
+- `Rànquing`: llista completa de més a menys registres, amb posicions empatades, cercador, data del darrer registre i dies registrats en tocar cada alumne.
+- `Cursos`: comparativa per curs amb alumnes afectats, mitjana per alumne i reincidents; en tocar un curs s'obre el seu rànquing.
+- `Dies`: distribució per dia de la setmana i darrers dies amb registre, amb els noms de cada dia.
+
+El botó `Comparteix` envia (o copia) un resum en text del filtre actual amb el rànquing, pensat per a tutors i equip directiu.
 
 ### Instal·lació com a app
 
@@ -109,8 +121,10 @@ La URL configurada al frontend és:
 
 Accions disponibles:
 
-- `getStudents`
+- `getStudents` (sense `curs`, retorna tots els cursos)
 - `registerStudent`
+- `unregisterStudent` (només desfà registres del mateix dia)
+- `getDashboard` (dades compactes per a les consultes)
 - `getOverviewSummary`
 - `getCourseSummary`
 - `getStudentSummary`
@@ -155,7 +169,11 @@ Capçaleres esperades:
 
 Cada registre desa informació suficient per poder explotar les dades després sense càlculs manuals.
 
+La pestanya `Alumnat` es desa 10 minuts a la memòria cau de l'script. Quan s'edita a mà, l'activador simple `onEdit` la buida.
+
 ## Resums que genera el backend
+
+Les accions següents es mantenen per compatibilitat; l'app actual fa servir `getDashboard`.
 
 ### Vista general
 
@@ -251,17 +269,15 @@ Requisits:
 
 - l'app està pensada per a quatre cursos d'ESO fixos
 - no incorpora autenticació ni control d'usuaris
-- no permet editar o esborrar registres des de la interfície
-- el resum per alumne es limita als 50 casos amb més incidències
+- només es poden desfer registres del mateix dia
+- els trimestres són aproximats per mesos
 - el resum per dia està enfocat a dies lectius de dilluns a divendres
 
 ## Millores futures possibles
 
-- filtres per trimestre, mes o franja temporal
-- exportació de resultats
+- exportació de resultats a full de càlcul
 - gràfics visuals per a equips docents
 - panell d'administració per gestionar alumnat
-- historial de canvis o anul·lació de registres
 - autenticació per professorat
 
 ## Llicència i ús

@@ -26,8 +26,23 @@ const HEADERS_REGISTRES = [
 
 const CURSOS = ['1r ESO', '2n ESO', '3r ESO', '4t ESO'];
 const WEEKDAY_LABELS = ['Diumenge', 'Dilluns', 'Dimarts', 'Dimecres', 'Dijous', 'Divendres', 'Dissabte'];
+const STUDENTS_CACHE_KEY = 'alumnat_v2';
+const STUDENTS_CACHE_SECONDS = 600;
+
+let sheetsChecked = false;
+
+// Buida la memòria cau de l'alumnat quan s'edita la pestanya Alumnat.
+function onEdit(e) {
+  if (e && e.range && e.range.getSheet().getName() === SHEET_ALUMNAT) {
+    CacheService.getScriptCache().remove(STUDENTS_CACHE_KEY);
+  }
+}
 
 function setupSheets() {
+  if (sheetsChecked) {
+    return { ok: true, message: 'Estructura del full correcta.', cursos: CURSOS };
+  }
+
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const alumnatSheet = ss.getSheetByName(SHEET_ALUMNAT);
@@ -55,6 +70,8 @@ function setupSheets() {
       `Les capçaleres de "${SHEET_REGISTRES}" no són correctes. Han de ser: ${HEADERS_REGISTRES.join(', ')}`
     );
   }
+
+  sheetsChecked = true;
 
   return {
     ok: true,
@@ -110,7 +127,15 @@ function normalizeActiveValue(value) {
   return !['false', '0', 'no', 'inactive', 'inactiu'].includes(cleanValue);
 }
 
-function getAllStudents() {
+// Llegeix tot l'alumnat (també l'inactiu) i el desa a la memòria cau de l'script.
+function readStudentRows() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(STUDENTS_CACHE_KEY);
+
+  if (cached) {
+    return JSON.parse(cached);
+  }
+
   setupSheets();
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -123,15 +148,27 @@ function getAllStudents() {
 
   const values = sheet.getRange(2, 1, lastRow - 1, HEADERS_ALUMNAT.length).getValues();
 
-  return values
+  const students = values
     .map(row => ({
       id_alumne: normalizeStudentId(row[0]),
       nom_complet: normalizeText(row[1]),
       curs: normalizeText(row[2]),
       actiu: normalizeActiveValue(row[3])
     }))
-    .filter(student => student.id_alumne && student.nom_complet && student.curs && student.actiu)
+    .filter(student => student.id_alumne && student.nom_complet && student.curs)
     .sort((a, b) => a.nom_complet.localeCompare(b.nom_complet, 'ca'));
+
+  try {
+    cache.put(STUDENTS_CACHE_KEY, JSON.stringify(students), STUDENTS_CACHE_SECONDS);
+  } catch (error) {
+    // Si la llista no cap a la memòria cau, es continua llegint del full.
+  }
+
+  return students;
+}
+
+function getAllStudents() {
+  return readStudentRows().filter(student => student.actiu);
 }
 
 function getStudentsByCourse(curs) {
@@ -198,47 +235,70 @@ function getNowInfo() {
   };
 }
 
-function getTodayRegisteredStudentIds() {
+function getSchoolYearStart(dateString) {
+  const year = Number(dateString.slice(0, 4));
+  const month = Number(dateString.slice(5, 7));
+  return `${month >= 9 ? year : year - 1}-09-01`;
+}
+
+// Una sola lectura: qui està marcat avui i quantes vegades aquest curs escolar.
+function getRegisterStats(today) {
   setupSheets();
 
+  const stats = { todayIds: new Set(), yearCounts: {} };
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_REGISTRES);
   const lastRow = sheet.getLastRow();
 
   if (lastRow < 2) {
-    return [];
+    return stats;
   }
 
-  const today = getNowInfo().data;
+  const yearStart = getSchoolYearStart(today);
   const values = sheet.getRange(2, 1, lastRow - 1, HEADERS_REGISTRES.length).getValues();
 
-  return [...new Set(
-    values
-      .filter(row => {
-        const rowDate = normalizeDateValue(row[2]);
-        const uniqueKey = normalizeText(row[12]);
-        return rowDate === today || uniqueKey.indexOf(`${today}|`) === 0;
-      })
-      .map(row => normalizeStudentId(row[9]))
-      .filter(Boolean)
-  )];
+  values.forEach(row => {
+    const id = normalizeStudentId(row[9]);
+    const rowDate = normalizeDateValue(row[2]);
+
+    if (!id) {
+      return;
+    }
+
+    if (rowDate === today || normalizeText(row[12]).indexOf(`${today}|`) === 0) {
+      stats.todayIds.add(id);
+    }
+
+    if (rowDate >= yearStart && rowDate <= today) {
+      stats.yearCounts[id] = (stats.yearCounts[id] || 0) + 1;
+    }
+  });
+
+  return stats;
 }
 
+function getTodayRegisteredStudentIds() {
+  return [...getRegisterStats(getNowInfo().data).todayIds];
+}
+
+// Sense curs, retorna l'alumnat de tots els cursos en una sola crida.
 function getStudentsForCourse(curs) {
-  const students = getStudentsByCourse(curs);
-  const todayIds = new Set(getTodayRegisteredStudentIds());
+  const students = curs ? getStudentsByCourse(curs) : getAllStudents();
+  const today = getNowInfo().data;
+  const stats = getRegisterStats(today);
 
   const enrichedStudents = students.map(student => ({
     id_alumne: student.id_alumne,
     nom_complet: student.nom_complet,
     curs: student.curs,
-    registeredToday: todayIds.has(normalizeStudentId(student.id_alumne))
+    registeredToday: stats.todayIds.has(student.id_alumne),
+    yearCount: stats.yearCounts[student.id_alumne] || 0
   }));
 
   return {
     students: enrichedStudents,
     markedTodayCount: enrichedStudents.filter(student => student.registeredToday).length,
-    today: getNowInfo().data
+    today: today
   };
 }
 
@@ -315,6 +375,95 @@ function registerStudent(studentId) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// Només permet desfer el registre del mateix dia.
+function unregisterStudent(studentId) {
+  setupSheets();
+
+  const cleanStudentId = normalizeStudentId(studentId);
+
+  if (!cleanStudentId) {
+    throw new Error('Cal indicar un id dalumne vàlid.');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_REGISTRES);
+    const lastRow = sheet.getLastRow();
+    const today = getNowInfo().data;
+    const uniqueKey = `${today}|${cleanStudentId}`;
+
+    if (lastRow < 2) {
+      return { success: true, status: 'not_found', message: 'No hi havia cap registre avui', data: today };
+    }
+
+    const keyColumn = HEADERS_REGISTRES.indexOf('clau_unica') + 1;
+    const matches = sheet
+      .getRange(2, keyColumn, lastRow - 1, 1)
+      .createTextFinder(uniqueKey)
+      .matchEntireCell(true)
+      .findAll();
+
+    if (matches.length === 0) {
+      return { success: true, status: 'not_found', message: 'No hi havia cap registre avui', data: today };
+    }
+
+    matches
+      .map(cell => cell.getRow())
+      .sort((a, b) => b - a)
+      .forEach(row => sheet.deleteRow(row));
+
+    return {
+      success: true,
+      status: 'unregistered',
+      message: 'Registre desfet',
+      data: today,
+      studentId: cleanStudentId
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Dades compactes perquè l'app calculi tots els resums i filtres al dispositiu.
+function getDashboardData() {
+  setupSheets();
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_REGISTRES);
+  const lastRow = sheet.getLastRow();
+  const studentsById = {};
+
+  const registers = lastRow < 2
+    ? []
+    : sheet.getRange(2, 1, lastRow - 1, HEADERS_REGISTRES.length).getValues()
+      .map(row => {
+        const id = normalizeStudentId(row[9]);
+        const data = normalizeDateValue(row[2]);
+        const curs = normalizeText(row[11]);
+
+        if (id && !studentsById[id]) {
+          studentsById[id] = [id, normalizeText(row[10]), curs, false];
+        }
+
+        return [data, id, curs];
+      })
+      .filter(row => /^\d{4}-\d{2}-\d{2}$/.test(row[0]) && row[1]);
+
+  readStudentRows().forEach(student => {
+    studentsById[student.id_alumne] = [student.id_alumne, student.nom_complet, student.curs, student.actiu];
+  });
+
+  return {
+    today: getNowInfo().data,
+    courses: CURSOS,
+    students: Object.values(studentsById),
+    registers: registers
+  };
 }
 
 function normalizeDateValue(value) {
@@ -578,6 +727,17 @@ function handleRequest(action, params) {
   if (action === 'registerStudent') {
     const studentId = params.studentId;
     return registerStudent(studentId);
+  }
+
+  if (action === 'unregisterStudent') {
+    return unregisterStudent(params.studentId);
+  }
+
+  if (action === 'getDashboard') {
+    return {
+      success: true,
+      summary: getDashboardData()
+    };
   }
 
   if (action === 'getOverviewSummary') {

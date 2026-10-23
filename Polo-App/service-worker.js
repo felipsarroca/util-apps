@@ -1,9 +1,9 @@
-const CACHE_NAME = 'polo-eso-v2';
+const CACHE_NAME = 'polo-eso-v3';
 const APP_SHELL = [
   './',
   './index.html',
-  './css/styles.css',
-  './js/app.js',
+  './css/styles.css?v=20261023',
+  './js/app.js?v=20261023',
   './assets/icon-192.png?v=20260325',
   './assets/icon-512.png?v=20260325',
   './manifest.webmanifest'
@@ -11,7 +11,7 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL.map((url) => new Request(url, { cache: 'reload' }))))
   );
   self.skipWaiting();
 });
