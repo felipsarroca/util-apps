@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../shared/atzar.css?v=1.3" />
     <link rel="stylesheet" href="style.css?v=1.3" />
     <script src="../shared/atzar.js?v=1.3" defer></script>
-    <script src="script.js?v=1.3" defer></script>
+    <script src="script.js?v=1.4" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -83,17 +83,6 @@
             <div class="section-heading">
               <h2>Qui hi ha al barret?</h2>
             </div>
-            <details id="savedLists" class="saved-lists">
-              <summary>Les meves classes <span id="classCount"></span></summary>
-              <div id="classList" class="class-list" aria-label="Classes desades"></div>
-              <form id="saveClassForm" class="save-class-form">
-                <label for="className" class="sr-only">Nom de la classe</label>
-                <input id="className" type="text" placeholder="Nom de la classe: 2n A…" maxlength="40" required />
-                <button type="submit" class="quiet">Desa</button>
-              </form>
-              <p class="field-note">També hi trobaràs les classes desades a la Ruleta.</p>
-            </details>
-            <details id="absentList"></details>
             <textarea id="entriesInput" aria-label="Participants, un per línia" spellcheck="false" maxlength="20000" placeholder="Anna&#10;Biel&#10;Clàudia"></textarea>
             <p id="entryFeedback" class="field-note" aria-live="polite"></p>
             <div class="field">
@@ -113,6 +102,16 @@
               ><input id="retireToggle" type="checkbox" role="switch"
             /></label>
             <button id="restoreButton" class="secondary">↶ Torna tots els paperets al barret</button>
+            <details id="savedLists" class="saved-lists">
+              <summary>Les meves classes <span id="classCount"></span></summary>
+              <div id="classList" class="class-list" aria-label="Classes desades"></div>
+              <form id="saveClassForm" class="save-class-form">
+                <label for="className" class="sr-only">Nom de la classe</label>
+                <input id="className" type="text" placeholder="Nom de la classe: 2n A…" maxlength="40" required />
+                <button type="submit" class="quiet">Desa</button>
+              </form>
+              <p class="field-note">També hi trobaràs les classes desades a la Ruleta.</p>
+            </details>
             <details class="ideas">
               <summary>Idees per a l’aula</summary>
               <ul>
