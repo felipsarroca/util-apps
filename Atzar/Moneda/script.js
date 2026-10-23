@@ -156,6 +156,7 @@
       const final = `rotateZ(${spinZ}deg) rotateX(${to}deg)`;
       if (!motion) {
         flip.style.transform = final;
+        coin.classList.add("landed", results[i] === "H" ? "is-cara" : "is-creu");
         return Promise.resolve();
       }
       const duration = base * (0.94 + A.randomInt(121) / 1000),

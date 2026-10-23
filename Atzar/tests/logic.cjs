@@ -8,6 +8,12 @@ const b=await chromium.launch({channel:process.env.BROWSER_CHANNEL||"chrome"});c
 p.on("pageerror",e=>console.log("ERR",e.message));
 const setup=async(app,key,val)=>{await p.goto(base+app+"/");await p.evaluate(([k,v])=>localStorage.setItem(k,JSON.stringify(v)),[key,val]);await p.reload();await p.waitForTimeout(200);};
 const ls=k=>p.evaluate(k=>JSON.parse(localStorage.getItem(k)),k);
+// Generador: freqüències uniformes i tirades consecutives independents (khi quadrat, llindar p < 0,001)
+await setup("Daus","felip.atzar.daus.v1",{});
+{const g=await p.evaluate(()=>{const out={};for(const n of [2,6,20]){const N=300000,c=Array(n).fill(0),pr=Array(n*n).fill(0);let prev=-1;for(let i=0;i<N;i++){const v=Atzar.randomInt(n);c[v]++;if(prev>=0)pr[prev*n+v]++;prev=v;}
+const chi=(a,M)=>{const e=M/a.length;return a.reduce((s,x)=>s+(x-e)**2/e,0)};out[n]=[chi(c,N),chi(pr,N-1)];}return out;});
+const lim={2:[10.83,16.27],6:[20.52,66.62],20:[43.82,489]};for(const n in g){assert(g[n][0]<lim[n][0],`freqüències D${n}`);assert(g[n][1]<lim[n][1],`parelles D${n}`);}
+console.log("✓ Generador: freqüències i parelles consecutives uniformes (2, 6 i 20 valors)");}
 // Cartes: 40 cartes, 10 per tirada, sense reposició
 await setup("Cartes","felip.atzar.cartes.v1",{deck:"es40",count:10,duration:350});
 const seen=new Set();for(let i=0;i<4;i++){await p.click("#drawButton");await p.waitForFunction(()=>!document.querySelector("#drawButton").disabled||document.querySelector("#deckCount").textContent.startsWith("0"));await p.waitForTimeout(150);(await ls("felip.atzar.cartes.v1")).table.forEach(c=>{assert(!seen.has(c),"carta repetida "+c);seen.add(c)});}
