@@ -43,30 +43,36 @@ La lògica de treball està basada en esdeveniments. Això permet que cada canvi
 
 ## Accions ràpides disponibles
 
-Des de la fitxa d'un ordinador es poden registrar aquestes accions:
+La fitxa d'un ordinador només mostra les accions que tenen sentit en el seu estat actual:
 
-- Assignar
-- Canvi de propietari
-- Deixar lliure
-- Incidència
-- Reparació menor
-- Reparació major
-- Baixa
-- Marcar com reparat
-- Observació
+| Acció | Quan surt | Què fa |
+| --- | --- | --- |
+| Assignar / Reassignar | Equip lliure o assignat | Obre una assignació nova. Si l'equip ja tenia usuari, tanca l'anterior i es registra com a canvi de propietari. Avisa si l'usuari ja té altres equips. |
+| Deixar lliure | Equip amb usuari | Tanca l'assignació. En un equip a reparació major es diu «Treure l'usuari» i l'estat no canvia. |
+| Incidència | Sempre, excepte de baixa | Desa l'incident a l'historial (avaria, carregador, peça canviada...). No canvia l'estat ni deixa res pendent. |
+| Reparació major | Equip lliure o assignat | Envia l'equip al servei tècnic extern. L'usuari continua constant-hi. |
+| Marcar com reparat | Equip a reparació major | Permet tornar l'equip al mateix usuari o deixar-lo lliure. |
+| Baixa | Sempre, excepte de baixa | Demana confirmació, tanca l'assignació i es desa amb el tipus `baixa`. |
+| Reactivar | Equip de baixa | Torna a deixar l'equip lliure. |
+| Observació | Sempre | Afegeix una nota amb data. |
 
-Cada acció genera un esdeveniment i, quan toca, també actualitza l'estat de l'ordinador i la taula d'assignacions.
+Cada acció genera un esdeveniment. Els tipus antics (`reparacio_interna`, `canvi_propietari`...) es conserven a l'historial.
+
+## Inventari
+
+El botó «Inventari» mostra tots els equips amb comptadors per estat que també fan de filtre (lliures, assignats, incidència, reparació major i baixa). La llista es pot filtrar per text i ordenar per codi, estat, usuari o últim moviment. En prémer una fila s'obre la fitxa de l'equip.
+
+## Resum de l'historial
+
+Les fitxes d'ordinador i d'usuari mostren un resum amb el nombre d'usuaris o d'equips, d'incidències, de reparacions i de carregadors (esdeveniments que esmenten «carregador»), i el recorregut cronològic de les assignacions.
 
 ## Estats dels ordinadors
 
-L'aplicació treballa amb aquests estats:
-
 - `lliure`
 - `assignat`
-- `incidencia_menor`
-- `pendent_reparacio_interna`
-- `pendent_servei_tecnic_extern`
-- `fora_servei`
+- `pendent_servei_tecnic_extern` (reparació major)
+- `fora_servei` (baixa)
+- `incidencia_menor` i `pendent_reparacio_interna`: estats heretats. Les accions noves no els generen i desapareixen amb el moviment següent de l'equip.
 
 ## Modes d'accés
 

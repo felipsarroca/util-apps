@@ -1,7 +1,7 @@
 export const ESTATS = {
   lliure: "Lliure",
   assignat: "Assignat",
-  incidencia_menor: "Incidència menor",
+  incidencia_menor: "Incidència pendent",
   pendent_reparacio_interna: "Pendent de reparació menor",
   pendent_servei_tecnic_extern: "Pendent de reparació major",
   fora_servei: "Fora de servei",
@@ -16,6 +16,7 @@ export const EVENT_TYPE_LABELS = {
   servei_tecnic_extern: "Reparació major",
   reparat: "Reparat",
   observacio: "Observació",
+  baixa: "Baixa",
 };
 
 const makeIcon = (path) => `
@@ -36,6 +37,11 @@ export const ACTION_ICONS = {
   observacio: makeIcon('<path d="M8.2 4.8h5.7l3.1 3.1V19a1.8 1.8 0 0 1-1.8 1.8H8.8A1.8 1.8 0 0 1 7 19V6.6a1.8 1.8 0 0 1 1.2-1.8Z"/><path d="M13.9 4.8v3.3h3.1"/><path d="M9.6 11.1h4.9"/><path d="M9.6 14.2h4.9"/><path d="M9.6 17.3h3.1"/>'),
 };
 
+const EN_US = ["lliure", "assignat"];
+const AMB_INCIDENCIA = ["incidencia_menor", "pendent_reparacio_interna"];
+
+// Cada acció només es mostra en els estats indicats a `availableIn`.
+// El resultat (estat, usuari i tipus d'esdeveniment) es calcula a app.js.
 export const QUICK_ACTIONS = [
   {
     id: "assignacio",
@@ -43,19 +49,8 @@ export const QUICK_ACTIONS = [
     helper: "Assigna l'equip a un usuari",
     icon: ACTION_ICONS.assignacio,
     tone: "positive",
-    eventType: "assignacio",
-    nextState: "assignat",
     requiresUser: true,
-  },
-  {
-    id: "canvi_propietari",
-    label: "Canvi de propietari",
-    helper: "Tanca l'assignació actual i n'obre una de nova",
-    icon: ACTION_ICONS.canvi_propietari,
-    tone: "neutral",
-    eventType: "canvi_propietari",
-    nextState: "assignat",
-    requiresUser: true,
+    availableIn: [...EN_US, ...AMB_INCIDENCIA],
   },
   {
     id: "retorn",
@@ -63,27 +58,16 @@ export const QUICK_ACTIONS = [
     helper: "Tanca l'assignació actual",
     icon: ACTION_ICONS.retorn,
     tone: "neutral",
-    eventType: "retorn",
-    nextState: "lliure",
-    clearsUser: true,
+    requiresCurrentUser: true,
+    availableIn: ["assignat", ...AMB_INCIDENCIA, "pendent_servei_tecnic_extern"],
   },
   {
     id: "incidencia",
     label: "Incidència",
-    helper: "Registra una incidència general",
+    helper: "Avaria, carregador, peça canviada...",
     icon: ACTION_ICONS.incidencia,
     tone: "warning",
-    eventType: "incidencia",
-    nextState: "incidencia_menor",
-  },
-  {
-    id: "reparacio_interna",
-    label: "Reparació menor",
-    helper: "Incidència resoluble internament",
-    icon: ACTION_ICONS.reparacio_interna,
-    tone: "warning",
-    eventType: "reparacio_interna",
-    nextState: "pendent_reparacio_interna",
+    availableIn: [...EN_US, ...AMB_INCIDENCIA, "pendent_servei_tecnic_extern"],
   },
   {
     id: "servei_tecnic_extern",
@@ -91,8 +75,24 @@ export const QUICK_ACTIONS = [
     helper: "Enviar a servei tècnic extern",
     icon: ACTION_ICONS.servei_tecnic_extern,
     tone: "danger",
-    eventType: "servei_tecnic_extern",
-    nextState: "pendent_servei_tecnic_extern",
+    availableIn: [...EN_US, ...AMB_INCIDENCIA],
+  },
+  {
+    id: "reparat",
+    label: "Marcar com resolt",
+    helper: "Tanca la incidència pendent",
+    icon: ACTION_ICONS.reparat,
+    tone: "positive",
+    availableIn: [...AMB_INCIDENCIA, "pendent_servei_tecnic_extern"],
+  },
+  {
+    id: "reactivar",
+    label: "Reactivar",
+    helper: "Torna a posar en servei un equip de baixa",
+    icon: ACTION_ICONS.reparat,
+    tone: "positive",
+    availableIn: ["fora_servei"],
+    defaultDescription: "Equip reactivat",
   },
   {
     id: "baixa",
@@ -100,22 +100,8 @@ export const QUICK_ACTIONS = [
     helper: "Marca l'equip com a fora de servei",
     icon: ACTION_ICONS.baixa,
     tone: "danger",
-    eventType: "observacio",
-    nextState: "fora_servei",
-    clearsUser: true,
-    closesAssignment: true,
+    availableIn: [...EN_US, ...AMB_INCIDENCIA, "pendent_servei_tecnic_extern"],
     defaultDescription: "Baixa definitiva de l'equip",
-  },
-  {
-    id: "reparat",
-    label: "Marcar com reparat",
-    helper: "Torna l'equip a estat disponible",
-    icon: ACTION_ICONS.reparat,
-    tone: "positive",
-    eventType: "reparat",
-    nextState: "lliure",
-    clearsUser: true,
-    closesAssignment: true,
   },
   {
     id: "observacio",
@@ -123,7 +109,7 @@ export const QUICK_ACTIONS = [
     helper: "Afegeix una nota amb data",
     icon: ACTION_ICONS.observacio,
     tone: "neutral",
-    eventType: "observacio",
+    availableIn: [...EN_US, ...AMB_INCIDENCIA, "pendent_servei_tecnic_extern", "fora_servei"],
   },
 ];
 

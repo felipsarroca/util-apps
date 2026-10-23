@@ -13,6 +13,7 @@ const app = document.querySelector("#app");
 const AUTH_EMAIL_STORAGE_KEY = "rppo:lastAuthEmail";
 const INSTALL_PROMPT_SEEN_STORAGE_KEY = "rppo:installPromptSeen";
 let searchRenderTimer = null;
+let inventoryRenderTimer = null;
 let deferredInstallPromptEvent = null;
 const savedAuthEmail = (() => {
   try {
@@ -40,6 +41,10 @@ const state = {
     role: "consulta",
   },
   installPromptVisible: false,
+  inventoryOpen: false,
+  inventoryFilter: "tots",
+  inventoryQuery: "",
+  inventorySort: "codi",
   query: "",
   selectedResult: null,
   showActionPanel: true,
@@ -51,7 +56,9 @@ const state = {
     data: new Date().toISOString().slice(0, 10),
     usuariId: "",
     descripcio: "",
+    opcio: "",
   },
+  formError: "",
   createData: {
     kind: "computer",
     codi: "",
@@ -227,8 +234,104 @@ function activeAssignment(computerId) {
   return state.assignments.find((item) => item.ordinadorId === computerId && !item.dataFinal);
 }
 
+function actionsForComputer(computer) {
+  const hasUser = Boolean(computer.usuariActualId);
+  return QUICK_ACTIONS.filter((action) => action.availableIn.includes(computer.estat))
+    .filter((action) => !action.requiresCurrentUser || hasUser)
+    .map((action) => {
+      if (action.id === "assignacio" && hasUser) {
+        return { ...action, label: "Reassignar", helper: "Tanca l'assignació actual i n'obre una de nova" };
+      }
+      if (action.id === "retorn" && computer.estat === "pendent_servei_tecnic_extern") {
+        return { ...action, label: "Treure l'usuari", helper: "L'equip deixa de constar a nom de l'usuari" };
+      }
+      if (action.id === "reparat" && computer.estat === "pendent_servei_tecnic_extern") {
+        return { ...action, label: "Marcar com reparat", helper: "L'equip torna del servei tècnic" };
+      }
+      return action;
+    });
+}
+
 function currentAction() {
-  return QUICK_ACTIONS.find((item) => item.id === state.currentActionId) ?? null;
+  const computer = selectedComputer();
+  if (!computer) return null;
+  return actionsForComputer(computer).find((item) => item.id === state.currentActionId) ?? null;
+}
+
+// Tradueix l'acció triada i les opcions del formulari en el canvi que cal desar.
+function actionOutcome(action, computer, formData) {
+  const currentUserId = computer.usuariActualId;
+  const base = { label: action.label, nextUserId: currentUserId, nextState: computer.estat, closesAssignment: false };
+
+  switch (action.id) {
+    case "assignacio":
+      return {
+        ...base,
+        eventType: currentUserId ? "canvi_propietari" : "assignacio",
+        nextUserId: formData.usuariId,
+        nextState: "assignat",
+      };
+    case "retorn":
+      return {
+        ...base,
+        eventType: "retorn",
+        nextUserId: null,
+        nextState: computer.estat === "pendent_servei_tecnic_extern" ? computer.estat : "lliure",
+        closesAssignment: true,
+      };
+    case "incidencia":
+      return { ...base, eventType: "incidencia" };
+    case "servei_tecnic_extern":
+      return { ...base, eventType: "servei_tecnic_extern", nextState: "pendent_servei_tecnic_extern" };
+    case "reparat":
+      return currentUserId && formData.opcio !== "lliure"
+        ? { ...base, eventType: "reparat", nextState: "assignat" }
+        : { ...base, eventType: "reparat", nextUserId: null, nextState: "lliure", closesAssignment: true };
+    case "reactivar":
+      return { ...base, eventType: "reparat", nextUserId: null, nextState: "lliure" };
+    case "baixa":
+      return { ...base, eventType: "baixa", nextUserId: null, nextState: "fora_servei", closesAssignment: true };
+    default:
+      return { ...base, eventType: "observacio" };
+  }
+}
+
+const CHARGER_PATTERN = /carregador/i;
+const REPAIR_TYPES = ["reparacio_interna", "servei_tecnic_extern"];
+
+function renderHistorySummary(events, people) {
+  const incidents = events.filter((event) => event.tipus === "incidencia").length;
+  const repairs = events.filter((event) => REPAIR_TYPES.includes(event.tipus)).length;
+  const chargers = events.filter((event) => CHARGER_PATTERN.test(event.descripcio ?? "")).length;
+  return `
+    <article class="detail-card history-summary">
+      <h3>Resum de l'historial</h3>
+      <div class="history-stats">
+        <div><strong>${new Set(people.items).size}</strong><span>${text(people.label)}</span></div>
+        <div><strong>${incidents}</strong><span>Incidències</span></div>
+        <div><strong>${repairs}</strong><span>Reparacions</span></div>
+        <div><strong>${chargers}</strong><span>Carregadors</span></div>
+      </div>
+      ${
+        people.items.length
+          ? `<p class="history-path"><span>${text(people.pathLabel)}</span> ${people.items.map((name) => text(name)).join(" → ")}</p>`
+          : ""
+      }
+    </article>
+  `;
+}
+
+// Llista sense repeticions consecutives, de més antic a més recent.
+function chronologicalNames(assignments, nameOf) {
+  return [...assignments]
+    .sort((a, b) => byDateDesc(b.dataInici, a.dataInici))
+    .map(nameOf)
+    .filter((name, index, list) => name !== list[index - 1]);
+}
+
+function otherActiveComputers(userId, computerId) {
+  if (!userId) return [];
+  return state.computers.filter((item) => item.usuariActualId === userId && item.id !== computerId);
 }
 
 function currentEditedEvent() {
@@ -247,11 +350,12 @@ function isStructuralEventType(eventType) {
     "reparacio_interna",
     "servei_tecnic_extern",
     "reparat",
+    "baixa",
   ].includes(eventType);
 }
 
 function eventTone(eventType, status) {
-  if (status === "fora_servei") return "danger";
+  if (status === "fora_servei" || eventType === "baixa") return "danger";
   if (eventType === "servei_tecnic_extern") return "danger";
   if (eventType === "reparacio_interna" || eventType === "incidencia") return "warning";
   if (eventType === "assignacio" || eventType === "reparat") return "positive";
@@ -272,6 +376,7 @@ function eventHighlightClass(event, computerStatus) {
   if (event.tipus === "assignacio" || event.tipus === "canvi_propietari") {
     return "status-text-assignat";
   }
+  if (event.tipus === "baixa") return "status-text-baixa";
 
   const searchableText = `${EVENT_TYPE_LABELS[event.tipus] ?? ""} ${event.descripcio ?? ""}`.toLowerCase();
   if (computerStatus === "fora_servei" && searchableText.includes("baixa")) {
@@ -551,7 +656,7 @@ async function restoreSession() {
 
 function renderResults(results) {
   if (!state.query.trim()) {
-    if (state.adminOpen) return "";
+    if (state.adminOpen || state.inventoryOpen) return "";
 
     return `
       <section class="panel empty-state">
@@ -606,6 +711,132 @@ function renderResults(results) {
           )
           .join("")}
       </div>
+    </section>
+  `;
+}
+
+const INVENTORY_FILTERS = [
+  { id: "tots", label: "Tots" },
+  { id: "lliure", label: "Lliures" },
+  { id: "assignat", label: "Assignats" },
+  { id: "incidencia", label: "Incidència", states: ["incidencia_menor", "pendent_reparacio_interna"] },
+  { id: "pendent_servei_tecnic_extern", label: "Rep. major" },
+  { id: "fora_servei", label: "Baixa" },
+];
+
+function filterMatches(filterId, status) {
+  if (filterId === "tots") return true;
+  const filter = INVENTORY_FILTERS.find((item) => item.id === filterId);
+  return (filter?.states ?? [filterId]).includes(status);
+}
+
+const compareComputerCodes = (a, b) => a.codi.localeCompare(b.codi, "ca", { numeric: true });
+
+function inventoryRows() {
+  const query = state.inventoryQuery.trim().toLowerCase();
+  const rows = state.computers
+    .filter((item) => filterMatches(state.inventoryFilter, item.estat))
+    .map((item) => ({ item, lastEvent: computerEvents(item.id)[0] ?? null }))
+    .filter(({ item, lastEvent }) => {
+      if (!query) return true;
+      return [item.codi, userName(item.usuariActualId), item.observacions, lastEvent?.descripcio]
+        .some((value) => (value ?? "").toLowerCase().includes(query));
+    });
+
+  const statusOrder = Object.keys(ESTATS);
+  return rows.sort((a, b) => {
+    if (state.inventorySort === "estat") {
+      return statusOrder.indexOf(a.item.estat) - statusOrder.indexOf(b.item.estat) || compareComputerCodes(a.item, b.item);
+    }
+    if (state.inventorySort === "data") {
+      return byDateDesc(a.lastEvent?.data ?? 0, b.lastEvent?.data ?? 0) || compareComputerCodes(a.item, b.item);
+    }
+    if (state.inventorySort === "usuari") {
+      return userName(a.item.usuariActualId).localeCompare(userName(b.item.usuariActualId), "ca") || compareComputerCodes(a.item, b.item);
+    }
+    return compareComputerCodes(a.item, b.item);
+  });
+}
+
+function renderInventory() {
+  if (!state.inventoryOpen) return "";
+
+  const counts = Object.fromEntries(
+    INVENTORY_FILTERS.map((filter) => [filter.id, state.computers.filter((item) => filterMatches(filter.id, item.estat)).length]),
+  );
+  const rows = inventoryRows();
+
+  return `
+    <section class="panel inventory-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Inventari</p>
+          <h2>Estat de tots els ordinadors</h2>
+        </div>
+      </div>
+      <div class="inventory-filters" role="group" aria-label="Filtra per estat">
+        ${INVENTORY_FILTERS.map(
+          (filter) => `
+            <button
+              type="button"
+              class="inventory-filter inv-${filter.id} ${state.inventoryFilter === filter.id ? "active" : ""}"
+              data-inventory-filter="${filter.id}"
+              aria-pressed="${state.inventoryFilter === filter.id}"
+            >
+              <strong>${counts[filter.id] ?? 0}</strong>
+              <span>${text(filter.label)}</span>
+            </button>
+          `,
+        ).join("")}
+      </div>
+      <div class="inventory-tools">
+        <label class="inventory-search">
+          <span class="search-label">Filtra la llista</span>
+          <input id="inventory-search" type="search" value="${text(state.inventoryQuery)}" placeholder="Codi, usuari o text d'una incidència" />
+        </label>
+        <label class="inventory-sort">
+          <span class="search-label">Ordena per</span>
+          <select id="inventory-sort">
+            <option value="codi" ${state.inventorySort === "codi" ? "selected" : ""}>Codi RPPO</option>
+            <option value="estat" ${state.inventorySort === "estat" ? "selected" : ""}>Estat</option>
+            <option value="usuari" ${state.inventorySort === "usuari" ? "selected" : ""}>Usuari</option>
+            <option value="data" ${state.inventorySort === "data" ? "selected" : ""}>Últim moviment</option>
+          </select>
+        </label>
+      </div>
+      <p class="inventory-count">${rows.length} ${rows.length === 1 ? "ordinador" : "ordinadors"}</p>
+      ${
+        rows.length
+          ? `<div class="inventory-list">
+              <div class="inventory-row inventory-head" aria-hidden="true">
+                <span>Equip</span><span>Estat</span><span>Qui el té</span><span>Últim moviment</span>
+              </div>
+              ${rows
+                .map(
+                  ({ item, lastEvent }) => `
+                    <button
+                      type="button"
+                      class="inventory-row ${
+                        state.selectedResult?.type === "computer" && state.selectedResult.id === item.id ? "selected" : ""
+                      }"
+                      data-inventory-id="${item.id}"
+                    >
+                      <strong class="inv-code">${text(item.codi)}</strong>
+                      <span class="inv-status"><span class="inv-dot inv-${item.estat}"></span>${text(ESTATS[item.estat] ?? item.estat)}</span>
+                      <span class="inv-user ${item.usuariActualId ? "" : "is-empty"}">${text(userName(item.usuariActualId))}</span>
+                      <span class="inv-last">${
+                        lastEvent
+                          ? `<span class="inv-last-meta">${text(formatDate(lastEvent.data))} · ${text(EVENT_TYPE_LABELS[lastEvent.tipus] ?? lastEvent.tipus)}</span>
+                             <span class="inv-last-text">${text(lastEvent.descripcio)}</span>`
+                          : `<span class="inv-last-meta">Sense moviments</span>`
+                      }</span>
+                    </button>
+                  `,
+                )
+                .join("")}
+            </div>`
+          : `<p class="help-text">Cap ordinador coincideix amb aquest filtre.</p>`
+      }
     </section>
   `;
 }
@@ -709,11 +940,17 @@ function renderComputerDetail(item) {
         </div>
       </div>
 
+      ${renderHistorySummary(events, {
+        label: "Usuaris",
+        pathLabel: "Ha passat per:",
+        items: chronologicalNames(assignments, (assignment) => userName(assignment.usuariId)),
+      })}
+
       <article class="detail-card action-card">
         <div class="action-panel-head">
           <div>
             <h3>Registrar acció</h3>
-            <p class="action-panel-copy">Canvi de propietari, baixa, reparació o observació.</p>
+            <p class="action-panel-copy">Només es mostren les accions possibles en l'estat actual.</p>
           </div>
           <div class="action-panel-buttons">
             <button
@@ -735,7 +972,7 @@ function renderComputerDetail(item) {
         ${
           state.showActionPanel
             ? `<div class="quick-actions">
-                ${QUICK_ACTIONS.map(
+                ${actionsForComputer(item).map(
                   (action) => `
                     <button
                       type="button"
@@ -818,10 +1055,8 @@ function renderComputerDetail(item) {
 function renderUserDetail(item) {
   const assignments = userAssignments(item.id);
   const events = userEvents(item.id);
-  const active = assignments.find((assignment) => !assignment.dataFinal);
-  const currentComputer = active
-    ? state.computers.find((computer) => computer.id === active.ordinadorId)
-    : null;
+  const currentComputers = state.computers.filter((computer) => computer.usuariActualId === item.id);
+  const computerCode = (computerId) => state.computers.find((computer) => computer.id === computerId)?.codi ?? "Equip desconegut";
 
   return `
     <section class="panel detail-panel">
@@ -862,7 +1097,11 @@ function renderUserDetail(item) {
         <article class="detail-card">
           <h3>Situació actual</h3>
           <dl>
-            <div><dt>Ordinador actual</dt><dd>${text(currentComputer?.codi ?? "Cap equip assignat")}</dd></div>
+            <div><dt>Ordinador actual</dt><dd>${
+              currentComputers.length
+                ? currentComputers.map((computer) => `${text(computer.codi)} (${text(ESTATS[computer.estat] ?? computer.estat)})`).join(", ")
+                : "Cap equip assignat"
+            }</dd></div>
             <div><dt>Total d'assignacions</dt><dd>${assignments.length}</dd></div>
             <div><dt>Estat</dt><dd>${item.actiu === false ? "Usuari inactiu" : "Usuari actiu"}</dd></div>
           </dl>
@@ -872,6 +1111,12 @@ function renderUserDetail(item) {
           <p>${events.length ? `${events.length} esdeveniments relacionats` : "Cap esdeveniment registrat."}</p>
         </article>
       </div>
+
+      ${renderHistorySummary(events, {
+        label: "Equips",
+        pathLabel: "Equips que ha tingut:",
+        items: chronologicalNames(assignments, (assignment) => computerCode(assignment.ordinadorId)),
+      })}
 
       <article class="timeline-card">
         <h3>Historial d'ordinadors</h3>
@@ -1068,6 +1313,39 @@ function renderModal() {
   const computer = selectedComputer();
   if (!action || !computer) return "";
 
+  const currentUserName = userName(computer.usuariActualId);
+  const choice = (name, options) => `
+    <fieldset class="choice-group">
+      ${options
+        .map(
+          (option) => `
+            <label class="choice-option">
+              <input type="radio" name="${name}" value="${option.value}" ${state.formData.opcio === option.value ? "checked" : ""} />
+              <span>${text(option.label)}</span>
+            </label>
+          `,
+        )
+        .join("")}
+    </fieldset>
+  `;
+  const otherComputers = action.requiresUser ? otherActiveComputers(state.formData.usuariId, computer.id) : [];
+  let extraFields = "";
+  if (action.id === "reparat" && computer.usuariActualId) {
+    extraFields = choice("event-option", [
+      { value: "tornar", label: `Torna a ${currentUserName}` },
+      { value: "lliure", label: "Queda lliure" },
+    ]);
+  } else if (action.id === "baixa") {
+    extraFields = `
+      <label class="choice-option confirm-option">
+        <input id="event-confirm" type="checkbox" required />
+        <span>Confirmo que ${text(computer.codi)} queda fora de servei${
+          computer.usuariActualId ? ` i deixa de constar a nom de ${text(currentUserName)}` : ""
+        }.</span>
+      </label>
+    `;
+  }
+
   return `
     <div class="modal-overlay">
       <section class="panel modal-panel">
@@ -1087,12 +1365,20 @@ function renderModal() {
                         `${user.nom} ${user.cognoms}`.trim(),
                       )}</option>`,
                   )
-                  .join("")}</select></label>`
+                  .join("")}</select></label>${
+                  otherComputers.length
+                    ? `<p class="form-note">Aquest usuari ja té: ${otherComputers
+                        .map((item) => `${text(item.codi)} (${text(ESTATS[item.estat] ?? item.estat)})`)
+                        .join(", ")}.</p>`
+                    : ""
+                }`
               : ""
           }
+          ${extraFields}
           <label><span>Descripció</span><textarea id="event-description" rows="4" required>${text(
             state.formData.descripcio,
           )}</textarea></label>
+          ${state.formError ? `<p class="form-error">${text(state.formError)}</p>` : ""}
           <button type="submit" class="primary-button" ${state.isSaving ? "disabled" : ""}>${
             state.isSaving ? "Desant..." : "Desar esdeveniment"
           }</button>
@@ -1108,7 +1394,7 @@ function renderMain() {
   const user = selectedUser();
 
   app.innerHTML = `
-    <main class="app-shell search-layout">
+    <main class="app-shell search-layout ${state.inventoryOpen ? "inventory-open" : ""}">
       <section class="panel hero-panel">
         <div class="hero-copy-block">
           <div class="hero-title-row">
@@ -1151,6 +1437,9 @@ function renderMain() {
             state.accessMode === "edicio" ? "edició" : "lectura"
           }</span>
           <span class="source-badge source-${state.source}">${text(state.syncMessage)}</span>
+          <button type="button" class="ghost-button compact-button" id="toggle-inventory">
+            ${state.inventoryOpen ? "Tancar inventari" : "Inventari"}
+          </button>
           ${
             isEditor()
               ? `<button type="button" class="ghost-button compact-button" id="toggle-admin-panel">
@@ -1164,6 +1453,7 @@ function renderMain() {
 
       ${renderAdminPanel()}
       ${renderResults(results)}
+      ${renderInventory()}
       ${computer ? renderComputerDetail(computer) : user ? renderUserDetail(user) : ""}
       ${footerMarkup()}
     </main>
@@ -1185,6 +1475,41 @@ function bindMainEvents(results) {
     if (state.adminOpen && !state.adminUsers.length) await loadAdminUsers();
   });
   document.querySelector("#refresh-admin-users") && bindPress(document.querySelector("#refresh-admin-users"), loadAdminUsers);
+
+  document.querySelector("#toggle-inventory") && bindPress(document.querySelector("#toggle-inventory"), () => {
+    state.inventoryOpen = !state.inventoryOpen;
+    render();
+  });
+  document.querySelectorAll("[data-inventory-filter]").forEach((button) => {
+    bindPress(button, () => {
+      state.inventoryFilter = button.dataset.inventoryFilter;
+      render();
+    });
+  });
+  document.querySelector("#inventory-sort")?.addEventListener("change", (event) => {
+    state.inventorySort = event.target.value;
+    render();
+  });
+  document.querySelector("#inventory-search")?.addEventListener("input", (event) => {
+    state.inventoryQuery = event.target.value;
+    if (inventoryRenderTimer) clearTimeout(inventoryRenderTimer);
+    inventoryRenderTimer = setTimeout(() => {
+      inventoryRenderTimer = null;
+      render();
+      const input = document.querySelector("#inventory-search");
+      if (!input) return;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }, 140);
+  });
+  document.querySelectorAll("[data-inventory-id]").forEach((button) => {
+    bindPress(button, () => {
+      state.selectedResult = { type: "computer", id: button.dataset.inventoryId };
+      state.showActionPanel = false;
+      render();
+      document.querySelector(".detail-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 
   document.querySelector("#search-input")?.addEventListener("input", (event) => {
     state.query = event.target.value;
@@ -1218,17 +1543,19 @@ function bindMainEvents(results) {
 
   document.querySelectorAll("[data-action-id]").forEach((button) => {
     bindPress(button, () => {
-      const action = QUICK_ACTIONS.find((item) => item.id === button.dataset.actionId);
       const computer = selectedComputer();
+      const action = computer ? actionsForComputer(computer).find((item) => item.id === button.dataset.actionId) : null;
       if (!action || !computer) return;
       state.currentActionId = action.id;
       state.creatorOpen = false;
       state.editEventId = null;
       state.editUserId = null;
+      state.formError = "";
       state.formData = {
         data: new Date().toISOString().slice(0, 10),
-        usuariId: action.requiresUser && computer.usuariActualId ? computer.usuariActualId : "",
+        usuariId: "",
         descripcio: action.defaultDescription ?? "",
+        opcio: action.id === "reparat" ? "tornar" : "",
       };
       render();
     });
@@ -1369,18 +1696,25 @@ function bindMainEvents(results) {
   });
   document.querySelector("#event-user")?.addEventListener("change", (event) => {
     state.formData.usuariId = event.target.value;
+    state.formError = "";
+    render();
+  });
+  document.querySelectorAll('input[name="event-option"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      state.formData.opcio = input.value;
+    });
   });
   document.querySelector("#event-description")?.addEventListener("input", (event) => {
     state.formData.descripcio = event.target.value;
   });
   document.querySelector("#action-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const nextUserId = action.clearsUser
-      ? null
-      : action.requiresUser
-        ? state.formData.usuariId
-        : computer.usuariActualId;
-    await persistAction(action, computer, nextUserId, state.formData.data, state.formData.descripcio);
+    if (action.requiresUser && state.formData.usuariId === computer.usuariActualId) {
+      state.formError = "L'equip ja està assignat a aquest usuari.";
+      render();
+      return;
+    }
+    await persistAction(actionOutcome(action, computer, state.formData), computer, state.formData.data, state.formData.descripcio);
   });
 }
 
@@ -1594,17 +1928,17 @@ async function loadSupabaseData() {
   render();
 }
 
-async function persistAction(action, computer, nextUserId, eventDate, description) {
+async function persistAction(outcome, computer, eventDate, description) {
   state.isSaving = true;
   state.syncMessage = "Desant a Supabase...";
   render();
 
   const current = activeAssignment(computer.id);
-  const nextStatus = action.nextState ?? computer.estat;
-  const nextObservations = action.eventType === "observacio" ? description : computer.observacions;
+  const { eventType, nextState, nextUserId } = outcome;
+  const nextObservations = eventType === "observacio" ? description : computer.observacions;
 
   try {
-    if (action.eventType === "assignacio" || action.eventType === "canvi_propietari") {
+    if (eventType === "assignacio" || eventType === "canvi_propietari") {
       if (current) {
         const { error } = await supabase
           .from("assignacions")
@@ -1623,17 +1957,15 @@ async function persistAction(action, computer, nextUserId, eventDate, descriptio
         data_inici: eventDate,
         data_final: null,
         curs_academic: academicYear(eventDate),
-        motiu: action.label,
+        motiu: outcome.label,
       });
       if (error) throw error;
-    }
-
-    if ((action.eventType === "retorn" || action.eventType === "reparat" || action.closesAssignment) && current) {
+    } else if (outcome.closesAssignment && current) {
       const { error } = await supabase
         .from("assignacions")
         .update({
           data_final: eventDate,
-          motiu: action.label,
+          motiu: outcome.label,
         })
         .eq("id", current.id);
       if (error) throw error;
@@ -1642,7 +1974,7 @@ async function persistAction(action, computer, nextUserId, eventDate, descriptio
     const { error: computerError } = await supabase
       .from("ordinadors")
       .update({
-        estat_actual: nextStatus,
+        estat_actual: nextState,
         usuari_actual_id: nextUserId,
         observacions_generals: nextObservations,
       })
@@ -1652,11 +1984,11 @@ async function persistAction(action, computer, nextUserId, eventDate, descriptio
     const { error: eventError } = await supabase.from("esdeveniments").insert({
       id: makeId(),
       ordinador_id: computer.id,
-      usuari_id: nextUserId,
-      tipus: action.eventType,
+      usuari_id: nextUserId ?? computer.usuariActualId,
+      tipus: eventType,
       data_event: eventDate,
       descripcio: description,
-      estat_resultant: nextStatus,
+      estat_resultant: nextState,
       curs_academic: academicYear(eventDate),
     });
     if (eventError) throw eventError;

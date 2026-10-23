@@ -461,6 +461,143 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
 .status-lliure { background: #e8ece7; }
 .status-incidencia_menor, .status-pendent_reparacio_interna, .status-pendent_servei_tecnic_extern, .status-fora_servei { background: #f3dfc8; }
 
+.history-summary { display: grid; gap: 10px; }
+.history-summary h3 { margin: 0; }
+.history-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.history-stats > div {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+.history-stats strong { font-size: 1.3rem; line-height: 1.05; }
+.history-stats span { font-size: 0.78rem; color: var(--muted); }
+.history-path { margin: 0; line-height: 1.45; }
+.history-path span { color: var(--muted); }
+
+.choice-group { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; }
+.modal-form label.choice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid rgba(17, 34, 24, 0.12);
+  cursor: pointer;
+}
+.modal-form .choice-option input { width: auto; margin: 2px 0 0; flex: 0 0 auto; accent-color: #2e8a4b; }
+.modal-form .confirm-option { border-color: rgba(180, 63, 59, 0.35); background: #fbeeea; }
+.form-note { margin: -4px 0 0; padding: 8px 11px; border-radius: 12px; background: #fff4dc; color: #6d4b15; font-size: 0.84rem; }
+.form-error { margin: 0; color: #b43f3b; font-weight: 600; }
+
+.inventory-panel { padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.inventory-panel .section-head { margin-bottom: 0; }
+.inventory-filters {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.inventory-filter {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--accent);
+  padding: 9px 8px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  box-shadow: 0 4px 10px rgba(17, 34, 24, 0.05);
+  border-top: 4px solid var(--inv-color, #c9d3cc);
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+.inventory-filter strong { font-size: 1.35rem; line-height: 1.05; }
+.inventory-filter span { font-size: 0.78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.inventory-filter:hover { transform: translateY(-1px); }
+.inventory-filter.active {
+  border-color: rgba(17, 34, 24, 0.35);
+  border-top-color: var(--inv-color, #c9d3cc);
+  background: var(--accent-soft);
+  box-shadow: 0 10px 22px rgba(17, 34, 24, 0.1);
+}
+.inv-tots { --inv-color: #112218; }
+.inv-lliure { --inv-color: #8fa89a; }
+.inv-assignat { --inv-color: #3f9a5c; }
+.inv-incidencia, .inv-incidencia_menor { --inv-color: #e2b13c; }
+.inv-pendent_reparacio_interna { --inv-color: #e08a2e; }
+.inv-pendent_servei_tecnic_extern { --inv-color: #c9572b; }
+.inv-fora_servei { --inv-color: #8c2f2c; }
+
+.inventory-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
+  gap: 10px;
+}
+.inventory-tools label { display: grid; gap: 4px; min-width: 0; }
+.inventory-tools input,
+.inventory-tools select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(17, 34, 24, 0.14);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 9px 11px;
+  font-size: 0.86rem;
+  color: var(--accent);
+}
+.inventory-count { margin: 0; font-size: 0.8rem; color: var(--muted); }
+
+.inventory-list { display: grid; gap: 6px; min-width: 0; }
+.inventory-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.55fr) minmax(150px, 1fr) minmax(140px, 1.1fr) minmax(0, 2.4fr);
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--card);
+  padding: 7px 12px;
+  color: var(--accent);
+  font-size: 0.86rem;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+button.inventory-row:hover,
+.inventory-row.selected {
+  border-color: rgba(36, 64, 48, 0.24);
+  box-shadow: 0 8px 18px rgba(17, 34, 24, 0.08);
+}
+.inventory-head {
+  background: transparent;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.inventory-row > * { min-width: 0; }
+.inv-code { font-size: 0.98rem; }
+.inv-status { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.inv-dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: 50%;
+  background: var(--inv-color);
+}
+.inv-user { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-user.is-empty { color: var(--muted); }
+.inv-last { display: grid; gap: 1px; }
+.inv-last-meta { font-size: 0.76rem; color: var(--muted); }
+.inv-last-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .empty-state {
   min-height: 0;
   display: grid;
@@ -657,6 +794,11 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
     grid-column: 2;
     align-self: start;
   }
+  .search-layout > .inventory-panel,
+  .search-layout.inventory-open > .detail-panel,
+  .search-layout.inventory-open > .results-panel {
+    grid-column: 1 / -1;
+  }
   .search-layout > .results-panel,
   .search-layout > .empty-state {
     max-width: 100%;
@@ -723,6 +865,25 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
   .hero-panel, .info-strip, .detail-grid, .detail-grid-wide, .quick-actions {
     grid-template-columns: 1fr;
   }
+  .inventory-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .inventory-head { display: none; }
+  .inventory-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "code status"
+      "user user"
+      "last last";
+    gap: 4px 10px;
+  }
+  .inv-code { grid-area: code; }
+  .inv-status { grid-area: status; justify-self: end; }
+  .inv-user { grid-area: user; }
+  .inv-last { grid-area: last; }
+}
+
+@media (max-width: 640px) {
+  .inventory-panel { padding: 12px; }
+  .inventory-tools { grid-template-columns: 1fr; }
   .admin-panel {
     width: 100%;
     min-width: 0;
