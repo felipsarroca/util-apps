@@ -102,27 +102,37 @@ html[data-theme="dark"] .clock.danger .display {
 .clock.potato-mode .ring-bar {
   display: none;
 }
-/* La patata s'enfila a la part alta i el temps queda a sota, sense trepitjar-la. */
+/* Patata allargada: la cara a dalt i el temps damunt de la panxa, lluny dels botons. */
 .clock.potato-mode .potato {
-  inset: 7% 12% 31%;
+  inset: 5% 18% 9%;
+}
+.clock.potato-mode .potato svg {
+  width: auto;
+  height: 100%;
 }
 .clock.potato-mode .clock-face {
   position: absolute;
-  bottom: 9%;
+  top: 56%;
   left: 0;
   right: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 .clock.potato-mode .display {
-  font-size: calc(var(--clock, 340px) * 0.1);
-  color: var(--muted);
+  font-size: calc(var(--clock, 340px) * 0.11);
+  color: #fffaf0;
+  -webkit-text-stroke: calc(var(--clock, 340px) * 0.008) #6b4520;
+  paint-order: stroke fill;
 }
 .clock.potato-mode .display:empty {
   display: none;
 }
 .clock.potato-mode .clock-note {
   margin-top: 4px;
-  max-width: calc(var(--clock, 340px) * 0.56);
+  max-width: calc(var(--clock, 340px) * 0.4);
   font-size: clamp(12px, calc(var(--clock, 340px) * 0.04), 20px);
+  font-weight: 700;
+  color: #4a2f12;
 }
 .potato .steam {
   opacity: 0;
@@ -387,4 +397,8 @@ html[data-theme="dark"] .stage-marks li:first-child .n {
     grid-template-columns: 1fr 1fr;
     width: 100%;
   }
+}
+/* El «BUM!» queda a l'altura de la cara perquè no tapi el temps. */
+.clock.potato-mode .potato .boom {
+  margin-bottom: 34%;
 }
