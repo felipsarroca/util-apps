@@ -1650,3 +1650,32 @@ html[data-theme="dark"] .absent-chips button[aria-pressed="true"] {
     max-width: none;
   }
 }
+/* «Ja han sortit»: una franja compacta de noms ratllats sota el quadre de text. */
+.entry-roster {
+  height: auto;
+  max-height: 96px;
+  padding: 8px 12px;
+  margin-top: 4px;
+}
+.entry-roster[hidden] {
+  display: none;
+}
+.entry-roster .roster-heading {
+  margin: 0 0 4px;
+}
+.entry-roster .roster-retired {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.entry-roster .roster-retired li {
+  padding: 0;
+  font-size: 13px;
+}
+.entry-roster .field-note {
+  margin: 0 0 4px;
+}

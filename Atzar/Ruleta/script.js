@@ -141,8 +141,7 @@
     invalidDraft = false,
     toastTimer,
     audioContext,
-    master,
-    editingList = false;
+    master;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   // La Ruleta mostra exactament els noms escrits: no aplica la llista d'absents de les altres apps.
   const wheel = () => state.entries;
@@ -209,7 +208,6 @@
     for (const id of [
       "entriesInput",
       "libraryButton",
-      "editListButton",
       "shuffleButton",
       "dedupeButton",
       "clearButton",
@@ -488,7 +486,6 @@
       return;
     audioReady();
     checkpoint();
-    editingList = false;
     spinning = true;
     refresh();
     const n = wheel().length,
@@ -629,17 +626,8 @@
         audioContext.currentTime,
       );
   }
-  function renderRoster() {
-    const showRoster = state.noRepeat && !editingList;
-    $("entryRoster").hidden = !showRoster;
-    $("entriesInput").hidden = showRoster;
-    $("editListButton").hidden = !state.noRepeat;
-    $("editListButton").textContent = editingList ? "Fet" : "Edita";
-    $("editListNote").hidden = !state.noRepeat || !editingList;
-    $("entryFeedback").hidden = showRoster;
-    $("activityHelp").hidden = !state.activity;
-    $("activityInstructions").textContent = state.activity?.instructions || "";
-    if (!showRoster) return;
+  // Opcions de la llista completa que ja han sortit (sense repeticions).
+  function retiredEntries() {
     const counts = new Map();
     state.entries.forEach((name) =>
       counts.set(name, (counts.get(name) || 0) + 1),
@@ -652,25 +640,30 @@
       }
       return true;
     });
-    const roster = $("entryRoster");
-    roster.replaceChildren();
-    function group(names, title, isRetired) {
-      const heading = document.createElement("p");
-      heading.className = "roster-heading";
-      heading.textContent = `${title} · ${names.length}`;
-      const list = document.createElement("ol");
-      list.className = isRetired ? "roster-retired" : "roster-pending";
-      names.forEach((name) => {
-        const item = document.createElement("li");
-        const text = document.createElement(isRetired ? "s" : "span");
-        text.textContent = name;
-        item.append(text);
-        list.append(item);
-      });
-      roster.append(heading, list);
+    return retired;
+  }
+  // El quadre de text sempre és visible i editable: hi ha les opcions que són a la roda.
+  // Sense repeticions, a sota es mostren ratllades les que ja han sortit.
+  function renderRoster() {
+    $("activityHelp").hidden = !state.activity;
+    $("activityInstructions").textContent = state.activity?.instructions || "";
+    const retired = state.noRepeat ? retiredEntries() : [],
+      roster = $("entryRoster");
+    roster.hidden = !retired.length;
+    if (!retired.length) return roster.replaceChildren();
+    const heading = document.createElement("p"),
+      list = document.createElement("ol");
+    heading.className = "roster-heading";
+    heading.textContent = `Ja han sortit · ${retired.length}`;
+    list.className = "roster-retired";
+    for (const name of retired) {
+      const item = document.createElement("li"),
+        text = document.createElement("s");
+      text.textContent = name;
+      item.append(text);
+      list.append(item);
     }
-    group(state.entries, "Pendents", false);
-    if (retired.length) group(retired, "Ja han sortit", true);
+    roster.replaceChildren(heading, list);
     if (!state.entries.length) {
       const message = document.createElement("p");
       message.className = "field-note";
@@ -678,14 +671,6 @@
       roster.prepend(message);
     }
   }
-  $("editListButton").addEventListener("click", () => {
-    if (spinning) return;
-    editingList = !editingList;
-    if (editingList) $("entriesInput").value = state.base.join("\n");
-    else syncInput();
-    renderRoster();
-    if (editingList) $("entriesInput").focus();
-  });
 
   function renderClasses() {
     $("classCount").textContent = state.classes.length
@@ -706,7 +691,6 @@
           state.base = [...group.entries];
           state.title = group.name;
           state.activity = null;
-          editingList = false;
           $("className").value = group.name;
           changed();
           toast(
@@ -931,7 +915,6 @@
         instructions: selectedTheme.instructions,
       };
     }
-    editingList = false;
     changed();
     selectTab("entries");
     libraryDialog.close();
@@ -995,9 +978,11 @@
       return;
     }
     checkpoint();
+    // Les que ja han sortit es conserven perquè «Recupera participants» les torni a la roda.
+    const retired = state.noRepeat ? retiredEntries() : [];
     state.entries = parse($("entriesInput").value);
-    state.base = [...state.entries];
-    state.activity = null;
+    state.base = [...state.entries, ...retired];
+    if (!state.entries.length) state.activity = null;
     winnerIndex = null;
     rotation = 0;
     drawWheel();
@@ -1193,7 +1178,6 @@
           : type === "number"
             ? Number($(id).value)
             : $(id).value;
-      if (key === "noRepeat") editingList = false;
       applySettings();
       refresh();
       if (key === "palette") drawWheel();

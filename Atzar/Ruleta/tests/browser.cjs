@@ -49,7 +49,6 @@ const root = path.resolve(__dirname, "..");
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(baseURL);
   async function setEntries(value) {
-    if (!(await page.locator("#entriesInput").isVisible())) await page.locator("#editListButton").click();
     await page.locator("#entriesInput").fill(value);
   }
 

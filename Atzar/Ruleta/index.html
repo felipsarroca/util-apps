@@ -12,10 +12,10 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="../manifest.webmanifest" />
     <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
-    <link rel="stylesheet" href="style.css?v=3.5" />
+    <link rel="stylesheet" href="style.css?v=3.6" />
     <script src="../shared/atzar.js?v=1.3" defer></script>
     <script src="data/library.js" defer></script>
-    <script src="script.js?v=3.6" defer></script>
+    <script src="script.js?v=3.7" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -133,7 +133,6 @@
           >
             <div class="section-heading">
               <h2>Opcions de la ruleta</h2>
-              <button id="editListButton" class="quiet" hidden>Edita</button>
             </div>
             <button id="libraryButton" class="library-launch">
               <span aria-hidden="true">▦</span
@@ -143,6 +142,42 @@
                 ></span
               ><span aria-hidden="true">→</span>
             </button>
+            <textarea
+              id="entriesInput"
+              aria-label="Opcions de la ruleta, una per línia"
+              spellcheck="false"
+              maxlength="20000"
+              aria-describedby="entryFeedback"
+              placeholder="Anna&#10;Biel&#10;Clàudia"
+            ></textarea>
+            <p id="entryFeedback" class="field-note" aria-live="polite"></p>
+            <div class="tools-row">
+              <button id="shuffleButton" class="quiet">⇄ Barreja</button
+              ><button id="dedupeButton" class="quiet">Treu duplicats</button
+              ><button id="clearButton" class="quiet">Buida</button>
+            </div>
+            <div
+              id="entryRoster"
+              class="entry-roster"
+              aria-label="Opcions que ja han sortit"
+              hidden
+            ></div>
+            <details id="activityHelp" class="activity-help" hidden>
+              <summary>Com es juga</summary>
+              <p id="activityInstructions"></p>
+            </details>
+            <div class="separator"></div>
+            <label class="switch-row" for="noRepeatToggle"
+              ><span
+                ><strong>Sense repeticions</strong
+                ><small>Les que surten deixen la roda i es veuen ratllades a sota.</small></span
+              ><input id="noRepeatToggle" type="checkbox" role="switch"
+            /></label>
+            <div class="tools-row recovery">
+              <button id="restoreButton" class="quiet">
+                ↶ Recupera participants</button
+              ><button id="undoButton" class="quiet" disabled>Desfés</button>
+            </div>
             <details id="savedClasses" class="saved-classes">
               <summary>Les meves classes <span id="classCount"></span></summary>
               <div
@@ -167,48 +202,6 @@
                 ronda. El mateix nom actualitza la classe.
               </p>
             </details>
-            <details id="activityHelp" class="activity-help" hidden>
-              <summary>Com es juga</summary>
-              <p id="activityInstructions"></p>
-            </details>
-            <div
-              id="entryRoster"
-              tabindex="0"
-              role="region"
-              class="entry-roster"
-              aria-label="Opcions pendents i triades"
-              hidden
-            ></div>
-            <p id="editListNote" class="field-note" hidden>
-              Si modifiques la llista, totes les opcions tornaran a estar
-              actives.
-            </p>
-            <textarea
-              id="entriesInput"
-              aria-label="Opcions de la ruleta, una per línia"
-              spellcheck="false"
-              maxlength="20000"
-              aria-describedby="entryFeedback"
-              placeholder="Anna&#10;Biel&#10;Clàudia"
-            ></textarea>
-            <p id="entryFeedback" class="field-note" aria-live="polite"></p>
-            <div class="tools-row">
-              <button id="shuffleButton" class="quiet">⇄ Barreja</button
-              ><button id="dedupeButton" class="quiet">Treu duplicats</button
-              ><button id="clearButton" class="quiet">Buida</button>
-            </div>
-            <div class="separator"></div>
-            <label class="switch-row" for="noRepeatToggle"
-              ><span
-                ><strong>Sense repeticions</strong
-                ><small>Les triades queden ratllades al final.</small></span
-              ><input id="noRepeatToggle" type="checkbox" role="switch"
-            /></label>
-            <div class="tools-row recovery">
-              <button id="restoreButton" class="quiet">
-                ↶ Recupera participants</button
-              ><button id="undoButton" class="quiet" disabled>Desfés</button>
-            </div>
             <div class="panel-bottom">
               <button id="importButton" class="secondary">↥ Importa</button
               ><button id="exportButton" class="secondary">

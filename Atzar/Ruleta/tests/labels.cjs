@@ -60,8 +60,6 @@ const fs = require("node:fs");
   ]) {
     await page.setViewportSize({ width, height });
     for (const count of [1, 2, 3, 6, 8, 12, 20, 48, 60, 200]) {
-      if (!(await page.locator("#entriesInput").isVisible()))
-        await page.locator("#editListButton").click();
       const entries = Array.from(
         { length: count },
         (_, i) => examples[i % examples.length],

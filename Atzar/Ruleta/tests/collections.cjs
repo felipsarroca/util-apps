@@ -39,7 +39,6 @@ const path = require("node:path"),
   assert((await page.locator("#savedClasses").getAttribute("open")) !== null);
   await page.getByRole("button", { name: "2n A", exact: true }).click();
   assert.equal((await stored()).entries.length, 3);
-  await page.locator("#editListButton").click();
   await page.locator("#entriesInput").fill("Duna\nEmma");
   await page.locator("#className").fill("3r B");
   await page.locator("#saveClassButton").click();
