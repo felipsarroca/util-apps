@@ -36,7 +36,7 @@ La lògica de treball està basada en esdeveniments. Això permet que cada canvi
 - Fitxa d'usuari amb equip actual i recorregut d'ús.
 - Accions ràpides per registrar canvis sense navegar per pantalles complexes.
 - Edició d'esdeveniments ja registrats.
-- Alta de nous ordinadors i nous usuaris des de la pròpia interfície.
+- Alta i edició d'ordinadors (codi RPPO) i d'usuaris des de la pròpia interfície, amb fusió de duplicats.
 - Connexió amb Supabase per treballar amb dades reals.
 - Mode local de reserva si Supabase no respon.
 - Preparació PWA: manifest, service worker i instal·lació en dispositius mòbils.
@@ -60,7 +60,14 @@ Cada acció genera un esdeveniment. Els tipus antics (`reparacio_interna`, `canv
 
 ## Inventari
 
-El botó «Inventari» mostra tots els equips amb comptadors per estat que també fan de filtre (lliures, assignats, incidència, reparació major i baixa). La llista es pot filtrar per text i ordenar per codi, estat, usuari o últim moviment. En prémer una fila s'obre la fitxa de l'equip.
+El botó «Inventari» mostra tots els equips amb comptadors per estat que també fan de filtre (lliures, assignats, reparació major i baixa). La llista es pot filtrar per text i ordenar per codi, estat, usuari o últim moviment. En prémer una fila s'obre la fitxa de l'equip. En mode edició, el botó «Nou equip» permet donar-ne d'alta un, i «Editar equip» (a la fitxa) permet corregir-ne el codi.
+
+## Usuaris i accessos
+
+L'app distingeix dos conceptes:
+
+- **Usuaris**: les persones que fan servir els ordinadors (alumnes o usuaris genèrics). El botó «Usuaris» mostra la llista completa amb un filtre per nom i marca els possibles duplicats (mateix nom sense tenir en compte accents, majúscules ni espais). Des d'aquí es pot crear un usuari, obrir-ne la fitxa o editar-lo. A la finestra d'edició es pot corregir el nom, fusionar-lo amb un altre usuari (hi passen els equips i tot l'historial) o esborrar-lo si no té historial. La fusió i l'esborrat es fan amb la funció `elimina_usuari` de Supabase.
+- **Accessos**: els comptes de Supabase Auth que poden entrar a l'app, amb rol de consulta o d'edició. Només els veu el mode edició, amb el botó «Accessos».
 
 ## Resum de l'historial
 
@@ -72,7 +79,7 @@ Les fitxes d'ordinador i d'usuari mostren un resum amb el nombre d'usuaris o d'e
 - `assignat`
 - `pendent_servei_tecnic_extern` (reparació major)
 - `fora_servei` (baixa)
-- `incidencia_menor` i `pendent_reparacio_interna`: estats heretats. Les accions noves no els generen i desapareixen amb el moviment següent de l'equip.
+- `incidencia_menor` i `pendent_reparacio_interna`: estats heretats. L'app els mostra com a lliure o assignat (segons si l'equip té usuari), de manera que cap incidència queda «pendent»; es corregeixen a la base de dades amb el moviment següent de l'equip.
 
 ## Modes d'accés
 

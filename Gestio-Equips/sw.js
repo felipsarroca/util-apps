@@ -1,4 +1,4 @@
-const CACHE_NAME = "gestio-equips-v4";
+const CACHE_NAME = "gestio-equips-v5";
 const APP_SHELL = [
   "./",
   "./index.html",

@@ -497,7 +497,7 @@ p, dt, dd, small, input, select, textarea, button { font-size: 0.74rem; }
 .inventory-panel .section-head { margin-bottom: 0; }
 .inventory-filters {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 .inventory-filter {
@@ -597,6 +597,77 @@ button.inventory-row:hover,
 .inv-last { display: grid; gap: 1px; }
 .inv-last-meta { font-size: 0.76rem; color: var(--muted); }
 .inv-last-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.people-panel { padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.people-panel .section-head { margin-bottom: 0; }
+.people-search { display: grid; gap: 4px; max-width: 420px; }
+.people-search input {
+  width: 100%;
+  border: 1px solid rgba(17, 34, 24, 0.14);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 9px 11px;
+  font-size: 0.86rem;
+  color: var(--accent);
+}
+.people-dup-note { color: #8a4c22; font-weight: 700; }
+.people-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.people-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 6px 8px 6px 4px;
+}
+.people-row.is-inactive { opacity: 0.62; }
+.people-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 10px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.people-open:hover { background: var(--accent-soft); }
+.people-open strong,
+.people-open small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.people-open small { color: var(--muted); font-size: 0.78rem; }
+.people-dup {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff4dc;
+  color: #8a4c22;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.user-cleanup {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+}
+.user-cleanup h3 { margin: 0; font-size: 0.95rem; }
+.user-merge-row { display: flex; gap: 8px; }
+.user-merge-row select {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid rgba(17, 34, 24, 0.14);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 9px 11px;
+  color: var(--accent);
+}
 
 .empty-state {
   min-height: 0;
@@ -795,6 +866,8 @@ button.inventory-row:hover,
     align-self: start;
   }
   .search-layout > .inventory-panel,
+  .search-layout > .people-panel,
+  .search-layout > .admin-panel,
   .search-layout.inventory-open > .detail-panel,
   .search-layout.inventory-open > .results-panel {
     grid-column: 1 / -1;

@@ -41,6 +41,8 @@ const state = {
     role: "consulta",
   },
   installPromptVisible: false,
+  peopleOpen: false,
+  peopleQuery: "",
   inventoryOpen: false,
   inventoryFilter: "tots",
   inventoryQuery: "",
@@ -52,6 +54,9 @@ const state = {
   creatorOpen: false,
   editEventId: null,
   editUserId: null,
+  editComputerId: null,
+  editComputerCode: "",
+  mergeTargetId: "",
   formData: {
     data: new Date().toISOString().slice(0, 10),
     usuariId: "",
@@ -156,6 +161,13 @@ function getInstallInstructions() {
   }
 
   return "Si el navegador no mostra el botó d'instal·lació, obre el menú i tria «Instal·la l'app» o «Afegeix a la pantalla d'inici».";
+}
+
+// Els estats d'incidència antics no han de quedar oberts: es mostren com a lliure o assignat.
+const LEGACY_INCIDENT_STATES = ["incidencia_menor", "pendent_reparacio_interna"];
+function normalizeComputerStatus(status, userId) {
+  if (!LEGACY_INCIDENT_STATES.includes(status)) return status;
+  return userId ? "assignat" : "lliure";
 }
 
 function getUser(userId) {
@@ -620,6 +632,7 @@ async function signOut() {
     state.query = "";
     state.selectedResult = null;
     state.adminOpen = false;
+    state.peopleOpen = false;
     state.adminUsers = [];
     state.adminMessage = "";
     state.adminError = "";
@@ -719,7 +732,6 @@ const INVENTORY_FILTERS = [
   { id: "tots", label: "Tots" },
   { id: "lliure", label: "Lliures" },
   { id: "assignat", label: "Assignats" },
-  { id: "incidencia", label: "Incidència", states: ["incidencia_menor", "pendent_reparacio_interna"] },
   { id: "pendent_servei_tecnic_extern", label: "Rep. major" },
   { id: "fora_servei", label: "Baixa" },
 ];
@@ -773,6 +785,7 @@ function renderInventory() {
           <p class="eyebrow">Inventari</p>
           <h2>Estat de tots els ordinadors</h2>
         </div>
+        ${isEditor() ? '<button type="button" class="primary-button compact-button" id="inventory-new-computer">Nou equip</button>' : ""}
       </div>
       <div class="inventory-filters" role="group" aria-label="Filtra per estat">
         ${INVENTORY_FILTERS.map(
@@ -848,8 +861,8 @@ function renderAdminPanel() {
     <section class="panel admin-panel">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Administració</p>
-          <h2>Accessos a l'app</h2>
+          <p class="eyebrow">Accessos</p>
+          <h2>Comptes que poden entrar a l'app</h2>
         </div>
         <button type="button" class="ghost-button compact-button" id="refresh-admin-users" ${state.isAdminLoading ? "disabled" : ""}>
           Actualitzar
@@ -903,8 +916,78 @@ function renderAdminPanel() {
                   `,
                 )
                 .join("")
-            : `<p class="help-text">${state.isAdminLoading ? "Carregant usuaris..." : "Encara no s'ha carregat cap usuari."}</p>`
+            : `<p class="help-text">${state.isAdminLoading ? "Carregant accessos..." : "Encara no s'ha carregat cap accés."}</p>`
         }
+      </div>
+    </section>
+  `;
+}
+
+// Clau per detectar possibles duplicats: sense accents, majúscules ni espais.
+const nameKey = (user) =>
+  `${user.nom} ${user.cognoms}`
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+function userHasHistory(userId) {
+  return (
+    state.assignments.some((item) => item.usuariId === userId) ||
+    state.events.some((item) => item.usuariId === userId) ||
+    state.computers.some((item) => item.usuariActualId === userId)
+  );
+}
+
+function renderPeoplePanel() {
+  if (!state.peopleOpen) return "";
+
+  const query = state.peopleQuery.trim().toLowerCase();
+  const keyCounts = state.users.reduce((counts, user) => counts.set(nameKey(user), (counts.get(nameKey(user)) ?? 0) + 1), new Map());
+  const rows = state.users
+    .filter((user) => !query || `${user.nom} ${user.cognoms}`.toLowerCase().includes(query))
+    .sort((a, b) => `${a.nom} ${a.cognoms}`.localeCompare(`${b.nom} ${b.cognoms}`, "ca"));
+  const duplicates = state.users.filter((user) => keyCounts.get(nameKey(user)) > 1).length;
+
+  return `
+    <section class="panel people-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Usuaris</p>
+          <h2>Persones que fan servir els ordinadors</h2>
+        </div>
+        ${isEditor() ? '<button type="button" class="primary-button compact-button" id="people-new-user">Nou usuari</button>' : ""}
+      </div>
+      <label class="people-search">
+        <span class="search-label">Filtra per nom</span>
+        <input id="people-search" type="search" value="${text(state.peopleQuery)}" placeholder="Nom o cognoms" />
+      </label>
+      <p class="inventory-count">${rows.length} ${rows.length === 1 ? "usuari" : "usuaris"}${
+        duplicates ? ` · <span class="people-dup-note">${duplicates} amb el nom repetit</span>` : ""
+      }</p>
+      <div class="people-list">
+        ${rows
+          .map((user) => {
+            const computers = state.computers.filter((computer) => computer.usuariActualId === user.id);
+            const isDuplicate = keyCounts.get(nameKey(user)) > 1;
+            return `
+              <article class="people-row ${user.actiu === false ? "is-inactive" : ""}">
+                <button type="button" class="people-open" data-people-open="${user.id}">
+                  <strong>${text(`${user.nom} ${user.cognoms}`.trim())}</strong>
+                  <small>${user.tipusUsuari === "generic" ? "Genèric" : "Alumne"}${user.actiu === false ? " · Inactiu" : ""} · ${
+                    computers.length ? text(computers.map((computer) => computer.codi).join(", ")) : "Sense equip"
+                  }</small>
+                </button>
+                ${isDuplicate ? '<span class="people-dup">Possible duplicat</span>' : ""}
+                ${
+                  isEditor()
+                    ? `<button type="button" class="ghost-button compact-button" data-people-edit="${user.id}">Editar</button>`
+                    : ""
+                }
+              </article>
+            `;
+          })
+          .join("")}
       </div>
     </section>
   `;
@@ -922,7 +1005,14 @@ function renderComputerDetail(item) {
           <p class="eyebrow">Fitxa d'ordinador</p>
           <h2>${text(item.codi)}</h2>
         </div>
-        <span class="status-badge status-${item.estat}">${text(ESTATS[item.estat])}</span>
+        <div class="detail-header-actions">
+          <span class="status-badge status-${item.estat}">${text(ESTATS[item.estat])}</span>
+          ${
+            isEditor()
+              ? '<button type="button" class="compact-button user-edit-button" id="edit-computer-button">Editar equip</button>'
+              : ""
+          }
+        </div>
       </div>
 
       <div class="info-strip">
@@ -953,15 +1043,6 @@ function renderComputerDetail(item) {
             <p class="action-panel-copy">Només es mostren les accions possibles en l'estat actual.</p>
           </div>
           <div class="action-panel-buttons">
-            <button
-              type="button"
-              class="ghost-button compact-button icon-plus-button"
-              id="open-create-modal"
-              title="Afegir un nou equip"
-              ${state.accessMode !== "edicio" ? "disabled" : ""}
-            >
-              Editar equips / usuaris
-            </button>
             <button type="button" class="primary-button compact-button" id="toggle-actions" ${
               state.accessMode !== "edicio" ? "disabled" : ""
             }>
@@ -1178,17 +1259,10 @@ function renderModal() {
       <div class="modal-overlay">
         <section class="panel modal-panel">
           <div class="section-head">
-            <div><p class="eyebrow">Nou registre</p><h2>Afegir un nou element</h2></div>
+            <div><p class="eyebrow">Nou registre</p><h2>${state.createData.kind === "computer" ? "Nou equip" : "Nou usuari"}</h2></div>
             <button type="button" class="ghost-button" id="close-modal">Tancar</button>
           </div>
           <form class="modal-form" id="create-form" autocomplete="off">
-            <label>
-              <span>Què vols afegir?</span>
-              <select id="create-kind">
-                <option value="computer" ${state.createData.kind === "computer" ? "selected" : ""}>Nou ordinador</option>
-                <option value="user" ${state.createData.kind === "user" ? "selected" : ""}>Nou usuari</option>
-              </select>
-            </label>
             ${
               state.createData.kind === "computer"
                 ? `
@@ -1273,8 +1347,37 @@ function renderModal() {
     `;
   }
 
+  const editedComputer = state.computers.find((item) => item.id === state.editComputerId);
+  if (editedComputer) {
+    return `
+      <div class="modal-overlay">
+        <section class="panel modal-panel">
+          <div class="section-head">
+            <div><p class="eyebrow">Equip</p><h2>Editar equip</h2></div>
+            <button type="button" class="ghost-button" id="close-modal">Tancar</button>
+          </div>
+          <form class="modal-form" id="edit-computer-form" autocomplete="off">
+            <label><span>Codi RPPO</span><input id="edit-computer-code" type="text" value="${text(state.editComputerCode)}" required /></label>
+            <p class="modal-warning">L'historial i les assignacions de l'equip es mantenen; només canvia el codi.</p>
+            <button type="submit" class="primary-button" ${state.isSaving ? "disabled" : ""}>
+              ${state.isSaving ? "Desant..." : "Desar equip"}
+            </button>
+          </form>
+        </section>
+      </div>
+    `;
+  }
+
   const editedUser = currentEditedUser();
   if (editedUser) {
+    const editedKey = nameKey(editedUser);
+    const mergeCandidates = state.users
+      .filter((user) => user.id !== editedUser.id)
+      .sort(
+        (a, b) =>
+          Number(nameKey(b) === editedKey) - Number(nameKey(a) === editedKey) ||
+          `${a.nom} ${a.cognoms}`.localeCompare(`${b.nom} ${b.cognoms}`, "ca"),
+      );
     return `
       <div class="modal-overlay">
         <section class="panel modal-panel">
@@ -1304,6 +1407,31 @@ function renderModal() {
               ${state.isSaving ? "Desant..." : "Desar usuari"}
             </button>
           </form>
+          <div class="user-cleanup">
+            <h3>És un duplicat o un error?</h3>
+            <p class="help-text">Tria l'usuari correcte: hi passaran els equips i tot l'historial, i aquest registre s'esborrarà.</p>
+            <div class="user-merge-row">
+              <select id="merge-target" aria-label="Usuari amb qui fusionar">
+                <option value="">Fusiona amb...</option>
+                ${mergeCandidates
+                  .map(
+                    (user) =>
+                      `<option value="${user.id}" ${state.mergeTargetId === user.id ? "selected" : ""}>${text(
+                        `${user.nom} ${user.cognoms}`.trim(),
+                      )}${nameKey(user) === editedKey ? " (mateix nom)" : ""}</option>`,
+                  )
+                  .join("")}
+              </select>
+              <button type="button" class="ghost-button compact-button" id="merge-user-button" ${
+                state.isSaving || !state.mergeTargetId ? "disabled" : ""
+              }>Fusionar</button>
+            </div>
+            ${
+              userHasHistory(editedUser.id)
+                ? `<p class="help-text">Com que té historial, no es pot esborrar sense més: fusiona'l o marca'l com a inactiu.</p>`
+                : `<button type="button" class="danger-button" id="delete-user-button" ${state.isSaving ? "disabled" : ""}>Esborrar usuari</button>`
+            }
+          </div>
         </section>
       </div>
     `;
@@ -1394,7 +1522,9 @@ function renderMain() {
   const user = selectedUser();
 
   app.innerHTML = `
-    <main class="app-shell search-layout ${state.inventoryOpen ? "inventory-open" : ""}">
+    <main class="app-shell search-layout ${state.inventoryOpen ? "inventory-open" : ""} ${
+      state.adminOpen || state.peopleOpen ? "panel-open" : ""
+    }">
       <section class="panel hero-panel">
         <div class="hero-copy-block">
           <div class="hero-title-row">
@@ -1440,10 +1570,13 @@ function renderMain() {
           <button type="button" class="ghost-button compact-button" id="toggle-inventory">
             ${state.inventoryOpen ? "Tancar inventari" : "Inventari"}
           </button>
+          <button type="button" class="ghost-button compact-button" id="toggle-people">
+            ${state.peopleOpen ? "Tancar usuaris" : "Usuaris"}
+          </button>
           ${
             isEditor()
               ? `<button type="button" class="ghost-button compact-button" id="toggle-admin-panel">
-                  ${state.adminOpen ? "Tancar usuaris" : "Usuaris"}
+                  ${state.adminOpen ? "Tancar accessos" : "Accessos"}
                 </button>`
               : ""
           }
@@ -1452,9 +1585,14 @@ function renderMain() {
       </div>
 
       ${renderAdminPanel()}
-      ${renderResults(results)}
-      ${renderInventory()}
-      ${computer ? renderComputerDetail(computer) : user ? renderUserDetail(user) : ""}
+      ${renderPeoplePanel()}
+      ${
+        state.adminOpen || state.peopleOpen
+          ? ""
+          : `${renderResults(results)}
+             ${renderInventory()}
+             ${computer ? renderComputerDetail(computer) : user ? renderUserDetail(user) : ""}`
+      }
       ${footerMarkup()}
     </main>
     ${renderModal()}
@@ -1469,6 +1607,8 @@ function bindMainEvents(results) {
   document.querySelector("#sign-out-button") && bindPress(document.querySelector("#sign-out-button"), signOut);
   document.querySelector("#toggle-admin-panel") && bindPress(document.querySelector("#toggle-admin-panel"), async () => {
     state.adminOpen = !state.adminOpen;
+    state.peopleOpen = false;
+    state.inventoryOpen = false;
     state.adminMessage = "";
     state.adminError = "";
     render();
@@ -1478,8 +1618,42 @@ function bindMainEvents(results) {
 
   document.querySelector("#toggle-inventory") && bindPress(document.querySelector("#toggle-inventory"), () => {
     state.inventoryOpen = !state.inventoryOpen;
+    state.adminOpen = false;
+    state.peopleOpen = false;
     render();
   });
+  document.querySelector("#toggle-people") && bindPress(document.querySelector("#toggle-people"), () => {
+    state.peopleOpen = !state.peopleOpen;
+    state.adminOpen = false;
+    state.inventoryOpen = false;
+    render();
+  });
+  document.querySelector("#people-search")?.addEventListener("input", (event) => {
+    state.peopleQuery = event.target.value;
+    if (inventoryRenderTimer) clearTimeout(inventoryRenderTimer);
+    inventoryRenderTimer = setTimeout(() => {
+      inventoryRenderTimer = null;
+      render();
+      const input = document.querySelector("#people-search");
+      if (!input) return;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }, 140);
+  });
+  document.querySelectorAll("[data-people-open]").forEach((button) => {
+    bindPress(button, () => {
+      state.selectedResult = { type: "user", id: button.dataset.peopleOpen };
+      state.peopleOpen = false;
+      render();
+      document.querySelector(".detail-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+  document.querySelectorAll("[data-people-edit]").forEach((button) => {
+    bindPress(button, () => openUserEditor(button.dataset.peopleEdit));
+  });
+  document.querySelector("#people-new-user") && bindPress(document.querySelector("#people-new-user"), () => openCreator("user"));
+  document.querySelector("#inventory-new-computer") &&
+    bindPress(document.querySelector("#inventory-new-computer"), () => openCreator("computer"));
   document.querySelectorAll("[data-inventory-filter]").forEach((button) => {
     bindPress(button, () => {
       state.inventoryFilter = button.dataset.inventoryFilter;
@@ -1561,18 +1735,12 @@ function bindMainEvents(results) {
     });
   });
 
-  document.querySelector("#open-create-modal") && bindPress(document.querySelector("#open-create-modal"), () => {
-    state.creatorOpen = true;
-    state.currentActionId = null;
-    state.editEventId = null;
-    state.editUserId = null;
-    state.createData = {
-      kind: "computer",
-      codi: "",
-      nom: "",
-      cognoms: "",
-      tipusUsuari: "alumne",
-    };
+  document.querySelector("#edit-computer-button") && bindPress(document.querySelector("#edit-computer-button"), () => {
+    const computer = selectedComputer();
+    if (!computer || !isEditor()) return;
+    closeModals();
+    state.editComputerId = computer.id;
+    state.editComputerCode = computer.codi;
     render();
   });
 
@@ -1582,27 +1750,13 @@ function bindMainEvents(results) {
   });
 
   document.querySelector("#close-modal") && bindPress(document.querySelector("#close-modal"), () => {
-    state.currentActionId = null;
-    state.creatorOpen = false;
-    state.editEventId = null;
-    state.editUserId = null;
+    closeModals();
     render();
   });
 
   document.querySelector("#edit-user-button") && bindPress(document.querySelector("#edit-user-button"), () => {
     const user = selectedUser();
-    if (!user || state.accessMode !== "edicio") return;
-    state.editUserId = user.id;
-    state.creatorOpen = false;
-    state.currentActionId = null;
-    state.editEventId = null;
-    state.editUserData = {
-      nom: user.nom,
-      cognoms: user.cognoms ?? "",
-      tipusUsuari: user.tipusUsuari,
-      actiu: user.actiu !== false,
-    };
-    render();
+    if (user) openUserEditor(user.id);
   });
 
   document.querySelectorAll("[data-event-id]").forEach((button) => {
@@ -1624,10 +1778,6 @@ function bindMainEvents(results) {
   });
 
   if (state.creatorOpen) {
-    document.querySelector("#create-kind")?.addEventListener("change", (event) => {
-      state.createData.kind = event.target.value;
-      render();
-    });
     document.querySelector("#create-computer-code")?.addEventListener("input", (event) => {
       state.createData.codi = event.target.value;
     });
@@ -1684,6 +1834,27 @@ function bindMainEvents(results) {
       event.preventDefault();
       await persistUserEdit();
     });
+    document.querySelector("#merge-target")?.addEventListener("change", (event) => {
+      state.mergeTargetId = event.target.value;
+      render();
+    });
+    document.querySelector("#merge-user-button")?.addEventListener("click", async () => {
+      await removeEditedUser(state.mergeTargetId);
+    });
+    document.querySelector("#delete-user-button")?.addEventListener("click", async () => {
+      await removeEditedUser(null);
+    });
+    return;
+  }
+
+  if (state.editComputerId) {
+    document.querySelector("#edit-computer-code")?.addEventListener("input", (event) => {
+      state.editComputerCode = event.target.value;
+    });
+    document.querySelector("#edit-computer-form")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await persistComputerEdit();
+    });
     return;
   }
 
@@ -1716,6 +1887,37 @@ function bindMainEvents(results) {
     }
     await persistAction(actionOutcome(action, computer, state.formData), computer, state.formData.data, state.formData.descripcio);
   });
+}
+
+function closeModals() {
+  state.currentActionId = null;
+  state.creatorOpen = false;
+  state.editEventId = null;
+  state.editUserId = null;
+  state.editComputerId = null;
+  state.mergeTargetId = "";
+}
+
+function openCreator(kind) {
+  if (!isEditor()) return;
+  closeModals();
+  state.creatorOpen = true;
+  state.createData = { kind, codi: "", nom: "", cognoms: "", tipusUsuari: "alumne" };
+  render();
+}
+
+function openUserEditor(userId) {
+  const user = getUser(userId);
+  if (!user || !isEditor()) return;
+  closeModals();
+  state.editUserId = user.id;
+  state.editUserData = {
+    nom: user.nom,
+    cognoms: user.cognoms ?? "",
+    tipusUsuari: user.tipusUsuari,
+    actiu: user.actiu !== false,
+  };
+  render();
 }
 
 function bindAdminEvents() {
@@ -1783,9 +1985,9 @@ async function loadAdminUsers() {
   try {
     const data = await callUserAdmin("list");
     state.adminUsers = data.users ?? [];
-    state.adminMessage = "Llista d'usuaris actualitzada.";
+    state.adminMessage = "Llista d'accessos actualitzada.";
   } catch (error) {
-    state.adminError = error.message ?? "No s'han pogut carregar els usuaris.";
+    state.adminError = error.message ?? "No s'han pogut carregar els accessos.";
   } finally {
     state.isAdminLoading = false;
     render();
@@ -1805,11 +2007,11 @@ async function createAdminUser() {
       role: state.adminForm.role,
     });
     state.adminForm = { email: "", password: "", role: "consulta" };
-    state.adminMessage = "Usuari creat correctament.";
+    state.adminMessage = "Accés creat correctament.";
     const data = await callUserAdmin("list");
     state.adminUsers = data.users ?? [];
   } catch (error) {
-    state.adminError = error.message ?? "No s'ha pogut crear l'usuari.";
+    state.adminError = error.message ?? "No s'ha pogut crear l'accés.";
   } finally {
     state.isAdminLoading = false;
     render();
@@ -1847,7 +2049,7 @@ async function setAdminUserDisabled(userId, disabled) {
     const data = await callUserAdmin("list");
     state.adminUsers = data.users ?? [];
   } catch (error) {
-    state.adminError = error.message ?? "No s'ha pogut canviar l'estat de l'usuari.";
+    state.adminError = error.message ?? "No s'ha pogut canviar l'estat de l'accés.";
   } finally {
     state.isAdminLoading = false;
     render();
@@ -1863,9 +2065,9 @@ async function deleteAdminUser(userId) {
   try {
     await callUserAdmin("delete", { userId });
     state.adminUsers = state.adminUsers.filter((user) => user.id !== userId);
-    state.adminMessage = "Usuari eliminat.";
+    state.adminMessage = "Accés eliminat.";
   } catch (error) {
-    state.adminError = error.message ?? "No s'ha pogut eliminar l'usuari.";
+    state.adminError = error.message ?? "No s'ha pogut eliminar l'accés.";
   } finally {
     state.isAdminLoading = false;
     render();
@@ -1896,7 +2098,7 @@ async function loadSupabaseData() {
     state.computers = computersResult.data.map((item) => ({
       id: item.id,
       codi: item.codi_rppo,
-      estat: item.estat_actual,
+      estat: normalizeComputerStatus(item.estat_actual, item.usuari_actual_id),
       usuariActualId: item.usuari_actual_id,
       observacions: item.observacions_generals ?? "",
     }));
@@ -2123,6 +2325,79 @@ async function persistUserEdit() {
   } catch (error) {
     console.error(error);
     state.syncMessage = `Error en desar: ${error.message ?? "revisa permisos o connexió"}`;
+    state.isSaving = false;
+    render();
+    return;
+  }
+
+  state.isSaving = false;
+  render();
+}
+
+async function persistComputerEdit() {
+  const computer = state.computers.find((item) => item.id === state.editComputerId);
+  if (!computer) return;
+
+  state.isSaving = true;
+  state.syncMessage = "Desant a Supabase...";
+  render();
+
+  try {
+    const codi = normalizeComputerCode(state.editComputerCode);
+    if (!codi.startsWith("RPPO")) throw new Error("El codi ha de començar per RPPO.");
+    if (state.computers.some((item) => item.id !== computer.id && item.codi === codi)) {
+      throw new Error(`Ja hi ha un equip amb el codi ${codi}.`);
+    }
+
+    const { error } = await supabase.from("ordinadors").update({ codi_rppo: codi }).eq("id", computer.id);
+    if (error) throw error;
+
+    state.editComputerId = null;
+    state.syncMessage = "Equip desat a Supabase";
+    await loadSupabaseData();
+  } catch (error) {
+    console.error(error);
+    state.syncMessage = `Error en desar: ${error.message ?? "revisa permisos o connexió"}`;
+    state.isSaving = false;
+    render();
+    return;
+  }
+
+  state.isSaving = false;
+  render();
+}
+
+// Sense destinació esborra un usuari sense historial; amb destinació hi fusiona l'usuari editat.
+async function removeEditedUser(targetId) {
+  const user = currentEditedUser();
+  if (!user) return;
+
+  const target = targetId ? getUser(targetId) : null;
+  if (targetId && !target) return;
+  const confirmed = window.confirm(
+    target
+      ? `L'historial i els equips de ${userName(user.id)} passaran a ${userName(target.id)}, i ${userName(user.id)} s'esborrarà. Vols continuar?`
+      : `Vols esborrar definitivament ${userName(user.id)}?`,
+  );
+  if (!confirmed) return;
+
+  state.isSaving = true;
+  state.syncMessage = target ? "Fusionant usuaris..." : "Esborrant usuari...";
+  render();
+
+  try {
+    const { error } = await supabase.rpc("elimina_usuari", { p_origen: user.id, p_desti: target?.id ?? null });
+    if (error) throw error;
+
+    closeModals();
+    if (state.selectedResult?.type === "user" && state.selectedResult.id === user.id) {
+      state.selectedResult = target ? { type: "user", id: target.id } : null;
+    }
+    state.syncMessage = target ? "Usuaris fusionats" : "Usuari esborrat";
+    await loadSupabaseData();
+  } catch (error) {
+    console.error(error);
+    state.syncMessage = `Error: ${error.message ?? "revisa permisos o connexió"}`;
     state.isSaving = false;
     render();
     return;
