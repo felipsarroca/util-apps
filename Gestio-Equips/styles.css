@@ -611,6 +611,16 @@ button.inventory-row:hover,
   color: var(--accent);
 }
 .people-dup-note { color: #8a4c22; font-weight: 700; }
+.people-group { display: grid; gap: 8px; }
+.people-group + .people-group { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.people-group h3 { margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.people-group h3 span {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
 .people-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
 .people-row {
   display: flex;

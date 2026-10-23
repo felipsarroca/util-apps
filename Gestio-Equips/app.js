@@ -962,34 +962,46 @@ function renderPeoplePanel() {
         <span class="search-label">Filtra per nom</span>
         <input id="people-search" type="search" value="${text(state.peopleQuery)}" placeholder="Nom o cognoms" />
       </label>
-      <p class="inventory-count">${rows.length} ${rows.length === 1 ? "usuari" : "usuaris"}${
-        duplicates ? ` · <span class="people-dup-note">${duplicates} amb el nom repetit</span>` : ""
-      }</p>
-      <div class="people-list">
-        ${rows
-          .map((user) => {
-            const computers = state.computers.filter((computer) => computer.usuariActualId === user.id);
-            const isDuplicate = keyCounts.get(nameKey(user)) > 1;
-            return `
-              <article class="people-row ${user.actiu === false ? "is-inactive" : ""}">
-                <button type="button" class="people-open" data-people-open="${user.id}">
-                  <strong>${text(`${user.nom} ${user.cognoms}`.trim())}</strong>
-                  <small>${user.tipusUsuari === "generic" ? "Genèric" : "Alumne"}${user.actiu === false ? " · Inactiu" : ""} · ${
-                    computers.length ? text(computers.map((computer) => computer.codi).join(", ")) : "Sense equip"
-                  }</small>
-                </button>
-                ${isDuplicate ? '<span class="people-dup">Possible duplicat</span>' : ""}
-                ${
-                  isEditor()
-                    ? `<button type="button" class="ghost-button compact-button" data-people-edit="${user.id}">Editar</button>`
-                    : ""
-                }
-              </article>
-            `;
-          })
-          .join("")}
-      </div>
+      ${duplicates ? `<p class="inventory-count people-dup-note">${duplicates} usuaris amb el nom repetit</p>` : ""}
+      ${peopleGroup("Actius", rows.filter((user) => user.actiu !== false), keyCounts)}
+      ${peopleGroup("Inactius", rows.filter((user) => user.actiu === false), keyCounts)}
     </section>
+  `;
+}
+
+function peopleGroup(title, users, keyCounts) {
+  return `
+    <div class="people-group">
+      <h3>${text(title)} <span>${users.length}</span></h3>
+      ${
+        users.length
+          ? `<div class="people-list">
+              ${users
+                .map((user) => {
+                  const computers = state.computers.filter((computer) => computer.usuariActualId === user.id);
+                  const isDuplicate = keyCounts.get(nameKey(user)) > 1;
+                  return `
+                    <article class="people-row ${user.actiu === false ? "is-inactive" : ""}">
+                      <button type="button" class="people-open" data-people-open="${user.id}">
+                        <strong>${text(`${user.nom} ${user.cognoms}`.trim())}</strong>
+                        <small>${user.tipusUsuari === "generic" ? "Genèric" : "Alumne"} · ${
+                          computers.length ? text(computers.map((computer) => computer.codi).join(", ")) : "Sense equip"
+                        }</small>
+                      </button>
+                      ${isDuplicate ? '<span class="people-dup">Possible duplicat</span>' : ""}
+                      ${
+                        isEditor()
+                          ? `<button type="button" class="ghost-button compact-button" data-people-edit="${user.id}">Editar</button>`
+                          : ""
+                      }
+                    </article>
+                  `;
+                })
+                .join("")}
+            </div>`
+          : `<p class="help-text">Cap usuari ${title === "Actius" ? "actiu" : "inactiu"}${state.peopleQuery.trim() ? " amb aquest nom" : ""}.</p>`
+      }
+    </div>
   `;
 }
 
