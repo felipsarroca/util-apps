@@ -291,9 +291,9 @@
           labels,
           observed: counts.map((c) => c / tirades),
           expected: binomial(state.count),
-          label: `Nombre de cares en tirades de ${state.count} monedes`,
+          label: `Nombre de cares en tirades ${A.de(state.count)}${plural(state.count, "moneda", "monedes")}`,
         }) + A.charts.legend;
-      $("distCaption").textContent = `Nombre de cares en cada tirada de ${state.count} monedes (${plural(tirades, "tirada", "tirades")}). Les marques daurades són la probabilitat teòrica.`;
+      $("distCaption").textContent = `Nombre de cares en cada tirada ${A.de(state.count)}${plural(state.count, "moneda", "monedes")} (${plural(tirades, "tirada", "tirades")}). Les marques daurades són la probabilitat teòrica.`;
     }
   }
   function renderHistory() {

@@ -246,7 +246,7 @@
         ? "Escriu les fases al panell"
         : done
           ? "S’han acabat totes les fases!"
-          : [step.name, `Fase ${state.ph.idx + 1} de ${steps.length}${rounds}${next ? ` · després: ${next.name}` : ""}`];
+          : [step.name, `Fase ${state.ph.idx + 1} ${A.de(steps.length)}${steps.length}${rounds}${next ? ` · després: ${next.name}` : ""}`];
     } else {
       const t = potatoPlayed();
       text = potato.exploded || t ? fmtCountdown(t).replace(/^0/, "") : "";
@@ -579,7 +579,7 @@
     }
     $("phasesNote").classList.toggle("error", bad.length > 0);
     $("phasesNote").textContent = bad.length
-      ? `No s’entén ${bad.length > 1 ? "les línies" : "la línia"} ${bad.join(", ")}: escriu el temps i el nom, per exemple «2:30 En parella».`
+      ? `No s’${bad.length > 1 ? "entenen les línies" : "entén la línia"} ${bad.join(", ")}: escriu el temps i el nom, per exemple «2:30 En parella».`
       : list.length
         ? `${list.length} ${list.length > 1 ? "fases" : "fase"}${state.ph.rounds > 1 ? ` × ${state.ph.rounds} rondes` : ""} · durada total ${fmtCountdown(total)}`
         : "";

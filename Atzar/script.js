@@ -64,7 +64,7 @@
   const note = (text) => (document.getElementById("dataNote").textContent = text);
   function refreshNote() {
     const n = ownKeys().length;
-    note(n ? `Hi ha dades de ${n} ${n > 1 ? "apartats" : "apartat"} en aquest navegador.` : "Encara no hi ha dades desades en aquest navegador.");
+    note(n ? `Hi ha ${n > 1 ? `${n} apartats` : "un apartat"} amb dades en aquest navegador.` : "Encara no hi ha dades desades en aquest navegador.");
   }
   document.getElementById("exportData").addEventListener("click", () => {
     const data = {};
@@ -98,7 +98,7 @@
       return A.toast("No hi ha prou espai al navegador per importar la còpia.");
     }
     refreshNote();
-    A.undoable(`S’han importat ${entries.length} apartats. Obre qualsevol app per veure-ho.`, () => {
+    A.undoable(`${entries.length > 1 ? `S’han importat ${entries.length} apartats` : "S’ha importat un apartat"}. Obre qualsevol app per veure-ho.`, () => {
       for (const k of ownKeys()) if (!(k in before)) localStorage.removeItem(k);
       for (const [k, v] of Object.entries(before)) localStorage.setItem(k, v);
       refreshNote();

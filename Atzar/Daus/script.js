@@ -414,12 +414,12 @@
     let label;
     if (isCustom()) label = `Simulació: ${times.toLocaleString("ca")} tirades de ${configName()}`;
     else {
-      label = `Simulació: ${times.toLocaleString("ca")} tirades de ${state.count}D${state.faces} → ${product ? "producte" : state.count > 1 ? "suma" : "valor"} mitjà ${fmt(total / times)}`;
+      label = `Simulació: ${times.toLocaleString("ca")} tirades de ${state.count}D${state.faces} → ${product ? "producte mitjà" : state.count > 1 ? "suma mitjana" : "valor mitjà"} ${fmt(total / times)}`;
       const top = Math.max(...seen.values()),
         winners = [...seen].filter(([, c]) => c === top).map(([v]) => v).sort((a, b) => a - b),
         raw = $("predictInput").value.trim(),
         guess = Number(raw);
-      if (raw && Number.isFinite(guess)) label += ` · predicció: ${fmt(guess)}; el més freqüent ha estat el ${winners.map(fmt).join(" i el ")}${winners.includes(guess) ? " ✓" : ""}`;
+      if (raw && Number.isFinite(guess)) label += ` · predicció: ${fmt(guess)}; ${winners.length > 1 ? "els més freqüents han estat" : "el més freqüent ha estat"} el ${winners.map(fmt).join(" i el ")}${winners.includes(guess) ? " ✓" : ""}`;
     }
     state.history.unshift({ label, detail: configName(), time: Date.now() });
     state.history.length = Math.min(state.history.length, 200);

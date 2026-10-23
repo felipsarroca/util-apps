@@ -501,7 +501,9 @@
         big = Math.ceil(n / k),
         bigCount = n % k;
       $("splitNote").textContent =
-        (small === big ? `${k} equips de ${small} persones.` : `${k} equips: ${bigCount} de ${big} i ${k - bigCount} de ${small} persones.`) + (away ? ` ${away} ${away === 1 ? "absent" : "absents"}.` : "");
+        (small === big
+          ? `${k} equips ${A.de(small)}${small} ${small === 1 ? "persona" : "persones"}.`
+          : `${k} equips: ${bigCount} ${A.de(big)}${big} i ${k - bigCount} ${A.de(small)}${small} ${small === 1 ? "persona" : "persones"}.`) + (away ? ` ${away} ${away === 1 ? "absent" : "absents"}.` : "");
       $("stageSubtitle").textContent = `${n} persones · ${k} equips`;
     } else {
       $("splitNote").textContent = "Calen almenys dues persones presents.";

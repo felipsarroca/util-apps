@@ -317,7 +317,9 @@
     $("leftNote").textContent = state.replace
       ? "Amb reposició, cada tirada es fa amb la baralla completa: les probabilitats no canvien."
       : n
-        ? `Queden ${n} cartes. Probabilitat que la propera carta sigui…`
+        ? n === 1
+          ? "Queda 1 carta. Probabilitat que sigui…"
+          : `Queden ${n} cartes. Probabilitat que la propera carta sigui…`
         : "No queda cap carta. Recull i barreja per començar de nou.";
     const rows = SUITS[fam].map((s) => ({ icon: `suit-${s.id}`, label: s.name.replace(/^./, (c) => c.toUpperCase()), k: pool.filter((id) => id.startsWith(`${s.id}-`)).length }));
     rows.push({ icon: null, label: fam === "es" ? "Figura (sota, cavall o rei)" : "Figura (J, Q o K)", k: pool.filter((id) => !id.startsWith("joker") && isFigure(state.deck, parse(id).rank)).length });

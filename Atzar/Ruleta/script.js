@@ -700,7 +700,7 @@
         const load = document.createElement("button");
         load.className = "load-class";
         load.textContent = group.name;
-        load.title = `${group.entries.length} participants · Comença una nova ronda`;
+        load.title = `${group.entries.length} ${group.entries.length === 1 ? "participant" : "participants"} · Comença una nova ronda`;
         load.addEventListener("click", () => {
           if (spinning) return;
           checkpoint();
@@ -712,7 +712,7 @@
           $("className").value = group.name;
           changed();
           toast(
-            `${group.name}: ${group.entries.length} participants recuperats. Pots desfer el canvi.`,
+            `${group.name}: ${group.entries.length} ${group.entries.length === 1 ? "participant recuperat" : "participants recuperats"}. Pots desfer el canvi.`,
           );
         });
         const remove = document.createElement("button");
@@ -937,7 +937,7 @@
     changed();
     selectTab("entries");
     libraryDialog.close();
-    toast(`${entries.length} opcions carregades. Pots desfer el canvi.`);
+    toast(`${entries.length} ${entries.length === 1 ? "opció carregada" : "opcions carregades"}. Pots desfer el canvi.`);
   });
   $("themeMode").addEventListener(
     "change",

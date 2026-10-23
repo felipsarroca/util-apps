@@ -294,7 +294,7 @@
       setResultLine(`Era el ${fmt(secretValue)}.`);
       A.sounds.click();
     }
-    state.history[0] = { label: `Nombre secret: ${fmt(secretValue)}${attempts.length ? ` (${attempts.length} intents)` : ""}`, time: state.history[0]?.time || Date.now() };
+    state.history[0] = { label: `Nombre secret: ${fmt(secretValue)}${attempts.length ? ` (${attempts.length} ${attempts.length === 1 ? "intent" : "intents"})` : ""}`, time: state.history[0]?.time || Date.now() };
     secretValue = null;
     persist();
     renderHistory();
@@ -424,7 +424,7 @@
     else {
       state.min = min;
       state.max = max;
-      if (state.unique && !state.secret && state.qty > max - min + 1) error = `Sense repetir, només hi ha ${fmt(max - min + 1)} nombres diferents.`;
+      if (state.unique && !state.secret && state.qty > max - min + 1) error = max === min ? "Sense repetir, només hi ha un nombre possible." : `Sense repetir, només hi ha ${fmt(max - min + 1)} nombres diferents.`;
     }
     $("numberNote").textContent = error;
     $("numberNote").classList.toggle("error", !!error);

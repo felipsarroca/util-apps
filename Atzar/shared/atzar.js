@@ -206,6 +206,8 @@ window.Atzar = (() => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const csvCell = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  // «de» davant d'un nombre: s'apostrofa davant d'1, 11 i 11.000-11.999 («d’1», «d’11»).
+  const de = (n) => (/^(1|11|11\d{3})$/.test(String(n)) ? "d’" : "de ");
   function downloadCsv(name, rows) {
     download(
       name,
@@ -758,6 +760,7 @@ window.Atzar = (() => {
     confetti,
     formatTime,
     download,
+    de,
     downloadCsv,
     parseLines,
     copyText,
