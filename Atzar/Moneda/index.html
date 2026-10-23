@@ -10,51 +10,81 @@
     />
     <title>Moneda App</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
-    <link rel="stylesheet" href="style.css?v=1.0" />
-    <script src="../shared/atzar.js?v=1.0" defer></script>
-    <script src="script.js?v=1.0" defer></script>
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.1" />
+    <link rel="stylesheet" href="style.css?v=1.1" />
+    <script src="../shared/atzar.js?v=1.1" defer></script>
+    <script src="script.js?v=1.1" defer></script>
   </head>
   <body>
     <svg width="0" height="0" class="sr-only" aria-hidden="true">
       <defs>
-        <radialGradient id="goldFace" cx="38%" cy="32%" r="75%">
-          <stop offset="0" stop-color="#fbe7a1" />
-          <stop offset="0.55" stop-color="#e2b04f" />
-          <stop offset="1" stop-color="#b9842c" />
+        <!-- Bisell de la vora, paret interior i camp de cada metall. -->
+        <linearGradient id="goldRim" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fff3c0" /><stop offset="0.42" stop-color="#e2b04f" /><stop offset="1" stop-color="#7f5418" />
+        </linearGradient>
+        <linearGradient id="goldWall" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#8c5d1d" /><stop offset="1" stop-color="#f7de92" />
+        </linearGradient>
+        <radialGradient id="goldField" cx="38%" cy="32%" r="72%">
+          <stop offset="0" stop-color="#f9e19a" /><stop offset="0.6" stop-color="#e2b24f" /><stop offset="1" stop-color="#c08a30" />
         </radialGradient>
-        <radialGradient id="silverFace" cx="38%" cy="32%" r="75%">
-          <stop offset="0" stop-color="#ffffff" />
-          <stop offset="0.55" stop-color="#cfd8da" />
-          <stop offset="1" stop-color="#8c9a9f" />
+        <linearGradient id="silverRim" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#ffffff" /><stop offset="0.42" stop-color="#c9d2d5" /><stop offset="1" stop-color="#5f6c71" />
+        </linearGradient>
+        <linearGradient id="silverWall" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#66747a" /><stop offset="1" stop-color="#eef2f3" />
+        </linearGradient>
+        <radialGradient id="silverField" cx="38%" cy="32%" r="72%">
+          <stop offset="0" stop-color="#fbfcfc" /><stop offset="0.6" stop-color="#cdd5d8" /><stop offset="1" stop-color="#9aa6ab" />
         </radialGradient>
+        <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0.25" stop-color="#fff" stop-opacity="0" /><stop offset="0.42" stop-color="#fff" stop-opacity=".38" /><stop offset="0.5" stop-color="#fff" stop-opacity="0" />
+        </linearGradient>
+        <!-- Relleu: ombra a baix a la dreta i llum a dalt a l'esquerra. -->
+        <filter id="reliefGold" x="-8%" y="-8%" width="116%" height="116%">
+          <feOffset in="SourceAlpha" dx="0.7" dy="0.9" result="o1" /><feFlood flood-color="#5c3a0c" flood-opacity=".6" /><feComposite in2="o1" operator="in" result="sh" />
+          <feOffset in="SourceAlpha" dx="-0.55" dy="-0.65" result="o2" /><feFlood flood-color="#fff4c8" /><feComposite in2="o2" operator="in" result="hi" />
+          <feMerge><feMergeNode in="sh" /><feMergeNode in="hi" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <filter id="reliefSilver" x="-8%" y="-8%" width="116%" height="116%">
+          <feOffset in="SourceAlpha" dx="0.7" dy="0.9" result="o1" /><feFlood flood-color="#2f3a3f" flood-opacity=".55" /><feComposite in2="o1" operator="in" result="sh" />
+          <feOffset in="SourceAlpha" dx="-0.55" dy="-0.65" result="o2" /><feFlood flood-color="#ffffff" /><feComposite in2="o2" operator="in" result="hi" />
+          <feMerge><feMergeNode in="sh" /><feMergeNode in="hi" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
         <symbol id="coin-cara" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="49" fill="#a8742a" />
-          <circle cx="50" cy="50" r="46.5" fill="url(#goldFace)" />
-          <circle cx="50" cy="50" r="41" fill="none" stroke="#a8742a" stroke-width="1.2" opacity=".7" />
-          <circle cx="50" cy="50" r="37.5" fill="none" stroke="#9a6a22" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 4.9" opacity=".75" />
-          <g fill="#b07a27" opacity=".9">
-            <path d="M50 17.5l2.6 8h-5.2zM50 66.5l2.6 8h-5.2zM17.5 50l8-2.6v5.2zM82.5 50l-8-2.6v5.2zM27 27l7.4 3.8-3.6 3.6zM73 27l-3.8 7.4-3.6-3.6zM27 73l3.8-7.4 3.6 3.6zM73 73l-7.4-3.8 3.6-3.6z" transform="translate(0 -6)" />
+          <circle cx="50" cy="50" r="49.6" fill="url(#goldRim)" />
+          <circle cx="50" cy="50" r="44.2" fill="url(#goldWall)" />
+          <circle cx="50" cy="50" r="42.6" fill="url(#goldField)" />
+          <g filter="url(#reliefGold)">
+            <circle cx="50" cy="50" r="39.4" fill="none" stroke="#e9bd5e" stroke-width="2.3" stroke-linecap="round" stroke-dasharray="0.1 4.55" />
+            <g fill="#e8bb5a" transform="translate(0 -5)">
+              <path d="M50 18.5l2.8 8.5h-5.6zM50 69.5l2.8-8.5h-5.6zM18.5 50l8.5-2.8v5.6zM81.5 50l-8.5-2.8v5.6zM27.7 27.7l8 4-4 4zM72.3 27.7l-4 8-4-4zM27.7 72.3l4-8 4 4zM72.3 72.3l-8-4 4-4z" />
+              <circle cx="50" cy="50" r="15.5" />
+            </g>
+            <text x="50" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="9.5" font-weight="800" letter-spacing="2.5" fill="#d9a646">CARA</text>
           </g>
-          <circle cx="50" cy="44" r="15" fill="#d9a441" stroke="#a8742a" stroke-width="1.4" />
-          <circle cx="44.5" cy="41.5" r="1.8" fill="#6f4a15" />
-          <circle cx="55.5" cy="41.5" r="1.8" fill="#6f4a15" />
-          <path d="M43.5 48c3.6 4 9.4 4 13 0" fill="none" stroke="#6f4a15" stroke-width="1.8" stroke-linecap="round" />
-          <text x="50" y="81" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="9.5" font-weight="800" letter-spacing="2.5" fill="#6f4a15">CARA</text>
+          <g fill="#8a5b1b" transform="translate(0 -5)">
+            <ellipse cx="44.5" cy="47" rx="1.9" ry="2.2" /><ellipse cx="55.5" cy="47" rx="1.9" ry="2.2" />
+            <path d="M43.4 54c3.7 4.2 9.5 4.2 13.2 0" fill="none" stroke="#8a5b1b" stroke-width="1.9" stroke-linecap="round" />
+          </g>
+          <circle cx="50" cy="50" r="49.6" fill="url(#sheen)" />
         </symbol>
         <symbol id="coin-creu" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="49" fill="#7a878c" />
-          <circle cx="50" cy="50" r="46.5" fill="url(#silverFace)" />
-          <circle cx="50" cy="50" r="41" fill="none" stroke="#7a878c" stroke-width="1.2" opacity=".7" />
-          <circle cx="50" cy="50" r="37.5" fill="none" stroke="#6d797e" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 4.9" opacity=".75" />
-          <g fill="#4f5d63" transform="translate(0 -6)">
-            <path d="M42 22h16l-4.5 21h-7z" />
-            <path d="M42 22h16l-4.5 21h-7z" transform="rotate(90 50 50)" />
-            <path d="M42 22h16l-4.5 21h-7z" transform="rotate(180 50 50)" />
-            <path d="M42 22h16l-4.5 21h-7z" transform="rotate(270 50 50)" />
-            <circle cx="50" cy="50" r="5" />
+          <circle cx="50" cy="50" r="49.6" fill="url(#silverRim)" />
+          <circle cx="50" cy="50" r="44.2" fill="url(#silverWall)" />
+          <circle cx="50" cy="50" r="42.6" fill="url(#silverField)" />
+          <g filter="url(#reliefSilver)">
+            <circle cx="50" cy="50" r="39.4" fill="none" stroke="#d6dde0" stroke-width="2.3" stroke-linecap="round" stroke-dasharray="0.1 4.55" />
+            <g fill="#d3dadd" transform="translate(0 -5)">
+              <path d="M42 21h16l-4.5 21h-7z" />
+              <path d="M42 21h16l-4.5 21h-7z" transform="rotate(90 50 50)" />
+              <path d="M42 21h16l-4.5 21h-7z" transform="rotate(180 50 50)" />
+              <path d="M42 21h16l-4.5 21h-7z" transform="rotate(270 50 50)" />
+              <circle cx="50" cy="50" r="5.5" />
+            </g>
+            <text x="50" y="80" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="9.5" font-weight="800" letter-spacing="2.5" fill="#a9b4b8">CREU</text>
           </g>
-          <text x="50" y="81" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="9.5" font-weight="800" letter-spacing="2.5" fill="#3d494e">CREU</text>
+          <circle cx="50" cy="50" r="49.6" fill="url(#sheen)" />
         </symbol>
       </defs>
     </svg>

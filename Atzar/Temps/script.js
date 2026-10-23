@@ -87,7 +87,15 @@
   function size() {
     const H = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--play-height")) || 360,
       W = document.querySelector(".play-area").clientWidth || 320;
-    $("clock").style.setProperty("--clock", `${Math.floor(Math.min(H, W, A.cap(600)) * 0.96)}px`);
+    // Amb marques, el cronòmetre deixa lloc a una columna a la dreta (o a una fila a sota, si és estret).
+    const marks = document.querySelector(".play-area").classList.contains("with-marks"),
+      side = marks && W >= 560,
+      listW = side ? Math.min(A.cap(320), Math.max(190, W * 0.3)) : 0,
+      w = side ? W - listW - 32 : W,
+      h = marks && !side ? H - 76 : H;
+    $("clock").style.setProperty("--clock", `${Math.floor(Math.min(h, w, A.cap(600)) * 0.96)}px`);
+    $("stageMarks").classList.toggle("side", side);
+    $("stageMarks").style.setProperty("--list-w", `${Math.floor(listW)}px`);
   }
 
   /* Pintat */
@@ -270,7 +278,7 @@
     render();
   }
   function mark() {
-    if (state.mode !== "stopwatch" || !swElapsed()) return;
+    if (state.mode !== "stopwatch" || !(state.sw.startAt || swElapsed())) return;
     state.sw.marks.push({ t: swElapsed(), label: "" });
     A.tone(1200, 0.05, 0, "triangle", 0.15);
     persist();
@@ -314,21 +322,29 @@
   }
   function renderStageMarks() {
     const host = $("stageMarks"),
-      marks = state.sw.marks;
-    host.hidden = state.mode !== "stopwatch" || !marks.length;
+      marks = state.sw.marks,
+      show = state.mode === "stopwatch" && marks.length > 0;
+    host.hidden = !show;
+    document.querySelector(".play-area").classList.toggle("with-marks", show);
     host.replaceChildren(
       ...marks
-        .slice(-6)
-        .reverse()
-        .map((m) => {
+        .map((m, i) => {
           const li = document.createElement("li"),
-            b = document.createElement("b"),
-            i = marks.indexOf(m);
-          b.textContent = m.label || `#${i + 1}`;
-          li.append(b, fmtStopwatch(m.t));
+            n = document.createElement("span"),
+            t = document.createElement("span"),
+            sub = document.createElement("span");
+          n.className = "n";
+          n.textContent = i + 1;
+          t.className = "t";
+          t.textContent = fmtStopwatch(m.t);
+          sub.className = "s";
+          sub.textContent = `+${fmtStopwatch(m.t - (i ? marks[i - 1].t : 0))}${m.label ? ` · ${m.label}` : ""}`;
+          li.append(n, t, sub);
           return li;
-        }),
+        })
+        .reverse(),
     );
+    size();
     A.fitLayout();
   }
   function marksRows() {
@@ -346,7 +362,8 @@
     $("potatoOptions").hidden = m !== "potato";
     $("plusButton").hidden = m !== "countdown";
     $("markButton").hidden = m !== "stopwatch";
-    $("markButton").disabled = !swElapsed();
+    // Es pot marcar mentre corre (encara que just comenci) i també en pausa.
+    $("markButton").disabled = !(state.sw.startAt || swElapsed());
     let label;
     if (m === "countdown") label = state.cd.endAt ? "Pausa" : finished ? "Torna a començar" : state.cd.remaining < state.cd.total ? "Continua" : "Comença";
     else if (m === "stopwatch") label = state.sw.startAt ? "Atura" : swElapsed() ? "Continua" : "Comença";

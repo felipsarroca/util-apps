@@ -22,63 +22,83 @@
 }
 .die-shadow {
   position: absolute;
-  left: 12%;
-  right: 12%;
-  bottom: -14%;
-  height: 12%;
+  left: 6%;
+  right: 6%;
+  bottom: -16%;
+  height: 16%;
   border-radius: 50%;
-  background: #233f3a2a;
-  filter: blur(6px);
+  background: radial-gradient(closest-side, #233f3a40, #233f3a00);
 }
 html[data-theme="dark"] .die-shadow {
-  background: #0007;
+  background: radial-gradient(closest-side, #000b, #0000);
 }
 
-/* D6: cub tridimensional */
+/* D6: cub tridimensional, vist una mica des de dalt i de costat. */
+.cube-tilt,
 .cube {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
+}
+.cube {
   will-change: transform;
 }
 .cube-face,
 .cube-core {
   position: absolute;
   inset: 0;
-  border-radius: 16%;
   background: var(--c);
+  backface-visibility: hidden;
 }
 .cube-face {
   display: grid;
   grid-template: repeat(3, 1fr) / repeat(3, 1fr);
   padding: 13%;
+  border-radius: 17%;
+  background:
+    radial-gradient(120% 120% at 30% 25%, #ffffff2e, #fff0 60%),
+    var(--c);
   box-shadow:
-    inset 0 0 0 calc(var(--die, 140px) * 0.02) #0000000f,
-    inset 0 calc(var(--die, 140px) * -0.05) calc(var(--die, 140px) * 0.08) #0000001f;
-  backface-visibility: hidden;
+    inset 0 0 0 calc(var(--die, 140px) * 0.012) #ffffff2a,
+    inset calc(var(--die, 140px) * -0.03) calc(var(--die, 140px) * -0.04) calc(var(--die, 140px) * 0.07) #00000026;
+}
+/* Ombrejat segons la llum: --dark el calcula el script per a cada cara. */
+.cube-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #000;
+  opacity: var(--dark, 0.1);
+  transition: opacity 0.25s;
+  z-index: 2;
 }
 .die.classic .cube-face {
   box-shadow:
     inset 0 0 0 1px #d8d2c0,
-    inset 0 calc(var(--die, 140px) * -0.05) calc(var(--die, 140px) * 0.08) #0000001a;
+    inset calc(var(--die, 140px) * -0.03) calc(var(--die, 140px) * -0.04) calc(var(--die, 140px) * 0.07) #0000001a;
 }
 .cube-core {
-  border-radius: 0;
-  filter: brightness(0.86);
+  border-radius: 8%;
+  background: color-mix(in srgb, var(--c) 70%, #000);
 }
 .pip {
-  width: 74%;
-  height: 74%;
+  width: 76%;
+  height: 76%;
   margin: auto;
   border-radius: 50%;
-  background: var(--pip);
-  box-shadow: inset 0 calc(var(--die, 140px) * 0.012) calc(var(--die, 140px) * 0.02) #0004;
+  /* Punt enfonsat: ombra a dalt a l'esquerra. */
+  background: radial-gradient(circle at 62% 66%, var(--pip) 0 52%, color-mix(in srgb, var(--pip) 72%, #000) 100%);
+  box-shadow:
+    inset calc(var(--die, 140px) * 0.012) calc(var(--die, 140px) * 0.014) calc(var(--die, 140px) * 0.018) #0000004d,
+    0 calc(var(--die, 140px) * -0.004) 0 #0000001a,
+    0 calc(var(--die, 140px) * 0.005) 0 #ffffff40;
 }
 .die.classic .cube-face[data-v="1"] .pip {
-  background: #c0443a;
+  --pip: #c0443a;
 }
 
-/* Daus polièdrics en 2D */
+/* Daus polièdrics: sòlids facetats vistos de cara. */
 .poly {
   position: absolute;
   inset: 0;
@@ -88,22 +108,30 @@ html[data-theme="dark"] .die-shadow {
   width: 100%;
   height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 5px 8px #0002);
 }
 .poly .shape {
   fill: var(--c);
-  stroke: color-mix(in srgb, var(--c) 72%, #000);
-  stroke-width: 2.5;
+}
+.poly .facet {
+  stroke: #ffffff30;
+  stroke-width: 0.8;
   stroke-linejoin: round;
 }
-.poly .edges {
+.poly .front {
+  fill: var(--c);
+  stroke: #ffffff59;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+.poly .rim {
   fill: none;
-  stroke: #ffffff55;
-  stroke-width: 1.6;
+  stroke: color-mix(in srgb, var(--c) 62%, #000);
+  stroke-width: 2.2;
   stroke-linejoin: round;
 }
-.die.classic .poly .edges {
-  stroke: #0000001a;
+.die.classic .poly .facet,
+.die.classic .poly .front {
+  stroke: #0000001f;
 }
 .poly text {
   fill: var(--pip);
@@ -111,15 +139,9 @@ html[data-theme="dark"] .die-shadow {
   font-weight: 800;
   text-anchor: middle;
   dominant-baseline: central;
-}
-.poly .kind {
-  font-size: 9px;
-  font-weight: 700;
-  opacity: 0.7;
-}
-.die.landed .poly,
-.die.landed .cube {
-  animation: land 0.3s ease-out;
+  paint-order: stroke;
+  stroke: #00000026;
+  stroke-width: 1.2px;
 }
 .result-line {
   font-size: clamp(17px, 2vw, 22px);
@@ -140,11 +162,6 @@ html[data-theme="dark"] .die-shadow {
 #facesChips button,
 #opChips button {
   min-width: 52px;
-}
-@keyframes land {
-  50% {
-    scale: 1.06;
-  }
 }
 @media (max-width: 420px) {
   .tools-row .secondary {

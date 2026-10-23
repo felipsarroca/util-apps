@@ -29,8 +29,8 @@ assert.equal(new Set(e.last.teams.flatMap(t=>t.members.map(m=>m.name))).size,25)
 await setup("Equips","felip.atzar.equips.v1",{base:names.slice(0,10),split:"size",size:4,duration:0});await p.click("#makeButton");await p.waitForTimeout(200);
 assert.deepEqual((await ls("felip.atzar.equips.v1")).last.teams.map(t=>t.members.length).sort(),[3,3,4]);console.log("✓ Equips: 10 de 4 en 4 → 4,3,3");
 // Nombres: 10 sense repetir de 1 a 10 => permutació
-await setup("Nombres","felip.atzar.nombres.v1",{mode:"number",min:1,max:10,qty:10,unique:true,sort:true,duration:500});await p.click("#drawButton");await p.waitForSelector("#resultLine .big");
-assert.equal(await p.textContent("#resultLine .big"),"1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 · 10");console.log("✓ Nombres: 10 de 10 sense repetir i ordenats");
+await setup("Nombres","felip.atzar.nombres.v1",{mode:"number",min:1,max:10,qty:10,unique:true,sort:true,duration:500});await p.click("#drawButton");await p.waitForFunction(()=>document.querySelector("#liveResult").textContent);
+assert.equal(await p.textContent("#liveResult"),"1, 2, 3, 4, 5, 6, 7, 8, 9, 10");console.log("✓ Nombres: 10 de 10 sense repetir i ordenats");
 // Nombres: 11 sense repetir de 1 a 10 -> botó desactivat
 await setup("Nombres","felip.atzar.nombres.v1",{mode:"number",min:1,max:10,qty:11,unique:true});assert(await p.isDisabled("#drawButton"));console.log("✓ Nombres: avisa si no hi ha prou nombres");
 // Bombo: 5 boles
@@ -45,4 +45,7 @@ assert.equal(d.rolls,3600);const seven=d.counts[5]/3600;assert(Math.abs(seven-1/
 // Temps: compte enrere 1 s acaba
 await setup("Temps","felip.atzar.temps.v1",{mode:"countdown",cd:{total:1000,remaining:1000,endAt:null}});await p.click("#startButton");await p.waitForTimeout(1600);
 assert(await p.locator("#clock.finished").count());console.log("✓ Temps: el compte enrere acaba i avisa");
+// Temps: es pot marcar amb el cronòmetre en marxa, sense aturar-lo
+await setup("Temps","felip.atzar.temps.v1",{mode:"stopwatch",sw:{base:0,startAt:null,marks:[]}});await p.click("#startButton");await p.click("#markButton");await p.waitForTimeout(200);await p.click("#markButton");
+const sw=(await ls("felip.atzar.temps.v1")).sw;assert.equal(sw.marks.length,2);assert(sw.startAt);assert.equal(await p.locator("#stageMarks li").count(),2);console.log("✓ Temps: dues marques sense aturar el cronòmetre");
 await b.close();srv.close();})().catch(e=>{console.log("✗",e.message);process.exit(1)});

@@ -46,16 +46,85 @@
   function polygon(n, r = 46, rot = -90) {
     return Array.from({ length: n }, (_, i) => {
       const a = ((rot + (360 / n) * i) * Math.PI) / 180;
-      return `${(50 + r * Math.cos(a)).toFixed(1)},${(50 + r * Math.sin(a)).toFixed(1)}`;
-    }).join(" ");
+      return [+(50 + r * Math.cos(a)).toFixed(1), +(50 + r * Math.sin(a)).toFixed(1)];
+    });
   }
-  const SHAPES = {
-    4: { shape: "50,6 95,86 5,86", edges: "", ty: 62, size: 30 },
-    8: { shape: "50,3 95,50 50,97 5,50", edges: "M5 50h90M50 3 26 50 50 97 74 50z", ty: 50, size: 30 },
-    10: { shape: "50,3 93,40 50,97 7,40", edges: "M7 40 50 58 93 40M50 58v39", ty: 38, size: 27 },
-    12: { shape: polygon(5, 48), edges: `M${polygon(5, 27)}z`, ty: 52, size: 26 },
-    20: { shape: polygon(6, 48, -90), edges: "M50 2 91 26 9 26zM50 26 91 74 9 74z", ty: 55, size: 23 },
-  };
+  const pts = (list) => list.map((p) => p.join(",")).join(" ");
+  /* Daus polièdrics vistos de cara: la cara frontal amb el número i les facetes del voltant,
+     ombrejades segons una llum que ve de dalt a l'esquerra (valors positius aclareixen, negatius enfosqueixen). */
+  function shade(poly) {
+    const cx = poly.reduce((a, p) => a + p[0], 0) / poly.length - 50,
+      cy = poly.reduce((a, p) => a + p[1], 0) / poly.length - 50,
+      len = Math.hypot(cx, cy) || 1;
+    return +((-cx * 0.55 - cy * 0.83) / len * 0.32).toFixed(2);
+  }
+  function solid(outline, front, facets, ty, size) {
+    return { outline, front, facets: facets.map((f) => [f, shade(f)]), ty, size };
+  }
+  const SHAPES = (() => {
+    const shapes = {};
+    // D4: tetràedre amb una cara al davant i una franja de la base.
+    shapes[4] = solid([[50, 5], [92, 78], [50, 95], [8, 78]], [[50, 5], [92, 78], [8, 78]], [[[8, 78], [92, 78], [50, 95]]], 58, 32);
+    // D8: octàedre, triangle frontal i tres facetes laterals.
+    const h8 = polygon(6, 47);
+    shapes[8] = solid(h8, [h8[0], h8[2], h8[4]], [[h8[0], h8[1], h8[2]], [h8[2], h8[3], h8[4]], [h8[4], h8[5], h8[0]]], 53, 30);
+    // D10: trapezoedre, estel frontal.
+    const t = [50, 3], r = [95, 44], rb = [80, 76], bt = [50, 97], lb = [20, 76], l = [5, 44],
+      kr = [74, 56], kb = [50, 72], kl = [26, 56];
+    shapes[10] = solid([t, r, rb, bt, lb, l], [t, kr, kb, kl], [[t, r, kr], [r, rb, kr], [kr, rb, bt, kb], [kl, kb, bt, lb], [l, kl, lb], [t, kl, l]], 46, 25);
+    // D12: dodecàedre, pentàgon central envoltat de cinc pentàgons.
+    const o12 = polygon(10, 48), i12 = polygon(5, 25);
+    shapes[12] = solid(o12, i12, i12.map((p, i) => [p, o12[(2 * i + 9) % 10], o12[2 * i], o12[2 * i + 1], i12[(i + 1) % 5]]), 52, 25);
+    // D20: icosàedre, triangle central i nou facetes.
+    const h = polygon(6, 48), A = [50, 21], B = [79, 68], C = [21, 68];
+    shapes[20] = solid(h, [A, B, C], [[h[0], h[1], A], [h[5], h[0], A], [h[1], B, A], [h[1], h[2], B], [h[2], h[3], B], [h[3], C, B], [h[3], h[4], C], [h[4], h[5], C], [h[5], A, C]], 54, 22);
+    return shapes;
+  })();
+  /* Llum del cub (en coordenades de pantalla: x a la dreta, y avall, z cap a l'espectador). */
+  const NORMALS = { 1: [0, 0, 1], 2: [0, -1, 0], 3: [1, 0, 0], 4: [-1, 0, 0], 5: [0, 1, 0], 6: [0, 0, -1] },
+    LIGHT = [-0.3, -0.45, 0.84],
+    TILT = [-18, 20];
+  const rad = (d) => (d * Math.PI) / 180;
+  const rotX = ([x, y, z], a) => [x, y * Math.cos(a) - z * Math.sin(a), y * Math.sin(a) + z * Math.cos(a)];
+  const rotY = ([x, y, z], a) => [x * Math.cos(a) + z * Math.sin(a), y, -x * Math.sin(a) + z * Math.cos(a)];
+  const rotZ = ([x, y, z], a) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a), z];
+  function lightCube(d) {
+    for (const face of d.body.querySelectorAll(".cube-face")) {
+      let n = NORMALS[face.dataset.v];
+      n = rotY(n, rad(d.y));
+      n = rotX(n, rad(d.x));
+      n = rotZ(n, rad(d.z));
+      n = rotY(n, rad(TILT[1]));
+      n = rotX(n, rad(TILT[0]));
+      const dot = n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2];
+      face.style.setProperty("--dark", (0.42 * (1 - Math.max(0, dot))).toFixed(2));
+    }
+  }
+  /* Trajectòria del llançament: [moment, alçada (fracció de la mida), progrés del gir]. Dos bots que s'apaguen. */
+  const PATH = [
+    [0, 0, 0],
+    [0.17, 0.5, 0.3],
+    [0.33, 0.66, 0.52],
+    [0.52, 0, 0.8],
+    [0.63, 0.2, 0.91],
+    [0.75, 0, 0.975],
+    [0.83, 0.05, 0.995],
+    [0.9, 0, 1],
+    [1, 0, 1],
+  ];
+  function flight(d, transformAt, duration, delay, drift) {
+    const size = d.el.offsetWidth,
+      frames = PATH.map(([offset, h, p], k) => ({
+        offset,
+        transform: `translate3d(${(drift * size * Math.sin(Math.PI * p)).toFixed(1)}px, ${(-h * size).toFixed(1)}px, ${(h * size * 0.6).toFixed(1)}px) ${transformAt(p, k)}`,
+        easing: PATH[k + 1] && PATH[k + 1][1] > h ? "cubic-bezier(.3,.6,.6,1)" : "cubic-bezier(.45,0,.75,.45)",
+      }));
+    d.el.querySelector(".die-shadow").animate(
+      PATH.map(([offset, h]) => ({ offset, transform: `scale(${(1 - h * 0.7).toFixed(2)})`, opacity: +(1 - h * 0.8).toFixed(2) })),
+      { duration, delay },
+    );
+    return d.body.animate(frames, { duration, delay, fill: "forwards" });
+  }
 
   function buildDice() {
     host.replaceChildren();
@@ -67,24 +136,35 @@
       die.innerHTML = '<div class="die-shadow"></div>';
       const item = { el: die, value: 1, x: 0, y: 0 };
       if (state.faces === 6) {
-        const cube = document.createElement("div");
+        const tilt = document.createElement("div"),
+          cube = document.createElement("div");
+        tilt.className = "cube-tilt";
+        tilt.style.transform = `rotateX(${TILT[0]}deg) rotateY(${TILT[1]}deg)`;
         cube.className = "cube";
+        // Un cub interior una mica més petit omple les cantonades arrodonides i fa de bisell.
         cube.innerHTML =
-          '<div class="cube-core"></div><div class="cube-core" style="transform:rotateY(90deg)"></div><div class="cube-core" style="transform:rotateX(90deg)"></div>' +
+          Object.values(FACE_POS)
+            .map((pos) => `<div class="cube-core" style="transform:${pos.replace("var(--h)", "calc(var(--h) * 0.94)")}"></div>`)
+            .join("") +
           Object.entries(PIPS)
             .map(([v, pips]) => `<div class="cube-face" data-v="${v}" style="transform:${FACE_POS[v]}">${Array.from({ length: 9 }, (_, k) => (pips.includes(k + 1) ? '<span class="pip"></span>' : "<span></span>")).join("")}</div>`)
             .join("");
-        die.append(cube);
+        tilt.append(cube);
+        die.append(tilt);
         item.body = cube;
         const start = 1 + (i % 6);
         item.value = start;
+        item.z = 0;
         [item.x, item.y] = SHOW[start];
         cube.style.transform = `rotateZ(0deg) rotateX(${item.x}deg) rotateY(${item.y}deg)`;
+        lightCube(item);
       } else {
         const g = SHAPES[state.faces],
           poly = document.createElement("div");
         poly.className = "poly";
-        poly.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><polygon class="shape" points="${g.shape}"/>${g.edges ? `<path class="edges" d="${g.edges}"/>` : ""}<text class="num" x="50" y="${g.ty}" font-size="${g.size}">${state.faces}</text><text class="kind" x="50" y="${state.faces === 4 ? 79 : 86}">D${state.faces}</text></svg>`;
+        poly.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><polygon class="shape" points="${pts(g.outline)}"/>${g.facets
+          .map(([f, k]) => `<polygon class="facet" points="${pts(f)}" fill="${k > 0 ? "#fff" : "#000"}" fill-opacity="${Math.abs(k)}"/>`)
+          .join("")}<polygon class="front" points="${pts(g.front)}"/><polygon class="rim" points="${pts(g.outline)}"/><text class="num" x="50" y="${g.ty}" font-size="${g.size}">${state.faces}</text></svg>`;
         die.append(poly);
         item.body = poly;
         item.value = state.faces;
@@ -182,38 +262,35 @@
         const [tx, ty] = SHOW[values[i]],
           ox = d.x,
           oy = d.y,
+          oz = d.z,
           spins = 2 + Math.round(state.duration / 900),
           x = d.x - (((d.x % 360) + 360) % 360) + 360 * (spins + A.randomInt(2)) + tx,
           y = d.y - (((d.y % 360) + 360) % 360) + 360 * (spins + A.randomInt(2)) + ty,
-          z = A.randomInt(31) - 15,
-          from = getComputedStyle(d.body).transform === "none" ? "" : d.body.style.transform,
-          final = `translate(0, 0) rotateZ(${z}deg) rotateX(${x}deg) rotateY(${y}deg)`;
-        d.x = x;
-        d.y = y;
-        d.value = values[i];
+          z = A.randomInt(41) - 20,
+          final = `translate3d(0px, 0px, 0px) rotateZ(${z}deg) rotateX(${x}deg) rotateY(${y}deg)`;
+        Object.assign(d, { x, y, z, value: values[i] });
         if (!motion) {
           d.body.style.transform = final;
+          lightCube(d);
           return Promise.resolve();
         }
-        const start = from.startsWith("translate") ? from : `translate(0, 0) ${from || "rotateZ(0deg) rotateX(0deg) rotateY(0deg)"}`;
-        const anim = d.body.animate(
-          [
-            { transform: start, easing: "cubic-bezier(.25,.7,.45,1)" },
-            { transform: `translate(${drift * 100}%, -30%) rotateZ(${z / 2}deg) rotateX(${ox + (x - ox) * 0.6}deg) rotateY(${oy + (y - oy) * 0.6}deg)`, offset: 0.4, easing: "cubic-bezier(.55,0,.8,.45)" },
-            { transform: `translate(0, 0) rotateZ(${z}deg) rotateX(${x - 8}deg) rotateY(${y - 6}deg)`, offset: 0.85, easing: "ease-out" },
-            { transform: final },
-          ],
-          { duration, delay, fill: "forwards" },
-        );
+        for (const face of d.body.querySelectorAll(".cube-face")) face.style.setProperty("--dark", "0.12");
+        const anim = flight(d, (p) => `rotateZ(${(oz + (z - oz) * p).toFixed(1)}deg) rotateX(${(ox + (x - ox) * p).toFixed(1)}deg) rotateY(${(oy + (y - oy) * p).toFixed(1)}deg)`, duration, delay, drift);
         return anim.finished.then(() => {
           d.body.style.transform = final;
           anim.cancel();
+          lightCube(d);
           d.el.classList.add("landed");
         });
       }
-      // Daus polièdrics: rodolen mentre canvien de número i s'aturen al resultat.
-      const text = d.body.querySelector(".num"),
-        turns = (A.randomInt(2) ? 1 : -1) * (360 * (1 + Math.round(state.duration / 1000)) + A.randomInt(40) - 20);
+      // Daus polièdrics: giren i s'inclinen (sense posar-se mai de cantell) mentre canvien de número.
+      const dir = A.randomInt(2) ? 1 : -1,
+        turns = dir * 360 * (1 + Math.round(state.duration / 1000)),
+        wobX = 34 + A.randomInt(16),
+        wobY = 28 + A.randomInt(16),
+        tiltEnd = A.randomInt(25) - 12,
+        prevTilt = d.tilt || 0;
+      d.tilt = tiltEnd;
       if (!motion) {
         d.value = values[i];
         setNumberStyle();
@@ -226,17 +303,11 @@
         setNumberStyle();
         setTimeout(() => flicker(Math.min(260, wait * 1.12)), wait);
       })(55);
-      const anim = d.body.animate(
-        [
-          { transform: "translate(0,0) rotate(0deg) scale(1)", easing: "cubic-bezier(.25,.7,.45,1)" },
-          { transform: `translate(${drift * 100}%, -28%) rotate(${turns * 0.55}deg) scale(1.1)`, offset: 0.42, easing: "cubic-bezier(.55,0,.8,.45)" },
-          { transform: `translate(0,0) rotate(${turns * 0.97}deg) scale(1)`, offset: 0.85, easing: "ease-out" },
-          { transform: `translate(0,0) rotate(${turns}deg) scale(1)` },
-        ],
-        { duration, delay },
-      );
+      const anim = flight(d, (p) => `rotate(${(prevTilt + (turns + tiltEnd - prevTilt) * p).toFixed(1)}deg) rotateX(${(Math.sin(p * Math.PI * 4) * wobX * (1 - p)).toFixed(1)}deg) rotateY(${(Math.sin(p * Math.PI * 3) * wobY * (1 - p)).toFixed(1)}deg)`, duration, delay, drift);
       return anim.finished.then(() => {
         stop = true;
+        d.body.style.transform = `rotate(${tiltEnd}deg)`;
+        anim.cancel();
         d.value = values[i];
         setNumberStyle();
         d.el.classList.add("landed");

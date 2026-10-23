@@ -44,14 +44,28 @@
   function plural(n, one, many) {
     return `${n.toLocaleString("ca")} ${n === 1 ? one : many}`;
   }
+  const EDGE_LAYERS = 12,
+    STEPS = 16,
+    FLIGHT = 0.74,
+    // [moment, alçada del bot (%), balanceig (graus)]
+    LANDING = [
+      [0.81, -9, 16],
+      [0.87, 0, -8],
+      [0.92, -2.5, 4],
+      [0.96, 0, -1.5],
+    ];
   function buildCoins() {
     coinsHost.replaceChildren();
     angles = [];
     for (let i = 0; i < state.count; i++) {
       const coin = document.createElement("div");
       coin.className = "coin";
-      coin.innerHTML =
-        '<div class="coin-shadow"></div><div class="coin-flip"><svg class="face face-cara" viewBox="0 0 100 100"><use href="#coin-cara"/></svg><svg class="face face-creu" viewBox="0 0 100 100"><use href="#coin-creu"/></svg></div>';
+      // El cantell són capes de disc apilades entre les dues cares: dona gruix a la moneda quan gira.
+      const edge = Array.from({ length: EDGE_LAYERS }, (_, k) => {
+        const f = k / (EDGE_LAYERS - 1);
+        return `<div class="coin-edge" style="--z:${(f - 0.5).toFixed(3)};--edge:${f < 0.5 ? "#a8772a" : "#7d8a8f"}"></div>`;
+      }).join("");
+      coin.innerHTML = `<div class="coin-shadow"></div><div class="coin-flip">${edge}<svg class="face face-cara" viewBox="0 0 100 100"><use href="#coin-cara"/></svg><svg class="face face-creu" viewBox="0 0 100 100"><use href="#coin-creu"/></svg></div>`;
       coinsHost.append(coin);
       angles.push(0);
     }
@@ -136,31 +150,40 @@
       const from = angles[i],
         turns = 4 + A.randomInt(3) + Math.round(base / 900),
         target = results[i] === "H" ? 0 : 180,
-        to = from - (from % 360) + turns * 360 + target;
+        to = from - (from % 360) + turns * 360 + target,
+        spinZ = A.randomInt(31) - 15;
       angles[i] = to;
-      const final = `translateY(0) rotateX(${to}deg)`;
-      coin.style.setProperty("--final", final);
+      const final = `rotateZ(${spinZ}deg) rotateX(${to}deg)`;
       if (!motion) {
         flip.style.transform = final;
         return Promise.resolve();
       }
       const duration = base * (0.94 + A.randomInt(121) / 1000),
-        delay = i * 70;
-      const anim = flip.animate(
-        [
-          { transform: `translateY(0) rotateX(${from}deg) scale(1)`, easing: "cubic-bezier(.2,.7,.4,1)" },
-          { transform: `translateY(-38%) rotateX(${from + (to - from) * 0.55}deg) scale(1.14)`, offset: 0.45, easing: "cubic-bezier(.6,0,.85,.4)" },
-          { transform: `translateY(0) rotateX(${to}deg) scale(1)`, offset: 0.86, easing: "ease-out" },
-          { transform: `translateY(-5%) rotateX(${to}deg) scale(1)`, offset: 0.93, easing: "ease-in" },
-          { transform: final, offset: 1 },
-        ],
-        { duration, delay, fill: "forwards" },
-      );
-      shadow.animate(
-        [{ transform: "scale(1)", opacity: 1 }, { transform: "scale(.55)", opacity: 0.45, offset: 0.45 }, { transform: "scale(1)", opacity: 1, offset: 0.86 }, { transform: "scale(1)", opacity: 1 }],
-        { duration, delay },
-      );
-      setTimeout(() => A.noise(0.05, 0, 0.22, 3200 + i * 150), delay + duration * 0.86);
+        delay = i * 70,
+        size = coin.offsetWidth,
+        rise = 0.62 + A.randomInt(20) / 100,
+        drift = A.randomInt(21) - 10,
+        fromZ = Number(coin.dataset.z || 0);
+      coin.dataset.z = spinZ;
+      // Vol parabòlic amb gir constant, i després un bot i un balanceig que s'apaga.
+      const frames = [],
+        shadowFrames = [];
+      for (let k = 0; k <= STEPS; k++) {
+        const t = k / STEPS,
+          h = 4 * t * (1 - t);
+        frames.push({
+          transform: `translateY(${(-h * rise * 100).toFixed(1)}%) translateZ(${(h * size * 0.55).toFixed(1)}px) rotateZ(${(fromZ + (spinZ - fromZ) * t + drift * h).toFixed(1)}deg) rotateX(${(from + (to - from) * t).toFixed(1)}deg)`,
+          offset: t * FLIGHT,
+        });
+        shadowFrames.push({ transform: `scale(${(1 - h * 0.5).toFixed(2)})`, opacity: +(1 - h * 0.65).toFixed(2), offset: t * FLIGHT });
+      }
+      for (const [offset, y, wobble] of LANDING) frames.push({ transform: `translateY(${y}%) translateZ(0px) rotateZ(${spinZ}deg) rotateX(${to + wobble}deg)`, offset });
+      frames.push({ transform: `translateY(0%) translateZ(0px) ${final}`, offset: 1 });
+      shadowFrames.push({ transform: "scale(1)", opacity: 1, offset: 1 });
+      const anim = flip.animate(frames, { duration, delay, fill: "forwards" });
+      shadow.animate(shadowFrames, { duration, delay });
+      setTimeout(() => A.noise(0.05, 0, 0.22, 3200 + i * 150), delay + duration * FLIGHT);
+      setTimeout(() => A.noise(0.03, 0, 0.12, 4200 + i * 150), delay + duration * 0.87);
       return anim.finished.then(() => {
         flip.style.transform = final;
         anim.cancel();

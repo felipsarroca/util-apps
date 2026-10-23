@@ -110,17 +110,7 @@
     if (rank === 1) {
       body = use(sym, 50, 75, fam === "es" ? 54 : 44);
     } else if (figure) {
-      const title = fam === "es" ? { 10: "SOTA", 11: "CAVALL", 12: "REI" }[rank] : { 11: "VALET", 12: "REINA", 13: "REI" }[rank];
-      const crown = (fam === "es" && rank === 12) || (fam === "fr" && rank >= 12);
-      const emblem =
-        fam === "es"
-          ? rank === 10
-            ? `<circle cx="50" cy="42" r="8" fill="${s.color}" opacity=".85"/><path d="M34 62c0-9 7-13 16-13s16 4 16 13z" fill="${s.color}" opacity=".85"/>`
-            : rank === 11
-              ? `<path d="M37 60V48a13 13 0 0 1 26 0v12h-7V48a6 6 0 0 0-12 0v12z" fill="${s.color}" opacity=".85"/><g fill="#fffefa"><circle cx="40.5" cy="55" r="1.4"/><circle cx="59.5" cy="55" r="1.4"/><circle cx="41" cy="47" r="1.4"/><circle cx="59" cy="47" r="1.4"/></g>`
-              : `<use href="#crown" x="34" y="34" width="32" height="20"/>`
-          : `<text x="50" y="63" text-anchor="middle" font-size="40" font-weight="800" fill="${s.color}">${label}</text>${crown ? `<use href="#crown" x="38" y="22" width="24" height="14"/>` : ""}`;
-      body = `<rect x="20" y="28" width="60" height="94" rx="6" fill="${s.color}" opacity=".08"/>${emblem}${use(sym, 50, 88, 30)}<text x="50" y="114" text-anchor="middle" font-size="9" font-weight="800" letter-spacing="1.5" fill="${s.color}">${title}</text>`;
+      body = fam === "es" ? window.CartesFigures.spanish(rank, suit, use) : window.CartesFigures.french(rank, suit, use, s.color);
     } else {
       const pts = PIPS[rank],
         size = rank <= 3 ? 26 : rank <= 6 ? 22 : 19;

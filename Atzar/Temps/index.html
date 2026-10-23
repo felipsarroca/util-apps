@@ -10,10 +10,10 @@
     />
     <title>Temps App</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
-    <link rel="stylesheet" href="style.css?v=1.0" />
-    <script src="../shared/atzar.js?v=1.0" defer></script>
-    <script src="script.js?v=1.0" defer></script>
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.1" />
+    <link rel="stylesheet" href="style.css?v=1.1" />
+    <script src="../shared/atzar.js?v=1.1" defer></script>
+    <script src="script.js?v=1.1" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -61,6 +61,7 @@
                 <p id="clockNote" class="clock-note"></p>
               </div>
             </div>
+            <ol id="stageMarks" class="stage-marks" aria-label="Marques" hidden></ol>
           </div>
           <div class="action-row">
             <button id="startButton" class="action-button" title="Comença o atura (barra d’espai)">
@@ -71,7 +72,6 @@
             <button id="resetButton" class="secondary round" title="Reinicia">↺</button>
           </div>
           <p id="liveStatus" class="sr-only" aria-live="assertive"></p>
-          <ol id="stageMarks" class="stage-marks" hidden></ol>
         </section>
         <aside class="panel" aria-label="Personalitza el rellotge">
           <div class="tabs" role="tablist" aria-label="Panells">

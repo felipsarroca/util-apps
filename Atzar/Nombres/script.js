@@ -90,6 +90,14 @@
     const len = String(text).length;
     return len <= 2 ? 0.4 : len === 3 ? 0.3 : len === 4 ? 0.23 : len <= 6 ? 0.16 : 0.11;
   }
+  /* El resultat ja es veu a l'escenari; només s'anuncia als lectors de pantalla. */
+  function announce(text) {
+    $("liveResult").textContent = text;
+  }
+  function setResultLine(...nodes) {
+    $("resultLine").replaceChildren(...nodes);
+    A.fitLayout();
+  }
   function addHistory(label) {
     state.history.unshift({ label, time: Date.now() });
     state.history.length = Math.min(state.history.length, 200);
@@ -153,10 +161,10 @@
     const narrow = W < 600,
       cols = state.bingoMax <= 100 ? 10 : 15,
       rows = Math.ceil(state.bingoMax / cols),
-      big = Math.floor(narrow ? Math.min(110, H * 0.3) : Math.min(A.cap(220), H * 0.62, W * 0.3));
+      big = Math.floor(narrow ? Math.min(110, H * 0.28) : Math.min(A.cap(200), H * 0.55, W * 0.26));
     const boardW = narrow ? W : W - big - 24,
       boardH = narrow ? H - big - 12 : H;
-    const cell = Math.max(16, Math.floor(Math.min((boardW - (cols - 1) * 4) / cols, (boardH - (rows - 1) * 4) / rows, A.cap(54))));
+    const cell = Math.max(16, Math.floor(Math.min((boardW - (cols - 1) * 4) / cols, (boardH - (rows - 1) * 4) / rows, A.cap(72))));
     const view = $("bingoView");
     view.style.setProperty("--bingo-ball", `${big}px`);
     view.style.setProperty("--cols", cols);
@@ -190,7 +198,8 @@
     sync();
     attempts = [];
     secretValue = state.secret ? values[0] : null;
-    $("resultLine").textContent = "";
+    setResultLine();
+    announce("");
     renderBalls(values.map(() => null));
     const balls = [...$("numberView").children],
       size = state.max - state.min + 1;
@@ -214,15 +223,12 @@
     busy = false;
     lastNumbers = values;
     if (state.secret) {
-      $("resultLine").textContent = `He pensat un nombre entre ${fmt(state.min)} i ${fmt(state.max)}. Quin és?`;
+      setResultLine(`He pensat un nombre entre ${fmt(state.min)} i ${fmt(state.max)}. Quin és?`);
       $("guessInput").value = "";
       $("guessInput").focus({ preventScroll: true });
       addHistory(`Nombre secret entre ${fmt(state.min)} i ${fmt(state.max)}`);
     } else {
-      const big = document.createElement("span");
-      big.className = "big";
-      big.textContent = values.map(fmt).join(" · ");
-      $("resultLine").replaceChildren(big);
+      announce(values.map(fmt).join(", "));
       addHistory(values.map(fmt).join(", "));
       A.sounds.win();
     }
@@ -246,20 +252,19 @@
       msg = value < secretValue ? `El ${fmt(value)} és massa petit: és més gran ↑` : `El ${fmt(value)} és massa gran: és més petit ↓`;
       A.tone(value < secretValue ? 520 : 390, 0.15, 0, "triangle", 0.15);
     }
-    const line = $("resultLine"),
-      big = document.createElement("span");
+    const big = document.createElement("span");
     big.className = "big";
     big.textContent = msg;
     const tried = document.createElement("span");
     tried.textContent = `Intents: ${attempts.map(fmt).join(", ")}`;
-    line.replaceChildren(big, tried);
+    setResultLine(big, tried);
     $("guessInput").value = "";
   }
   function reveal(found = false) {
     if (secretValue === null) return;
     $("numberView").classList.remove("secret");
     if (!found) {
-      $("resultLine").textContent = `Era el ${fmt(secretValue)}.`;
+      setResultLine(`Era el ${fmt(secretValue)}.`);
       A.sounds.click();
     }
     state.history[0] = { label: `Nombre secret: ${fmt(secretValue)}${attempts.length ? ` (${attempts.length} intents)` : ""}`, time: state.history[0]?.time || Date.now() };
@@ -311,11 +316,7 @@
     renderBoard();
     sync();
     renderHistory();
-    $("resultLine").innerHTML = "";
-    const big = document.createElement("span");
-    big.className = "big";
-    big.textContent = `Ha sortit el ${value}`;
-    $("resultLine").append(big);
+    announce(`Ha sortit el ${value}`);
     A.sounds.win();
     speak(String(value));
   }
@@ -356,10 +357,7 @@
     renderLetterChips();
     sync();
     renderHistory();
-    const big = document.createElement("span");
-    big.className = "big";
-    big.textContent = `Lletra ${value}`;
-    $("resultLine").replaceChildren(big);
+    announce(`Lletra ${value}`);
     A.sounds.win();
   }
 
@@ -431,7 +429,7 @@
     if (busy || mode === state.mode) return;
     state.mode = mode;
     secretValue = null;
-    $("resultLine").textContent = "";
+    setResultLine();
     persist();
     sync();
     if (mode === "bingo") renderBoard();
@@ -503,7 +501,7 @@
   $("bingoReset").addEventListener("click", () => {
     if (busy) return;
     state.bingoDrawn = [];
-    $("resultLine").textContent = "Tauler buit. Totes les boles tornen al bombo.";
+    A.toast("Tauler buit. Totes les boles tornen al bombo.");
     persist();
     renderBoard();
   });

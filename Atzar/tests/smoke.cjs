@@ -22,7 +22,7 @@ const APPS = {
   Moneda: { action: "#tossButton", wait: 2600, check: "#resultLine .big" },
   Daus: { action: "#rollButton", wait: 2600, check: "#resultLine .big" },
   Cartes: { action: "#drawButton", wait: 1800, check: "#table .card" },
-  Nombres: { action: "#drawButton", wait: 2200, check: "#resultLine .big" },
+  Nombres: { action: "#drawButton", wait: 2200, check: "#numberView .ball.settled" },
   Sorteig: { action: "#drawButton", wait: 3600, check: "#winners li" },
   Equips: { action: "#makeButton", wait: 3000, check: ".team" },
   Temps: { action: "#startButton", wait: 1200, check: "#display" },

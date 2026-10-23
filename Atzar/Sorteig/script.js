@@ -51,6 +51,25 @@
     area.style.setProperty("--slip-font", `${Math.round(A.cap(font))}px`);
     area.style.setProperty("--slip-min", `${Math.min(A.cap(min), W - 20)}px`);
   }
+  /* El paperet mostra el nom sencer: la lletra s'ajusta perquè cap paraula es parteixi. */
+  function placeReveal(name) {
+    const reveal = $("reveal"),
+      stage = document.querySelector(".draw-stage"),
+      sw = stage.clientWidth,
+      maxW = Math.min(A.cap(460), sw - 16),
+      inner = maxW - 56,
+      longest = Math.max(1, ...name.split(/\s+/).map((w) => w.length));
+    const font = Math.max(14, Math.min(A.cap(40), inner / (longest * 0.62), (inner * 2) / (name.length * 0.6)));
+    reveal.firstElementChild.textContent = name;
+    reveal.style.setProperty("--reveal-font", `${Math.floor(font)}px`);
+    reveal.style.maxWidth = `${maxW}px`;
+    const s = stage.getBoundingClientRect(),
+      h = $("hat").getBoundingClientRect(),
+      w = reveal.offsetWidth,
+      cx = h.left - s.left + h.width / 2;
+    reveal.style.left = `${Math.max(8, Math.min(sw - w - 8, cx - w / 2))}px`;
+    reveal.style.top = `${Math.max(-40, h.top - s.top + h.height * 0.3 - reveal.offsetHeight)}px`;
+  }
   function addWinner(name, i) {
     const li = document.createElement("li");
     li.textContent = name;
@@ -117,7 +136,7 @@
     const step = motion ? Math.max(140, Math.min(state.duration, 7000 / n)) : 0;
     for (let i = 0; i < picks.length; i++) {
       if (motion) {
-        reveal.textContent = picks[i];
+        placeReveal(picks[i]);
         reveal.style.setProperty("--slip", COLORS[i % COLORS.length]);
         reveal.style.setProperty("--reveal-time", `${Math.round(step * 0.85)}ms`);
         reveal.classList.remove("show");
