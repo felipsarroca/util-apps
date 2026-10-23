@@ -73,7 +73,7 @@
     selected = null; // {t, m}: membre seleccionat per moure'l o intercanviar-lo
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const splitList = (s) => s.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 40);
-  const people = () => A.present(state.base);
+  const people = () => state.base;
   const level = (name) => state.levels[name] || 2;
 
   function teamCount(n = people().length) {
@@ -495,7 +495,6 @@
     $("sizePlus").disabled = value >= Math.max(2, Math.min(n, 30));
     $("leftoverField").hidden = isTeams;
     $("leftoverInput").value = state.leftover;
-    const away = total - n;
     if (n >= 2) {
       const small = Math.floor(n / k),
         big = Math.ceil(n / k),
@@ -503,7 +502,7 @@
       $("splitNote").textContent =
         (small === big
           ? `${k} equips ${A.de(small)}${small} ${small === 1 ? "persona" : "persones"}.`
-          : `${k} equips: ${bigCount} ${A.de(big)}${big} i ${k - bigCount} ${A.de(small)}${small} ${small === 1 ? "persona" : "persones"}.`) + (away ? ` ${away} ${away === 1 ? "absent" : "absents"}.` : "");
+          : `${k} equips: ${bigCount} ${A.de(big)}${big} i ${k - bigCount} ${A.de(small)}${small} ${small === 1 ? "persona" : "persones"}.`);
       $("stageSubtitle").textContent = `${n} persones · ${k} equips`;
     } else {
       $("splitNote").textContent = "Calen almenys dues persones presents.";
@@ -536,7 +535,6 @@
     state.base = entries;
     persist();
     sync();
-    renderAbsents();
     renderRules();
   }
 
@@ -612,7 +610,6 @@
   $("exportHistory").addEventListener("click", () =>
     A.downloadCsv("equips.csv", [["Equip", "Persona", "Rol"], ...state.last.teams.flatMap((t) => t.members.map((m) => [t.name, m.name, m.role || ""]))]),
   );
-  const renderAbsents = A.setupAbsents({ host: $("absentList"), getNames: () => state.base, onChange: sync });
   A.setupClasses({
     getEntries: () => state.base,
     onLoad: (group) => {

@@ -39,11 +39,6 @@ for(let i=0;i<8;i++){await setup("Equips","felip.atzar.equips.v1",{base:names.sl
 const t=(await ls("felip.atzar.equips.v1")).last.teams.map(x=>x.members.map(m=>m.name));const team=n=>t.findIndex(x=>x.includes(n));
 assert.notEqual(team("P1"),team("P2"));assert.equal(team("P3"),team("P4"));assert.notEqual(team("P5"),team("P6"));}
 console.log("✓ Equips: condicions de separar i ajuntar respectades (8 de 8)");
-// Absents: qui falta avui no entra als equips
-{const d=new Date();await setup("Equips","felip.atzar.absents",{date:`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`,names:["A","B"]});}
-await setup("Equips","felip.atzar.equips.v1",{base:["A","B","C","D","E","F"],teams:2,duration:0});await p.click("#makeButton");await p.waitForTimeout(200);
-{const m=(await ls("felip.atzar.equips.v1")).last.teams.flatMap(t=>t.members.map(x=>x.name));assert.equal(m.length,4);assert(!m.includes("A")&&!m.includes("B"),"hi surt un absent");}
-await p.evaluate(()=>localStorage.removeItem("felip.atzar.absents"));console.log("✓ Absents: els equips només compten qui hi és");
 // Nombres: 10 sense repetir de 1 a 10 => permutació
 await setup("Nombres","felip.atzar.nombres.v1",{mode:"number",min:1,max:10,qty:10,unique:true,sort:true,duration:500});await p.click("#drawButton");await p.waitForFunction(()=>document.querySelector("#liveResult").textContent);
 assert.equal(await p.textContent("#liveResult"),"1, 2, 3, 4, 5, 6, 7, 8, 9, 10");console.log("✓ Nombres: 10 de 10 sense repetir i ordenats");

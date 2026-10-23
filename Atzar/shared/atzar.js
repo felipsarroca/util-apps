@@ -382,80 +382,6 @@ window.Atzar = (() => {
     return render;
   }
 
-  /* Absents d'avui: compartits entre Ruleta, Sorteig i Equips; caduquen en canviar de dia. */
-  const ABSENT_KEY = "felip.atzar.absents";
-  const today = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-  };
-  function getAbsents() {
-    const data = load(ABSENT_KEY, null);
-    return data && data.date === today() && Array.isArray(data.names)
-      ? new Set(data.names.filter((x) => typeof x === "string"))
-      : new Set();
-  }
-  function setAbsents(names) {
-    save(ABSENT_KEY, { date: today(), names: [...names].slice(0, 400) });
-  }
-  function present(list) {
-    const absent = getAbsents();
-    return absent.size ? list.filter((x) => !absent.has(x)) : list;
-  }
-  /* Panell «Qui falta avui?»: details amb un botó per persona. onChange es crida en cada canvi. */
-  function setupAbsents({ host, getNames, onChange }) {
-    if (!host) return () => {};
-    host.classList.add("absents");
-    host.innerHTML =
-      '<summary>Qui falta avui? <span class="absent-count"></span></summary><p class="field-note">Toca qui no hi és: no sortirà fins demà, i tampoc a les altres apps d’Atzar. La llista no canvia.</p><div class="absent-chips chips"></div><button type="button" class="quiet absent-clear">Hi són tots</button>';
-    const chips = host.querySelector(".absent-chips"),
-      count = host.querySelector(".absent-count"),
-      clear = host.querySelector(".absent-clear");
-    function render() {
-      const absent = getAbsents(),
-        names = [...new Set(getNames())],
-        missing = names.filter((n) => absent.has(n)).length;
-      count.textContent = missing ? `(${missing})` : "";
-      clear.hidden = !missing;
-      chips.replaceChildren(
-        ...names.map((name) => {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.textContent = name;
-          b.setAttribute("aria-pressed", String(absent.has(name)));
-          b.title = absent.has(name) ? "Avui no hi és" : "Hi és";
-          b.addEventListener("click", () => {
-            const now = getAbsents();
-            now.has(name) ? now.delete(name) : now.add(name);
-            setAbsents(now);
-            render();
-            onChange?.();
-          });
-          return b;
-        }),
-      );
-      if (!names.length) chips.textContent = "La llista és buida.";
-    }
-    clear.addEventListener("click", () => {
-      const before = getAbsents();
-      setAbsents([]);
-      render();
-      onChange?.();
-      undoable("Tothom torna a ser present.", () => {
-        setAbsents(before);
-        render();
-        onChange?.();
-      });
-    });
-    window.addEventListener("storage", (e) => {
-      if (e.key === ABSENT_KEY) {
-        render();
-        onChange?.();
-      }
-    });
-    render();
-    return render;
-  }
-
   /* Capçalera, tema, so, mode aula, pestanyes i dreceres */
   function applyPrefs() {
     document.documentElement.dataset.theme = prefs.dark ? "dark" : "light";
@@ -754,9 +680,6 @@ window.Atzar = (() => {
     sounds,
     toast,
     undoable,
-    getAbsents,
-    present,
-    setupAbsents,
     confetti,
     formatTime,
     download,

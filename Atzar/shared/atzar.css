@@ -753,42 +753,6 @@ input[type="range"] {
   min-width: 54px;
 }
 
-/* Absents d'avui */
-.absents {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--pastel-rose);
-  padding: 0 12px;
-}
-.absents summary {
-  min-height: 44px;
-  padding-block: 12px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 650;
-}
-.absents .field-note {
-  margin: 0 0 8px;
-}
-.absent-chips {
-  max-height: 170px;
-  overflow-y: auto;
-  margin-bottom: 8px;
-}
-.absent-chips button {
-  background: var(--paper);
-}
-.absents .absent-chips button[aria-pressed="true"] {
-  background: transparent;
-  border-style: dashed;
-  border-color: var(--danger);
-  color: var(--danger);
-  text-decoration: line-through;
-}
-.absent-clear {
-  margin: 0 0 8px;
-}
-
 /* Diàlegs */
 dialog {
   border: 1px solid var(--line);

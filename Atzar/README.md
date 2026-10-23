@@ -26,7 +26,6 @@ Cada app inclou un apartat **Idees per a l’aula** amb propostes concretes. No 
 - **Barra d’espai** per a l’acció principal; **Esc** per sortir del mode aula.
 - **Historial** exportable en CSV i, quan té sentit, botó per copiar el resultat.
 - **Classes compartides**: les classes desades a la Ruleta apareixen també a Sorteig i Equips (només lectura); les que es desen des d’aquestes dues apps són comunes a totes dues.
-- **Qui falta avui?**: les persones marcades com a absents queden fora dels Equips fins a mitjanit. La Ruleta i el Sorteig fan servir sempre els noms escrits.
 - **Desfés**: esborrar historials, estadístiques, marques o classes es pot desfer des de l’avís que apareix.
 - Botó **⊞** a la capçalera per tornar al menú.
 

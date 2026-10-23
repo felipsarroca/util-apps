@@ -143,7 +143,6 @@
     audioContext,
     master;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  // La Ruleta mostra exactament els noms escrits: no aplica la llista d'absents de les altres apps.
   const wheel = () => state.entries;
   function toast(message) {
     $("toast").textContent = message;
