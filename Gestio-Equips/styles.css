@@ -623,6 +623,16 @@ button.inventory-row:hover,
   padding: 6px 8px 6px 4px;
 }
 .people-row.is-inactive { opacity: 0.62; }
+.people-group-title {
+  margin: 6px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .people-open {
   flex: 1 1 auto;
   min-width: 0;

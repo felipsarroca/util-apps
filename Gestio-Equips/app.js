@@ -182,6 +182,14 @@ function usersForSelection(selectedUserId = "") {
   return state.users.filter((item) => item.actiu !== false || item.id === selectedUserId);
 }
 
+// Actius primer i, dins de cada grup, per ordre alfabètic.
+function compareUsers(a, b) {
+  return (
+    Number(a.actiu === false) - Number(b.actiu === false) ||
+    `${a.nom} ${a.cognoms}`.localeCompare(`${b.nom} ${b.cognoms}`, "ca")
+  );
+}
+
 function userName(userId) {
   const user = getUser(userId);
   return user ? `${user.nom} ${user.cognoms}`.trim() : "Sense assignar";
@@ -200,9 +208,9 @@ function filteredResults() {
         (item.observacions ?? "").toLowerCase().includes(query)
       );
     }),
-    users: state.users.filter((item) =>
-      `${item.nom} ${item.cognoms}`.trim().toLowerCase().includes(query),
-    ),
+    users: state.users
+      .filter((item) => `${item.nom} ${item.cognoms}`.trim().toLowerCase().includes(query))
+      .sort(compareUsers),
   };
 }
 
@@ -939,6 +947,27 @@ function userHasHistory(userId) {
   );
 }
 
+function renderPeopleRow(user, keyCounts) {
+  const computers = state.computers.filter((computer) => computer.usuariActualId === user.id);
+  const isDuplicate = keyCounts.get(nameKey(user)) > 1;
+  return `
+    <article class="people-row ${user.actiu === false ? "is-inactive" : ""}">
+      <button type="button" class="people-open" data-people-open="${user.id}">
+        <strong>${text(`${user.nom} ${user.cognoms}`.trim())}</strong>
+        <small>${user.tipusUsuari === "generic" ? "Genèric" : "Alumne"}${user.actiu === false ? " · Inactiu" : ""} · ${
+          computers.length ? text(computers.map((computer) => computer.codi).join(", ")) : "Sense equip"
+        }</small>
+      </button>
+      ${isDuplicate ? '<span class="people-dup">Possible duplicat</span>' : ""}
+      ${
+        isEditor()
+          ? `<button type="button" class="ghost-button compact-button" data-people-edit="${user.id}">Editar</button>`
+          : ""
+      }
+    </article>
+  `;
+}
+
 function renderPeoplePanel() {
   if (!state.peopleOpen) return "";
 
@@ -946,7 +975,9 @@ function renderPeoplePanel() {
   const keyCounts = state.users.reduce((counts, user) => counts.set(nameKey(user), (counts.get(nameKey(user)) ?? 0) + 1), new Map());
   const rows = state.users
     .filter((user) => !query || `${user.nom} ${user.cognoms}`.toLowerCase().includes(query))
-    .sort((a, b) => `${a.nom} ${a.cognoms}`.localeCompare(`${b.nom} ${b.cognoms}`, "ca"));
+    .sort(compareUsers);
+  const activeRows = rows.filter((user) => user.actiu !== false);
+  const inactiveRows = rows.filter((user) => user.actiu === false);
   const duplicates = state.users.filter((user) => keyCounts.get(nameKey(user)) > 1).length;
 
   return `
@@ -962,33 +993,18 @@ function renderPeoplePanel() {
         <span class="search-label">Filtra per nom</span>
         <input id="people-search" type="search" value="${text(state.peopleQuery)}" placeholder="Nom o cognoms" />
       </label>
-      <p class="inventory-count">${rows.length} ${rows.length === 1 ? "usuari" : "usuaris"}${
+      <p class="inventory-count">${activeRows.length} ${activeRows.length === 1 ? "usuari actiu" : "usuaris actius"}${
+        inactiveRows.length ? ` · ${inactiveRows.length} ${inactiveRows.length === 1 ? "inactiu" : "inactius"}` : ""
+      }${
         duplicates ? ` · <span class="people-dup-note">${duplicates} amb el nom repetit</span>` : ""
       }</p>
-      <div class="people-list">
-        ${rows
-          .map((user) => {
-            const computers = state.computers.filter((computer) => computer.usuariActualId === user.id);
-            const isDuplicate = keyCounts.get(nameKey(user)) > 1;
-            return `
-              <article class="people-row ${user.actiu === false ? "is-inactive" : ""}">
-                <button type="button" class="people-open" data-people-open="${user.id}">
-                  <strong>${text(`${user.nom} ${user.cognoms}`.trim())}</strong>
-                  <small>${user.tipusUsuari === "generic" ? "Genèric" : "Alumne"}${user.actiu === false ? " · Inactiu" : ""} · ${
-                    computers.length ? text(computers.map((computer) => computer.codi).join(", ")) : "Sense equip"
-                  }</small>
-                </button>
-                ${isDuplicate ? '<span class="people-dup">Possible duplicat</span>' : ""}
-                ${
-                  isEditor()
-                    ? `<button type="button" class="ghost-button compact-button" data-people-edit="${user.id}">Editar</button>`
-                    : ""
-                }
-              </article>
-            `;
-          })
-          .join("")}
-      </div>
+      ${activeRows.length ? `<div class="people-list">${activeRows.map((user) => renderPeopleRow(user, keyCounts)).join("")}</div>` : ""}
+      ${
+        inactiveRows.length
+          ? `<h3 class="people-group-title">Usuaris inactius</h3>
+             <div class="people-list">${inactiveRows.map((user) => renderPeopleRow(user, keyCounts)).join("")}</div>`
+          : ""
+      }
     </section>
   `;
 }
@@ -1375,8 +1391,7 @@ function renderModal() {
       .filter((user) => user.id !== editedUser.id)
       .sort(
         (a, b) =>
-          Number(nameKey(b) === editedKey) - Number(nameKey(a) === editedKey) ||
-          `${a.nom} ${a.cognoms}`.localeCompare(`${b.nom} ${b.cognoms}`, "ca"),
+          Number(nameKey(b) === editedKey) - Number(nameKey(a) === editedKey) || compareUsers(a, b),
       );
     return `
       <div class="modal-overlay">
