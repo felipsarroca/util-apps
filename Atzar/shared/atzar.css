@@ -1180,3 +1180,21 @@ dialog::backdrop {
     font-size: 17px;
   }
 }
+/* El cartellet surt a la cantonada inferior dreta, sobre la part buida del peu,
+   perquè no tapi els resultats ni els gràfics. */
+.toast {
+  left: auto;
+  right: 20px;
+  bottom: 10px;
+  transform: none;
+  max-width: min(440px, calc(100vw - 40px));
+  line-height: 1.4;
+}
+@media (max-width: 600px) {
+  .toast {
+    left: 12px;
+    right: 12px;
+    bottom: 8px;
+    max-width: none;
+  }
+}
