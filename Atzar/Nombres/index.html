@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Nombres a l’atzar, bombo amb tauler i lletres per a jocs de paraules. En català, sense anuncis i amb desament local."
+    />
+    <title>Nombres App</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
+    <link rel="stylesheet" href="style.css?v=1.0" />
+    <script src="../shared/atzar.js?v=1.0" defer></script>
+    <script src="script.js?v=1.0" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Nombres, inici"
+          ><img class="brand-icon" src="favicon.svg" alt="" width="60" height="60" /><span
+            >nombres<span class="brand-dot">.</span></span
+          ></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <a class="icon-button home-link" href="../" title="Totes les apps d’Atzar a l’aula" aria-label="Atzar a l’aula: totes les apps"
+            ><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></g></svg></a
+          ><button id="soundButton" class="icon-button" aria-label="Silencia el so" aria-pressed="false" title="Activa o silencia el so">♫</button
+          ><button id="themeButton" class="icon-button" aria-label="Activa el tema fosc" aria-pressed="false" title="Tema clar o fosc">◐</button
+          ><button id="presentButton" class="quiet" aria-pressed="false">⛶ <span>Mode aula</span></button>
+        </nav>
+      </header>
+      <main class="layout">
+        <section class="stage" aria-label="Nombres i lletres a l’atzar">
+          <div class="stage-heading">
+            <h1 id="stageTitle">Un nombre a l’atzar</h1>
+            <div class="segmented" role="group" aria-label="Mode">
+              <button data-mode="number" aria-pressed="true">Nombres</button><button data-mode="bingo" aria-pressed="false">Bombo</button><button data-mode="letter" aria-pressed="false">Lletra</button>
+            </div>
+          </div>
+          <div class="play-area">
+            <div id="numberView" class="view number-view"></div>
+            <div id="bingoView" class="view bingo-view" hidden>
+              <div class="bingo-current"><div id="bingoBall" class="ball big-ball"><span>?</span></div><p id="bingoCount" class="bingo-count"></p></div>
+              <div id="bingoBoard" class="bingo-board" aria-label="Tauler del bombo"></div>
+            </div>
+            <div id="letterView" class="view letter-view" hidden>
+              <div id="letterTile" class="tile"><span>?</span></div>
+            </div>
+          </div>
+          <button id="drawButton" class="action-button" title="Treu (barra d’espai)">
+            <span aria-hidden="true">#</span><span id="drawLabel">Genera</span><span aria-hidden="true">→</span>
+          </button>
+          <div id="guessBox" class="guess-box" hidden>
+            <form id="guessForm" class="guess-form">
+              <label for="guessInput" class="sr-only">La teva proposta</label>
+              <input id="guessInput" type="number" inputmode="numeric" placeholder="Quin nombre és?" />
+              <button class="secondary" type="submit">Prova</button><button id="revealButton" class="quiet" type="button">Revela</button>
+            </form>
+          </div>
+          <p id="resultLine" class="result-line" aria-live="polite"></p>
+        </section>
+        <aside class="panel" aria-label="Personalitza">
+          <div class="tabs" role="tablist" aria-label="Panells">
+            <button id="tab-options" class="tab active" role="tab" aria-controls="panel-options" aria-selected="true">Opcions</button
+            ><button id="tab-history" class="tab" role="tab" aria-controls="panel-history" aria-selected="false" tabindex="-1">Historial <span id="historyCount" class="badge">0</span></button
+            ><button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Ajustos</button>
+          </div>
+          <section id="panel-options" class="tab-content" role="tabpanel" aria-labelledby="tab-options">
+            <div id="numberOptions" class="mode-options">
+              <h2>Entre quins nombres?</h2>
+              <div class="field-pair">
+                <label class="field">Des de<input id="minInput" type="number" inputmode="numeric" value="1" /></label>
+                <label class="field">Fins a<input id="maxInput" type="number" inputmode="numeric" value="100" /></label>
+              </div>
+              <div class="chips" aria-label="Intervals habituals">
+                <button data-range="1,10">1–10</button><button data-range="1,25">1–25</button><button data-range="1,30">1–30</button><button data-range="1,100">1–100</button><button data-range="0,9">0–9</button><button data-range="-10,10">−10–10</button>
+              </div>
+              <div class="stepper">
+                <span id="qtyLabel">Quants nombres?</span>
+                <div class="stepper-control" role="group" aria-labelledby="qtyLabel">
+                  <button id="qtyMinus" aria-label="Un nombre menys">−</button><output id="qtyValue" aria-live="polite">1</output><button id="qtyPlus" aria-label="Un nombre més">+</button>
+                </div>
+              </div>
+              <label class="switch-row" for="uniqueToggle"><span><strong>Sense repetir</strong><small>Dins d’una mateixa tirada, cap nombre surt dues vegades.</small></span><input id="uniqueToggle" type="checkbox" role="switch" checked /></label>
+              <label class="switch-row" for="sortToggle"><span><strong>Ordena de menor a major</strong><small>Útil per fer estadística amb les dades.</small></span><input id="sortToggle" type="checkbox" role="switch" /></label>
+              <label class="switch-row" for="secretToggle"><span><strong>Nombre secret</strong><small>Queda amagat i la classe l’ha d’endevinar amb pistes.</small></span><input id="secretToggle" type="checkbox" role="switch" /></label>
+              <p id="numberNote" class="field-note"></p>
+            </div>
+            <div id="bingoOptions" class="mode-options" hidden>
+              <h2>El bombo</h2>
+              <div class="chips" aria-label="Mida del bombo">
+                <button data-bingo="75">1–75</button><button data-bingo="90">1–90</button><button data-bingo="100">1–100</button>
+              </div>
+              <label class="field">O un altre màxim<input id="bingoMax" type="number" inputmode="numeric" min="5" max="200" value="90" /></label>
+              <label class="switch-row" for="speakToggle"><span><strong>Llegeix el nombre en veu alta</strong><small>Fa servir una veu catalana si el dispositiu en té.</small></span><input id="speakToggle" type="checkbox" role="switch" /></label>
+              <button id="bingoReset" class="secondary">↺ Buida el tauler i torna a començar</button>
+              <p class="field-note">Cada bola surt una sola vegada fins que buides el tauler.</p>
+            </div>
+            <div id="letterOptions" class="mode-options" hidden>
+              <h2>Quines lletres?</h2>
+              <p class="muted">Toca una lletra per incloure-la o treure-la.</p>
+              <div id="letterChips" class="chips letter-chips"></div>
+              <div class="tools-row">
+                <button id="lettersEasy" class="quiet">Només les habituals</button><button id="lettersAll" class="quiet">Totes</button><button id="lettersReset" class="quiet">↺ Recupera les usades</button>
+              </div>
+              <label class="switch-row" for="letterUniqueToggle"><span><strong>Sense repetir lletra</strong><small>Les lletres que surten queden marcades fins que les recuperis.</small></span><input id="letterUniqueToggle" type="checkbox" role="switch" checked /></label>
+            </div>
+            <details class="ideas">
+              <summary>Idees per a l’aula</summary>
+              <ul id="ideasList"></ul>
+            </details>
+          </section>
+          <section id="panel-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history" hidden>
+            <div class="section-heading">
+              <h2>Han sortit…</h2>
+              <button id="clearHistory" class="quiet">Esborra</button>
+            </div>
+            <p class="muted">Els últims 200 resultats, del més recent al més antic.</p>
+            <ol id="historyList" class="history-list"></ol>
+            <div id="historyEmpty" class="empty-state">
+              <span aria-hidden="true">#</span>
+              <h3>Encara no hi ha res</h3>
+              <p>Genera un nombre i el trobaràs aquí.</p>
+            </div>
+            <div class="panel-bottom">
+              <button id="copyHistory" class="secondary">⧉ Copia</button><button id="exportHistory" class="secondary">↧ Exporta (.csv)</button>
+            </div>
+          </section>
+          <section id="panel-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-settings" hidden>
+            <h2>Fes-la teva</h2>
+            <label class="field">Durada de l’animació<select id="durationInput">
+                <option value="500">Ràpida · mig segon</option>
+                <option value="1300">Normal · 1,3 segons</option>
+                <option value="2500">Suspens · 2,5 segons</option>
+              </select></label>
+            <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
+            <p class="muted">Tots els nombres i lletres de l’interval tenen la mateixa probabilitat. El resultat es tria abans de l’animació amb el generador criptogràfic del navegador.</p>
+            <p class="muted">Dreceres: <kbd>espai</kbd> generar · <kbd>Esc</kbd> sortir del mode aula.</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0"><img src="../shared/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA" /></a>
+      <div>
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>

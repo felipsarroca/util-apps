@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Treu cartes d’una baralla espanyola o francesa, amb reposició o sense, i calcula probabilitats amb les que queden."
+    />
+    <title>Cartes App</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
+    <link rel="stylesheet" href="style.css?v=1.0" />
+    <script src="../shared/atzar.js?v=1.0" defer></script>
+    <script src="script.js?v=1.0" defer></script>
+  </head>
+  <body>
+    <svg width="0" height="0" class="sr-only" aria-hidden="true">
+      <defs>
+        <symbol id="suit-oros" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="17" fill="#e7b54f" stroke="#a8742a" stroke-width="2.4" />
+          <circle cx="20" cy="20" r="11" fill="none" stroke="#a8742a" stroke-width="1.6" />
+          <circle cx="20" cy="20" r="11" fill="none" stroke="#fbe7a1" stroke-width="1" stroke-dasharray="1 2.4" />
+          <circle cx="20" cy="20" r="5" fill="#c0443a" stroke="#a8742a" stroke-width="1.2" />
+        </symbol>
+        <symbol id="suit-copes" viewBox="0 0 40 40">
+          <path d="M7 4h26c0 11-5.5 18-13 18S7 15 7 4z" fill="#c0443a" stroke="#7d2a22" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M9.5 8h21" stroke="#e2ad55" stroke-width="2" />
+          <path d="M18 22h4l1 9h-6z" fill="#e2ad55" stroke="#a8742a" stroke-width="1.2" />
+          <ellipse cx="20" cy="33.5" rx="9" ry="3.2" fill="#c0443a" stroke="#7d2a22" stroke-width="1.4" />
+        </symbol>
+        <symbol id="suit-espases" viewBox="0 0 40 40">
+          <path d="M20 1.5l3.2 5.5V27h-6.4V7z" fill="#5f91a6" stroke="#2f5566" stroke-width="1.3" stroke-linejoin="round" />
+          <path d="M20 6v20" stroke="#cfe3ea" stroke-width="1" />
+          <rect x="9" y="26.5" width="22" height="3.6" rx="1.6" fill="#e2ad55" stroke="#a8742a" stroke-width="1" />
+          <rect x="18" y="30" width="4" height="6" fill="#8a5a3c" />
+          <circle cx="20" cy="37" r="2.4" fill="#e2ad55" stroke="#a8742a" stroke-width="1" />
+        </symbol>
+        <symbol id="suit-bastos" viewBox="0 0 40 40">
+          <path d="M16.5 38.5 13.5 9c0-5 4-7.5 6.5-7.5S27 4 26.5 9l-3 29.5z" fill="#9b7445" stroke="#5f4524" stroke-width="1.4" stroke-linejoin="round" />
+          <g fill="#759479" stroke="#4d6a51" stroke-width=".9">
+            <ellipse cx="13" cy="15" rx="3.6" ry="2" transform="rotate(-30 13 15)" />
+            <ellipse cx="27" cy="21" rx="3.6" ry="2" transform="rotate(30 27 21)" />
+            <ellipse cx="13.5" cy="27" rx="3.4" ry="1.9" transform="rotate(-30 13.5 27)" />
+          </g>
+          <path d="M18 12q2 1.5 4 0M18.3 20q1.8 1.3 3.6 0M18.6 29q1.6 1.2 3 0" fill="none" stroke="#5f4524" stroke-width="1" />
+        </symbol>
+        <symbol id="suit-cors" viewBox="0 0 40 40">
+          <path d="M20 36C8 27 2 20 2 12.5 2 7 6 3 11 3c4 0 7 2.5 9 6 2-3.5 5-6 9-6 5 0 9 4 9 9.5C38 20 32 27 20 36z" fill="#c0443a" />
+        </symbol>
+        <symbol id="suit-diamants" viewBox="0 0 40 40">
+          <path d="M20 2l15 18-15 18L5 20z" fill="#c0443a" />
+        </symbol>
+        <symbol id="suit-piques" viewBox="0 0 40 40">
+          <path d="M20 2c9 10 17 15 17 23 0 5-4 8-8.5 8-2.6 0-4.7-1.2-6-3l2.5 8h-10l2.5-8c-1.3 1.8-3.4 3-6 3C7 33 3 30 3 25 3 17 11 12 20 2z" fill="#233f3a" />
+        </symbol>
+        <symbol id="suit-trevols" viewBox="0 0 40 40">
+          <g fill="#233f3a">
+            <circle cx="20" cy="10.5" r="7.5" />
+            <circle cx="10.5" cy="23" r="7.5" />
+            <circle cx="29.5" cy="23" r="7.5" />
+            <path d="M18 20h4l3 18H15z" />
+          </g>
+        </symbol>
+        <symbol id="crown" viewBox="0 0 40 24">
+          <path d="M3 21 1 5l10 8 9-12 9 12 10-8-2 16z" fill="#e2ad55" stroke="#a8742a" stroke-width="1.5" stroke-linejoin="round" />
+          <circle cx="20" cy="15" r="2.4" fill="#c0443a" />
+        </symbol>
+      </defs>
+    </svg>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Cartes, inici"
+          ><img class="brand-icon" src="favicon.svg" alt="" width="60" height="60" /><span
+            >cartes<span class="brand-dot">.</span></span
+          ></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <a class="icon-button home-link" href="../" title="Totes les apps d’Atzar a l’aula" aria-label="Atzar a l’aula: totes les apps"
+            ><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></g></svg></a
+          ><button id="soundButton" class="icon-button" aria-label="Silencia el so" aria-pressed="false" title="Activa o silencia el so">♫</button
+          ><button id="themeButton" class="icon-button" aria-label="Activa el tema fosc" aria-pressed="false" title="Tema clar o fosc">◐</button
+          ><button id="presentButton" class="quiet" aria-pressed="false">⛶ <span>Mode aula</span></button>
+        </nav>
+      </header>
+      <main class="layout">
+        <section class="stage" aria-label="Treure cartes">
+          <div class="stage-heading">
+            <h1>Quina carta et toca?</h1>
+            <p id="stageSubtitle" class="subtitle"></p>
+          </div>
+          <div class="play-area">
+            <div class="card-stage">
+              <button id="deck" class="deck" aria-label="Treu cartes de la baralla">
+                <span class="deck-stack" aria-hidden="true"></span>
+                <span id="deckCount" class="deck-count">40</span>
+              </button>
+              <div id="table" class="table" aria-live="polite" aria-label="Cartes tretes"></div>
+            </div>
+          </div>
+          <div class="action-row">
+            <button id="drawButton" class="action-button" title="Treu (barra d’espai)">
+              <span aria-hidden="true">🂠</span><span id="drawLabel">Treu una carta</span><span aria-hidden="true">→</span>
+            </button>
+            <button id="collectButton" class="secondary collect" title="Torna totes les cartes a la baralla i barreja">⇄ Recull i barreja</button>
+          </div>
+          <p id="resultLine" class="result-line" aria-live="polite"></p>
+        </section>
+        <aside class="panel" aria-label="Personalitza la baralla">
+          <div class="tabs" role="tablist" aria-label="Panells">
+            <button id="tab-deck" class="tab active" role="tab" aria-controls="panel-deck" aria-selected="true">Baralla</button
+            ><button id="tab-left" class="tab" role="tab" aria-controls="panel-left" aria-selected="false" tabindex="-1">Queden <span id="leftCount" class="badge">40</span></button
+            ><button id="tab-history" class="tab" role="tab" aria-controls="panel-history" aria-selected="false" tabindex="-1">Historial <span id="historyCount" class="badge">0</span></button
+            ><button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Ajustos</button>
+          </div>
+          <section id="panel-deck" class="tab-content" role="tabpanel" aria-labelledby="tab-deck">
+            <h2>Amb quina baralla?</h2>
+            <label class="field">Baralla<select id="deckInput">
+                <option value="es40">Espanyola · 40 cartes</option>
+                <option value="es48">Espanyola · 48 cartes (amb 8 i 9)</option>
+                <option value="fr52">Francesa · 52 cartes</option>
+                <option value="fr54">Francesa · 54 cartes (amb comodins)</option>
+              </select></label>
+            <div class="stepper">
+              <span id="countLabel">Cartes per tirada</span>
+              <div class="stepper-control" role="group" aria-labelledby="countLabel">
+                <button id="countMinus" aria-label="Una carta menys">−</button><output id="countValue" aria-live="polite">1</output><button id="countPlus" aria-label="Una carta més">+</button>
+              </div>
+            </div>
+            <label class="switch-row" for="replaceToggle"
+              ><span><strong>Amb reposició</strong><small>Cada tirada es fa amb la baralla completa.</small></span
+              ><input id="replaceToggle" type="checkbox" role="switch"
+            /></label>
+            <p class="field-note" id="modeNote"></p>
+            <details class="ideas">
+              <summary>Idees per a l’aula</summary>
+              <ul>
+                <li><strong>Probabilitat que canvia.</strong> Abans de cada carta, la classe calcula la probabilitat que surti una figura o un pal concret. La pestanya «Queden» permet comprovar-ho: sense reposició, la probabilitat canvia a cada carta.</li>
+                <li><strong>Amb reposició o sense?</strong> Es treuen deu cartes de cada manera i es compara quantes vegades surt un mateix pal. Per què el resultat és diferent?</li>
+                <li><strong>El joc del 24.</strong> Baralla espanyola de 48, quatre cartes de l’1 al 9: cal combinar-les amb + − × ÷ per obtenir 24.</li>
+                <li><strong>Tasques per pals.</strong> Cada pal és un tipus de repte (oros: definir, copes: exemplificar, espases: debatre, bastos: resumir) i cada alumne treu la seva carta.</li>
+                <li><strong>Grups per número.</strong> Es reparteix una carta a cada alumne i s’agrupen els que tenen el mateix número o el mateix pal.</li>
+                <li><strong>Història.</strong> La paraula «naip» apareix el 1371 al <em>Llibre de concordances</em> de Jaume March, una de les mencions més antigues de les cartes de joc a Europa.</li>
+              </ul>
+            </details>
+          </section>
+          <section id="panel-left" class="tab-content" role="tabpanel" aria-labelledby="tab-left" hidden>
+            <div class="section-heading">
+              <h2>Què queda a la baralla?</h2>
+            </div>
+            <p class="muted" id="leftNote"></p>
+            <div id="probTable" class="prob-table"></div>
+            <div id="leftGrid" class="left-grid"></div>
+          </section>
+          <section id="panel-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history" hidden>
+            <div class="section-heading">
+              <h2>Han sortit…</h2>
+              <button id="clearHistory" class="quiet">Esborra</button>
+            </div>
+            <p class="muted">Les últimes 200 tirades, de la més recent a la més antiga.</p>
+            <ol id="historyList" class="history-list"></ol>
+            <div id="historyEmpty" class="empty-state">
+              <span aria-hidden="true">🂠</span>
+              <h3>Encara no hi ha res</h3>
+              <p>Treu una carta i la trobaràs aquí.</p>
+            </div>
+            <button id="exportHistory" class="secondary">↧ Exporta resultats (.csv)</button>
+          </section>
+          <section id="panel-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-settings" hidden>
+            <h2>Fes-la teva</h2>
+            <label class="field">Velocitat del repartiment<select id="durationInput">
+                <option value="350">Ràpida</option>
+                <option value="700">Normal</option>
+                <option value="1200">Amb calma</option>
+              </select></label>
+            <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
+            <p class="muted">Les cartes es trien entre les que queden amb el generador criptogràfic del navegador; totes tenen la mateixa probabilitat. Dins d’una mateixa tirada no es repeteix cap carta.</p>
+            <p class="muted">Dreceres: <kbd>espai</kbd> treure · <kbd>Esc</kbd> sortir del mode aula.</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0"><img src="../shared/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA" /></a>
+      <div>
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>

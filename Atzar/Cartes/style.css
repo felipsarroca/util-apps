@@ -1,0 +1,208 @@
+.card-stage {
+  width: 100%;
+  height: var(--play-height, 360px);
+  display: flex;
+  align-items: center;
+  gap: var(--card-gap, 22px);
+}
+.deck {
+  position: relative;
+  flex: none;
+  width: var(--deck-w, 110px);
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  border-radius: calc(var(--deck-w, 110px) * 0.08);
+  background: transparent;
+  min-height: 0;
+}
+.deck-stack,
+.card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 50%, #fffefa 0 13%, transparent 13.5%),
+    radial-gradient(circle at 50% 50%, #e2ad55 0 17%, transparent 17.5%),
+    repeating-linear-gradient(45deg, #ffffff1f 0 6px, transparent 6px 12px),
+    repeating-linear-gradient(-45deg, #ffffff1f 0 6px, transparent 6px 12px),
+    #245c48;
+  border: 4px solid #fffefa;
+  box-shadow: 0 0 0 1px #d8d2c0;
+}
+.deck-stack {
+  box-shadow:
+    0 0 0 1px #d8d2c0,
+    3px 3px 0 -1px #fffefa,
+    3px 3px 0 0 #c9c3b0,
+    6px 6px 0 -1px #fffefa,
+    6px 6px 0 0 #c9c3b0,
+    0 12px 22px #233f3a2a;
+}
+.deck.empty .deck-stack {
+  background: transparent;
+  border: 2px dashed var(--line);
+  box-shadow: none;
+}
+.deck-count {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  translate: -50% 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.table {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  gap: var(--card-gap, 22px);
+  perspective: 1400px;
+}
+.table:empty::before {
+  content: "Clica la baralla o el botó per treure una carta";
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 220px;
+  line-height: 1.5;
+  align-self: center;
+}
+.card {
+  position: relative;
+  width: var(--card-w, 120px);
+  aspect-ratio: 2 / 3;
+  border-radius: calc(var(--card-w, 120px) * 0.07);
+}
+.card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  border-radius: inherit;
+}
+.card-front,
+.card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.card-front svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 8px 14px #233f3a24);
+}
+.card-back {
+  transform: rotateY(180deg);
+}
+.collect {
+  min-height: 52px;
+  border-radius: 13px;
+  font-size: 14px;
+}
+.result-line {
+  font-size: clamp(17px, 2vw, 21px);
+}
+.result-line strong {
+  font-weight: 700;
+}
+.prob-table {
+  display: grid;
+  gap: 6px;
+}
+.prob-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+.prob-row svg {
+  width: 20px;
+  height: 20px;
+}
+.prob-row .bar {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.prob-row .bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.prob-row span {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.prob-row strong {
+  font-variant-numeric: tabular-nums;
+  min-width: 58px;
+  text-align: right;
+}
+.left-grid {
+  display: grid;
+  gap: 8px;
+}
+.left-suit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.left-suit svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+.left-suit span {
+  min-width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.left-suit span.out {
+  opacity: 0.35;
+  text-decoration: line-through;
+  background: transparent;
+}
+@media (max-width: 520px) {
+  .card-stage {
+    flex-direction: column;
+    gap: 22px;
+  }
+  .deck {
+    width: 54px;
+  }
+  .table {
+    width: 100%;
+  }
+  .action-row {
+    width: 100%;
+  }
+  .collect {
+    width: 100%;
+  }
+}

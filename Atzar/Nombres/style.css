@@ -1,0 +1,194 @@
+.stage-heading .segmented {
+  margin-top: 4px;
+}
+.view {
+  width: 100%;
+  height: var(--play-height, 360px);
+}
+.number-view {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  gap: var(--ball-gap, 18px);
+  cursor: pointer;
+}
+.ball {
+  --c: #817ca6;
+  position: relative;
+  width: var(--ball, 200px);
+  height: var(--ball, 200px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 34% 28%, #ffffff8c 0 9%, transparent 32%), radial-gradient(circle at 50% 50%, var(--c) 0 62%, color-mix(in srgb, var(--c) 78%, #000) 100%);
+  box-shadow: 0 10px 22px #233f3a26;
+}
+.ball > span {
+  display: grid;
+  place-items: center;
+  width: 64%;
+  height: 64%;
+  border-radius: 50%;
+  background: #fffefa;
+  color: #233f3a;
+  font-weight: 800;
+  font-size: calc(var(--ball, 200px) * var(--digits-scale, 0.3));
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  box-shadow: inset 0 -3px 6px #0000001a;
+}
+.ball.rolling > span {
+  color: #233f3a99;
+}
+.ball.settled {
+  animation: pop 0.35s ease-out;
+}
+.number-view.secret .ball > span {
+  color: transparent;
+  text-shadow: none;
+  position: relative;
+}
+.number-view.secret .ball > span::after {
+  content: "?";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #233f3a;
+}
+
+/* Bombo */
+.bingo-view {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.bingo-current {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.big-ball {
+  --ball: var(--bingo-ball, 180px);
+  --c: #d47761;
+}
+.bingo-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.bingo-board {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 10), var(--cell, 30px));
+  grid-auto-rows: var(--cell, 30px);
+  gap: 4px;
+  justify-content: center;
+  align-content: center;
+  height: 100%;
+}
+.bingo-board span {
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  font-size: calc(var(--cell, 30px) * 0.42);
+  font-weight: 650;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.bingo-board span.out {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+html[data-theme="dark"] .bingo-board span.out {
+  color: #142b21;
+}
+.bingo-board span.last {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fff;
+  animation: pop 0.4s ease-out;
+}
+
+/* Lletra */
+.letter-view {
+  display: grid;
+  place-items: center;
+}
+.tile {
+  width: var(--tile, 240px);
+  height: var(--tile, 240px);
+  border-radius: 14%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, #fdf3dc, #ecd6a6);
+  box-shadow:
+    inset 0 -8px 0 #d3b77c,
+    0 14px 26px #233f3a2b;
+  color: #233f3a;
+  font-weight: 800;
+  font-size: calc(var(--tile, 240px) * 0.6);
+  line-height: 1;
+  cursor: pointer;
+}
+.tile.settled {
+  animation: pop 0.35s ease-out;
+}
+.letter-chips button {
+  min-width: 40px;
+  font-size: 14px;
+}
+.letter-chips button.used {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* Endevina */
+.guess-box {
+  width: min(100%, 420px);
+  margin-top: 14px;
+}
+.guess-form {
+  display: flex;
+  gap: 8px;
+}
+.guess-form input {
+  font-size: 16px;
+}
+.result-line {
+  font-size: clamp(16px, 1.8vw, 20px);
+}
+.result-line .big {
+  display: block;
+  font-size: clamp(22px, 3vw, 34px);
+  font-weight: 750;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .bingo-view {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .bingo-current {
+    flex-direction: row;
+  }
+  .bingo-board {
+    height: auto;
+    flex: 1;
+  }
+}

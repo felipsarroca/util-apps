@@ -1505,3 +1505,14 @@ html[data-theme="dark"] .theme-star[aria-pressed="true"] {
     margin: 0;
   }
 }
+
+/* Accés al menú d'Atzar a l'aula. */
+.home-link {
+  display: inline-grid;
+  place-items: center;
+  text-decoration: none;
+}
+.home-link svg {
+  width: 22px;
+  height: 22px;
+}

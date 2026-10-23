@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Treu paperets d’un barret: tria una o diverses persones, o ordena tota la classe. Sense repeticions i amb les classes de la Ruleta."
+    />
+    <title>Sorteig App</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
+    <link rel="stylesheet" href="style.css?v=1.0" />
+    <script src="../shared/atzar.js?v=1.0" defer></script>
+    <script src="script.js?v=1.0" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Sorteig, inici"
+          ><img class="brand-icon" src="favicon.svg" alt="" width="60" height="60" /><span
+            >sorteig<span class="brand-dot">.</span></span
+          ></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <a class="icon-button home-link" href="../" title="Totes les apps d’Atzar a l’aula" aria-label="Atzar a l’aula: totes les apps"
+            ><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></g></svg></a
+          ><button id="soundButton" class="icon-button" aria-label="Silencia el so" aria-pressed="false" title="Activa o silencia el so">♫</button
+          ><button id="themeButton" class="icon-button" aria-label="Activa el tema fosc" aria-pressed="false" title="Tema clar o fosc">◐</button
+          ><button id="presentButton" class="quiet" aria-pressed="false">⛶ <span>Mode aula</span></button>
+        </nav>
+      </header>
+      <main class="layout">
+        <section class="stage" aria-label="Sorteig de paperets">
+          <div class="stage-heading">
+            <h1 id="stageTitle">A qui li toca?</h1>
+            <p id="stageSubtitle" class="subtitle"></p>
+          </div>
+          <div class="play-area">
+            <div class="draw-stage">
+              <div class="hat-wrap">
+                <div id="reveal" class="reveal" aria-hidden="true"></div>
+                <button id="hat" class="hat" aria-label="Treu paperets del barret">
+                  <svg viewBox="0 0 200 190" aria-hidden="true">
+                    <ellipse cx="100" cy="178" rx="92" ry="10" class="hat-shadow" />
+                    <g class="slips">
+                      <rect x="54" y="22" width="30" height="40" rx="3" fill="#fffefa" stroke="#e2ad55" stroke-width="3" transform="rotate(-18 69 42)" />
+                      <rect x="84" y="12" width="30" height="40" rx="3" fill="#fffefa" stroke="#759479" stroke-width="3" transform="rotate(6 99 32)" />
+                      <rect x="114" y="22" width="30" height="40" rx="3" fill="#fffefa" stroke="#d47761" stroke-width="3" transform="rotate(20 129 42)" />
+                      <rect x="70" y="30" width="30" height="40" rx="3" fill="#fffefa" stroke="#5f91a6" stroke-width="3" transform="rotate(-6 85 50)" />
+                      <rect x="100" y="30" width="30" height="40" rx="3" fill="#fffefa" stroke="#817ca6" stroke-width="3" transform="rotate(10 115 50)" />
+                    </g>
+                    <path d="M38 62h124l-12 108H50z" fill="#245c48" />
+                    <path d="M38 62h124l-2 18H40z" fill="#1d4b3b" />
+                    <rect x="44" y="128" width="112" height="18" fill="#d47761" />
+                    <rect x="26" y="52" width="148" height="18" rx="8" fill="#2f7a5f" />
+                    <path d="M62 86l6 72" stroke="#ffffff22" stroke-width="7" stroke-linecap="round" />
+                  </svg>
+                </button>
+                <p id="poolCount" class="pool-count"></p>
+              </div>
+              <ol id="winners" class="winners" aria-live="polite" aria-label="Paperets que han sortit"></ol>
+            </div>
+          </div>
+          <div class="action-row">
+            <button id="drawButton" class="action-button" title="Sorteja (barra d’espai)">
+              <span aria-hidden="true">✦</span><span id="drawLabel">Treu un paperet</span><span aria-hidden="true">→</span>
+            </button>
+            <button id="copyButton" class="secondary copy" disabled>⧉ Copia</button>
+          </div>
+          <p id="resultLine" class="result-line sr-only" aria-live="polite"></p>
+        </section>
+        <aside class="panel" aria-label="Personalitza el sorteig">
+          <div class="tabs" role="tablist" aria-label="Panells">
+            <button id="tab-entries" class="tab active" role="tab" aria-controls="panel-entries" aria-selected="true">Participants <span id="entryCount" class="badge">0</span></button
+            ><button id="tab-history" class="tab" role="tab" aria-controls="panel-history" aria-selected="false" tabindex="-1">Historial <span id="historyCount" class="badge">0</span></button
+            ><button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Ajustos</button>
+          </div>
+          <section id="panel-entries" class="tab-content" role="tabpanel" aria-labelledby="tab-entries">
+            <div class="section-heading">
+              <h2>Qui hi ha al barret?</h2>
+            </div>
+            <details id="savedLists" class="saved-lists">
+              <summary>Les meves classes <span id="classCount"></span></summary>
+              <div id="classList" class="class-list" aria-label="Classes desades"></div>
+              <form id="saveClassForm" class="save-class-form">
+                <label for="className" class="sr-only">Nom de la classe</label>
+                <input id="className" type="text" placeholder="Nom de la classe: 2n A…" maxlength="40" required />
+                <button type="submit" class="quiet">Desa</button>
+              </form>
+              <p class="field-note">També hi trobaràs les classes desades a la Ruleta.</p>
+            </details>
+            <textarea id="entriesInput" aria-label="Participants, un per línia" spellcheck="false" maxlength="20000" placeholder="Anna&#10;Biel&#10;Clàudia"></textarea>
+            <p id="entryFeedback" class="field-note" aria-live="polite"></p>
+            <div class="field">
+              <span id="modeLabel">Què vols fer?</span>
+              <div class="segmented wide" role="group" aria-labelledby="modeLabel">
+                <button data-mode="pick" aria-pressed="true">Triar-ne uns quants</button><button data-mode="order" aria-pressed="false">Ordenar-los tots</button>
+              </div>
+            </div>
+            <div id="pickRow" class="stepper">
+              <span id="qtyLabel">Quants paperets?</span>
+              <div class="stepper-control" role="group" aria-labelledby="qtyLabel">
+                <button id="qtyMinus" aria-label="Un menys">−</button><output id="qtyValue" aria-live="polite">1</output><button id="qtyPlus" aria-label="Un més">+</button>
+              </div>
+            </div>
+            <label class="switch-row" for="retireToggle"
+              ><span><strong>No tornis els paperets al barret</strong><small>Ningú repeteix fins que hagin sortit tots.</small></span
+              ><input id="retireToggle" type="checkbox" role="switch"
+            /></label>
+            <button id="restoreButton" class="secondary">↶ Torna tots els paperets al barret</button>
+            <details class="ideas">
+              <summary>Idees per a l’aula</summary>
+              <ul>
+                <li><strong>Ordre d’exposicions.</strong> «Ordenar-los tots» dona l’ordre de les presentacions orals en un sol gest i davant de tothom.</li>
+                <li><strong>Càrrecs del dia.</strong> Tria’n dos: el primer és portaveu i el segon, secretari o secretària.</li>
+                <li><strong>Torns justos tot el trimestre.</strong> Amb els paperets fora del barret, cada setmana en surten uns quants i ningú no repeteix fins que han sortit tots.</li>
+                <li><strong>Temes i preguntes.</strong> Posa-hi temes de treball, preguntes d’un examen oral o personatges històrics en lloc de noms.</li>
+                <li><strong>Història.</strong> A l’Atenes clàssica, molts càrrecs públics es triaven per sorteig amb una màquina de pedra, el <em>kleroterion</em>. Era més democràtic que votar? Bon punt de partida per a un debat.</li>
+              </ul>
+            </details>
+          </section>
+          <section id="panel-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history" hidden>
+            <div class="section-heading">
+              <h2>Han sortit…</h2>
+              <button id="clearHistory" class="quiet">Esborra</button>
+            </div>
+            <p class="muted">Els últims 200 sortejos, del més recent al més antic.</p>
+            <ol id="historyList" class="history-list"></ol>
+            <div id="historyEmpty" class="empty-state">
+              <span aria-hidden="true">✦</span>
+              <h3>Encara no hi ha res</h3>
+              <p>Fes el primer sorteig i el trobaràs aquí.</p>
+            </div>
+            <button id="exportHistory" class="secondary">↧ Exporta resultats (.csv)</button>
+          </section>
+          <section id="panel-settings" class="tab-content settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+            <h2>Fes-lo teu</h2>
+            <label class="field">Títol<input id="titleInput" type="text" maxlength="70" placeholder="A qui li toca?" /></label>
+            <label class="field">Ritme dels paperets<select id="durationInput">
+                <option value="400">Ràpid</option>
+                <option value="900">Normal</option>
+                <option value="1600">Amb suspens</option>
+              </select></label>
+            <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
+            <label class="switch-row" for="confettiToggle"><span><strong>Un toc de celebració</strong><small>Confeti quan acaba el sorteig.</small></span><input id="confettiToggle" type="checkbox" role="switch" checked /></label>
+            <p class="muted">Cada línia és un paperet i tots tenen la mateixa probabilitat. L’ordre complet és una permutació aleatòria (Fisher-Yates) feta amb el generador criptogràfic del navegador.</p>
+            <p class="muted">Dreceres: <kbd>espai</kbd> sortejar · <kbd>Esc</kbd> sortir del mode aula.</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0"><img src="../shared/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA" /></a>
+      <div>
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+    <div id="confetti" class="confetti" aria-hidden="true"></div>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>

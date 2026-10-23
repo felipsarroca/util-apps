@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Una ruleta per decidir, participar i sorprendre. En català, sense anuncis i amb desament local."
+    />
+    <title>Ruleta App</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css?v=3.3" />
+    <script src="data/library.js" defer></script>
+    <script src="script.js?v=3.3" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Ruleta, inici"
+          ><img
+            class="brand-icon"
+            src="favicon.svg"
+            alt=""
+            width="60"
+            height="60"
+          /><span>ruleta<span class="brand-dot">.</span></span></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <a
+            class="icon-button home-link"
+            href="../"
+            title="Totes les apps d’Atzar a l’aula"
+            aria-label="Atzar a l’aula: totes les apps"
+            ><svg viewBox="0 0 24 24" aria-hidden="true">
+              <g fill="currentColor">
+                <rect x="3" y="3" width="7.5" height="7.5" rx="2" />
+                <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" />
+                <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" />
+                <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></g></svg></a
+          ><button
+            id="soundButton"
+            class="icon-button"
+            aria-label="Silencia el so"
+            aria-pressed="false"
+            title="Activa o silencia el so"
+          >
+            ♫</button
+          ><button
+            id="themeButton"
+            class="icon-button"
+            aria-label="Activa el tema fosc"
+            aria-pressed="false"
+            title="Tema clar o fosc"
+          >
+            ◐</button
+          ><button id="presentButton" class="quiet" aria-pressed="false">
+            ⛶ <span>Mode aula</span>
+          </button>
+        </nav>
+      </header>
+      <main class="layout">
+        <section class="stage" aria-label="Ruleta aleatòria">
+          <div class="stage-heading">
+            <h1 id="wheelTitle">Que la sort decideixi!</h1>
+            <p id="stageSubtitle"></p>
+          </div>
+          <div class="wheel-wrap">
+            <div class="wheel-ring">
+              <canvas
+                id="wheelCanvas"
+                width="1000"
+                height="1000"
+                aria-label="Sectors de la ruleta. Consulta les opcions al panell lateral."
+                role="img"
+              ></canvas>
+            </div>
+            <div class="pointer" aria-hidden="true"></div>
+            <button id="hubButton" class="hub" aria-label="Gira la ruleta">
+              <span aria-hidden="true">↻</span>
+            </button>
+          </div>
+          <button
+            id="spinButton"
+            class="spin-button"
+            title="Gira la ruleta (barra d’espai)"
+          >
+            <span aria-hidden="true">↻</span
+            ><span id="spinLabel">Gira la ruleta</span
+            ><span aria-hidden="true">→</span>
+          </button>
+          <span id="availableCount" class="sr-only"></span>
+          <div class="sr-only" id="lastResult" aria-live="polite"></div>
+        </section>
+        <aside class="panel" aria-label="Personalitza la ruleta">
+          <div class="tabs" role="tablist" aria-label="Panells">
+            <button
+              id="tab-entries"
+              class="tab active"
+              role="tab"
+              aria-controls="panel-entries"
+              aria-selected="true"
+            >
+              Opcions <span id="entryCount" class="badge">8</span></button
+            ><button
+              id="tab-history"
+              class="tab"
+              role="tab"
+              aria-controls="panel-history"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Historial <span id="historyCount" class="badge">0</span></button
+            ><button
+              id="tab-settings"
+              class="tab"
+              role="tab"
+              aria-controls="panel-settings"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Ajustos
+            </button>
+          </div>
+          <section
+            id="panel-entries"
+            class="tab-content"
+            role="tabpanel"
+            aria-labelledby="tab-entries"
+          >
+            <div class="section-heading">
+              <h2>Opcions de la ruleta</h2>
+              <button id="editListButton" class="quiet" hidden>Edita</button>
+            </div>
+            <button id="libraryButton" class="library-launch">
+              <span aria-hidden="true">▦</span
+              ><span
+                >Biblioteca de temes<small
+                  >30 temes · 600 idees per a l’aula</small
+                ></span
+              ><span aria-hidden="true">→</span>
+            </button>
+            <details id="savedClasses" class="saved-classes">
+              <summary>Les meves classes <span id="classCount"></span></summary>
+              <div
+                id="classList"
+                class="class-list"
+                aria-label="Classes desades"
+              ></div>
+              <form id="saveClassForm" class="save-class-form">
+                <label for="className" class="sr-only">Nom de la classe</label>
+                <input
+                  id="className"
+                  placeholder="Nom de la classe: 2n A…"
+                  maxlength="40"
+                  required
+                />
+                <button id="saveClassButton" type="submit" class="quiet">
+                  Desa
+                </button>
+              </form>
+              <p class="field-note">
+                Desa la llista completa. Clica una classe per començar una nova
+                ronda. El mateix nom actualitza la classe.
+              </p>
+            </details>
+            <details id="activityHelp" class="activity-help" hidden>
+              <summary>Com es juga</summary>
+              <p id="activityInstructions"></p>
+            </details>
+            <div
+              id="entryRoster"
+              tabindex="0"
+              role="region"
+              class="entry-roster"
+              aria-label="Opcions pendents i triades"
+              hidden
+            ></div>
+            <p id="editListNote" class="field-note" hidden>
+              Si modifiques la llista, totes les opcions tornaran a estar
+              actives.
+            </p>
+            <textarea
+              id="entriesInput"
+              aria-label="Opcions de la ruleta, una per línia"
+              spellcheck="false"
+              maxlength="20000"
+              aria-describedby="entryFeedback"
+              placeholder="Anna&#10;Biel&#10;Clàudia"
+            ></textarea>
+            <p id="entryFeedback" class="field-note" aria-live="polite"></p>
+            <div class="tools-row">
+              <button id="shuffleButton" class="quiet">⇄ Barreja</button
+              ><button id="dedupeButton" class="quiet">Treu duplicats</button
+              ><button id="clearButton" class="quiet">Buida</button>
+            </div>
+            <div class="separator"></div>
+            <label class="switch-row" for="noRepeatToggle"
+              ><span
+                ><strong>Sense repeticions</strong
+                ><small>Les triades queden ratllades al final.</small></span
+              ><input id="noRepeatToggle" type="checkbox" role="switch"
+            /></label>
+            <div class="tools-row recovery">
+              <button id="restoreButton" class="quiet">
+                ↶ Recupera participants</button
+              ><button id="undoButton" class="quiet" disabled>Desfés</button>
+            </div>
+            <div class="panel-bottom">
+              <button id="importButton" class="secondary">↥ Importa</button
+              ><button id="exportButton" class="secondary">
+                ↧ Desa una còpia
+              </button>
+            </div>
+            <input
+              id="fileInput"
+              type="file"
+              accept=".txt,.json,text/plain,application/json"
+              hidden
+            />
+            <p id="saveStatus" class="save-status">
+              ● Desat només en aquest navegador
+            </p>
+          </section>
+          <section
+            id="panel-history"
+            class="tab-content"
+            role="tabpanel"
+            aria-labelledby="tab-history"
+            hidden
+          >
+            <div class="section-heading">
+              <h2>La sort ha dit…</h2>
+              <button id="clearHistoryButton" class="quiet">Esborra</button>
+            </div>
+            <p class="muted">
+              Els últims 200 resultats, del més recent al més antic.
+            </p>
+            <ol id="historyList" class="history-list"></ol>
+            <div id="historyEmpty" class="empty-state">
+              <span aria-hidden="true">↻</span>
+              <h3>Tot està per decidir</h3>
+              <p>Fes el primer gir i trobaràs el resultat aquí.</p>
+            </div>
+            <button id="exportHistoryButton" class="secondary">
+              ↧ Exporta resultats (.csv)
+            </button>
+          </section>
+          <section
+            id="panel-settings"
+            class="tab-content settings"
+            role="tabpanel"
+            aria-labelledby="tab-settings"
+            hidden
+          >
+            <h2>Fes-la teva</h2>
+            <label for="titleInput"
+              >Títol de la ruleta<input
+                id="titleInput"
+                type="text"
+                maxlength="70"
+                placeholder="Que la sort decideixi!" /></label
+            ><label for="durationInput"
+              >Durada del gir<select id="durationInput">
+                <option value="3">Ràpid · 3 segons</option>
+                <option value="6" selected>Amb emoció · 6 segons</option>
+                <option value="10">Suspens · 10 segons</option>
+              </select></label
+            ><label for="paletteInput"
+              >Colors dels sectors<select id="paletteInput">
+                <option value="festival">Festival</option>
+                <option value="ocean">Oceà</option>
+                <option value="earth">Terra</option>
+              </select></label
+            ><label for="volumeInput"
+              >Volum <span id="volumeValue">45%</span
+              ><input
+                id="volumeInput"
+                type="range"
+                min="0"
+                max="100"
+                value="45" /></label
+            ><label class="switch-row" for="confettiToggle"
+              ><span
+                ><strong>Un toc de celebració</strong
+                ><small>Confeti quan apareix el resultat.</small></span
+              ><input id="confettiToggle" type="checkbox" role="switch" checked
+            /></label>
+            <p class="settings-note">
+              Cada línia té la mateixa probabilitat de sortir. Si repeteixes un
+              nom, tindrà més oportunitats. Fins a 200 opcions de 80 caràcters.
+            </p>
+            <p class="settings-note">
+              Dreceres: <kbd>espai</kbd> girar · <kbd>Esc</kbd> tancar el
+              resultat o sortir del mode aula. Es respecta la preferència de
+              moviment reduït del dispositiu.
+            </p>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a
+        href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Llicència Creative Commons BY-NC-SA 4.0"
+        ><img src="assets/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA"
+      /></a>
+      <div>
+        <p>
+          Aplicació creada per
+          <a
+            href="https://ja.cat/felipsarroca"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Felip Sarroca</a
+          >
+          amb assistència de la IA
+        </p>
+        <p>
+          Obra sota llicència
+          <a
+            href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca"
+            target="_blank"
+            rel="noopener noreferrer"
+            >CC BY-NC-SA 4.0</a
+          >
+        </p>
+      </div>
+    </footer>
+    <dialog
+      id="winnerDialog"
+      aria-labelledby="winnerName"
+      aria-describedby="winnerDescription"
+    >
+      <div id="confetti" aria-hidden="true"></div>
+      <button
+        id="closeWinner"
+        class="close-button"
+        aria-label="Tanca el resultat"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path
+            d="m6 6 12 12M18 6 6 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <p class="eyebrow">Resultat</p>
+      <h2 id="winnerName"></h2>
+      <p id="winnerDescription" class="sr-only"></p>
+      <div class="dialog-actions">
+        <button id="againButton" class="primary">Torna a girar ↻</button
+        ><button id="removeButton" class="secondary">
+          Elimina aquesta opció
+        </button>
+      </div>
+    </dialog>
+
+    <dialog id="libraryDialog" aria-labelledby="libraryTitle">
+      <button
+        id="closeLibrary"
+        class="close-button"
+        aria-label="Tanca la biblioteca"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path
+            d="m6 6 12 12M18 6 6 18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <div class="library-heading">
+        <p class="eyebrow">IDEES PER COMPARTIR</p>
+        <h2 id="libraryTitle">Una ruleta per a cada moment</h2>
+        <p>
+          Tria un tema, descobreix com es juga i deixa que la sort faci la
+          resta.
+        </p>
+      </div>
+      <div class="library-filters">
+        <label
+          ><span class="sr-only">Cerca temes</span
+          ><input
+            id="themeSearch"
+            type="search"
+            placeholder="Cerca: mímica, contes, ciència…"
+        /></label>
+        <label
+          ><span class="sr-only">Àmbit</span
+          ><select id="themeCategory">
+            <option value="">Tots els àmbits</option>
+            <option value="__favorites">★ Preferides</option>
+          </select></label
+        >
+        <label
+          ><span class="sr-only">Etapa orientativa</span
+          ><select id="themeLevel">
+            <option value="">Totes les etapes</option>
+            <option value="primaria-inicial">Primària · cicle inicial</option>
+            <option value="primaria-mitja">Primària · cicle mitjà</option>
+            <option value="primaria-superior">Primària · cicle superior</option>
+            <option value="eso">ESO</option>
+          </select></label
+        >
+      </div>
+      <p id="themeCount" class="library-count" role="status"></p>
+      <div class="library-body">
+        <div>
+          <div id="themeCards" class="theme-cards"></div>
+          <p id="themeEmpty" class="empty-state" hidden>
+            No hi ha coincidències. Prova una altra cerca o etapa.
+          </p>
+        </div>
+        <section
+          id="themeDetail"
+          class="theme-detail"
+          aria-labelledby="themeTitle"
+          hidden
+        >
+          <p id="themeMeta" class="eyebrow"></p>
+          <h3 id="themeTitle" tabindex="-1"></h3>
+          <p id="themeDescription"></p>
+          <p id="themeInstructions" class="theme-instructions"></p>
+          <details>
+            <summary>Mostra les opcions</summary>
+            <ol id="themePreview"></ol>
+          </details>
+        </section>
+      </div>
+      <div class="library-footer">
+        <label class="theme-field"
+          >Quantes opcions?<select id="themeAmount">
+            <option value="6">6 aleatòries</option>
+            <option value="12" selected>12 aleatòries</option>
+            <option value="all">Totes les opcions</option>
+          </select></label
+        >
+        <label class="theme-field"
+          >Com les vols carregar?<select id="themeMode">
+            <option value="replace">Substitueix la llista</option>
+            <option value="append">Afegeix a les pendents</option>
+          </select></label
+        >
+        <p id="themeLoadNote" class="field-note">Podràs desfer el canvi.</p>
+        <button id="loadThemeButton" class="primary">Carrega a la ruleta</button
+        ><button id="downloadThemeButton" class="quiet">
+          Descarrega el tema en JSON
+        </button>
+      </div>
+    </dialog>
+
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>

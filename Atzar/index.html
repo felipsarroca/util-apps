@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Atzar a l’aula: ruleta, sorteig, equips, moneda, daus, cartes, nombres i temporitzador. En català, sense anuncis ni registre."
+    />
+    <title>Atzar a l’aula</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="shared/atzar.css?v=1.0" />
+    <link rel="stylesheet" href="style.css?v=1.0" />
+    <script src="shared/atzar.js?v=1.0" defer></script>
+    <script src="script.js?v=1.0" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Atzar a l’aula, inici"
+          ><img class="brand-icon" src="favicon.svg" alt="" width="60" height="60" /><span
+            >atzar<span class="brand-dot">.</span></span
+          ></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <button id="themeButton" class="icon-button" aria-label="Activa el tema fosc" aria-pressed="false" title="Tema clar o fosc">◐</button>
+        </nav>
+      </header>
+      <main class="menu">
+        <section class="hero">
+          <p class="eyebrow">Atzar a l’aula</p>
+          <h1>Que la sort reparteixi el joc</h1>
+          <p class="lead">
+            Vuit eines per triar, repartir, jugar i mesurar el temps. En català, sense anuncis ni registre, i pensades per projectar.
+          </p>
+        </section>
+        <div id="groups" class="groups"></div>
+        <section class="guide" aria-labelledby="guideTitle">
+          <h2 id="guideTitle">Quina eina necessito?</h2>
+          <div class="guide-table" role="table" aria-label="Situacions i eines recomanades">
+            <div role="row"><span role="cell">Qui surt a la pissarra o respon ara?</span><span role="cell"><a href="Ruleta/">Ruleta</a> · <a href="Sorteig/">Sorteig</a></span></div>
+            <div role="row"><span role="cell">En quin ordre farem les exposicions?</span><span role="cell"><a href="Sorteig/">Sorteig</a> (ordena-los tots)</span></div>
+            <div role="row"><span role="cell">Necessito grups per treballar</span><span role="cell"><a href="Equips/">Equips</a>, amb rols si cal</span></div>
+            <div role="row"><span role="cell">Qui comença? Una decisió de sí o no</span><span role="cell"><a href="Moneda/">Moneda</a></span></div>
+            <div role="row"><span role="cell">Treballem la probabilitat</span><span role="cell"><a href="Moneda/">Moneda</a> · <a href="Daus/">Daus</a> · <a href="Cartes/">Cartes</a></span></div>
+            <div role="row"><span role="cell">Un número, un bingo o una lletra per a l’Stop</span><span role="cell"><a href="Nombres/">Nombres</a></span></div>
+            <div role="row"><span role="cell">Temps de treball, marques o un joc amb pressa</span><span role="cell"><a href="Temps/">Temps</a></span></div>
+          </div>
+          <p class="guide-note">
+            Les classes desades a la Ruleta també apareixen a Sorteig i Equips. Totes les dades es guarden només en aquest navegador. Per fer-les servir sense connexió, descarrega la carpeta <code>Atzar</code> completa i obre <code>index.html</code>.
+          </p>
+        </section>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0"><img src="shared/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA" /></a>
+      <div>
+        <p>Aplicacions creades per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obres sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>

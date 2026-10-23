@@ -1,0 +1,112 @@
+.teams {
+  width: 100%;
+  height: var(--play-height, 360px);
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(var(--team-cols, 3), minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: center;
+  gap: 12px;
+  padding: 4px;
+  scrollbar-width: thin;
+}
+.teams:empty {
+  display: grid;
+  place-items: center;
+  grid-template-columns: 1fr;
+}
+.teams:empty::before {
+  content: "Escriu la llista, tria quants equips vols i prem «Fes equips».";
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+.team {
+  --t: #d47761;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: left;
+  box-shadow: 0 6px 16px #233f3a0f;
+  font-size: var(--team-font, 16px);
+  min-width: 0;
+}
+.team h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0.55em 0.8em;
+  background: color-mix(in srgb, var(--t) 18%, var(--paper));
+  border-bottom: 3px solid var(--t);
+  font-size: 1.02em;
+  font-weight: 750;
+  letter-spacing: -0.2px;
+}
+.team h3 small {
+  font-size: 0.72em;
+  font-weight: 650;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.team ul {
+  list-style: none;
+  margin: 0;
+  padding: 0.35em 0.8em 0.55em;
+}
+.team li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0.28em 0;
+  border-bottom: 1px dashed var(--line);
+  overflow-wrap: break-word;
+  font-weight: 600;
+}
+.team li:last-child {
+  border-bottom: 0;
+}
+.team li.new {
+  animation: pop 0.3s ease-out;
+}
+.role {
+  flex: none;
+  font-size: 0.66em;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--t) 70%, var(--ink));
+  background: color-mix(in srgb, var(--t) 14%, transparent);
+  padding: 0.15em 0.55em;
+  border-radius: 99px;
+  white-space: nowrap;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.copy {
+  min-height: 52px;
+  border-radius: 13px;
+  font-size: 14px;
+}
+.segmented.wide {
+  display: flex;
+}
+.segmented.wide button {
+  flex: 1;
+}
+@media (max-width: 600px) {
+  .teams {
+    height: auto;
+    min-height: var(--play-height, 300px);
+    overflow: visible;
+    align-content: start;
+  }
+  .action-row {
+    width: 100%;
+  }
+  .action-row .action-button {
+    flex: 1;
+  }
+}

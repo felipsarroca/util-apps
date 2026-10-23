@@ -1,0 +1,201 @@
+.draw-stage {
+  width: 100%;
+  height: var(--play-height, 360px);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.hat-wrap {
+  position: relative;
+  flex: none;
+  width: var(--hat, 250px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.hat {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  min-height: 0;
+}
+.hat svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.hat-shadow {
+  fill: #233f3a1f;
+}
+html[data-theme="dark"] .hat-shadow {
+  fill: #0005;
+}
+.slips {
+  transform-origin: 100px 70px;
+}
+.hat.shaking .slips {
+  animation: jiggle 0.22s ease-in-out infinite alternate;
+}
+.hat.shaking svg {
+  animation: wobble 0.36s ease-in-out infinite alternate;
+  transform-origin: 50% 90%;
+}
+.pool-count {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.reveal {
+  position: absolute;
+  left: 50%;
+  bottom: 62%;
+  translate: -50% 0;
+  z-index: 3;
+  min-width: 70%;
+  max-width: min(420px, 90vw);
+  padding: 16px 22px;
+  border-radius: 8px;
+  background: #fffefa;
+  color: #233f3a;
+  border: 3px solid var(--slip, #e2ad55);
+  box-shadow: 0 16px 34px #233f3a33;
+  font-size: clamp(20px, 2.6vw, 32px);
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  text-align: center;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  opacity: 0;
+}
+.reveal.show {
+  animation: unfold var(--reveal-time, 900ms) cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.winners {
+  flex: 1;
+  min-width: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--slip-min, 220px), 1fr));
+  align-content: center;
+  gap: 8px;
+  counter-reset: slip;
+  scrollbar-width: thin;
+}
+.winners:empty::before {
+  content: "Els paperets que surtin apareixeran aquí.";
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+}
+.winners li {
+  --slip: #e2ad55;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--slip);
+  font-size: var(--slip-font, 22px);
+  font-weight: 650;
+  text-align: left;
+  overflow-wrap: anywhere;
+  box-shadow: 0 4px 10px #233f3a0d;
+  animation: pop 0.35s ease-out;
+}
+.winners li::before {
+  counter-increment: slip;
+  content: counter(slip);
+  flex: none;
+  min-width: 1.7em;
+  height: 1.7em;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 0.7em;
+  font-variant-numeric: tabular-nums;
+}
+.copy {
+  min-height: 52px;
+  border-radius: 13px;
+  font-size: 14px;
+}
+.segmented.wide {
+  display: flex;
+}
+.segmented.wide button {
+  flex: 1;
+}
+#confetti {
+  position: fixed;
+  z-index: 15;
+}
+@keyframes jiggle {
+  from {
+    transform: translateY(0) rotate(-3deg);
+  }
+  to {
+    transform: translateY(-6px) rotate(3deg);
+  }
+}
+@keyframes wobble {
+  from {
+    transform: rotate(-2.5deg);
+  }
+  to {
+    transform: rotate(2.5deg);
+  }
+}
+@keyframes unfold {
+  0% {
+    opacity: 0;
+    transform: translateY(70px) scale(0.3, 0.1) rotate(-8deg);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(-10px) scale(0.9, 0.35) rotate(3deg);
+  }
+  70% {
+    transform: translateY(0) scale(1.05, 1.05) rotate(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 600px) {
+  .draw-stage {
+    flex-direction: column;
+    gap: 12px;
+    height: auto;
+    min-height: var(--play-height, 360px);
+  }
+  .hat-wrap {
+    width: 150px;
+    margin-top: 60px;
+  }
+  .reveal {
+    bottom: 70%;
+  }
+  .winners {
+    width: 100%;
+    max-height: none;
+    align-content: start;
+  }
+  .action-row {
+    width: 100%;
+  }
+  .action-row .action-button {
+    flex: 1;
+  }
+}

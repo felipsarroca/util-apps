@@ -4,7 +4,9 @@
 
 Una ruleta en català amb frenada suau, so sincronitzat i una biblioteca de **30 activitats i 600 propostes originals**. Sense anuncis, comptes ni enviament de les llistes a un servidor.
 
-[**Obre Ruleta App →**](https://ja.cat/ruletapp) · [Accés directe](https://felipsarroca.github.io/util-apps/Ruleta/) · [Propostes de millora](docs/PROPOSTES.md)
+[**Obre Ruleta App →**](https://ja.cat/ruletapp) · [Accés directe](https://felipsarroca.github.io/util-apps/Atzar/Ruleta/) · [Propostes de millora](docs/PROPOSTES.md)
+
+Forma part d’[**Atzar a l’aula**](../README.md) ([ja.cat/atzar](https://ja.cat/atzar)), amb Sorteig, Equips, Temps, Moneda, Daus, Cartes i Nombres. Les classes desades aquí també es poden carregar a Sorteig i Equips.
 
 ![Vista principal de Ruleta App](docs/images/ruleta-principal.png)
 
@@ -83,7 +85,7 @@ El canvas es dibuixa segons la densitat de píxels del dispositiu. L’animació
 
 Les llistes, els ajustos i l’historial es desen al navegador del dispositiu. Esborrar les dades del navegador els elimina. En ordinadors compartits, evita deixar-hi dades personals innecessàries i exporta una còpia quan la necessitis.
 
-Per utilitzar-la sense connexió, descarrega **tota la carpeta `Ruleta`** i obre `index.html`. Conserva els fitxers i les carpetes `assets` i `data`. La biblioteca s’inclou en un fitxer JavaScript local i no necessita peticions a un servidor. El desament sota `file://` pot variar segons el navegador i la ubicació del fitxer.
+Per utilitzar-la sense connexió, descarrega **tota la carpeta `Ruleta`** (o tota la carpeta `Atzar`, si vols totes les apps) i obre `index.html`. Conserva els fitxers i les carpetes `assets` i `data`. La biblioteca s’inclou en un fitxer JavaScript local i no necessita peticions a un servidor. El desament sota `file://` pot variar segons el navegador i la ubicació del fitxer.
 
 No cal instal·lar Node.js per fer servir l’app.
 

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Compte enrere, cronòmetre amb marques i patata calenta amb durada a l’atzar. En català i pensat per projectar a l’aula."
+    />
+    <title>Temps App</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
+    <link rel="stylesheet" href="style.css?v=1.0" />
+    <script src="../shared/atzar.js?v=1.0" defer></script>
+    <script src="script.js?v=1.0" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Temps, inici"
+          ><img class="brand-icon" src="favicon.svg" alt="" width="60" height="60" /><span
+            >temps<span class="brand-dot">.</span></span
+          ></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <a class="icon-button home-link" href="../" title="Totes les apps d’Atzar a l’aula" aria-label="Atzar a l’aula: totes les apps"
+            ><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></g></svg></a
+          ><button id="soundButton" class="icon-button" aria-label="Silencia el so" aria-pressed="false" title="Activa o silencia el so">♫</button
+          ><button id="themeButton" class="icon-button" aria-label="Activa el tema fosc" aria-pressed="false" title="Tema clar o fosc">◐</button
+          ><button id="presentButton" class="quiet" aria-pressed="false">⛶ <span>Mode aula</span></button>
+        </nav>
+      </header>
+      <main class="layout">
+        <section class="stage" aria-label="Rellotge">
+          <div class="stage-heading">
+            <h1 id="stageTitle">Compte enrere</h1>
+            <div class="segmented" role="group" aria-label="Mode">
+              <button data-mode="countdown" aria-pressed="true">Compte enrere</button><button data-mode="stopwatch" aria-pressed="false">Cronòmetre</button><button data-mode="potato" aria-pressed="false">Patata calenta</button>
+            </div>
+          </div>
+          <div class="play-area">
+            <div id="clock" class="clock">
+              <svg id="ring" class="ring" viewBox="0 0 100 100" aria-hidden="true">
+                <circle class="ring-track" cx="50" cy="50" r="45" />
+                <circle id="ringBar" class="ring-bar" cx="50" cy="50" r="45" pathLength="100" />
+              </svg>
+              <div id="potato" class="potato" hidden aria-hidden="true">
+                <svg viewBox="0 0 120 100">
+                  <path d="M60 8c26 0 52 14 52 40 0 27-22 46-54 46C27 94 8 77 8 53 8 28 33 8 60 8z" fill="#c9954f" stroke="#8a5e2a" stroke-width="3" />
+                  <g fill="#9b6b33" opacity=".75"><circle cx="34" cy="34" r="3.2" /><circle cx="88" cy="30" r="2.6" /><circle cx="94" cy="64" r="3" /><circle cx="28" cy="70" r="2.4" /><circle cx="70" cy="80" r="2.2" /></g>
+                  <circle cx="47" cy="48" r="5" fill="#2b2118" /><circle cx="73" cy="48" r="5" fill="#2b2118" />
+                  <circle cx="48.5" cy="46.5" r="1.6" fill="#fff" /><circle cx="74.5" cy="46.5" r="1.6" fill="#fff" />
+                  <path d="M50 62q10 8 20 0" fill="none" stroke="#2b2118" stroke-width="3" stroke-linecap="round" />
+                  <g class="steam" fill="none" stroke="#d47761" stroke-width="3" stroke-linecap="round" opacity=".8"><path d="M40 4q-5-7 0-14" /><path d="M60 0q-5-7 0-14" /><path d="M80 4q-5-7 0-14" /></g>
+                </svg>
+                <span class="boom" aria-hidden="true">BUM!</span>
+              </div>
+              <div class="clock-face">
+                <output id="display" class="display" aria-live="off">05:00</output>
+                <p id="clockNote" class="clock-note"></p>
+              </div>
+            </div>
+          </div>
+          <div class="action-row">
+            <button id="startButton" class="action-button" title="Comença o atura (barra d’espai)">
+              <span aria-hidden="true" id="startIcon">▶</span><span id="startLabel">Comença</span><span aria-hidden="true">→</span>
+            </button>
+            <button id="markButton" class="secondary round" hidden title="Anota una marca (tecla M)">⚑ Marca</button>
+            <button id="plusButton" class="secondary round" title="Afegeix un minut">+1 min</button>
+            <button id="resetButton" class="secondary round" title="Reinicia">↺</button>
+          </div>
+          <p id="liveStatus" class="sr-only" aria-live="assertive"></p>
+          <ol id="stageMarks" class="stage-marks" hidden></ol>
+        </section>
+        <aside class="panel" aria-label="Personalitza el rellotge">
+          <div class="tabs" role="tablist" aria-label="Panells">
+            <button id="tab-time" class="tab active" role="tab" aria-controls="panel-time" aria-selected="true">Temps</button
+            ><button id="tab-marks" class="tab" role="tab" aria-controls="panel-marks" aria-selected="false" tabindex="-1">Marques <span id="marksCount" class="badge">0</span></button
+            ><button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Ajustos</button>
+          </div>
+          <section id="panel-time" class="tab-content" role="tabpanel" aria-labelledby="tab-time">
+            <div id="countdownOptions" class="mode-options">
+              <h2>Quant de temps?</h2>
+              <div class="chips presets" aria-label="Durades habituals">
+                <button data-preset="30">30 s</button><button data-preset="60">1 min</button><button data-preset="120">2 min</button><button data-preset="180">3 min</button><button data-preset="300">5 min</button><button data-preset="600">10 min</button><button data-preset="900">15 min</button><button data-preset="1200">20 min</button><button data-preset="1800">30 min</button>
+              </div>
+              <div class="field-pair">
+                <label class="field">Minuts<input id="minutesInput" type="number" inputmode="numeric" min="0" max="180" value="5" /></label>
+                <label class="field">Segons<input id="secondsInput" type="number" inputmode="numeric" min="0" max="59" value="0" /></label>
+              </div>
+              <label class="field">Missatge final<input id="endMessage" type="text" maxlength="60" placeholder="S’ha acabat el temps!" /></label>
+            </div>
+            <div id="stopwatchOptions" class="mode-options" hidden>
+              <h2>Cronòmetre amb marques</h2>
+              <p class="muted">Prem <strong>⚑ Marca</strong> (o la tecla <kbd>M</kbd>) per anotar el temps sense aturar el cronòmetre. A la pestanya Marques pots posar un nom a cada marca i exportar-les.</p>
+            </div>
+            <div id="potatoOptions" class="mode-options" hidden>
+              <h2>Patata calenta</h2>
+              <p class="muted">La patata explota en un moment a l’atzar dins de l’interval. Ningú, ni tan sols el docent, sap quan.</p>
+              <div class="field-pair">
+                <label class="field">Com a mínim (s)<input id="potatoMin" type="number" inputmode="numeric" min="3" max="600" value="15" /></label>
+                <label class="field">Com a màxim (s)<input id="potatoMax" type="number" inputmode="numeric" min="4" max="900" value="45" /></label>
+              </div>
+              <p id="potatoNote" class="field-note"></p>
+            </div>
+            <details class="ideas">
+              <summary>Idees per a l’aula</summary>
+              <ul id="ideasList"></ul>
+            </details>
+          </section>
+          <section id="panel-marks" class="tab-content" role="tabpanel" aria-labelledby="tab-marks" hidden>
+            <div class="section-heading">
+              <h2>Marques de temps</h2>
+              <button id="clearMarks" class="quiet">Esborra</button>
+            </div>
+            <p class="muted">Temps total i parcial des de la marca anterior. Pots escriure un nom al costat de cada marca.</p>
+            <ol id="marksList" class="marks-list"></ol>
+            <div id="marksEmpty" class="empty-state">
+              <span aria-hidden="true">⚑</span>
+              <h3>Encara no hi ha marques</h3>
+              <p>Engega el cronòmetre i prem «Marca».</p>
+            </div>
+            <div class="panel-bottom">
+              <button id="copyMarks" class="secondary">⧉ Copia</button><button id="exportMarks" class="secondary">↧ Exporta (.csv)</button>
+            </div>
+          </section>
+          <section id="panel-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-settings" hidden>
+            <h2>Fes-lo teu</h2>
+            <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
+            <label class="switch-row" for="tickToggle"><span><strong>Tic dels últims 10 segons</strong><small>Al compte enrere, un so suau per segon al final.</small></span><input id="tickToggle" type="checkbox" role="switch" checked /></label>
+            <label class="switch-row" for="potatoTickToggle"><span><strong>Tic-tac de la patata</strong><small>Un tic-tac constant que no revela quan explotarà.</small></span><input id="potatoTickToggle" type="checkbox" role="switch" checked /></label>
+            <p class="muted">El compte enrere es calcula amb l’hora del sistema: si recarregues la pàgina, continua on era. Els navegadors poden alentir els temporitzadors de les pestanyes amagades; per a un ús precís, mantén la pestanya visible.</p>
+            <p class="muted">Dreceres: <kbd>espai</kbd> comença o atura · <kbd>M</kbd> marca · <kbd>R</kbd> reinicia · <kbd>Esc</kbd> sortir del mode aula.</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0"><img src="../shared/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA" /></a>
+      <div>
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>

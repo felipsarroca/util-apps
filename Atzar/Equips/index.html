@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Fes equips equilibrats a l’atzar, amb noms d’equip i rols cooperatius. En català, sense anuncis i amb desament local."
+    />
+    <title>Equips App</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
+    <link rel="stylesheet" href="style.css?v=1.0" />
+    <script src="../shared/atzar.js?v=1.0" defer></script>
+    <script src="script.js?v=1.0" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Equips, inici"
+          ><img class="brand-icon" src="favicon.svg" alt="" width="60" height="60" /><span
+            >equips<span class="brand-dot">.</span></span
+          ></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <a class="icon-button home-link" href="../" title="Totes les apps d’Atzar a l’aula" aria-label="Atzar a l’aula: totes les apps"
+            ><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></g></svg></a
+          ><button id="soundButton" class="icon-button" aria-label="Silencia el so" aria-pressed="false" title="Activa o silencia el so">♫</button
+          ><button id="themeButton" class="icon-button" aria-label="Activa el tema fosc" aria-pressed="false" title="Tema clar o fosc">◐</button
+          ><button id="presentButton" class="quiet" aria-pressed="false">⛶ <span>Mode aula</span></button>
+        </nav>
+      </header>
+      <main class="layout">
+        <section class="stage" aria-label="Equips a l’atzar">
+          <div class="stage-heading">
+            <h1 id="stageTitle">Fem equips!</h1>
+            <p id="stageSubtitle" class="subtitle"></p>
+          </div>
+          <div class="play-area">
+            <div id="teams" class="teams" aria-live="polite" aria-label="Equips"></div>
+          </div>
+          <div class="action-row">
+            <button id="makeButton" class="action-button" title="Fes equips (barra d’espai)">
+              <span aria-hidden="true">⁂</span><span id="makeLabel">Fes equips</span><span aria-hidden="true">→</span>
+            </button>
+            <button id="copyButton" class="secondary copy" disabled>⧉ Copia</button>
+          </div>
+          <p id="resultLine" class="sr-only" aria-live="polite"></p>
+        </section>
+        <aside class="panel" aria-label="Personalitza els equips">
+          <div class="tabs" role="tablist" aria-label="Panells">
+            <button id="tab-entries" class="tab active" role="tab" aria-controls="panel-entries" aria-selected="true">Alumnat <span id="entryCount" class="badge">0</span></button
+            ><button id="tab-teams" class="tab" role="tab" aria-controls="panel-teams" aria-selected="false" tabindex="-1">Equips</button
+            ><button id="tab-history" class="tab" role="tab" aria-controls="panel-history" aria-selected="false" tabindex="-1">Historial <span id="historyCount" class="badge">0</span></button
+            ><button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Ajustos</button>
+          </div>
+          <section id="panel-entries" class="tab-content" role="tabpanel" aria-labelledby="tab-entries">
+            <h2>Qui hi participa?</h2>
+            <details id="savedLists" class="saved-lists">
+              <summary>Les meves classes <span id="classCount"></span></summary>
+              <div id="classList" class="class-list" aria-label="Classes desades"></div>
+              <form id="saveClassForm" class="save-class-form">
+                <label for="className" class="sr-only">Nom de la classe</label>
+                <input id="className" type="text" placeholder="Nom de la classe: 2n A…" maxlength="40" required />
+                <button type="submit" class="quiet">Desa</button>
+              </form>
+              <p class="field-note">També hi trobaràs les classes desades a la Ruleta.</p>
+            </details>
+            <textarea id="entriesInput" aria-label="Participants, un per línia" spellcheck="false" maxlength="20000" placeholder="Anna&#10;Biel&#10;Clàudia"></textarea>
+            <p id="entryFeedback" class="field-note" aria-live="polite"></p>
+            <div class="field">
+              <span id="splitLabel">Com els repartim?</span>
+              <div class="segmented wide" role="group" aria-labelledby="splitLabel">
+                <button data-split="teams" aria-pressed="true">Nombre d’equips</button><button data-split="size" aria-pressed="false">Persones per equip</button>
+              </div>
+            </div>
+            <div class="stepper">
+              <span id="sizeLabel">Equips</span>
+              <div class="stepper-control" role="group" aria-labelledby="sizeLabel">
+                <button id="sizeMinus" aria-label="Un menys">−</button><output id="sizeValue" aria-live="polite">4</output><button id="sizePlus" aria-label="Un més">+</button>
+              </div>
+            </div>
+            <p id="splitNote" class="field-note"></p>
+            <details class="ideas">
+              <summary>Idees per a l’aula</summary>
+              <ul>
+                <li><strong>Equips cooperatius.</strong> Activa els rols (coordinació, secretaria, portaveu, material) com als equips de base del programa <em>Cooperar per aprendre / Aprendre a cooperar</em> (CA/AC). Cada rol té una responsabilitat clara.</li>
+                <li><strong>Parelles.</strong> Dues persones per equip per a la lectura en parella, la correcció entre iguals o el tutor-tutorat.</li>
+                <li><strong>Trencaclosques.</strong> Fes els grups d’experts a l’atzar i, després, els grups de base: cada membre aporta la seva part.</li>
+                <li><strong>Concursos i tornejos.</strong> Equips amb noms d’animals o de colors per a un joc de preguntes de repàs.</li>
+                <li><strong>Un punt de partida.</strong> L’atzar evita etiquetes i afavoreix que tothom treballi amb tothom; el docent pot revisar la proposta abans de projectar-la si cal tenir en compte necessitats concretes.</li>
+              </ul>
+            </details>
+          </section>
+          <section id="panel-teams" class="tab-content" role="tabpanel" aria-labelledby="tab-teams" hidden>
+            <h2>Noms dels equips</h2>
+            <label class="field">Estil<select id="namesInput">
+                <option value="numbers">Equip 1, Equip 2…</option>
+                <option value="colors">Colors</option>
+                <option value="animals">Animals</option>
+                <option value="custom">Els meus noms</option>
+              </select></label>
+            <label id="customNamesField" class="field" hidden>Noms separats per comes<input id="customNames" type="text" maxlength="400" placeholder="Atenes, Esparta, Corint, Tebes" /></label>
+            <div class="separator"></div>
+            <label class="switch-row" for="rolesToggle"><span><strong>Assigna rols dins de cada equip</strong><small>El primer rol a la primera persona de l’equip, i així successivament.</small></span><input id="rolesToggle" type="checkbox" role="switch" /></label>
+            <label class="field" id="rolesField">Rols, en ordre i separats per comes<input id="rolesInput" type="text" maxlength="400" /></label>
+            <button id="rolesDefault" class="quiet">↺ Rols de l’aprenentatge cooperatiu</button>
+            <p class="field-note">Si un equip té més membres que rols, la resta hi apareixen sense rol.</p>
+          </section>
+          <section id="panel-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history" hidden>
+            <div class="section-heading">
+              <h2>Equips anteriors</h2>
+              <button id="clearHistory" class="quiet">Esborra</button>
+            </div>
+            <p class="muted">Els últims 200 repartiments, del més recent al més antic.</p>
+            <ol id="historyList" class="history-list"></ol>
+            <div id="historyEmpty" class="empty-state">
+              <span aria-hidden="true">⁂</span>
+              <h3>Encara no hi ha equips</h3>
+              <p>Fes el primer repartiment i el trobaràs aquí.</p>
+            </div>
+            <button id="exportHistory" class="secondary">↧ Exporta els equips actuals (.csv)</button>
+          </section>
+          <section id="panel-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-settings" hidden>
+            <h2>Fes-la teva</h2>
+            <label class="field">Títol<input id="titleInput" type="text" maxlength="70" placeholder="Fem equips!" /></label>
+            <label class="field">Ritme del repartiment<select id="durationInput">
+                <option value="0">Immediat</option>
+                <option value="2500">Normal · uns 2,5 segons</option>
+                <option value="5000">Amb suspens · uns 5 segons</option>
+              </select></label>
+            <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
+            <p class="muted">Primer es barreja tota la llista (Fisher-Yates amb el generador criptogràfic del navegador) i després es reparteix per torns, de manera que els equips no es diferencien en més d’una persona.</p>
+            <p class="muted">Dreceres: <kbd>espai</kbd> fer equips · <kbd>Esc</kbd> sortir del mode aula.</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0"><img src="../shared/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA" /></a>
+      <div>
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>

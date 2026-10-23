@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Llança d’una a deu monedes i observa com l’atzar s’acosta al 50 %. En català, sense anuncis i amb desament local."
+    />
+    <title>Moneda App</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
+    <link rel="stylesheet" href="style.css?v=1.0" />
+    <script src="../shared/atzar.js?v=1.0" defer></script>
+    <script src="script.js?v=1.0" defer></script>
+  </head>
+  <body>
+    <svg width="0" height="0" class="sr-only" aria-hidden="true">
+      <defs>
+        <radialGradient id="goldFace" cx="38%" cy="32%" r="75%">
+          <stop offset="0" stop-color="#fbe7a1" />
+          <stop offset="0.55" stop-color="#e2b04f" />
+          <stop offset="1" stop-color="#b9842c" />
+        </radialGradient>
+        <radialGradient id="silverFace" cx="38%" cy="32%" r="75%">
+          <stop offset="0" stop-color="#ffffff" />
+          <stop offset="0.55" stop-color="#cfd8da" />
+          <stop offset="1" stop-color="#8c9a9f" />
+        </radialGradient>
+        <symbol id="coin-cara" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="49" fill="#a8742a" />
+          <circle cx="50" cy="50" r="46.5" fill="url(#goldFace)" />
+          <circle cx="50" cy="50" r="41" fill="none" stroke="#a8742a" stroke-width="1.2" opacity=".7" />
+          <circle cx="50" cy="50" r="37.5" fill="none" stroke="#9a6a22" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 4.9" opacity=".75" />
+          <g fill="#b07a27" opacity=".9">
+            <path d="M50 17.5l2.6 8h-5.2zM50 66.5l2.6 8h-5.2zM17.5 50l8-2.6v5.2zM82.5 50l-8-2.6v5.2zM27 27l7.4 3.8-3.6 3.6zM73 27l-3.8 7.4-3.6-3.6zM27 73l3.8-7.4 3.6 3.6zM73 73l-7.4-3.8 3.6-3.6z" transform="translate(0 -6)" />
+          </g>
+          <circle cx="50" cy="44" r="15" fill="#d9a441" stroke="#a8742a" stroke-width="1.4" />
+          <circle cx="44.5" cy="41.5" r="1.8" fill="#6f4a15" />
+          <circle cx="55.5" cy="41.5" r="1.8" fill="#6f4a15" />
+          <path d="M43.5 48c3.6 4 9.4 4 13 0" fill="none" stroke="#6f4a15" stroke-width="1.8" stroke-linecap="round" />
+          <text x="50" y="81" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="9.5" font-weight="800" letter-spacing="2.5" fill="#6f4a15">CARA</text>
+        </symbol>
+        <symbol id="coin-creu" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="49" fill="#7a878c" />
+          <circle cx="50" cy="50" r="46.5" fill="url(#silverFace)" />
+          <circle cx="50" cy="50" r="41" fill="none" stroke="#7a878c" stroke-width="1.2" opacity=".7" />
+          <circle cx="50" cy="50" r="37.5" fill="none" stroke="#6d797e" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 4.9" opacity=".75" />
+          <g fill="#4f5d63" transform="translate(0 -6)">
+            <path d="M42 22h16l-4.5 21h-7z" />
+            <path d="M42 22h16l-4.5 21h-7z" transform="rotate(90 50 50)" />
+            <path d="M42 22h16l-4.5 21h-7z" transform="rotate(180 50 50)" />
+            <path d="M42 22h16l-4.5 21h-7z" transform="rotate(270 50 50)" />
+            <circle cx="50" cy="50" r="5" />
+          </g>
+          <text x="50" y="81" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="9.5" font-weight="800" letter-spacing="2.5" fill="#3d494e">CREU</text>
+        </symbol>
+      </defs>
+    </svg>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Moneda, inici"
+          ><img class="brand-icon" src="favicon.svg" alt="" width="60" height="60" /><span
+            >moneda<span class="brand-dot">.</span></span
+          ></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <a class="icon-button home-link" href="../" title="Totes les apps d’Atzar a l’aula" aria-label="Atzar a l’aula: totes les apps"
+            ><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></g></svg></a
+          ><button id="soundButton" class="icon-button" aria-label="Silencia el so" aria-pressed="false" title="Activa o silencia el so">♫</button
+          ><button id="themeButton" class="icon-button" aria-label="Activa el tema fosc" aria-pressed="false" title="Tema clar o fosc">◐</button
+          ><button id="presentButton" class="quiet" aria-pressed="false">⛶ <span>Mode aula</span></button>
+        </nav>
+      </header>
+      <main class="layout">
+        <section class="stage" aria-label="Llançament de monedes">
+          <div class="stage-heading">
+            <h1>Cara o creu?</h1>
+            <p id="stageSubtitle" class="subtitle"></p>
+          </div>
+          <div class="play-area">
+            <div id="coins" class="coins" role="img" aria-label="Monedes"></div>
+          </div>
+          <button id="tossButton" class="action-button" title="Llança (barra d’espai)">
+            <span aria-hidden="true">◎</span><span id="tossLabel">Llança la moneda</span><span aria-hidden="true">→</span>
+          </button>
+          <p id="resultLine" class="result-line" aria-live="polite"></p>
+        </section>
+        <aside class="panel" aria-label="Personalitza el llançament">
+          <div class="tabs" role="tablist" aria-label="Panells">
+            <button id="tab-coins" class="tab active" role="tab" aria-controls="panel-coins" aria-selected="true">Monedes</button
+            ><button id="tab-stats" class="tab" role="tab" aria-controls="panel-stats" aria-selected="false" tabindex="-1">Estadística</button
+            ><button id="tab-history" class="tab" role="tab" aria-controls="panel-history" aria-selected="false" tabindex="-1">Historial <span id="historyCount" class="badge">0</span></button
+            ><button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Ajustos</button>
+          </div>
+          <section id="panel-coins" class="tab-content" role="tabpanel" aria-labelledby="tab-coins">
+            <h2>Què llancem?</h2>
+            <div class="stepper">
+              <span id="countLabel">Nombre de monedes</span>
+              <div class="stepper-control" role="group" aria-labelledby="countLabel">
+                <button id="countMinus" aria-label="Una moneda menys">−</button><output id="countValue" aria-live="polite">1</output><button id="countPlus" aria-label="Una moneda més">+</button>
+              </div>
+            </div>
+            <div class="field-pair">
+              <label class="field">Si surt cara…<input id="labelCara" type="text" maxlength="40" placeholder="p. ex. comença el grup A" /></label>
+              <label class="field">Si surt creu…<input id="labelCreu" type="text" maxlength="40" placeholder="p. ex. comença el grup B" /></label>
+            </div>
+            <p class="field-note">Les etiquetes són opcionals i apareixen amb el resultat d’una sola moneda.</p>
+            <div class="separator"></div>
+            <h2>Experiment ràpid</h2>
+            <p class="muted">Simula moltes tirades de cop i mira l’estadística.</p>
+            <div class="tools-row">
+              <button class="secondary" data-simulate="10">10 tirades</button
+              ><button class="secondary" data-simulate="100">100 tirades</button
+              ><button class="secondary" data-simulate="1000">1.000 tirades</button>
+            </div>
+            <details class="ideas">
+              <summary>Idees per a l’aula</summary>
+              <ul>
+                <li><strong>Llei dels grans nombres.</strong> Abans de començar, cada alumne prediu el percentatge de cares després de 10, 100 i 1.000 tirades. Després es compara amb la gràfica de l’Estadística.</li>
+                <li><strong>La fal·làcia del jugador.</strong> Si han sortit cinc cares seguides, és més probable una creu? Es llança i es comenta per què la moneda «no té memòria».</li>
+                <li><strong>Dues monedes, tres resultats.</strong> Per què «una cara i una creu» surt el doble que «dues cares»? Es dibuixa el diagrama d’arbre i es contrasta amb la distribució.</li>
+                <li><strong>Decisions justes.</strong> Etiqueta cara i creu (qui comença el debat, quin grup exposa primer) i llança davant de tothom.</li>
+                <li><strong>Història.</strong> A Roma es jugava a <em>capita aut navia</em>, «caps o naus», per les dues cares de les monedes de bronze. Quines imatges hi ha a les monedes d’euro actuals?</li>
+              </ul>
+            </details>
+          </section>
+          <section id="panel-stats" class="tab-content" role="tabpanel" aria-labelledby="tab-stats" hidden>
+            <div class="section-heading">
+              <h2>Què diu l’atzar?</h2>
+              <button id="resetStats" class="quiet">Reinicia</button>
+            </div>
+            <div class="stat-grid">
+              <div class="stat"><small>Monedes</small><strong id="statTotal">0</strong><span>llançades</span></div>
+              <div class="stat"><small>Cares</small><strong id="statCara">0</strong><span id="statCaraPct">—</span></div>
+              <div class="stat"><small>Creus</small><strong id="statCreu">0</strong><span id="statCreuPct">—</span></div>
+            </div>
+            <div class="chart" id="convergenceChart"></div>
+            <p class="chart-caption">Percentatge acumulat de cares. Com més llançaments, més s’acosta a la línia del 50 %.</p>
+            <div id="distWrap" hidden>
+              <div class="chart" id="distChart"></div>
+              <p class="chart-caption" id="distCaption"></p>
+            </div>
+          </section>
+          <section id="panel-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history" hidden>
+            <div class="section-heading">
+              <h2>Han sortit…</h2>
+              <button id="clearHistory" class="quiet">Esborra</button>
+            </div>
+            <p class="muted">Els últims 200 llançaments, del més recent al més antic.</p>
+            <ol id="historyList" class="history-list"></ol>
+            <div id="historyEmpty" class="empty-state">
+              <span aria-hidden="true">◎</span>
+              <h3>Encara no hi ha res</h3>
+              <p>Llança la moneda i trobaràs el resultat aquí.</p>
+            </div>
+            <button id="exportHistory" class="secondary">↧ Exporta resultats (.csv)</button>
+          </section>
+          <section id="panel-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-settings" hidden>
+            <h2>Fes-la teva</h2>
+            <label class="field">Durada del llançament<select id="durationInput">
+                <option value="900">Ràpid · 1 segon</option>
+                <option value="1700">Normal · 2 segons</option>
+                <option value="3000">Suspens · 3 segons</option>
+              </select></label>
+            <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
+            <p class="muted">Cada moneda és independent i té exactament la mateixa probabilitat de sortir cara o creu: el resultat es tria abans de l’animació amb el generador criptogràfic del navegador.</p>
+            <p class="muted">Dreceres: <kbd>espai</kbd> llançar · <kbd>Esc</kbd> sortir del mode aula.</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0"><img src="../shared/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA" /></a>
+      <div>
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>

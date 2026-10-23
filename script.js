@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     const apps = [
         {
-            name: 'Ruleta App',
-            path: 'https://ja.cat/ruletapp',
-            icon: 'Ruleta/favicon.svg',
-            description: 'Ruleta de noms i activitats amb 30 temes per a l’aula, sense repeticions i amb historial.',
+            name: 'Atzar a l’aula',
+            path: 'https://ja.cat/atzar',
+            icon: 'Atzar/favicon.svg',
+            description: 'Ruleta, sorteig, equips, temps, moneda, daus, cartes i nombres: vuit eines d’atzar per a l’aula.',
             category: 'Aula i avaluació'
         },
         {

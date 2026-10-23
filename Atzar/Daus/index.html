@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ee" />
+    <meta
+      name="description"
+      content="Llança d’un a sis daus de 4, 6, 8, 10, 12 o 20 cares, suma o multiplica i descobreix la distribució de resultats."
+    />
+    <title>Daus App</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
+    <link rel="stylesheet" href="style.css?v=1.0" />
+    <script src="../shared/atzar.js?v=1.0" defer></script>
+    <script src="script.js?v=1.0" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Daus, inici"
+          ><img class="brand-icon" src="favicon.svg" alt="" width="60" height="60" /><span
+            >daus<span class="brand-dot">.</span></span
+          ></a
+        >
+        <nav class="header-actions" aria-label="Visualització">
+          <a class="icon-button home-link" href="../" title="Totes les apps d’Atzar a l’aula" aria-label="Atzar a l’aula: totes les apps"
+            ><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></g></svg></a
+          ><button id="soundButton" class="icon-button" aria-label="Silencia el so" aria-pressed="false" title="Activa o silencia el so">♫</button
+          ><button id="themeButton" class="icon-button" aria-label="Activa el tema fosc" aria-pressed="false" title="Tema clar o fosc">◐</button
+          ><button id="presentButton" class="quiet" aria-pressed="false">⛶ <span>Mode aula</span></button>
+        </nav>
+      </header>
+      <main class="layout">
+        <section class="stage" aria-label="Llançament de daus">
+          <div class="stage-heading">
+            <h1>Alea iacta est!</h1>
+            <p id="stageSubtitle" class="subtitle"></p>
+          </div>
+          <div class="play-area">
+            <div id="dice" class="dice" role="img" aria-label="Daus"></div>
+          </div>
+          <button id="rollButton" class="action-button" title="Llança (barra d’espai)">
+            <span aria-hidden="true">⚄</span><span id="rollLabel">Llança el dau</span><span aria-hidden="true">→</span>
+          </button>
+          <p id="resultLine" class="result-line" aria-live="polite"></p>
+        </section>
+        <aside class="panel" aria-label="Personalitza els daus">
+          <div class="tabs" role="tablist" aria-label="Panells">
+            <button id="tab-dice" class="tab active" role="tab" aria-controls="panel-dice" aria-selected="true">Daus</button
+            ><button id="tab-stats" class="tab" role="tab" aria-controls="panel-stats" aria-selected="false" tabindex="-1">Estadística</button
+            ><button id="tab-history" class="tab" role="tab" aria-controls="panel-history" aria-selected="false" tabindex="-1">Historial <span id="historyCount" class="badge">0</span></button
+            ><button id="tab-settings" class="tab" role="tab" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Ajustos</button>
+          </div>
+          <section id="panel-dice" class="tab-content" role="tabpanel" aria-labelledby="tab-dice">
+            <h2>Quins daus?</h2>
+            <div class="stepper">
+              <span id="countLabel">Nombre de daus</span>
+              <div class="stepper-control" role="group" aria-labelledby="countLabel">
+                <button id="countMinus" aria-label="Un dau menys">−</button><output id="countValue" aria-live="polite">2</output><button id="countPlus" aria-label="Un dau més">+</button>
+              </div>
+            </div>
+            <div class="field">
+              <span id="facesLabel">Cares de cada dau</span>
+              <div id="facesChips" class="chips" role="group" aria-labelledby="facesLabel">
+                <button data-faces="4" aria-pressed="false">D4</button><button data-faces="6" aria-pressed="true">D6</button><button data-faces="8" aria-pressed="false">D8</button><button data-faces="10" aria-pressed="false">D10</button><button data-faces="12" aria-pressed="false">D12</button><button data-faces="20" aria-pressed="false">D20</button>
+              </div>
+            </div>
+            <div class="field">
+              <span id="opLabel">Què en fem, dels valors?</span>
+              <div id="opChips" class="chips" role="group" aria-labelledby="opLabel">
+                <button data-op="sum" aria-pressed="true">Suma</button><button data-op="product" aria-pressed="false">Producte</button><button data-op="none" aria-pressed="false">Només els valors</button>
+              </div>
+            </div>
+            <label class="switch-row" for="colorToggle"
+              ><span><strong>Un color per dau</strong><small>Permet dir «el dau vermell» i «el dau blau».</small></span
+              ><input id="colorToggle" type="checkbox" role="switch" checked
+            /></label>
+            <div class="separator"></div>
+            <h2>Experiment ràpid</h2>
+            <p class="muted">Simula moltes tirades amb aquests daus.</p>
+            <div class="tools-row">
+              <button class="secondary" data-simulate="36">36 tirades</button
+              ><button class="secondary" data-simulate="360">360 tirades</button
+              ><button class="secondary" data-simulate="3600">3.600 tirades</button>
+            </div>
+            <details class="ideas">
+              <summary>Idees per a l’aula</summary>
+              <ul>
+                <li><strong>La cursa de cavalls.</strong> Onze cavalls numerats del 2 al 12; amb dos daus, avança el cavall de la suma. Qui guanya més sovint? I per què el cavall 1 no surt mai?</li>
+                <li><strong>Per què el 7?</strong> Amb dos D6 hi ha 36 combinacions i sis sumen 7. Es fa la taula de doble entrada i es compara amb la gràfica de l’Estadística.</li>
+                <li><strong>Càlcul mental.</strong> Mode producte per repassar les taules; tres daus i suma per al càlcul ràpid. Qui ho diu primer, explica com ho ha pensat.</li>
+                <li><strong>Coordenades.</strong> El dau vermell és la fila i el blau la columna d’una graella, un mapa o una taula de preguntes.</li>
+                <li><strong>Escriptura creativa.</strong> Tres daus de colors trien personatge, lloc i conflicte d’una llista numerada.</li>
+                <li><strong>Història.</strong> «Alea iacta est», «la sort està llançada»: Suetoni atribueix aquestes paraules a Juli Cèsar quan va creuar el Rubicó. Grecs i romans jugaven amb daus i astràgals d’os.</li>
+              </ul>
+            </details>
+          </section>
+          <section id="panel-stats" class="tab-content" role="tabpanel" aria-labelledby="tab-stats" hidden>
+            <div class="section-heading">
+              <h2>Què diu l’atzar?</h2>
+              <button id="resetStats" class="quiet">Reinicia</button>
+            </div>
+            <div class="stat-grid">
+              <div class="stat"><small>Tirades</small><strong id="statRolls">0</strong><span id="statConfig">—</span></div>
+              <div class="stat"><small>Mitjana</small><strong id="statMean">—</strong><span id="statExpected">—</span></div>
+            </div>
+            <div class="chart" id="distChart"></div>
+            <p class="chart-caption" id="distCaption"></p>
+          </section>
+          <section id="panel-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history" hidden>
+            <div class="section-heading">
+              <h2>Han sortit…</h2>
+              <button id="clearHistory" class="quiet">Esborra</button>
+            </div>
+            <p class="muted">Les últimes 200 tirades, de la més recent a la més antiga.</p>
+            <ol id="historyList" class="history-list"></ol>
+            <div id="historyEmpty" class="empty-state">
+              <span aria-hidden="true">⚄</span>
+              <h3>Encara no hi ha res</h3>
+              <p>Llança els daus i trobaràs el resultat aquí.</p>
+            </div>
+            <button id="exportHistory" class="secondary">↧ Exporta resultats (.csv)</button>
+          </section>
+          <section id="panel-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-settings" hidden>
+            <h2>Fes-los teus</h2>
+            <label class="field">Durada del llançament<select id="durationInput">
+                <option value="700">Ràpid · menys d’un segon</option>
+                <option value="1400">Normal · 1,5 segons</option>
+                <option value="2600">Suspens · 2,5 segons</option>
+              </select></label>
+            <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
+            <p class="muted">Cada dau és independent i totes les cares tenen la mateixa probabilitat. El resultat es tria abans de l’animació amb el generador criptogràfic del navegador.</p>
+            <p class="muted">Dreceres: <kbd>espai</kbd> llançar · <kbd>Esc</kbd> sortir del mode aula.</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <footer class="felip-app-footer">
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0"><img src="../shared/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA" /></a>
+      <div>
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+      </div>
+    </footer>
+    <div id="toast" role="status" class="toast" hidden></div>
+  </body>
+</html>
