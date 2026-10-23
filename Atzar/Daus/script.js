@@ -16,8 +16,17 @@
     op: "sum",
     colors: true,
     duration: 1400,
+    custom: false,
+    customText: "",
     history: [],
     stats: {},
+  };
+  // Daus personalitzats: cares amb paraules o emojis per a llengua, tutoria o escriptura.
+  const PRESETS = {
+    pronoms: "jo\ntu\nell / ella\nnosaltres\nvosaltres\nells / elles",
+    temps: "present\npassat perifràstic\nimperfet\nfutur\ncondicional\nimperatiu",
+    preguntes: "Qui?\nQuè?\nOn?\nQuan?\nCom?\nPer què?",
+    emocions: "😀 alegria\n😢 tristesa\n😠 ràbia\n😨 por\n😲 sorpresa\n😌 calma",
   };
   const saved = A.load(KEY, null);
   if (saved && typeof saved === "object") {
@@ -26,6 +35,8 @@
     if (OPS.includes(saved.op)) state.op = saved.op;
     if (typeof saved.colors === "boolean") state.colors = saved.colors;
     if (DURATIONS.includes(saved.duration)) state.duration = saved.duration;
+    if (typeof saved.custom === "boolean") state.custom = saved.custom;
+    if (typeof saved.customText === "string") state.customText = saved.customText.slice(0, 600);
     if (Array.isArray(saved.history))
       state.history = saved.history
         .filter((h) => h && typeof h.label === "string" && Number.isFinite(h.time))
@@ -33,7 +44,19 @@
     if (saved.stats && typeof saved.stats === "object") state.stats = saved.stats;
   }
   const persist = () => A.save(KEY, state);
-  const configKey = () => `${state.count}d${state.faces}`;
+  const customFaces = () =>
+    state.customText
+      .split(/\r?\n/)
+      .map((x) => x.trim().slice(0, 24))
+      .filter(Boolean)
+      .slice(0, 20);
+  if (!state.customText) state.customText = PRESETS.preguntes;
+  const isCustom = () => state.custom && customFaces().length >= 2;
+  const sides = () => (isCustom() ? customFaces().length : state.faces);
+  const faceLabel = (v) => (isCustom() ? customFaces()[v - 1] : String(v));
+  // La clau de les estadístiques inclou les cares personalitzades: si canvien, l'estadística és nova.
+  const configKey = () => (isCustom() ? `${state.count}c:${customFaces().join("|")}` : `${state.count}d${state.faces}`);
+  const configName = () => (isCustom() ? `${state.count} ${state.count === 1 ? "dau amb paraules" : "daus amb paraules"}` : `${state.count} × D${state.faces}`);
 
   const host = $("dice");
   let busy = false,
@@ -135,7 +158,14 @@
       if (state.colors) die.style.setProperty("--c", COLORS[i % COLORS.length]);
       die.innerHTML = '<div class="die-shadow"></div>';
       const item = { el: die, value: 1, x: 0, y: 0 };
-      if (state.faces === 6) {
+      if (isCustom()) {
+        const tile = document.createElement("div");
+        tile.className = "poly custom";
+        tile.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><rect class="shape" x="5" y="5" width="90" height="90" rx="20"/><rect class="front" x="11" y="11" width="78" height="78" rx="15"/><rect class="rim" x="5" y="5" width="90" height="90" rx="20"/><text class="num" x="50" y="51"></text></svg>`;
+        die.append(tile);
+        item.body = tile;
+        item.value = 1 + (i % sides());
+      } else if (state.faces === 6) {
         const tilt = document.createElement("div"),
           cube = document.createElement("div");
         tilt.className = "cube-tilt";
@@ -173,13 +203,34 @@
       dice.push(item);
     }
     setNumberStyle();
-    host.setAttribute("aria-label", `${state.count} ${state.count === 1 ? "dau" : "daus"} de ${state.faces} cares`);
+    host.setAttribute("aria-label", isCustom() ? configName() : `${state.count} ${state.count === 1 ? "dau" : "daus"} de ${state.faces} cares`);
     sizeDice();
   }
   function setNumberStyle() {
     for (const d of dice) {
       const text = d.body.querySelector?.(".num");
       if (!text) continue;
+      if (isCustom()) {
+        // Les etiquetes llargues es parteixen en dues línies i la lletra s'ajusta a la cara.
+        const label = faceLabel(d.value),
+          words = label.split(" "),
+          emoji = /^\p{Extended_Pictographic}/u.test(label),
+          half = emoji ? 1 : Math.ceil(words.length / 2),
+          lines = words.length > 1 && (emoji || [...label].length > 9) ? [words.slice(0, half).join(" "), words.slice(half).join(" ")] : [label],
+          longest = Math.max(...lines.map((l) => [...l].length)),
+          size = Math.max(9, Math.min(34, 132 / Math.max(3, longest)));
+        text.replaceChildren(
+          ...lines.map((line, k) => {
+            const span = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+            span.setAttribute("x", "50");
+            span.setAttribute("dy", String(k ? size * 1.1 : lines.length > 1 ? -size * 0.55 : 0));
+            span.textContent = line;
+            return span;
+          }),
+        );
+        text.setAttribute("font-size", size.toFixed(1));
+        continue;
+      }
       text.textContent = d.value;
       // Subratllat del 6 i el 9 per distingir-los, com als daus reals.
       text.setAttribute("text-decoration", state.faces >= 8 && (d.value === 6 || d.value === 9) ? "underline" : "none");
@@ -205,29 +256,49 @@
     $("countMinus").disabled = busy || state.count <= 1;
     $("countPlus").disabled = busy || state.count >= MAX_DICE;
     for (const b of document.querySelectorAll("[data-faces]")) {
-      b.setAttribute("aria-pressed", String(Number(b.dataset.faces) === state.faces));
+      b.setAttribute("aria-pressed", String(b.dataset.faces === "custom" ? state.custom : !state.custom && Number(b.dataset.faces) === state.faces));
       b.disabled = busy;
     }
     for (const b of document.querySelectorAll("[data-op]")) b.setAttribute("aria-pressed", String(b.dataset.op === state.op));
+    $("customBox").hidden = !state.custom;
+    $("opField").hidden = isCustom();
+    if (document.activeElement !== $("customInput")) $("customInput").value = state.customText;
+    $("customNote").textContent = `${customFaces().length} cares${customFaces().length < 2 ? " · escriu-ne almenys dues" : ""}`;
+    $("predictField").hidden = isCustom();
+    $("predictLabel").textContent =
+      state.count > 1 && state.op === "product" ? "Abans de simular: quin producte sortirà més vegades?" : `Abans de simular: quin${state.count > 1 ? "a suma" : " valor"} sortirà més vegades?`;
     for (const b of document.querySelectorAll("[data-simulate]")) b.disabled = busy;
     $("colorToggle").checked = state.colors;
     $("durationInput").value = String(state.duration);
     $("rollButton").disabled = busy;
     $("rollLabel").textContent = state.count === 1 ? "Llança el dau" : `Llança ${state.count} daus`;
-    $("stageSubtitle").textContent = `${state.count} ${state.count === 1 ? "dau" : "daus"} de ${state.faces} cares${state.count > 1 && state.op !== "none" ? ` · ${state.op === "sum" ? "suma" : "producte"}` : ""}`;
+    $("stageSubtitle").textContent = isCustom()
+      ? `${configName()} · ${sides()} cares`
+      : `${state.count} ${state.count === 1 ? "dau" : "daus"} de ${state.faces} cares${state.count > 1 && state.op !== "none" ? ` · ${state.op === "sum" ? "suma" : "producte"}` : ""}`;
   }
 
   function describe(values) {
+    if (isCustom()) return values.map(faceLabel).join(" · ");
     if (values.length === 1) return String(values[0]);
     if (state.op === "sum") return `${values.join(" + ")} = ${values.reduce((a, b) => a + b, 0)}`;
     if (state.op === "product") return `${values.join(" × ")} = ${values.reduce((a, b) => a * b, 1)}`;
     return values.join(" · ");
   }
   function record(values) {
-    const key = configKey(),
-      s = (state.stats[key] ||= { rolls: 0, counts: Array(state.count * (state.faces - 1) + 1).fill(0) });
+    const key = configKey();
+    if (isCustom()) {
+      // Cares amb paraules: es compta cada cara de cada dau.
+      const s = (state.stats[key] ||= { rolls: 0, faces: Array(sides()).fill(0) });
+      s.rolls++;
+      for (const v of values) s.faces[v - 1]++;
+      return;
+    }
+    const s = (state.stats[key] ||= { rolls: 0, counts: Array(state.count * (state.faces - 1) + 1).fill(0) });
     s.rolls++;
     s.counts[values.reduce((a, b) => a + b, 0) - state.count]++;
+    const product = values.reduce((a, b) => a * b, 1);
+    s.prod ||= {};
+    s.prod[product] = (s.prod[product] || 0) + 1;
   }
   function showResult(values) {
     const line = $("resultLine"),
@@ -235,9 +306,9 @@
     big.className = "big";
     big.textContent = describe(values);
     line.replaceChildren(big);
-    if (state.colors && values.length > 1 && state.op === "none") {
+    if (state.colors && values.length > 1 && (state.op === "none" || isCustom())) {
       const detail = document.createElement("span");
-      detail.textContent = values.map((v, i) => `${COLOR_NAMES[i]}: ${v}`).join(" · ");
+      detail.textContent = values.map((v, i) => `${COLOR_NAMES[i]}: ${faceLabel(v)}`).join(" · ");
       line.append(detail);
     }
   }
@@ -248,7 +319,7 @@
     busy = true;
     syncControls();
     $("resultLine").textContent = "";
-    const values = dice.map(() => 1 + A.randomInt(state.faces)),
+    const values = dice.map(() => 1 + A.randomInt(sides())),
       motion = !A.reduced.matches;
     const done = dice.map((d, i) => {
       d.el.classList.remove("landed");
@@ -258,7 +329,7 @@
       for (let k = 0; k < Math.max(3, Math.round(duration / 160)); k++)
         setTimeout(() => A.noise(0.03, 0, 0.16, 1800 + A.randomInt(1400)), delay + (k * duration * 0.75) / Math.max(3, Math.round(duration / 160)));
       setTimeout(() => A.noise(0.06, 0, 0.3, 1200), delay + duration * 0.85);
-      if (state.faces === 6) {
+      if (!isCustom() && state.faces === 6) {
         const [tx, ty] = SHOW[values[i]],
           ox = d.x,
           oy = d.y,
@@ -299,7 +370,7 @@
       let stop = false;
       (function flicker(wait) {
         if (stop) return;
-        d.value = 1 + A.randomInt(state.faces);
+        d.value = 1 + A.randomInt(sides());
         setNumberStyle();
         setTimeout(() => flicker(Math.min(260, wait * 1.12)), wait);
       })(55);
@@ -317,7 +388,7 @@
       busy = false;
       record(values);
       showResult(values);
-      state.history.unshift({ label: describe(values), detail: `${state.count}d${state.faces}`, time: Date.now() });
+      state.history.unshift({ label: describe(values), detail: isCustom() ? configName() : `${state.count}d${state.faces}`, time: Date.now() });
       state.history.length = Math.min(state.history.length, 200);
       A.sounds.win();
       persist();
@@ -329,14 +400,28 @@
 
   function simulate(times) {
     if (busy) return;
+    const product = !isCustom() && state.count > 1 && state.op === "product",
+      seen = new Map();
     let total = 0;
     for (let t = 0; t < times; t++) {
-      const values = Array.from({ length: state.count }, () => 1 + A.randomInt(state.faces));
-      total += values.reduce((a, b) => a + b, 0);
+      const values = Array.from({ length: state.count }, () => 1 + A.randomInt(sides()));
+      const v = product ? values.reduce((a, b) => a * b, 1) : values.reduce((a, b) => a + b, 0);
+      total += v;
+      seen.set(v, (seen.get(v) || 0) + 1);
       record(values);
     }
-    const label = `Simulació: ${times.toLocaleString("ca")} tirades de ${configKey().replace("d", "D")} → suma mitjana ${(total / times).toLocaleString("ca", { maximumFractionDigits: 2 })}`;
-    state.history.unshift({ label, detail: configKey(), time: Date.now() });
+    const fmt = (v) => v.toLocaleString("ca", { maximumFractionDigits: 2 });
+    let label;
+    if (isCustom()) label = `Simulació: ${times.toLocaleString("ca")} tirades de ${configName()}`;
+    else {
+      label = `Simulació: ${times.toLocaleString("ca")} tirades de ${state.count}D${state.faces} → ${product ? "producte" : state.count > 1 ? "suma" : "valor"} mitjà ${fmt(total / times)}`;
+      const top = Math.max(...seen.values()),
+        winners = [...seen].filter(([, c]) => c === top).map(([v]) => v).sort((a, b) => a - b),
+        raw = $("predictInput").value.trim(),
+        guess = Number(raw);
+      if (raw && Number.isFinite(guess)) label += ` · predicció: ${fmt(guess)}; el més freqüent ha estat el ${winners.map(fmt).join(" i el ")}${winners.includes(guess) ? " ✓" : ""}`;
+    }
+    state.history.unshift({ label, detail: configName(), time: Date.now() });
     state.history.length = Math.min(state.history.length, 200);
     persist();
     renderHistory();
@@ -358,14 +443,50 @@
     }
     return dist;
   }
+  /* Distribució teòrica del producte: es multiplica dau a dau sobre un mapa de valors. */
+  function theoreticalProduct(count, faces) {
+    let dist = new Map([[1, 1]]);
+    for (let d = 0; d < count; d++) {
+      const next = new Map();
+      for (const [v, p] of dist) for (let f = 1; f <= faces; f++) next.set(v * f, (next.get(v * f) || 0) + p / faces);
+      dist = next;
+    }
+    return [...dist].sort((a, b) => a[0] - b[0]);
+  }
   function renderStats() {
     const s = state.stats[configKey()],
       rolls = s?.rolls || 0,
-      expectedMean = (state.count * (state.faces + 1)) / 2;
-    $("statRolls").textContent = rolls.toLocaleString("ca");
-    $("statConfig").textContent = `${state.count} × D${state.faces}`;
-    $("statExpected").textContent = `teòrica ${expectedMean.toLocaleString("ca")}`;
+      product = !isCustom() && state.count > 1 && state.op === "product",
+      expectedMean = product ? ((state.faces + 1) / 2) ** state.count : (state.count * (state.faces + 1)) / 2;
     const fmt = (v) => v.toLocaleString("ca", { maximumFractionDigits: 2 });
+    $("statRolls").textContent = rolls.toLocaleString("ca");
+    $("statConfig").textContent = configName();
+    $("statMeanLabel").textContent = product ? "Producte mitjà" : "Mitjana";
+    if (isCustom()) {
+      const labels = customFaces(),
+        counts = s?.faces || [],
+        n = counts.reduce((a, b) => a + b, 0);
+      $("statMeanLabel").textContent = "Cares";
+      $("statMean").textContent = labels.length;
+      $("statExpected").textContent = `${A.pct(1 / labels.length, 1)} cadascuna`;
+      $("distChart").innerHTML =
+        A.charts.bars({ labels: labels.map((l) => [...l].slice(0, 6).join("")), observed: labels.map((_, i) => (n ? (counts[i] || 0) / n : 0)), expected: labels.map(() => 1 / labels.length), label: "Freqüència de cada cara" }) + A.charts.legend;
+      $("distCaption").textContent = n
+        ? `Quantes vegades ha sortit cada cara (${n.toLocaleString("ca")} cares en ${rolls.toLocaleString("ca")} tirades). Totes tenen la mateixa probabilitat.`
+        : "Encara no hi ha tirades amb aquest dau. Totes les cares tenen la mateixa probabilitat.";
+      return;
+    }
+    $("statExpected").textContent = `${product ? "teòric" : "teòrica"} ${fmt(expectedMean)}`;
+    if (product) {
+      const theory = theoreticalProduct(state.count, state.faces),
+        prod = s?.prod || {},
+        n = Object.values(prod).reduce((a, b) => a + b, 0);
+      $("statMean").textContent = n ? fmt(Object.entries(prod).reduce((a, [v, c]) => a + v * c, 0) / n) : "—";
+      $("distChart").innerHTML =
+        A.charts.bars({ labels: theory.map(([v]) => String(v)), observed: theory.map(([v]) => (n ? (prod[v] || 0) / n : 0)), expected: theory.map(([, p]) => p), label: "Distribució del producte" }) + A.charts.legend;
+      $("distCaption").textContent = `Producte de ${state.count} × D${state.faces}: només hi ha ${theory.length} resultats possibles, i alguns es poden obtenir de moltes maneres (amb dos D6, el 12 surt de 2 × 6, 3 × 4, 4 × 3 i 6 × 2). ${n ? `${n.toLocaleString("ca")} tirades.` : "Encara no hi ha tirades en mode producte."}`;
+      return;
+    }
     if (!rolls) {
       $("statMean").textContent = "—";
       $("distChart").innerHTML = A.charts.bars({
@@ -411,13 +532,32 @@
   });
   for (const b of document.querySelectorAll("[data-faces]"))
     b.addEventListener("click", () => {
-      state.faces = Number(b.dataset.faces);
+      if (b.dataset.faces === "custom") state.custom = true;
+      else {
+        state.custom = false;
+        state.faces = Number(b.dataset.faces);
+      }
+      changed();
+    });
+  let customTimer;
+  $("customInput").addEventListener("input", (e) => {
+    clearTimeout(customTimer);
+    customTimer = setTimeout(() => {
+      state.customText = e.target.value.slice(0, 600);
+      changed();
+    }, 300);
+  });
+  for (const b of document.querySelectorAll("[data-preset]"))
+    b.addEventListener("click", () => {
+      state.customText = PRESETS[b.dataset.preset];
+      $("customInput").value = state.customText;
       changed();
     });
   for (const b of document.querySelectorAll("[data-op]"))
     b.addEventListener("click", () => {
       state.op = b.dataset.op;
       syncControls();
+      renderStats();
       persist();
     });
   $("colorToggle").addEventListener("change", (e) => {
@@ -430,15 +570,27 @@
   });
   for (const b of document.querySelectorAll("[data-simulate]")) b.addEventListener("click", () => simulate(Number(b.dataset.simulate)));
   $("resetStats").addEventListener("click", () => {
-    delete state.stats[configKey()];
+    const key = configKey(),
+      before = state.stats[key];
+    delete state.stats[key];
     persist();
     renderStats();
-    A.toast("Estadística d’aquesta configuració reiniciada.");
+    A.undoable("Estadística d’aquesta configuració reiniciada.", () => {
+      if (before) state.stats[key] = before;
+      persist();
+      renderStats();
+    });
   });
   $("clearHistory").addEventListener("click", () => {
+    const before = state.history;
     state.history = [];
     persist();
     renderHistory();
+    A.undoable("Historial esborrat.", () => {
+      state.history = before;
+      persist();
+      renderHistory();
+    });
   });
   $("exportHistory").addEventListener("click", () =>
     A.downloadCsv("daus-resultats.csv", [

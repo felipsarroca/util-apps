@@ -8,13 +8,15 @@
       name="description"
       content="Treu cartes d’una baralla espanyola o francesa, amb reposició o sense, i calcula probabilitats amb les que queden."
     />
-    <title>Cartes App</title>
+    <title>Cartes · Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.1" />
-    <link rel="stylesheet" href="style.css?v=1.1" />
-    <script src="../shared/atzar.js?v=1.1" defer></script>
-    <script src="figures.js?v=1.1" defer></script>
-    <script src="script.js?v=1.1" defer></script>
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.2" />
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="../shared/atzar.js?v=1.2" defer></script>
+    <script src="figures.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
   </head>
   <body>
     <svg width="0" height="0" class="sr-only" aria-hidden="true">
@@ -151,6 +153,7 @@
               <h2>Què queda a la baralla?</h2>
             </div>
             <p class="muted" id="leftNote"></p>
+            <div id="changeNote" class="change-note" aria-live="polite" hidden></div>
             <div id="probTable" class="prob-table"></div>
             <div id="leftGrid" class="left-grid"></div>
           </section>

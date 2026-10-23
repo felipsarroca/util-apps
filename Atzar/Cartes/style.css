@@ -206,3 +206,19 @@
     width: 100%;
   }
 }
+.change-note {
+  background: var(--pastel-blue);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  display: grid;
+  gap: 6px;
+}
+.change-note[hidden] {
+  display: none;
+}
+.change-note p {
+  margin: 0;
+}

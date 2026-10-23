@@ -361,3 +361,30 @@ html[data-theme="dark"] .stage-marks li:first-child .n {
     padding-inline: 10px;
   }
 }
+/* Fases: nom de la fase gran i context a sota. */
+.clock.phases-mode .clock-note {
+  display: grid;
+  gap: 2px;
+  max-width: calc(var(--clock, 340px) * 0.74);
+}
+.clock.phases-mode .clock-note strong {
+  color: var(--ring, var(--ink));
+  font-size: clamp(16px, calc(var(--clock, 340px) * 0.07), 34px);
+  font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.clock.phases-mode .clock-note small {
+  font-size: clamp(11px, calc(var(--clock, 340px) * 0.036), 17px);
+}
+#phasesInput {
+  font-variant-numeric: tabular-nums;
+}
+/* Quatre modes: en mòbil, graella de 2 × 2 perquè no es retalli cap botó. */
+@media (max-width: 480px) {
+  .stage-heading .segmented {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+}

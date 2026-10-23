@@ -38,7 +38,7 @@
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   function source() {
-    return state.retire ? state.pool : state.base;
+    return A.present(state.retire ? state.pool : state.base);
   }
   function sizeStage() {
     const area = document.querySelector(".draw-stage"),
@@ -84,14 +84,16 @@
     $("entryCount").textContent = n;
     $("stageTitle").textContent = state.title || (state.mode === "order" ? "En quin ordre?" : "A qui li toca?");
     $("titleInput").value = state.title;
-    $("poolCount").textContent = state.retire ? `Al barret: ${src.length} de ${n}` : `${n} ${n === 1 ? "paperet" : "paperets"} al barret`;
+    const away = state.base.length - A.present(state.base).length;
+    $("poolCount").textContent =
+      (state.retire ? `Al barret: ${src.length} de ${n}` : `${src.length} ${src.length === 1 ? "paperet" : "paperets"} al barret`) + (away ? ` · ${away} ${away === 1 ? "absent" : "absents"}` : "");
     $("stageSubtitle").textContent =
       state.mode === "order" ? "Ordre aleatori de tota la llista" : `${state.qty === 1 ? "Un paperet" : `${state.qty} paperets`}${state.retire ? " · sense tornar-los al barret" : ""}`;
     for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode));
     $("pickRow").hidden = state.mode === "order";
     $("qtyValue").textContent = state.qty;
     $("qtyMinus").disabled = state.qty <= 1;
-    $("qtyPlus").disabled = state.qty >= Math.max(1, n);
+    $("qtyPlus").disabled = state.qty >= Math.max(1, A.present(state.base).length);
     $("retireToggle").checked = state.retire;
     $("restoreButton").hidden = !state.retire;
     $("restoreButton").disabled = state.pool.length === n;
@@ -103,6 +105,7 @@
     $("copyButton").disabled = busy || !state.last.length;
     for (const b of document.querySelectorAll("[data-mode]")) b.disabled = busy;
     $("entriesInput").disabled = busy;
+    document.querySelector(".draw-stage").classList.toggle("idle", !busy && !state.last.length);
     const dup = n - new Set(state.base.map((x) => x.toLowerCase())).size;
     $("entryFeedback").textContent = dup ? `Hi ha ${dup} ${dup === 1 ? "nom repetit" : "noms repetits"}: cada línia és un paperet.` : "";
     sizeStage();
@@ -167,6 +170,7 @@
     state.qty = Math.min(state.qty, Math.max(1, entries.length));
     persist();
     sync();
+    renderAbsents();
   }
   function renderHistory() {
     A.renderHistory($("historyList"), $("historyEmpty"), state.history, $("historyCount"));
@@ -202,10 +206,15 @@
     sync();
   });
   $("restoreButton").addEventListener("click", () => {
+    const before = state.pool;
     state.pool = [...state.base];
     persist();
     sync();
-    A.toast("Tots els paperets tornen a ser al barret.");
+    A.undoable("Tots els paperets tornen a ser al barret.", () => {
+      state.pool = before;
+      persist();
+      sync();
+    });
   });
   $("copyButton").addEventListener("click", () => A.copyText(state.last.map((p, i) => (state.last.length > 1 ? `${i + 1}. ${p}` : p)).join("\n")));
   $("titleInput").addEventListener("input", (e) => {
@@ -222,9 +231,15 @@
     persist();
   });
   $("clearHistory").addEventListener("click", () => {
+    const before = state.history;
     state.history = [];
     persist();
     renderHistory();
+    A.undoable("Historial esborrat.", () => {
+      state.history = before;
+      persist();
+      renderHistory();
+    });
   });
   $("exportHistory").addEventListener("click", () =>
     A.downloadCsv("sorteig-resultats.csv", [
@@ -232,6 +247,7 @@
       ...state.history.map((h) => [new Date(h.time).toLocaleDateString("ca"), A.formatTime(h.time), h.label]),
     ]),
   );
+  const renderAbsents = A.setupAbsents({ host: $("absentList"), getNames: () => state.base, onChange: sync });
   A.setupClasses({
     getEntries: () => state.base,
     onLoad: (group) => {

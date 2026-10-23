@@ -8,11 +8,14 @@
       name="description"
       content="Una ruleta per decidir, participar i sorprendre. En català, sense anuncis i amb desament local."
     />
-    <title>Ruleta App</title>
+    <title>Ruleta · Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="style.css?v=3.3" />
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="style.css?v=3.4" />
+    <script src="../shared/atzar.js?v=1.2" defer></script>
     <script src="data/library.js" defer></script>
-    <script src="script.js?v=3.3" defer></script>
+    <script src="script.js?v=3.4" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -164,6 +167,7 @@
                 ronda. El mateix nom actualitza la classe.
               </p>
             </details>
+            <details id="absentList"></details>
             <details id="activityHelp" class="activity-help" hidden>
               <summary>Com es juga</summary>
               <p id="activityInstructions"></p>

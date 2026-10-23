@@ -72,6 +72,181 @@
 .team li.new {
   animation: pop 0.3s ease-out;
 }
+.member {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  min-height: 0;
+  line-height: inherit;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.member:hover {
+  color: color-mix(in srgb, var(--t) 70%, var(--ink));
+}
+.member.pinned::before {
+  content: "📌 ";
+  font-size: 0.75em;
+}
+.member.selected {
+  outline: 3px solid var(--t);
+  outline-offset: 2px;
+  background: color-mix(in srgb, var(--t) 16%, transparent);
+}
+.teams.editing .team {
+  cursor: pointer;
+}
+.teams.editing .team:hover {
+  border-color: var(--t);
+}
+.edit-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 12px;
+  margin: 10px auto 0;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--soft);
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 720px;
+}
+.edit-bar[hidden] {
+  display: none;
+}
+.conditions {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--pastel-sand);
+}
+.conditions summary {
+  min-height: 44px;
+  padding-block: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+}
+.rule-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.rule-form select {
+  font-size: 13px;
+  min-width: 0;
+}
+.rule-form #ruleType {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+.rules-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.rules-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--paper);
+  border-radius: 9px;
+  padding-left: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-left: 4px solid var(--danger);
+}
+.rules-list li[data-type="together"] {
+  border-left-color: var(--accent);
+}
+.rules-list li.missing {
+  opacity: 0.5;
+}
+.rules-list .remove-class {
+  min-width: 40px;
+  min-height: 36px;
+  font-size: 21px;
+  color: var(--muted);
+  background: transparent;
+}
+.levels-list {
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-bottom: 6px;
+}
+.level-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+.level-buttons {
+  display: flex;
+  gap: 3px;
+}
+.level-buttons button {
+  width: 34px;
+  height: 30px;
+  min-height: 0;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.level-buttons button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+.roles-dialog {
+  width: min(92vw, 760px);
+}
+.roles-dialog h2 {
+  font-size: 28px;
+  margin: 0 0 18px;
+}
+.roles-card {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  text-align: left;
+}
+.roles-card li {
+  --t: #d47761;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--t) 14%, var(--paper));
+  border-top: 5px solid var(--t);
+  display: grid;
+  gap: 6px;
+}
+.roles-card strong {
+  font-size: 20px;
+}
+.roles-card span {
+  font-size: 15px;
+  line-height: 1.4;
+}
+.roles-card span:empty {
+  display: none;
+}
 .role {
   flex: none;
   font-size: 0.66em;

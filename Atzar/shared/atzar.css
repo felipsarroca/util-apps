@@ -753,6 +753,42 @@ input[type="range"] {
   min-width: 54px;
 }
 
+/* Absents d'avui */
+.absents {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--pastel-rose);
+  padding: 0 12px;
+}
+.absents summary {
+  min-height: 44px;
+  padding-block: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+}
+.absents .field-note {
+  margin: 0 0 8px;
+}
+.absent-chips {
+  max-height: 170px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+.absent-chips button {
+  background: var(--paper);
+}
+.absents .absent-chips button[aria-pressed="true"] {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--danger);
+  color: var(--danger);
+  text-decoration: line-through;
+}
+.absent-clear {
+  margin: 0 0 8px;
+}
+
 /* Diàlegs */
 dialog {
   border: 1px solid var(--line);
@@ -833,6 +869,23 @@ dialog::backdrop {
   max-width: 90vw;
   z-index: 20;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.toast[hidden] {
+  display: none;
+}
+.toast-action {
+  background: transparent;
+  color: inherit;
+  border: 1.5px solid currentColor;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  min-height: 36px;
 }
 
 /* Peu */
@@ -983,20 +1036,46 @@ dialog::backdrop {
   }
 }
 @media (max-width: 420px) {
+  /* Logotip i botons en una sola línia en un mòbil habitual (390 px). */
   .brand {
-    font-size: 46px;
+    font-size: 29px;
     gap: 6px;
+    letter-spacing: -1px;
   }
   .brand-icon {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
   }
   .header-actions {
     gap: 4px;
   }
+  .icon-button,
   #presentButton {
-    font-size: 11px;
-    padding: 8px;
+    width: 38px;
+    min-height: 38px;
+    font-size: 19px;
+  }
+  .home-link svg {
+    width: 19px;
+    height: 19px;
+  }
+  .topbar {
+    min-height: 58px;
+    padding: 8px 0;
+  }
+  .segmented {
+    flex-wrap: nowrap;
+  }
+  .segmented button {
+    flex: 1 1 auto;
+    padding: 8px 7px;
+    font-size: 12px;
+  }
+  #presentButton {
+    font-size: 17px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
   }
   #presentButton span {
     display: none;
@@ -1028,5 +1107,76 @@ dialog::backdrop {
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Predicció abans d'un experiment i taules de comparació */
+.predict-field {
+  font-size: 12px;
+}
+.predict-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.predict-input input,
+.predict-input select {
+  max-width: 120px;
+}
+.human-result table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+.human-result th,
+.human-result td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+.human-result th[scope="row"],
+.human-result thead th:first-child {
+  text-align: left;
+}
+.human-result thead th {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 650;
+}
+.challenge textarea {
+  font-family: ui-monospace, Consolas, monospace;
+  letter-spacing: 1px;
+  min-height: 90px;
+}
+.challenge > button {
+  width: 100%;
+  margin-bottom: 10px;
+}
+/* Mòbils molt estrets (320–360 px): la capçalera continua en una sola línia. */
+@media (max-width: 360px) {
+  .brand {
+    font-size: 21px;
+    gap: 4px;
+    letter-spacing: -0.6px;
+  }
+  .topbar {
+    gap: 6px;
+  }
+  .brand-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .header-actions {
+    gap: 3px;
+  }
+  .icon-button,
+  #presentButton {
+    width: 34px;
+    min-height: 34px;
+    font-size: 17px;
   }
 }

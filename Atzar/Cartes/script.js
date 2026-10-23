@@ -58,7 +58,8 @@
       state.history = saved.history.filter((h) => h && typeof h.label === "string" && Number.isFinite(h.time)).slice(0, 200);
   }
   const persist = () => A.save(KEY, state);
-  let busy = false;
+  let busy = false,
+    change = null; // {card, before[], after[], replace}: per explicar què canvia després de treure una carta
 
   /* Noms en català */
   function parse(id) {
@@ -192,10 +193,12 @@
     if (!pool.length) return A.toast("No queden cartes. Recull i barreja.");
     A.audioReady();
     busy = true;
-    const n = Math.min(state.count, pool.length),
+    const before = [...pool],
+      n = Math.min(state.count, pool.length),
       hand = [];
     for (let i = 0; i < n; i++) hand.push(pool.splice(A.randomInt(pool.length), 1)[0]);
     if (!state.replace) state.remaining = state.remaining.filter((id) => !hand.includes(id));
+    change = { hand, before, after: state.replace ? deckIds(state.deck) : [...state.remaining], replace: state.replace };
     state.table = hand;
     $("resultLine").textContent = "";
     syncControls();
@@ -252,6 +255,8 @@
   }
   function collect() {
     if (busy) return;
+    change = null;
+    const before = { remaining: state.remaining, table: state.table };
     state.remaining = deckIds(state.deck);
     state.table = [];
     $("resultLine").textContent = "Baralla completa i barrejada.";
@@ -261,9 +266,50 @@
     renderTable();
     syncControls();
     renderLeft();
+    if (before.remaining.length < deckIds(state.deck).length)
+      A.undoable("Baralla recollida i barrejada.", () => {
+        Object.assign(state, before);
+        persist();
+        renderTable();
+        syncControls();
+        renderLeft();
+      });
   }
 
+  /* Probabilitat condicionada explicada amb el cas concret que acaba de passar. */
+  function renderChange() {
+    const host = $("changeNote");
+    host.hidden = !change || !change.after.length;
+    if (host.hidden) return;
+    const { hand, before, after, replace } = change,
+      first = hand[0],
+      { suit, rank } = parse(first);
+    const frac = (k, n) => `${k}/${n} (${A.pct(k / n, 1)})`;
+    const count = (pool, test) => pool.filter(test).length;
+    const sameSuit = (id) => id.startsWith(`${suit}-`),
+      sameKind =
+        suit === "joker"
+          ? (id) => id.startsWith("joker")
+          : rank === 1
+            ? (id) => parse(id).rank === 1 && !id.startsWith("joker")
+            : isFigure(state.deck, rank)
+              ? (id) => !id.startsWith("joker") && isFigure(state.deck, parse(id).rank)
+              : (id) => parse(id).rank === rank && !id.startsWith("joker");
+    const kindName =
+      suit === "joker" ? "un comodí" : rank === 1 ? "un as" : isFigure(state.deck, rank) ? `una figura` : `un ${rank}`;
+    const title = document.createElement("strong");
+    title.textContent = hand.length > 1 ? `Han sortit ${hand.length} cartes. Fixem-nos en la primera: ${cardName(first)}.` : `Ha sortit: ${cardName(first)}.`;
+    const lines = [];
+    if (replace) lines.push("Amb reposició, la carta torna a la baralla: la probabilitat de la propera carta no canvia gens.");
+    else {
+      lines.push(`Probabilitat que la propera sigui ${kindName}: abans ${frac(count(before, sameKind), before.length)} → ara ${frac(count(after, sameKind), after.length)}.`);
+      if (suit !== "joker") lines.push(`Que sigui ${/^[aeiouàèéíòóú]/i.test(suitOf(first).name) ? "d’" : "de "}${suitOf(first).name}: abans ${frac(count(before, sameSuit), before.length)} → ara ${frac(count(after, sameSuit), after.length)}.`);
+      lines.push(`I cada carta que encara és a la baralla ha passat d’1/${before.length} a 1/${after.length}: és una mica més probable. Sense reposició, el que ja ha sortit canvia les probabilitats del que vindrà.`);
+    }
+    host.replaceChildren(title, ...lines.map((t) => Object.assign(document.createElement("p"), { textContent: t })));
+  }
   function renderLeft() {
+    renderChange();
     const total = deckIds(state.deck),
       pool = state.replace ? total : state.remaining,
       n = pool.length,
@@ -310,6 +356,7 @@
   $("collectButton").addEventListener("click", collect);
   $("deckInput").addEventListener("change", (e) => {
     state.deck = e.target.value;
+    change = null;
     state.remaining = deckIds(state.deck);
     state.table = [];
     $("resultLine").textContent = "";
@@ -332,6 +379,7 @@
   });
   $("replaceToggle").addEventListener("change", (e) => {
     state.replace = e.target.checked;
+    change = null;
     if (state.replace) state.remaining = deckIds(state.deck);
     persist();
     syncControls();
@@ -342,9 +390,15 @@
     persist();
   });
   $("clearHistory").addEventListener("click", () => {
+    const before = state.history;
     state.history = [];
     persist();
     renderHistory();
+    A.undoable("Historial esborrat.", () => {
+      state.history = before;
+      persist();
+      renderHistory();
+    });
   });
   $("exportHistory").addEventListener("click", () =>
     A.downloadCsv("cartes-resultats.csv", [

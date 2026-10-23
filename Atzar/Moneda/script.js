@@ -213,8 +213,11 @@
       heads += results.filter((r) => r === "H").length;
       record(results);
     }
-    const coins = times * state.count;
-    const label = `Simulació: ${times.toLocaleString("ca")} tirades × ${plural(state.count, "moneda", "monedes")} → ${A.pct(heads / coins, 1)} de cares`;
+    const coins = times * state.count,
+      raw = $("predictInput").value.trim(),
+      guess = raw === "" ? null : Math.max(0, Math.min(100, Number(raw)));
+    let label = `Simulació: ${times.toLocaleString("ca")} tirades × ${plural(state.count, "moneda", "monedes")} → ${A.pct(heads / coins, 1)} de cares`;
+    if (Number.isFinite(guess)) label += ` (predicció: ${guess.toLocaleString("ca")} %, diferència de ${Math.abs(guess - (100 * heads) / coins).toLocaleString("ca", { maximumFractionDigits: 1 })} punts)`;
     state.history.unshift({ label, detail: `${heads}/${coins}`, time: Date.now() });
     state.history.length = Math.min(state.history.length, 200);
     persist();
@@ -225,6 +228,26 @@
     A.sounds.click();
     A.toast(`${coins.toLocaleString("ca")} monedes simulades. Mira l’Estadística.`);
   }
+
+  /* Ratxes: la més llarga, l'actual i quantes vegades es passa de cara a creu o al revés. */
+  function runs(seq) {
+    let longest = 0,
+      side = "",
+      current = 0,
+      prev = "",
+      switches = 0;
+    for (const c of seq) {
+      if (c === prev) current++;
+      else {
+        if (prev) switches++;
+        current = 1;
+        prev = c;
+      }
+      if (current > longest) [longest, side] = [current, c];
+    }
+    return { longest, side, current, currentSide: prev, switches };
+  }
+  const sideName = (c, n) => (c === "H" ? (n === 1 ? "cara" : "cares") : n === 1 ? "creu" : "creus");
 
   function binomial(n) {
     const row = [1];
@@ -238,6 +261,12 @@
     $("statCreu").textContent = (total - heads).toLocaleString("ca");
     $("statCaraPct").textContent = total ? A.pct(heads / total, 1) : "—";
     $("statCreuPct").textContent = total ? A.pct((total - heads) / total, 1) : "—";
+    const r = runs(seq);
+    $("statLongest").textContent = seq.length ? r.longest.toLocaleString("ca") : "—";
+    $("statLongestSide").textContent = seq.length ? sideName(r.side, r.longest) : "";
+    $("statCurrent").textContent = seq.length ? r.current.toLocaleString("ca") : "—";
+    $("statCurrentSide").textContent = seq.length ? sideName(r.currentSide, r.current) : "";
+    $("statSwitches").textContent = seq.length ? r.switches.toLocaleString("ca") : "—";
     // Recorregut acumulat sobre la seqüència desada (fins a 50.000 monedes).
     const points = [],
       n = seq.length,
@@ -302,27 +331,65 @@
   for (const b of document.querySelectorAll("[data-simulate]"))
     b.addEventListener("click", () => simulate(Number(b.dataset.simulate)));
   $("resetStats").addEventListener("click", () => {
+    const before = state.stats;
     state.stats = { total: 0, heads: 0, seq: "", dist: {} };
     persist();
     renderStats();
-    A.toast("Estadística reiniciada.");
+    A.undoable("Estadística reiniciada.", () => {
+      state.stats = before;
+      persist();
+      renderStats();
+    });
   });
   $("clearHistory").addEventListener("click", () => {
+    const before = state.history;
     state.history = [];
     persist();
     renderHistory();
+    A.undoable("Historial esborrat.", () => {
+      state.history = before;
+      persist();
+      renderHistory();
+    });
   });
   $("exportHistory").addEventListener("click", () =>
     A.downloadCsv("moneda-resultats.csv", [
-      ["Data", "Hora", "Resultat", "Detall (H = cara, T = creu)"],
+      ["Data", "Hora", "Resultat", "Detall (C = cara, X = creu)"],
       ...state.history.map((h) => [
         new Date(h.time).toLocaleDateString("ca"),
         A.formatTime(h.time),
         h.label,
-        h.detail || "",
+        (h.detail || "").replace(/H/g, "C").replace(/T/g, "X"),
       ]),
     ]),
   );
+  /* Repte: les seqüències inventades solen tenir massa canvis i ratxes massa curtes. */
+  const humanSeq = () =>
+    $("humanInput")
+      .value.toUpperCase()
+      .replace(/[^CX]/g, "")
+      .replace(/C/g, "H")
+      .replace(/X/g, "T")
+      .slice(0, 200);
+  $("humanInput").addEventListener("input", () => {
+    const n = humanSeq().length;
+    $("humanCount").textContent = `${plural(n, "tirada", "tirades")}${n && n < 50 ? " · com més n’hi hagi, més clar serà" : ""}`;
+  });
+  $("humanCompare").addEventListener("click", () => {
+    const human = humanSeq();
+    if (human.length < 20) return A.toast("Escriu almenys 20 tirades amb C i X.");
+    const real = Array.from({ length: human.length }, () => (A.randomInt(2) ? "T" : "H")).join("");
+    const row = (title, seq) => {
+      const r = runs(seq),
+        h = [...seq].filter((c) => c === "H").length;
+      return `<tr><th scope="row">${title}</th><td>${A.pct(h / seq.length)}</td><td>${r.longest}</td><td>${r.switches}</td></tr>`;
+    };
+    const host = $("humanResult");
+    host.hidden = false;
+    host.innerHTML = `<table><thead><tr><th></th><th>Cares</th><th>Ratxa més llarga</th><th>Canvis</th></tr></thead><tbody>${row("Inventades", human)}${row("Reals", real)}</tbody></table><p class="field-note">En ${human.length} tirades reals hi sol haver uns ${Math.round((human.length - 1) / 2)} canvis i una ratxa d’unes ${Math.max(3, Math.round(Math.log2(human.length)))} iguals seguides. Quan les inventem, tendim a canviar massa sovint i a evitar les ratxes llargues: ens sembla que «no és prou atzar».</p>`;
+    A.audioReady();
+    A.sounds.click();
+  });
   document.addEventListener("atzar:fit", sizeCoins);
 
   A.init({ onAction: toss, isBusy: () => busy, fit: { min: 200, max: 560 } });

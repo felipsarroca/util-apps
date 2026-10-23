@@ -114,6 +114,19 @@ html[data-theme="dark"] .hat-shadow {
   counter-reset: slip;
   scrollbar-width: thin;
 }
+/* Abans del primer sorteig, el barret ocupa el centre de l'escenari. */
+.draw-stage.idle {
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+.draw-stage.idle .winners {
+  flex: none;
+  text-align: center;
+}
+.draw-stage.idle .winners:empty::before {
+  text-align: center;
+}
 .winners:empty::before {
   content: "Els paperets que surtin apareixeran aquí.";
   color: var(--muted);

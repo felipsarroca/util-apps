@@ -8,12 +8,14 @@
       name="description"
       content="Fes equips equilibrats a l’atzar, amb noms d’equip i rols cooperatius. En català, sense anuncis i amb desament local."
     />
-    <title>Equips App</title>
+    <title>Equips · Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.0" />
-    <link rel="stylesheet" href="style.css?v=1.0" />
-    <script src="../shared/atzar.js?v=1.0" defer></script>
-    <script src="script.js?v=1.0" defer></script>
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.2" />
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="../shared/atzar.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -46,6 +48,9 @@
             </button>
             <button id="copyButton" class="secondary copy" disabled>⧉ Copia</button>
           </div>
+          <div id="editBar" class="edit-bar" role="status" hidden>
+            <span id="editText"></span><button id="pinButton" type="button" class="quiet"></button><button id="cancelEdit" type="button" class="quiet">Cancel·la</button>
+          </div>
           <p id="resultLine" class="sr-only" aria-live="polite"></p>
         </section>
         <aside class="panel" aria-label="Personalitza els equips">
@@ -67,6 +72,7 @@
               </form>
               <p class="field-note">També hi trobaràs les classes desades a la Ruleta.</p>
             </details>
+            <details id="absentList"></details>
             <textarea id="entriesInput" aria-label="Participants, un per línia" spellcheck="false" maxlength="20000" placeholder="Anna&#10;Biel&#10;Clàudia"></textarea>
             <p id="entryFeedback" class="field-note" aria-live="polite"></p>
             <div class="field">
@@ -81,7 +87,13 @@
                 <button id="sizeMinus" aria-label="Un menys">−</button><output id="sizeValue" aria-live="polite">4</output><button id="sizePlus" aria-label="Un més">+</button>
               </div>
             </div>
+            <label id="leftoverField" class="field" hidden>Si no surt exacte<select id="leftoverInput">
+                <option value="smaller">Fes un equip més petit</option>
+                <option value="spread">Reparteix els que sobren entre els equips</option>
+              </select></label>
             <p id="splitNote" class="field-note"></p>
+            <p id="editHint" class="field-note" hidden>Per retocar els equips, toca un nom a la pantalla i després un altre nom (s’intercanvien) o un altre equip (s’hi mou). També pots fixar-lo perquè no canviï d’equip.</p>
+            <button id="unpinAll" class="quiet" hidden>Deixa anar els fixats</button>
             <details class="ideas">
               <summary>Idees per a l’aula</summary>
               <ul>
@@ -106,7 +118,31 @@
             <label class="switch-row" for="rolesToggle"><span><strong>Assigna rols dins de cada equip</strong><small>El primer rol a la primera persona de l’equip, i així successivament.</small></span><input id="rolesToggle" type="checkbox" role="switch" /></label>
             <label class="field" id="rolesField">Rols, en ordre i separats per comes<input id="rolesInput" type="text" maxlength="400" /></label>
             <button id="rolesDefault" class="quiet">↺ Rols de l’aprenentatge cooperatiu</button>
-            <p class="field-note">Si un equip té més membres que rols, la resta hi apareixen sense rol.</p>
+            <button id="rolesShow" class="secondary">▣ Projecta la targeta de rols</button>
+            <p class="field-note">Si un equip té més membres que rols, la resta hi apareixen sense rol. Si en té menys, els últims rols queden sense assignar: algú en pot assumir dos.</p>
+            <div class="separator"></div>
+            <details class="conditions">
+              <summary>Condicions <span id="rulesCount"></span></summary>
+              <p class="field-note">Per exemple, separar dues persones que no treballen bé juntes o mantenir junts un alumne nouvingut i qui l’acompanya.</p>
+              <div class="rule-form">
+                <label class="sr-only" for="ruleA">Primera persona</label><select id="ruleA"></select>
+                <label class="sr-only" for="ruleType">Tipus de condició</label
+                ><select id="ruleType">
+                  <option value="apart">≠ en equips diferents</option>
+                  <option value="together">+ al mateix equip</option>
+                </select>
+                <label class="sr-only" for="ruleB">Segona persona</label><select id="ruleB"></select>
+                <button id="addRule" type="button" class="secondary">Afegeix</button>
+              </div>
+              <ul id="rulesList" class="rules-list"></ul>
+              <p id="rulesEmpty" class="field-note">Encara no hi ha cap condició.</p>
+            </details>
+            <label class="switch-row" for="balanceToggle"><span><strong>Equips heterogenis per nivells</strong><small>Cada equip rep una barreja de nivells 1, 2 i 3. Els nivells no es mostren mai a la pantalla.</small></span><input id="balanceToggle" type="checkbox" role="switch" /></label>
+            <div id="levelsBox" class="levels-box" hidden>
+              <p class="field-note">Per defecte, tothom té el nivell 2. Marca l’1 per a qui necessita més suport i el 3 per a qui pot ajudar els altres.</p>
+              <div id="levelsList" class="levels-list"></div>
+              <button id="levelsReset" type="button" class="quiet">Torna tothom al nivell 2</button>
+            </div>
           </section>
           <section id="panel-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history" hidden>
             <div class="section-heading">
@@ -131,7 +167,7 @@
                 <option value="5000">Amb suspens · uns 5 segons</option>
               </select></label>
             <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
-            <p class="muted">Primer es barreja tota la llista (Fisher-Yates amb el generador criptogràfic del navegador) i després es reparteix per torns, de manera que els equips no es diferencien en més d’una persona.</p>
+            <p class="muted">Es barreja tota la llista amb el generador criptogràfic del navegador i es reparteix de manera que els equips no es diferencien en més d’una persona. Si hi ha condicions o nivells, es fan diversos intents a l’atzar i es tria el primer que les compleix totes.</p>
             <p class="muted">Dreceres: <kbd>espai</kbd> fer equips · <kbd>Esc</kbd> sortir del mode aula.</p>
           </section>
         </aside>
@@ -144,6 +180,12 @@
         <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
       </div>
     </footer>
+    <dialog id="rolesDialog" class="roles-dialog" aria-labelledby="rolesTitle">
+      <button class="close-button" data-close aria-label="Tanca la targeta de rols"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg></button>
+      <h2 id="rolesTitle">Els rols de l’equip</h2>
+      <ol id="rolesCard" class="roles-card"></ol>
+      <p class="muted">Cada rol és una responsabilitat, no una feina exclusiva: tothom treballa i tothom aprèn. Feu-los rotar al llarg del trimestre.</p>
+    </dialog>
     <div id="toast" role="status" class="toast" hidden></div>
   </body>
 </html>

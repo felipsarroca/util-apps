@@ -10,10 +10,12 @@
     />
     <title>Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="shared/atzar.css?v=1.0" />
-    <link rel="stylesheet" href="style.css?v=1.0" />
-    <script src="shared/atzar.js?v=1.0" defer></script>
-    <script src="script.js?v=1.0" defer></script>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="shared/atzar.css?v=1.2" />
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="shared/atzar.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -46,10 +48,24 @@
             <div role="row"><span role="cell">Treballem la probabilitat</span><span role="cell"><a href="Moneda/">Moneda</a> · <a href="Daus/">Daus</a> · <a href="Cartes/">Cartes</a></span></div>
             <div role="row"><span role="cell">Un número, un bingo o una lletra per a l’Stop</span><span role="cell"><a href="Nombres/">Nombres</a></span></div>
             <div role="row"><span role="cell">Temps de treball, marques o un joc amb pressa</span><span role="cell"><a href="Temps/">Temps</a></span></div>
+            <div role="row"><span role="cell">Treball per fases: 1-2-4, debat, estacions</span><span role="cell"><a href="Temps/">Temps</a> (mode Fases)</span></div>
+            <div role="row"><span role="cell">Hi falta algú avui?</span><span role="cell">Indica-ho a «Qui falta avui?» (Ruleta, Sorteig o Equips)</span></div>
           </div>
           <p class="guide-note">
-            Les classes desades a la Ruleta també apareixen a Sorteig i Equips. Totes les dades es guarden només en aquest navegador. Per fer-les servir sense connexió, descarrega la carpeta <code>Atzar</code> completa i obre <code>index.html</code>.
+            Les classes desades a la Ruleta també apareixen a Sorteig i Equips, i la llista de «Qui falta avui?» val per a totes les apps fins a mitjanit. Un cop obertes, les apps funcionen també sense connexió i es poden instal·lar com una aplicació des del menú del navegador.
           </p>
+        </section>
+        <section class="guide data-box" aria-labelledby="dataTitle">
+          <h2 id="dataTitle">Les teves dades</h2>
+          <p class="guide-note">
+            Les classes, els historials i els ajustos es guarden només en aquest navegador: no s’envien enlloc. Fes-ne una còpia per passar-los a un altre ordinador o per no perdre’ls si s’esborren les dades del navegador.
+          </p>
+          <div class="data-actions">
+            <button id="exportData" type="button" class="secondary">↧ Exporta una còpia (.json)</button
+            ><button id="importData" type="button" class="secondary">↥ Importa una còpia</button>
+            <input id="importFile" type="file" accept="application/json,.json" hidden />
+          </div>
+          <p id="dataNote" class="guide-note" aria-live="polite"></p>
         </section>
       </main>
     </div>

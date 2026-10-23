@@ -142,8 +142,12 @@
     toastTimer,
     audioContext,
     master,
-    editingList = false;
+    editingList = false,
+    renderAbsents = () => {};
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  // Les opcions de la roda, sense els absents d'avui (compartits amb Sorteig i Equips).
+  const wheel = () =>
+    window.Atzar ? window.Atzar.present(state.entries) : state.entries;
   function toast(message) {
     $("toast").textContent = message;
     $("toast").hidden = false;
@@ -192,17 +196,19 @@
     $("entriesInput").setAttribute("aria-invalid", String(invalidDraft));
   }
   function refresh() {
+    const onWheel = wheel().length,
+      away = state.entries.length - onWheel;
     $("entryCount").textContent = state.entries.length;
     $("historyCount").textContent = state.history.length;
     $("availableCount").textContent =
-      `${state.entries.length} ${state.entries.length === 1 ? "opció disponible" : "opcions disponibles"}`;
+      `${onWheel} ${onWheel === 1 ? "opció disponible" : "opcions disponibles"}${away ? ` · ${away} ${away === 1 ? "absent" : "absents"}` : ""}`;
     $("spinLabel").textContent = spinning
       ? "Girant…"
-      : state.entries.length
+      : onWheel
         ? "Gira la ruleta"
         : "Afegeix opcions";
     $("spinButton").disabled = $("hubButton").disabled =
-      spinning || invalidDraft || !state.entries.length;
+      spinning || invalidDraft || !onWheel;
     for (const id of [
       "entriesInput",
       "libraryButton",
@@ -221,7 +227,7 @@
     $("undoButton").disabled = spinning || !undoState;
     $("exportButton").disabled = invalidDraft;
     $("stageSubtitle").textContent =
-      state.entries.length === 1
+      onWheel === 1
         ? "Només queda una opció. L’última també compta!"
         : "";
     $("exportHistoryButton").disabled = !state.history.length;
@@ -339,8 +345,9 @@
     ctx.clearRect(0, 0, size, size);
     ctx.save();
     ctx.translate(size / 2, size / 2);
-    const r = size / 2,
-      n = state.entries.length,
+    const entries = wheel(),
+      r = size / 2,
+      n = entries.length,
       colors = PALETTES[state.palette];
     if (!n) {
       ctx.fillStyle = state.dark ? "#304d3d" : "#e6e9df";
@@ -353,7 +360,7 @@
       ctx.fillText("Afegeix les teves opcions", 0, r * 0.48);
     } else {
       const step = TAU / n;
-      state.entries.forEach((entry, i) => {
+      entries.forEach((entry, i) => {
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.arc(0, 0, r, i * step, (i + 1) * step);
@@ -421,6 +428,7 @@
     winnerIndex = null;
     rotation = 0;
     if (base) state.base = [...state.entries];
+    renderAbsents();
     applySettings();
     syncInput();
     drawWheel();
@@ -477,7 +485,7 @@
     if (
       spinning ||
       invalidDraft ||
-      !state.entries.length ||
+      !wheel().length ||
       dialog.open ||
       $("libraryDialog").open
     )
@@ -487,7 +495,7 @@
     editingList = false;
     spinning = true;
     refresh();
-    const n = state.entries.length,
+    const n = wheel().length,
       index = randomInt(n),
       step = TAU / n;
     // Pick the winner uniformly first; stop strictly inside that sector, never on a boundary.
@@ -534,8 +542,8 @@
     rotation = angle;
     canvas.style.transform = `rotate(${rotation}rad)`;
     spinning = false;
-    winnerIndex = index;
-    const name = state.entries[index];
+    const name = wheel()[index];
+    winnerIndex = state.entries.indexOf(name);
     state.history.unshift({ name, time: Date.now() });
     state.history = state.history.slice(0, 200);
     $("winnerName").textContent = name;
@@ -546,16 +554,16 @@
       syncInput();
     }
     $("winnerDescription").textContent = state.noRepeat
-      ? state.entries.length
-        ? `Aquesta opció ja s’ha retirat. En queden ${state.entries.length}.`
+      ? wheel().length
+        ? `Aquesta opció ja s’ha retirat. En queden ${wheel().length}.`
         : "Han sortit totes les opcions. Recupera els participants per tornar a començar."
       : "La sort ha parlat. Quina serà la propera sorpresa?";
     $("winnerDescription").classList.toggle(
       "sr-only",
-      state.entries.length > 0,
+      wheel().length > 0,
     );
     $("removeButton").hidden = state.noRepeat;
-    $("againButton").disabled = !state.entries.length;
+    $("againButton").disabled = !wheel().length;
     renderHistory();
     refresh();
     save();
@@ -1273,7 +1281,8 @@
         top -
         heading.offsetHeight -
         $("spinButton").offsetHeight -
-        54;
+        // Marge inferior del cos (24 px) i separacions: així la pàgina no fa desplaçament.
+        62;
       const cap = window.innerWidth < 900 ? 520 : 720;
       const size = Math.min(
         stage.clientWidth - 20,
@@ -1299,6 +1308,17 @@
   window.addEventListener("resize", () => {
     if (!dialog.open) drawWheel();
   });
+  if (window.Atzar)
+    renderAbsents = window.Atzar.setupAbsents({
+      host: $("absentList"),
+      getNames: () => state.base,
+      onChange() {
+        if (spinning) return;
+        rotation = 0;
+        drawWheel();
+        refresh();
+      },
+    });
   applySettings();
   syncInput();
   drawWheel();

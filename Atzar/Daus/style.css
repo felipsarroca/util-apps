@@ -172,3 +172,15 @@ html[data-theme="dark"] .die-shadow {
 .die * {
   pointer-events: none;
 }
+.poly.custom text {
+  font-weight: 750;
+  stroke-width: 0.6px;
+}
+.custom-box {
+  display: grid;
+  gap: 8px;
+}
+.custom-box textarea {
+  min-height: 120px;
+  font-size: 14px;
+}

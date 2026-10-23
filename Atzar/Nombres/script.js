@@ -8,14 +8,33 @@
     DURATIONS = [500, 1300, 2500],
     MAX_QTY = 50,
     LIMIT = 1e9;
-  const ALPHABET = [..."ABCÇDEFGHIJKLMNOPQRSTUVWXYZ"],
-    UNUSUAL = ["Ç", "K", "W", "Y"];
+  const LETTERS = [..."ABCÇDEFGHIJKLMNOPQRSTUVWXYZ"],
+    // Dígrafs catalans per a l'ortografia: «paraules amb NY», «paraules amb L·L»…
+    DIGRAPHS = ["NY", "LL", "L·L", "RR", "SS", "IG", "TX", "TJ", "TG"],
+    ALPHABET = [...LETTERS, ...DIGRAPHS],
+    UNUSUAL = ["Ç", "K", "W", "Y", ...DIGRAPHS];
+  const DEFAULT_CATEGORIES = "Nom de persona\nAnimal\nPaís o ciutat\nFruita o verdura\nObjecte de casa\nVerb\nProfessió\nColor\nAliment\nEsport";
+  // Veus per cantar el bombo en la llengua de l'alumnat.
+  const VOICES = {
+    ca: ["ca-ES", "català"],
+    es: ["es-ES", "castellà"],
+    en: ["en-GB", "anglès"],
+    fr: ["fr-FR", "francès"],
+    de: ["de-DE", "alemany"],
+    it: ["it-IT", "italià"],
+    pt: ["pt-PT", "portuguès"],
+    ro: ["ro-RO", "romanès"],
+    ar: ["ar-SA", "àrab"],
+    ur: ["ur-PK", "urdú"],
+    zh: ["zh-CN", "xinès"],
+    uk: ["uk-UA", "ucraïnès"],
+  };
   const COLORS = ["#817ca6", "#5f91a6", "#d47761", "#759479", "#e2ad55", "#c78294", "#519b92"];
   const TITLES = { number: "Un nombre a l’atzar", bingo: "Bombo", letter: "Una lletra a l’atzar" };
   const LABELS = { number: "Genera", bingo: "Treu una bola", letter: "Treu una lletra" };
   const IDEAS = {
     number: [
-      ["Qui surt a la pissarra?", "Interval de l’1 al nombre d’alumnes de la llista, sense repetir."],
+      ["Qui surt a la pissarra?", "Interval de l’1 al nombre d’alumnes de la llista. Perquè ningú no repeteixi en tota la sessió, fes servir el Bombo amb tantes boles com alumnes."],
       ["Endevina el nombre secret.", "Activa «Nombre secret» i la classe proposa nombres amb pistes «més gran» o «més petit». Quants intents calen, com a màxim, entre 1 i 100? (Pista: cada pregunta pot partir l’interval per la meitat.)"],
       ["Dades per a l’estadística.", "Vint nombres de l’1 al 10, amb repetició i ordenats: freqüències, mitjana, mediana i moda."],
       ["Operacions amb enters.", "Dos nombres entre −10 i 10 per practicar sumes, restes i productes amb signes."],
@@ -23,14 +42,14 @@
     bingo: [
       ["Bingo de càlcul.", "Cada alumne escriu al cartró resultats possibles; el docent canta cada bola com una operació (per al 42: «sis per set»)."],
       ["Nombres en català.", "Amb la veu activada, l’alumnat nouvingut escolta i marca els nombres al seu cartró."],
-      ["Nombres en altres llengües.", "El docent diu el número de la bola en anglès o francès i l’alumnat l’ha de reconèixer."],
+      ["Nombres en altres llengües.", "Tria la llengua de la veu (anglès, francès, àrab, urdú, xinès…): l’alumnat practica una llengua estrangera o escolta els nombres en la seva llengua d’origen mentre aprèn els catalans."],
       ["Torns de tota la setmana.", "Bombo amb el nombre d’alumnes: cada bola és un torn i ningú no repeteix fins que es buida el tauler."],
     ],
     letter: [
       ["L’Stop.", "Categories (nom, animal, país, fruita, verb…) i paraules que comencin per la lletra. Qui acaba primer diu «Stop!»."],
       ["Vocabulari d’una matèria.", "Termes d’història, ciències o economia que comencin per la lletra, amb definició."],
       ["Tautogrames.", "Una frase on totes les paraules comencin per la mateixa lletra: «Marta menja mores madures»."],
-      ["Ortografia.", "Paraules amb la lletra a l’inici, al mig i al final."],
+      ["Ortografia.", "Paraules amb la lletra a l’inici, al mig i al final. Activa els dígrafs (NY, L·L, RR, SS, IG, TX…) per treballar-los un per un."],
     ],
   };
   const state = {
@@ -47,6 +66,9 @@
     letters: ALPHABET.filter((l) => !UNUSUAL.includes(l)),
     usedLetters: [],
     letterUnique: true,
+    withCategory: false,
+    categories: DEFAULT_CATEGORIES,
+    voiceLang: "ca",
     duration: 1300,
     history: [],
   };
@@ -61,6 +83,9 @@
     if (Array.isArray(saved.letters)) state.letters = ALPHABET.filter((l) => saved.letters.includes(l));
     if (Array.isArray(saved.usedLetters)) state.usedLetters = ALPHABET.filter((l) => saved.usedLetters.includes(l));
     if (DURATIONS.includes(saved.duration)) state.duration = saved.duration;
+    if (typeof saved.withCategory === "boolean") state.withCategory = saved.withCategory;
+    if (typeof saved.categories === "string") state.categories = saved.categories.slice(0, 1000);
+    if (Object.hasOwn(VOICES, saved.voiceLang)) state.voiceLang = saved.voiceLang;
     if (Array.isArray(saved.history)) state.history = saved.history.filter((h) => h && typeof h.label === "string" && Number.isFinite(h.time)).slice(0, 200);
   }
   const persist = () => A.save(KEY, state);
@@ -124,16 +149,18 @@
     });
   }
   let voice = null,
-    voiceWarned = false;
+    voiceWarned = "";
   function speak(text) {
     if (!state.speak || !("speechSynthesis" in window) || A.prefs.muted) return;
-    voice ||= speechSynthesis.getVoices().find((v) => /^ca(-|_|$)/i.test(v.lang)) || null;
-    if (!voice && !voiceWarned) {
-      voiceWarned = true;
-      A.toast("No s’ha trobat cap veu catalana al dispositiu; s’usarà la veu per defecte.");
+    const [lang, name] = VOICES[state.voiceLang],
+      code = state.voiceLang;
+    if (!voice || !voice.lang.toLowerCase().startsWith(code)) voice = speechSynthesis.getVoices().find((v) => new RegExp(`^${code}(-|_|$)`, "i").test(v.lang)) || null;
+    if (!voice && voiceWarned !== code) {
+      voiceWarned = code;
+      A.toast(`Aquest dispositiu no té veu en ${name}; s’usarà la veu per defecte.`);
     }
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ca-ES";
+    u.lang = lang;
     if (voice) u.voice = voice;
     u.rate = 0.9;
     u.volume = Math.max(0.2, A.prefs.volume / 100);
@@ -170,7 +197,7 @@
     view.style.setProperty("--cols", cols);
     view.style.setProperty("--cell", `${cell}px`);
     // Lletra
-    $("letterView").style.setProperty("--tile", `${Math.floor(Math.min(H * 0.82, W * 0.8, A.cap(320)))}px`);
+    $("letterView").style.setProperty("--tile", `${Math.floor(Math.min(H * (state.withCategory ? 0.64 : 0.82), W * 0.8, A.cap(320)))}px`);
   }
 
   /* Mode nombres */
@@ -247,7 +274,7 @@
       msg = `Encertat! Era el ${fmt(secretValue)}, en ${attempts.length} ${attempts.length === 1 ? "intent" : "intents"}.`;
       reveal(true);
       A.sounds.win();
-      A.confetti(null);
+      A.confetti($("confetti"));
     } else {
       msg = value < secretValue ? `El ${fmt(value)} és massa petit: és més gran ↑` : `El ${fmt(value)} és massa gran: és més petit ↓`;
       A.tone(value < secretValue ? 520 : 390, 0.15, 0, "triangle", 0.15);
@@ -348,18 +375,36 @@
     const value = pool[A.randomInt(pool.length)],
       tile = $("letterTile");
     tile.classList.remove("settled");
-    await flicker((v) => (tile.firstElementChild.textContent = v ?? A.pick(state.letters)), value, state.duration);
+    const categories = categoryList(),
+      category = state.withCategory && categories.length ? A.pick(categories) : "";
+    $("letterCategory").textContent = "";
+    await flicker(
+      (v) => {
+        tile.firstElementChild.textContent = v ?? A.pick(state.letters);
+        tile.dataset.len = [...tile.firstElementChild.textContent].length;
+      },
+      value,
+      state.duration,
+    );
     tile.classList.add("settled");
+    $("letterCategory").textContent = category;
     if (!state.usedLetters.includes(value)) state.usedLetters.push(value);
     busy = false;
-    addHistory(`Lletra: ${value}`);
+    addHistory(`Lletra: ${value}${category ? ` · ${category}` : ""}`);
     persist();
     renderLetterChips();
     sync();
     renderHistory();
-    announce(`Lletra ${value}`);
+    announce(`Lletra ${value}${category ? `, ${category}` : ""}`);
     A.sounds.win();
   }
+
+  const categoryList = () =>
+    state.categories
+      .split(/\r?\n/)
+      .map((x) => x.trim().slice(0, 40))
+      .filter(Boolean)
+      .slice(0, 60);
 
   /* Comú */
   function draw() {
@@ -407,6 +452,11 @@
     $("secretToggle").checked = state.secret;
     $("speakToggle").checked = state.speak;
     $("letterUniqueToggle").checked = state.letterUnique;
+    $("categoryToggle").checked = state.withCategory;
+    $("categoriesField").hidden = !state.withCategory;
+    if (document.activeElement !== $("categoriesInput")) $("categoriesInput").value = state.categories;
+    $("voiceLang").value = state.voiceLang;
+    $("voiceField").hidden = !state.speak;
     $("bingoMax").value = state.bingoMax;
     for (const b of document.querySelectorAll("[data-bingo]")) b.setAttribute("aria-pressed", String(Number(b.dataset.bingo) === state.bingoMax));
     for (const b of document.querySelectorAll("[data-range]")) b.setAttribute("aria-pressed", String(b.dataset.range === `${state.min},${state.max}`));
@@ -471,7 +521,7 @@
     $(id).addEventListener("change", (e) => {
       state[key] = e.target.checked;
       if (key === "secret" && !state.secret && secretValue !== null) reveal();
-      if (key === "speak" && state.speak) speak("Hola");
+      if (key === "speak" && state.speak) speak(String(A.randomBetween(1, state.bingoMax)));
       persist();
       sync();
       if (key === "letterUnique") renderLetterChips();
@@ -499,11 +549,16 @@
     renderBoard();
   });
   $("bingoReset").addEventListener("click", () => {
-    if (busy) return;
+    if (busy || !state.bingoDrawn.length) return;
+    const before = state.bingoDrawn;
     state.bingoDrawn = [];
-    A.toast("Tauler buit. Totes les boles tornen al bombo.");
     persist();
     renderBoard();
+    A.undoable("Tauler buit. Totes les boles tornen al bombo.", () => {
+      state.bingoDrawn = before;
+      persist();
+      renderBoard();
+    });
   });
   $("lettersEasy").addEventListener("click", () => {
     state.letters = ALPHABET.filter((l) => !UNUSUAL.includes(l));
@@ -511,24 +566,62 @@
     renderLetterChips();
   });
   $("lettersAll").addEventListener("click", () => {
-    state.letters = [...ALPHABET];
+    state.letters = ALPHABET.filter((l) => LETTERS.includes(l) || (state.letters.includes(l) && DIGRAPHS.includes(l)));
     persist();
     renderLetterChips();
   });
+  $("lettersDigraphs").addEventListener("click", () => {
+    const all = DIGRAPHS.every((d) => state.letters.includes(d));
+    state.letters = ALPHABET.filter((l) => (DIGRAPHS.includes(l) ? !all : state.letters.includes(l)));
+    persist();
+    renderLetterChips();
+  });
+  $("categoryToggle").addEventListener("change", (e) => {
+    state.withCategory = e.target.checked;
+    if (!state.withCategory) $("letterCategory").textContent = "";
+    persist();
+    sync();
+    sizeViews();
+  });
+  $("categoriesInput").addEventListener("input", (e) => {
+    state.categories = e.target.value.slice(0, 1000);
+    persist();
+  });
+  $("categoriesDefault").addEventListener("click", () => {
+    state.categories = DEFAULT_CATEGORIES;
+    $("categoriesInput").value = state.categories;
+    persist();
+  });
+  $("voiceLang").addEventListener("change", (e) => {
+    state.voiceLang = e.target.value;
+    persist();
+    speak(String(A.randomBetween(1, state.bingoMax)));
+  });
   $("lettersReset").addEventListener("click", () => {
+    const before = state.usedLetters;
     state.usedLetters = [];
     persist();
     renderLetterChips();
-    A.toast("Totes les lletres tornen a estar disponibles.");
+    A.undoable("Totes les lletres tornen a estar disponibles.", () => {
+      state.usedLetters = before;
+      persist();
+      renderLetterChips();
+    });
   });
   $("durationInput").addEventListener("change", (e) => {
     state.duration = Number(e.target.value);
     persist();
   });
   $("clearHistory").addEventListener("click", () => {
+    const before = state.history;
     state.history = [];
     persist();
     renderHistory();
+    A.undoable("Historial esborrat.", () => {
+      state.history = before;
+      persist();
+      renderHistory();
+    });
   });
   $("copyHistory").addEventListener("click", () => A.copyText(state.history.map((h) => h.label).reverse().join("\n")));
   $("exportHistory").addEventListener("click", () =>
@@ -545,7 +638,10 @@
   renderBalls(lastNumbers.length ? lastNumbers : [null]);
   renderBoard();
   renderLetterChips();
-  if (state.usedLetters.length) $("letterTile").firstElementChild.textContent = state.usedLetters.at(-1);
+  if (state.usedLetters.length) {
+    $("letterTile").firstElementChild.textContent = state.usedLetters.at(-1);
+    $("letterTile").dataset.len = [...state.usedLetters.at(-1)].length;
+  }
   sync();
   renderHistory();
 })();

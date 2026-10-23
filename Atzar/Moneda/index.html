@@ -8,12 +8,14 @@
       name="description"
       content="Llança d’una a deu monedes i observa com l’atzar s’acosta al 50 %. En català, sense anuncis i amb desament local."
     />
-    <title>Moneda App</title>
+    <title>Moneda · Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.1" />
-    <link rel="stylesheet" href="style.css?v=1.1" />
-    <script src="../shared/atzar.js?v=1.1" defer></script>
-    <script src="script.js?v=1.1" defer></script>
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.2" />
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="../shared/atzar.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
   </head>
   <body>
     <svg width="0" height="0" class="sr-only" aria-hidden="true">
@@ -140,6 +142,7 @@
             <div class="separator"></div>
             <h2>Experiment ràpid</h2>
             <p class="muted">Simula moltes tirades de cop i mira l’estadística.</p>
+            <label class="field predict-field">Abans de simular: quin percentatge de cares esperes?<span class="predict-input"><input id="predictInput" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="50" /> %</span></label>
             <div class="tools-row">
               <button class="secondary" data-simulate="10">10 tirades</button
               ><button class="secondary" data-simulate="100">100 tirades</button
@@ -165,6 +168,9 @@
               <div class="stat"><small>Monedes</small><strong id="statTotal">0</strong><span>llançades</span></div>
               <div class="stat"><small>Cares</small><strong id="statCara">0</strong><span id="statCaraPct">—</span></div>
               <div class="stat"><small>Creus</small><strong id="statCreu">0</strong><span id="statCreuPct">—</span></div>
+              <div class="stat"><small>Ratxa més llarga</small><strong id="statLongest">—</strong><span id="statLongestSide"></span></div>
+              <div class="stat"><small>Ratxa actual</small><strong id="statCurrent">—</strong><span id="statCurrentSide"></span></div>
+              <div class="stat"><small>Canvis</small><strong id="statSwitches">—</strong><span>cara ↔ creu</span></div>
             </div>
             <div class="chart" id="convergenceChart"></div>
             <p class="chart-caption">Percentatge acumulat de cares. Com més llançaments, més s’acosta a la línia del 50 %.</p>
@@ -172,6 +178,14 @@
               <div class="chart" id="distChart"></div>
               <p class="chart-caption" id="distCaption"></p>
             </div>
+            <details class="ideas challenge">
+              <summary>Repte: persones contra l’atzar</summary>
+              <p class="field-note">Inventa 100 tirades com si fossin reals i escriu-les amb <kbd>C</kbd> (cara) i <kbd>X</kbd> (creu). Després compara-les amb 100 tirades de veritat. Ho sap distingir la classe?</p>
+              <textarea id="humanInput" rows="4" maxlength="600" spellcheck="false" aria-label="Tirades inventades amb C i X" placeholder="CXXCXCCXCX…"></textarea>
+              <p id="humanCount" class="field-note">0 tirades</p>
+              <button id="humanCompare" class="secondary" type="button">Compara amb tirades reals</button>
+              <div id="humanResult" class="human-result" hidden></div>
+            </details>
           </section>
           <section id="panel-history" class="tab-content" role="tabpanel" aria-labelledby="tab-history" hidden>
             <div class="section-heading">

@@ -6,14 +6,16 @@
     <meta name="theme-color" content="#f5f3ee" />
     <meta
       name="description"
-      content="Compte enrere, cronòmetre amb marques i patata calenta amb durada a l’atzar. En català i pensat per projectar a l’aula."
+      content="Compte enrere, cronòmetre amb marques, patata calenta amb durada a l’atzar i fases encadenades (1-2-4, debat, Tabata, Pomodoro). En català i pensat per projectar a l’aula."
     />
-    <title>Temps App</title>
+    <title>Temps · Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.1" />
-    <link rel="stylesheet" href="style.css?v=1.1" />
-    <script src="../shared/atzar.js?v=1.1" defer></script>
-    <script src="script.js?v=1.1" defer></script>
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.2" />
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="../shared/atzar.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -36,7 +38,7 @@
           <div class="stage-heading">
             <h1 id="stageTitle">Compte enrere</h1>
             <div class="segmented" role="group" aria-label="Mode">
-              <button data-mode="countdown" aria-pressed="true">Compte enrere</button><button data-mode="stopwatch" aria-pressed="false">Cronòmetre</button><button data-mode="potato" aria-pressed="false">Patata calenta</button>
+              <button data-mode="countdown" aria-pressed="true">Compte enrere</button><button data-mode="stopwatch" aria-pressed="false">Cronòmetre</button><button data-mode="potato" aria-pressed="false">Patata calenta</button><button data-mode="phases" aria-pressed="false">Fases</button>
             </div>
           </div>
           <div class="play-area">
@@ -69,6 +71,7 @@
             </button>
             <button id="markButton" class="secondary round" hidden title="Anota una marca (tecla M)">⚑ Marca</button>
             <button id="plusButton" class="secondary round" title="Afegeix un minut">+1 min</button>
+            <button id="skipButton" class="secondary round" hidden title="Passa a la fase següent (tecla N)">⏭ Següent</button>
             <button id="resetButton" class="secondary round" title="Reinicia">↺</button>
           </div>
           <p id="liveStatus" class="sr-only" aria-live="assertive"></p>
@@ -104,6 +107,17 @@
               </div>
               <p id="potatoNote" class="field-note"></p>
             </div>
+            <div id="phasesOptions" class="mode-options" hidden>
+              <h2>Fases encadenades</h2>
+              <p class="muted">Cada fase té un nom i un temps. En acabar-ne una, sona un avís i comença la següent tota sola.</p>
+              <div class="chips presets" aria-label="Seqüències de mostra">
+                <button data-phases="124">1-2-4</button><button data-phases="debat">Debat</button><button data-phases="estacions">Estacions</button><button data-phases="tabata">Tabata</button><button data-phases="pomodoro">Pomodoro</button>
+              </div>
+              <label class="field" for="phasesInput">Fases, una per línia (temps i nom)</label>
+              <textarea id="phasesInput" rows="5" maxlength="800" spellcheck="false" placeholder="1:00 Individual&#10;2:00 En parella&#10;4:00 En grup"></textarea>
+              <label class="field">Repeticions de tota la seqüència<input id="phasesRounds" type="number" inputmode="numeric" min="1" max="20" value="1" /></label>
+              <p id="phasesNote" class="field-note"></p>
+            </div>
             <details class="ideas">
               <summary>Idees per a l’aula</summary>
               <ul id="ideasList"></ul>
@@ -128,10 +142,10 @@
           <section id="panel-settings" class="tab-content" role="tabpanel" aria-labelledby="tab-settings" hidden>
             <h2>Fes-lo teu</h2>
             <label class="field">Volum <span id="volumeValue">45%</span><input id="volumeInput" type="range" min="0" max="100" value="45" /></label>
-            <label class="switch-row" for="tickToggle"><span><strong>Tic dels últims 10 segons</strong><small>Al compte enrere, un so suau per segon al final.</small></span><input id="tickToggle" type="checkbox" role="switch" checked /></label>
+            <label class="switch-row" for="tickToggle"><span><strong>Tic dels últims 10 segons</strong><small>Al compte enrere, un so suau per segon al final (a les fases, els últims 3).</small></span><input id="tickToggle" type="checkbox" role="switch" checked /></label>
             <label class="switch-row" for="potatoTickToggle"><span><strong>Tic-tac de la patata</strong><small>Un tic-tac constant que no revela quan explotarà.</small></span><input id="potatoTickToggle" type="checkbox" role="switch" checked /></label>
             <p class="muted">El compte enrere es calcula amb l’hora del sistema: si recarregues la pàgina, continua on era. Els navegadors poden alentir els temporitzadors de les pestanyes amagades; per a un ús precís, mantén la pestanya visible.</p>
-            <p class="muted">Dreceres: <kbd>espai</kbd> comença o atura · <kbd>M</kbd> marca · <kbd>R</kbd> reinicia · <kbd>Esc</kbd> sortir del mode aula.</p>
+            <p class="muted">Dreceres: <kbd>espai</kbd> comença o atura · <kbd>M</kbd> marca · <kbd>N</kbd> fase següent · <kbd>R</kbd> reinicia · <kbd>Esc</kbd> sortir del mode aula.</p>
           </section>
         </aside>
       </main>

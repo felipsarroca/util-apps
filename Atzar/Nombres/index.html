@@ -8,12 +8,14 @@
       name="description"
       content="Nombres a l’atzar, bombo amb tauler i lletres per a jocs de paraules. En català, sense anuncis i amb desament local."
     />
-    <title>Nombres App</title>
+    <title>Nombres · Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.1" />
-    <link rel="stylesheet" href="style.css?v=1.1" />
-    <script src="../shared/atzar.js?v=1.1" defer></script>
-    <script src="script.js?v=1.1" defer></script>
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.2" />
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="../shared/atzar.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -47,6 +49,7 @@
             </div>
             <div id="letterView" class="view letter-view" hidden>
               <div id="letterTile" class="tile"><span>?</span></div>
+              <p id="letterCategory" class="letter-category" aria-hidden="true"></p>
             </div>
           </div>
           <button id="drawButton" class="action-button" title="Treu (barra d’espai)">
@@ -95,7 +98,21 @@
                 <button data-bingo="75">1–75</button><button data-bingo="90">1–90</button><button data-bingo="100">1–100</button>
               </div>
               <label class="field">O un altre màxim<input id="bingoMax" type="number" inputmode="numeric" min="5" max="200" value="90" /></label>
-              <label class="switch-row" for="speakToggle"><span><strong>Llegeix el nombre en veu alta</strong><small>Fa servir una veu catalana si el dispositiu en té.</small></span><input id="speakToggle" type="checkbox" role="switch" /></label>
+              <label class="switch-row" for="speakToggle"><span><strong>Llegeix el nombre en veu alta</strong><small>Amb la veu del dispositiu, en la llengua que triïs.</small></span><input id="speakToggle" type="checkbox" role="switch" /></label>
+              <label id="voiceField" class="field" hidden>Llengua de la veu<select id="voiceLang">
+                  <option value="ca">Català</option>
+                  <option value="es">Castellà</option>
+                  <option value="en">Anglès</option>
+                  <option value="fr">Francès</option>
+                  <option value="de">Alemany</option>
+                  <option value="it">Italià</option>
+                  <option value="pt">Portuguès</option>
+                  <option value="ro">Romanès</option>
+                  <option value="ar">Àrab</option>
+                  <option value="ur">Urdú</option>
+                  <option value="zh">Xinès</option>
+                  <option value="uk">Ucraïnès</option>
+                </select></label>
               <button id="bingoReset" class="secondary">↺ Buida el tauler i torna a començar</button>
               <p class="field-note">Cada bola surt una sola vegada fins que buides el tauler.</p>
             </div>
@@ -104,7 +121,13 @@
               <p class="muted">Toca una lletra per incloure-la o treure-la.</p>
               <div id="letterChips" class="chips letter-chips"></div>
               <div class="tools-row">
-                <button id="lettersEasy" class="quiet">Només les habituals</button><button id="lettersAll" class="quiet">Totes</button><button id="lettersReset" class="quiet">↺ Recupera les usades</button>
+                <button id="lettersEasy" class="quiet">Només les habituals</button><button id="lettersAll" class="quiet">Totes</button><button id="lettersDigraphs" class="quiet">Dígrafs</button><button id="lettersReset" class="quiet">↺ Recupera les usades</button>
+              </div>
+              <label class="switch-row" for="categoryToggle"><span><strong>Treu també una categoria</strong><small>Per a l’Stop: la lletra i, a sota, la categoria (animal, país, verb…).</small></span><input id="categoryToggle" type="checkbox" role="switch" /></label>
+              <div id="categoriesField" class="field" hidden>
+                <label for="categoriesInput">Categories, una per línia</label>
+                <textarea id="categoriesInput" rows="5" maxlength="1000" spellcheck="false"></textarea>
+                <button id="categoriesDefault" type="button" class="quiet">↺ Categories de mostra</button>
               </div>
               <label class="switch-row" for="letterUniqueToggle"><span><strong>Sense repetir lletra</strong><small>Les lletres que surten queden marcades fins que les recuperis.</small></span><input id="letterUniqueToggle" type="checkbox" role="switch" checked /></label>
             </div>
@@ -150,6 +173,7 @@
         <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
       </div>
     </footer>
+    <div id="confetti" class="confetti" aria-hidden="true"></div>
     <div id="toast" role="status" class="toast" hidden></div>
   </body>
 </html>

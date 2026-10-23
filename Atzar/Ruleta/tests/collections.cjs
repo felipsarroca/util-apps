@@ -90,7 +90,7 @@ const path = require("node:path"),
     await page.setViewportSize({ width, height });
     await page.evaluate(() => window.scrollTo(0, 0));
     const icon = await page.locator(".brand-icon").boundingBox();
-    assert.equal(icon.width, width <= 420 ? 48 : 60);
+    assert.equal(icon.width, width <= 360 ? 30 : width <= 420 ? 38 : 60);
     assert(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

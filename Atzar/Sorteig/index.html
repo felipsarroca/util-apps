@@ -8,12 +8,14 @@
       name="description"
       content="Treu paperets d’un barret: tria una o diverses persones, o ordena tota la classe. Sense repeticions i amb les classes de la Ruleta."
     />
-    <title>Sorteig App</title>
+    <title>Sorteig · Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.1" />
-    <link rel="stylesheet" href="style.css?v=1.1" />
-    <script src="../shared/atzar.js?v=1.1" defer></script>
-    <script src="script.js?v=1.1" defer></script>
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.2" />
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="../shared/atzar.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -91,6 +93,7 @@
               </form>
               <p class="field-note">També hi trobaràs les classes desades a la Ruleta.</p>
             </details>
+            <details id="absentList"></details>
             <textarea id="entriesInput" aria-label="Participants, un per línia" spellcheck="false" maxlength="20000" placeholder="Anna&#10;Biel&#10;Clàudia"></textarea>
             <p id="entryFeedback" class="field-note" aria-live="polite"></p>
             <div class="field">

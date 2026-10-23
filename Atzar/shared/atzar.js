@@ -7,6 +7,13 @@ window.Atzar = (() => {
     RULETA_KEY = "felip.ruleta.v2";
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 
+  /* App instal·lable i sense connexió (no funciona en obrir els fitxers directament). */
+  const root = new URL("../", document.currentScript?.src || location.href);
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol))
+    addEventListener("load", () =>
+      navigator.serviceWorker.register(new URL("sw.js", root)).catch(() => {}),
+    );
+
   /* Atzar: crypto.getRandomValues amb mostreig per rebuig (sense biaix del mòdul). */
   function randomInt(n) {
     if (!Number.isInteger(n) || n < 1) throw RangeError("n ha de ser ≥ 1");
@@ -135,15 +142,36 @@ window.Atzar = (() => {
     },
   };
 
-  /* Missatges i celebració */
+  /* Missatges i celebració. action = {label, run}: el missatge ofereix un botó i dura més. */
   let toastTimer;
-  function toast(message) {
+  function toast(message, action) {
     const el = $("toast");
     if (!el) return;
-    el.textContent = message;
+    el.replaceChildren(message);
+    if (action) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "toast-action";
+      button.textContent = action.label;
+      button.addEventListener("click", () => {
+        el.hidden = true;
+        action.run();
+      });
+      el.append(button);
+    }
     el.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => (el.hidden = true), 2600);
+    toastTimer = setTimeout(() => (el.hidden = true), action ? 8000 : 2600);
+  }
+  /* Les accions que esborren dades no demanen confirmació: es poden desfer uns segons. */
+  function undoable(message, restore) {
+    toast(message, {
+      label: "Desfés",
+      run() {
+        restore();
+        toast("Fet: s’ha recuperat tal com estava.");
+      },
+    });
   }
   const CONFETTI = ["#d47761", "#e2ad55", "#759479", "#5f91a6", "#817ca6"];
   function confetti(host) {
@@ -323,8 +351,13 @@ window.Atzar = (() => {
             remove.setAttribute("aria-label", `Elimina ${group.name}`);
             remove.textContent = "×";
             remove.addEventListener("click", () => {
+              const before = ownClasses();
               removeClass(group.id);
               render();
+              undoable(`Classe «${group.name}» eliminada.`, () => {
+                save(CLASSES_KEY, before);
+                render();
+              });
             });
             row.append(remove);
           }
@@ -341,6 +374,80 @@ window.Atzar = (() => {
         toast(`Classe «${input.value.trim()}» desada.`);
         input.value = "";
         render();
+      }
+    });
+    render();
+    return render;
+  }
+
+  /* Absents d'avui: compartits entre Ruleta, Sorteig i Equips; caduquen en canviar de dia. */
+  const ABSENT_KEY = "felip.atzar.absents";
+  const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  };
+  function getAbsents() {
+    const data = load(ABSENT_KEY, null);
+    return data && data.date === today() && Array.isArray(data.names)
+      ? new Set(data.names.filter((x) => typeof x === "string"))
+      : new Set();
+  }
+  function setAbsents(names) {
+    save(ABSENT_KEY, { date: today(), names: [...names].slice(0, 400) });
+  }
+  function present(list) {
+    const absent = getAbsents();
+    return absent.size ? list.filter((x) => !absent.has(x)) : list;
+  }
+  /* Panell «Qui falta avui?»: details amb un botó per persona. onChange es crida en cada canvi. */
+  function setupAbsents({ host, getNames, onChange }) {
+    if (!host) return () => {};
+    host.classList.add("absents");
+    host.innerHTML =
+      '<summary>Qui falta avui? <span class="absent-count"></span></summary><p class="field-note">Toca qui no hi és: no sortirà fins demà, i tampoc a les altres apps d’Atzar. La llista no canvia.</p><div class="absent-chips chips"></div><button type="button" class="quiet absent-clear">Hi són tots</button>';
+    const chips = host.querySelector(".absent-chips"),
+      count = host.querySelector(".absent-count"),
+      clear = host.querySelector(".absent-clear");
+    function render() {
+      const absent = getAbsents(),
+        names = [...new Set(getNames())],
+        missing = names.filter((n) => absent.has(n)).length;
+      count.textContent = missing ? `(${missing})` : "";
+      clear.hidden = !missing;
+      chips.replaceChildren(
+        ...names.map((name) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.textContent = name;
+          b.setAttribute("aria-pressed", String(absent.has(name)));
+          b.title = absent.has(name) ? "Avui no hi és" : "Hi és";
+          b.addEventListener("click", () => {
+            const now = getAbsents();
+            now.has(name) ? now.delete(name) : now.add(name);
+            setAbsents(now);
+            render();
+            onChange?.();
+          });
+          return b;
+        }),
+      );
+      if (!names.length) chips.textContent = "La llista és buida.";
+    }
+    clear.addEventListener("click", () => {
+      const before = getAbsents();
+      setAbsents([]);
+      render();
+      onChange?.();
+      undoable("Tothom torna a ser present.", () => {
+        setAbsents(before);
+        render();
+        onChange?.();
+      });
+    });
+    window.addEventListener("storage", (e) => {
+      if (e.key === ABSENT_KEY) {
+        render();
+        onChange?.();
       }
     });
     render();
@@ -437,7 +544,7 @@ window.Atzar = (() => {
     return select;
   }
   const isTyping = (el) =>
-    /INPUT|TEXTAREA|SELECT|BUTTON|A|SUMMARY/.test(el.tagName) ||
+    /^(INPUT|TEXTAREA|SELECT|BUTTON|A|SUMMARY)$/.test(el.tagName) ||
     el.isContentEditable;
 
   /* En mode aula, els objectes poden créixer fins a omplir la pantalla. */
@@ -644,6 +751,10 @@ window.Atzar = (() => {
     noise,
     sounds,
     toast,
+    undoable,
+    getAbsents,
+    present,
+    setupAbsents,
     confetti,
     formatTime,
     download,

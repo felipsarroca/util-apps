@@ -1,8 +1,8 @@
 /* Proves de lògica: reposició, repeticions, equilibri i temporitzadors. Ús: node tests/logic.cjs */
 const { chromium } = require("playwright"); const http=require("http"),fs=require("fs"),path=require("path"),assert=require("assert/strict");
 const root=path.resolve(__dirname,"..");
-const T={".html":"text/html; charset=utf-8",".css":"text/css",".js":"text/javascript",".svg":"image/svg+xml",".png":"image/png"};
-const srv=http.createServer((q,r)=>{let n=decodeURIComponent(q.url.split("?")[0]);if(n.endsWith("/"))n+="index.html";const f=path.join(root,n);if(!fs.existsSync(f)){r.writeHead(404);return r.end();}r.setHeader("Content-Type",T[path.extname(f)]);fs.createReadStream(f).pipe(r);});
+const T={".html":"text/html; charset=utf-8",".css":"text/css",".js":"text/javascript",".svg":"image/svg+xml",".png":"image/png",".json":"application/json",".webmanifest":"application/manifest+json"};
+const srv=http.createServer((q,r)=>{let n=decodeURIComponent(q.url.split("?")[0]);if(n.endsWith("/"))n+="index.html";const f=path.join(root,n);if(!fs.existsSync(f)){r.writeHead(404);return r.end();}r.setHeader("Content-Type",T[path.extname(f)]||"application/octet-stream");fs.createReadStream(f).pipe(r);});
 (async()=>{await new Promise(r=>srv.listen(0,r));const base=`http://127.0.0.1:${srv.address().port}/`;
 const b=await chromium.launch({channel:process.env.BROWSER_CHANNEL||"chrome"});const ctx=await b.newContext({reducedMotion:"reduce"});const p=await ctx.newPage();
 p.on("pageerror",e=>console.log("ERR",e.message));
@@ -28,6 +28,16 @@ assert.equal(new Set(e.last.teams.flatMap(t=>t.members.map(m=>m.name))).size,25)
 // Equips: persones per equip 4 amb 10 -> 3 equips
 await setup("Equips","felip.atzar.equips.v1",{base:names.slice(0,10),split:"size",size:4,duration:0});await p.click("#makeButton");await p.waitForTimeout(200);
 assert.deepEqual((await ls("felip.atzar.equips.v1")).last.teams.map(t=>t.members.length).sort(),[3,3,4]);console.log("✓ Equips: 10 de 4 en 4 → 4,3,3");
+// Equips: condicions «separats» i «junts» es compleixen sempre
+for(let i=0;i<8;i++){await setup("Equips","felip.atzar.equips.v1",{base:names.slice(0,12),teams:3,duration:0,rules:[{a:"P1",b:"P2",type:"apart"},{a:"P3",b:"P4",type:"together"},{a:"P5",b:"P6",type:"apart"}]});await p.click("#makeButton");await p.waitForTimeout(150);
+const t=(await ls("felip.atzar.equips.v1")).last.teams.map(x=>x.members.map(m=>m.name));const team=n=>t.findIndex(x=>x.includes(n));
+assert.notEqual(team("P1"),team("P2"));assert.equal(team("P3"),team("P4"));assert.notEqual(team("P5"),team("P6"));}
+console.log("✓ Equips: condicions de separar i ajuntar respectades (8 de 8)");
+// Absents: qui falta avui no entra al sorteig
+{const d=new Date();await setup("Sorteig","felip.atzar.absents",{date:`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`,names:["A","B"]});}
+await setup("Sorteig","felip.atzar.sorteig.v1",{base:["A","B","C","D","E","F"],mode:"order",duration:400,confetti:false});await p.click("#drawButton");await p.waitForFunction(()=>!document.querySelector("#entriesInput").disabled);
+{const w=await p.locator("#winners li").allTextContents();assert.equal(w.length,4);assert(!w.some(x=>/\b[AB]\b/.test(x)),"hi surt un absent");}
+await p.evaluate(()=>localStorage.removeItem("felip.atzar.absents"));console.log("✓ Absents: el sorteig només compta qui hi és");
 // Nombres: 10 sense repetir de 1 a 10 => permutació
 await setup("Nombres","felip.atzar.nombres.v1",{mode:"number",min:1,max:10,qty:10,unique:true,sort:true,duration:500});await p.click("#drawButton");await p.waitForFunction(()=>document.querySelector("#liveResult").textContent);
 assert.equal(await p.textContent("#liveResult"),"1, 2, 3, 4, 5, 6, 7, 8, 9, 10");console.log("✓ Nombres: 10 de 10 sense repetir i ordenats");
@@ -48,4 +58,11 @@ assert(await p.locator("#clock.finished").count());console.log("✓ Temps: el co
 // Temps: es pot marcar amb el cronòmetre en marxa, sense aturar-lo
 await setup("Temps","felip.atzar.temps.v1",{mode:"stopwatch",sw:{base:0,startAt:null,marks:[]}});await p.click("#startButton");await p.click("#markButton");await p.waitForTimeout(200);await p.click("#markButton");
 const sw=(await ls("felip.atzar.temps.v1")).sw;assert.equal(sw.marks.length,2);assert(sw.startAt);assert.equal(await p.locator("#stageMarks li").count(),2);console.log("✓ Temps: dues marques sense aturar el cronòmetre");
+// Temps: les fases s'encadenen soles i acaben
+await setup("Temps","felip.atzar.temps.v1",{mode:"phases",ph:{text:"0:01 A\n0:01 B",rounds:2,idx:0,remaining:null,endAt:null}});await p.click("#startButton");await p.waitForTimeout(1500);
+assert.match(await p.textContent("#clockNote"),/^BFase 2 de 4/);await p.waitForTimeout(3000);
+assert(await p.locator("#clock.finished").count());assert.equal((await ls("felip.atzar.temps.v1")).ph.idx,4);console.log("✓ Temps: 2 fases × 2 rondes encadenades");
+// Service worker: tots els recursos de la llista existeixen
+{const ctx2={self:{addEventListener(){}}};require("vm").runInNewContext(fs.readFileSync(path.join(root,"sw.js"),"utf8")+";self.list=ASSETS;",ctx2);const list=ctx2.self.list;
+const missing=list.filter(a=>!fs.existsSync(path.join(root,a.endsWith("/")||a===""?a+"index.html":a.split("?")[0])));assert.equal(missing.length,0,"falten: "+missing.join(", "));console.log(`✓ Fora de línia: ${list.length} recursos del service worker existeixen`);}
 await b.close();srv.close();})().catch(e=>{console.log("✗",e.message);process.exit(1)});

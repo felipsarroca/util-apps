@@ -8,12 +8,14 @@
       name="description"
       content="Llança d’un a sis daus de 4, 6, 8, 10, 12 o 20 cares, suma o multiplica i descobreix la distribució de resultats."
     />
-    <title>Daus App</title>
+    <title>Daus · Atzar a l’aula</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="../shared/atzar.css?v=1.1" />
-    <link rel="stylesheet" href="style.css?v=1.1" />
-    <script src="../shared/atzar.js?v=1.1" defer></script>
-    <script src="script.js?v=1.1" defer></script>
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../shared/atzar.css?v=1.2" />
+    <link rel="stylesheet" href="style.css?v=1.2" />
+    <script src="../shared/atzar.js?v=1.2" defer></script>
+    <script src="script.js?v=1.2" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -63,10 +65,18 @@
             <div class="field">
               <span id="facesLabel">Cares de cada dau</span>
               <div id="facesChips" class="chips" role="group" aria-labelledby="facesLabel">
-                <button data-faces="4" aria-pressed="false">D4</button><button data-faces="6" aria-pressed="true">D6</button><button data-faces="8" aria-pressed="false">D8</button><button data-faces="10" aria-pressed="false">D10</button><button data-faces="12" aria-pressed="false">D12</button><button data-faces="20" aria-pressed="false">D20</button>
+                <button data-faces="4" aria-pressed="false">D4</button><button data-faces="6" aria-pressed="true">D6</button><button data-faces="8" aria-pressed="false">D8</button><button data-faces="10" aria-pressed="false">D10</button><button data-faces="12" aria-pressed="false">D12</button><button data-faces="20" aria-pressed="false">D20</button><button data-faces="custom" aria-pressed="false">Amb paraules</button>
               </div>
             </div>
-            <div class="field">
+            <div id="customBox" class="custom-box" hidden>
+              <label class="field" for="customInput">Cares del dau, una per línia (de 2 a 20)</label>
+              <textarea id="customInput" rows="6" maxlength="600" spellcheck="false"></textarea>
+              <p id="customNote" class="field-note"></p>
+              <div class="chips" role="group" aria-label="Daus de mostra">
+                <button data-preset="preguntes">Preguntes</button><button data-preset="pronoms">Pronoms</button><button data-preset="temps">Temps verbals</button><button data-preset="emocions">Emocions</button>
+              </div>
+            </div>
+            <div id="opField" class="field">
               <span id="opLabel">Què en fem, dels valors?</span>
               <div id="opChips" class="chips" role="group" aria-labelledby="opLabel">
                 <button data-op="sum" aria-pressed="true">Suma</button><button data-op="product" aria-pressed="false">Producte</button><button data-op="none" aria-pressed="false">Només els valors</button>
@@ -79,6 +89,7 @@
             <div class="separator"></div>
             <h2>Experiment ràpid</h2>
             <p class="muted">Simula moltes tirades amb aquests daus.</p>
+            <label id="predictField" class="field predict-field"><span id="predictLabel">Abans de simular: quina suma sortirà més vegades?</span><span class="predict-input"><input id="predictInput" type="number" min="1" max="20000" step="1" inputmode="numeric" placeholder="7" /></span></label>
             <div class="tools-row">
               <button class="secondary" data-simulate="36">36 tirades</button
               ><button class="secondary" data-simulate="360">360 tirades</button
@@ -92,6 +103,8 @@
                 <li><strong>Càlcul mental.</strong> Mode producte per repassar les taules; tres daus i suma per al càlcul ràpid. Qui ho diu primer, explica com ho ha pensat.</li>
                 <li><strong>Coordenades.</strong> El dau vermell és la fila i el blau la columna d’una graella, un mapa o una taula de preguntes.</li>
                 <li><strong>Escriptura creativa.</strong> Tres daus de colors trien personatge, lloc i conflicte d’una llista numerada.</li>
+                <li><strong>Daus amb paraules.</strong> Un dau de pronoms i un de temps verbals per conjugar en veu alta; un de preguntes (qui, què, on…) per construir una notícia; un d’emocions per a la tutoria. Funciona molt bé amb l’alumnat nouvingut.</li>
+                <li><strong>Producte i taules.</strong> En mode producte, l’Estadística mostra quins resultats són més probables. Per què, amb dos D6, el 12 surt més que el 25?</li>
                 <li><strong>Història.</strong> «Alea iacta est», «la sort està llançada»: Suetoni atribueix aquestes paraules a Juli Cèsar quan va creuar el Rubicó. Grecs i romans jugaven amb daus i astràgals d’os.</li>
               </ul>
             </details>
@@ -103,7 +116,7 @@
             </div>
             <div class="stat-grid">
               <div class="stat"><small>Tirades</small><strong id="statRolls">0</strong><span id="statConfig">—</span></div>
-              <div class="stat"><small>Mitjana</small><strong id="statMean">—</strong><span id="statExpected">—</span></div>
+              <div class="stat"><small id="statMeanLabel">Mitjana</small><strong id="statMean">—</strong><span id="statExpected">—</span></div>
             </div>
             <div class="chart" id="distChart"></div>
             <p class="chart-caption" id="distCaption"></p>
