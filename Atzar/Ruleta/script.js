@@ -142,12 +142,10 @@
     toastTimer,
     audioContext,
     master,
-    editingList = false,
-    renderAbsents = () => {};
+    editingList = false;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  // Les opcions de la roda, sense els absents d'avui (compartits amb Sorteig i Equips).
-  const wheel = () =>
-    window.Atzar ? window.Atzar.present(state.entries) : state.entries;
+  // La Ruleta mostra exactament els noms escrits: no aplica la llista d'absents de les altres apps.
+  const wheel = () => state.entries;
   function toast(message) {
     $("toast").textContent = message;
     $("toast").hidden = false;
@@ -196,12 +194,11 @@
     $("entriesInput").setAttribute("aria-invalid", String(invalidDraft));
   }
   function refresh() {
-    const onWheel = wheel().length,
-      away = state.entries.length - onWheel;
+    const onWheel = wheel().length;
     $("entryCount").textContent = state.entries.length;
     $("historyCount").textContent = state.history.length;
     $("availableCount").textContent =
-      `${onWheel} ${onWheel === 1 ? "opció disponible" : "opcions disponibles"}${away ? ` · ${away} ${away === 1 ? "absent" : "absents"}` : ""}`;
+      `${onWheel} ${onWheel === 1 ? "opció disponible" : "opcions disponibles"}`;
     $("spinLabel").textContent = spinning
       ? "Girant…"
       : onWheel
@@ -428,7 +425,6 @@
     winnerIndex = null;
     rotation = 0;
     if (base) state.base = [...state.entries];
-    renderAbsents();
     applySettings();
     syncInput();
     drawWheel();
@@ -534,10 +530,12 @@
       }
       previousSector = sector;
       if (p < 1) requestAnimationFrame(frame);
-      else finish(index, finalAngle);
+      // Un segon de pausa amb la roda aturada perquè es vegi on ha caigut abans del missatge.
+      else setTimeout(() => finish(index, finalAngle), reduced.matches ? 0 : WINNER_PAUSE);
     }
     requestAnimationFrame(frame);
   }
+  const WINNER_PAUSE = 1000;
   function finish(index, angle) {
     rotation = angle;
     canvas.style.transform = `rotate(${rotation}rad)`;
@@ -1308,17 +1306,6 @@
   window.addEventListener("resize", () => {
     if (!dialog.open) drawWheel();
   });
-  if (window.Atzar)
-    renderAbsents = window.Atzar.setupAbsents({
-      host: $("absentList"),
-      getNames: () => state.base,
-      onChange() {
-        if (spinning) return;
-        rotation = 0;
-        drawWheel();
-        refresh();
-      },
-    });
   applySettings();
   syncInput();
   drawWheel();
