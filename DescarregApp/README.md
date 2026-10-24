@@ -1,6 +1,6 @@
 # DescarregApp
 
-DescarregApp 1.5.3 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
+DescarregApp 1.5.4 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
 
 ![Captura principal de DescarregApp](docs/images/descarregapp-main.png)
 
@@ -48,6 +48,12 @@ https://ja.cat/descarregapp
 No cal instal·lar Node.js, Deno, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari final. L'instal·lador ja inclou les eines necessàries.
 
 ## Actualitzacions
+
+### Novetats de la versió 1.5.4
+
+- El 60 % inicial reflecteix la transferència. La conversió o còpia final d'AVI, MP4, MKV i MP3 actualitza el 40 % restant segons el temps de contingut processat per FFmpeg.
+- Elimina un pas de remultiplexació innecessari que podia allargar l'espera sense actualitzar el progrés.
+- Neteja els fitxers temporals en acabar o fallar. Proves locals completes dels quatre formats amb `node scripts/test-avi.js`.
 
 ### Novetats de la versió 1.5.3
 

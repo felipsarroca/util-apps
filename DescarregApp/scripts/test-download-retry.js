@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
 const vm = require("node:vm");
 const { EventEmitter } = require("node:events");
 const { PassThrough } = require("node:stream");
@@ -8,6 +9,7 @@ const { test } = require("node:test");
 
 async function scenario(outcomes, cancel = false) {
   const events = [];
+  const destination = fs.mkdtempSync(path.join(os.tmpdir(), "descarregapp-retry-"));
   let downloads = 0;
   let extracts = 0;
   let context;
@@ -40,7 +42,10 @@ async function scenario(outcomes, cancel = false) {
   });
   vm.runInContext(fs.readFileSync(path.join(__dirname, "../src/main.js"), "utf8"), context);
   vm.runInContext("mainWindow = { isDestroyed: () => false, webContents: { send: (_channel, payload) => record(payload) } }", context);
-  await vm.runInContext(`runDownload({item:{id:'test',url:'https://example.com/video'},options:{outputFormat:'video',destinationFolder:'.',audioBitrate:'320',videoFormat:'mp4'}},{ytDlp:'yt-dlp',deno:'deno',ffmpegLocation:'.'})`, context);
+  vm.runInContext("finalizeMedia = async item => sendDownloadEvent({id:item.id,status:'completed',progress:100,message:'Completat'})", context);
+  context.destination = destination;
+  await vm.runInContext(`runDownload({item:{id:'test',url:'https://example.com/video'},options:{outputFormat:'video',destinationFolder:destination,audioBitrate:'320',videoFormat:'mp4'}},{ytDlp:'yt-dlp',deno:'deno',ffmpegLocation:'.'})`, context);
+  fs.rmSync(destination, { recursive: true, force: true });
   return { downloads, extracts, events };
 }
 

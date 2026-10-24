@@ -521,6 +521,10 @@ function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, vid
     "--progress",
     "--progress-template",
     "download:PROGRESS:%(progress._percent_str)s",
+    "--print",
+    "before_dl:DURATION:%(duration)s",
+    "--print",
+    "after_move:FILEPATH:%(filepath)s",
     "--ffmpeg-location",
     tools.ffmpegLocation
   ];
@@ -528,11 +532,8 @@ function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, vid
   if (format === "audio") {
     return [
       ...commonArgs,
-      "-x",
-      "--audio-format",
-      "mp3",
-      "--audio-quality",
-      `${audioBitrate}K`,
+      "-f",
+      "ba/b",
       "-o",
       outputTemplate,
       url
@@ -550,14 +551,8 @@ function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, vid
     "before_dl:FORMAT:%(format)s",
     "--print",
     "before_dl:DOWNLOADS:%(requested_formats)j",
-    // Merge modern codecs into MKV first; AVI requires actual transcoding.
     "--merge-output-format",
     videoFormat === "avi" ? "mkv" : videoFormat,
-    ...(videoFormat === "avi" ? [
-      "--recode-video", "avi",
-      "--postprocessor-args",
-      "VideoConvertor+ffmpeg_o:-c:v mpeg4 -q:v 3 -pix_fmt yuv420p -vf pad=ceil(iw/2)*2:ceil(ih/2)*2 -c:a libmp3lame -b:a 192k"
-    ] : ["--remux-video", videoFormat]),
     "-o",
     outputTemplate,
     url
@@ -622,6 +617,117 @@ function parseDownloadWeights(line) {
   }
 }
 
+function parseFfmpegTime(value) {
+  const match = String(value).match(/^(\d+):(\d{2}):(\d{2}(?:\.\d+)?)$/);
+  return match ? Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]) : 0;
+}
+
+async function cleanTemporaryDownload(tempDir, destinationFolder) {
+  const destination = path.resolve(destinationFolder);
+  const temporary = path.resolve(tempDir);
+  if (path.dirname(temporary) !== destination || !path.basename(temporary).startsWith(".descarregapp-")) {
+    console.warn("No s'ha netejat una carpeta temporal fora de la destinació:", temporary);
+    return;
+  }
+  try {
+    await fs.promises.rm(temporary, { recursive: true, force: true });
+  } catch (error) {
+    console.warn("No s'ha pogut netejar la carpeta temporal:", error);
+  }
+}
+
+async function finalizeMedia(item, options, sourcePath, tempDir, tools, knownDuration) {
+  const source = path.resolve(sourcePath);
+  const temporary = path.resolve(tempDir);
+  if (!source.startsWith(`${temporary}${path.sep}`) || !fs.existsSync(source)) {
+    sendDownloadEvent({ id: item.id, status: "error", message: "No s'ha trobat el fitxer descarregat per processar-lo." });
+    return;
+  }
+
+  const extension = options.outputFormat === "audio" ? "mp3" : options.videoFormat;
+  const target = path.join(options.destinationFolder, `${path.parse(source).name}.${extension}`);
+  const converting = path.join(tempDir, `descarregapp-final.${extension}`);
+  const processingArgs = options.outputFormat === "audio"
+    ? ["-vn", "-c:a", "libmp3lame", "-b:a", `${options.audioBitrate}k`]
+    : options.videoFormat === "avi"
+      ? ["-c:v", "mpeg4", "-q:v", "3", "-pix_fmt", "yuv420p",
+        "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2", "-c:a", "libmp3lame", "-b:a", "192k"]
+      : ["-c", "copy"];
+  const stageMessage = options.outputFormat === "audio" ? "Convertint l'àudio"
+    : options.videoFormat === "avi" ? "Convertint el vídeo" : "Copiant el vídeo";
+  const args = ["-hide_banner", "-nostdin", "-y", "-i", source, ...processingArgs,
+    "-progress", "pipe:1", "-stats_period", "0.5", "-nostats", converting];
+
+  await new Promise((resolve) => {
+    const child = spawn(tools.ffmpeg, args, { windowsHide: true });
+    activeDownload = child;
+    let duration = knownDuration || 0;
+    let lastProgress = 60;
+    let errorText = "";
+    let stdoutBuffer = "";
+    let finished = false;
+    sendDownloadEvent({ id: item.id, status: "downloading", progress: 60,
+      message: stageMessage });
+
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => {
+      stdoutBuffer += chunk;
+      const lines = stdoutBuffer.split(/\r?\n/);
+      stdoutBuffer = lines.pop() || "";
+      for (const line of lines) {
+        if (!line.startsWith("out_time=")) continue;
+        const elapsed = parseFfmpegTime(line.slice("out_time=".length));
+        if (duration > 0 && Number.isFinite(elapsed)) {
+          const next = Math.max(lastProgress, Math.min(99.5, 60 + 39.5 * elapsed / duration));
+          if (next - lastProgress >= 0.1) {
+            lastProgress = next;
+            sendDownloadEvent({ id: item.id, status: "downloading", progress: next,
+              message: stageMessage });
+          }
+        }
+      }
+    });
+    child.stderr.on("data", (chunk) => {
+      errorText = (errorText + chunk).slice(-64000);
+      const match = errorText.match(/Duration:\s*(\d+:\d{2}:\d{2}(?:\.\d+)?)/);
+      if (match) duration = parseFfmpegTime(match[1]);
+    });
+    child.on("error", async (error) => {
+      if (finished) return;
+      finished = true;
+      activeDownload = null;
+      try { await cleanTemporaryDownload(tempDir, options.destinationFolder); }
+      catch (cleanupError) { console.warn("No s'ha pogut netejar la carpeta temporal:", cleanupError); }
+      sendDownloadEvent({ id: item.id, status: "error", message: error.message, details: error.stack || error.message });
+      resolve();
+    });
+    child.on("close", async (code) => {
+      if (finished) return;
+      finished = true;
+      activeDownload = null;
+      try {
+        if (cancelRequested) {
+          await cleanTemporaryDownload(tempDir, options.destinationFolder);
+          sendDownloadEvent({ id: item.id, status: "canceled", progress: 0, message: "Cancel·lat" });
+        } else if (code !== 0) {
+          await cleanTemporaryDownload(tempDir, options.destinationFolder);
+          sendDownloadEvent({ id: item.id, status: "error", message: cleanError(errorText) || "El processament final ha fallat.", details: errorText });
+        } else {
+          await fs.promises.rename(converting, target);
+          sendDownloadEvent({ id: item.id, status: "completed", progress: 100, message: "Completat" });
+          cleanTemporaryDownload(tempDir, options.destinationFolder).catch((error) => {
+            console.warn("No s'ha pogut netejar la carpeta temporal:", error);
+          });
+        }
+      } catch (error) {
+        sendDownloadEvent({ id: item.id, status: "error", message: error.message, details: error.stack || error.message });
+      }
+      resolve();
+    });
+  });
+}
+
 function fetchTitle(url, tools) {
   return new Promise((resolve) => {
     const child = spawn(tools.ytDlp, [
@@ -661,6 +767,8 @@ function fetchTitle(url, tools) {
 
 async function runDownload(job, tools, attempt = 0) {
   const { item, options } = job;
+  const tempDir = path.join(options.destinationFolder,
+    `.descarregapp-${String(item.id).replace(/[^a-zA-Z0-9-]/g, "")}`);
 
   if (cancelRequested) {
     sendDownloadEvent({
@@ -689,10 +797,19 @@ async function runDownload(job, tools, attempt = 0) {
   }
 
   return new Promise((resolve) => {
+    try {
+      fs.mkdirSync(tempDir, { recursive: true });
+    } catch (error) {
+      sendDownloadEvent({ id: item.id, status: "error", progress: 0,
+        message: `No s'ha pogut preparar la carpeta de destinació: ${error.message}`,
+        details: error.stack || error.message });
+      resolve();
+      return;
+    }
     const args = buildYtDlpArgs(
       item.url,
       options.outputFormat,
-      options.destinationFolder,
+      tempDir,
       tools,
       options.audioBitrate,
       options.videoFormat
@@ -710,6 +827,8 @@ async function runDownload(job, tools, attempt = 0) {
     let downloadPartIndex = 0;
     let lastRawProgress = 0;
     let lastProgress = 0;
+    let downloadedPath = "";
+    let videoDuration = 0;
 
     sendDownloadEvent({
       id: item.id,
@@ -721,6 +840,11 @@ async function runDownload(job, tools, attempt = 0) {
     let stdoutBuffer = "";
 
     const processOutputLine = (line) => {
+      if (line.startsWith("FILEPATH:")) downloadedPath = line.slice("FILEPATH:".length).trim();
+      if (line.startsWith("DURATION:")) {
+        const value = Number(line.slice("DURATION:".length));
+        if (Number.isFinite(value) && value > 0) videoDuration = value;
+      }
       const parsedTitle = parseTitle(line);
       const parsedFormat = parseSelectedFormat(line);
       const parsedWeights = parseDownloadWeights(line);
@@ -765,12 +889,12 @@ async function runDownload(job, tools, attempt = 0) {
         const overallProgress = totalWeight > 0
           ? ((completedWeight + (currentWeight * rawProgress / 100)) / totalWeight) * 100
           : rawProgress;
-        // The last percent belongs to merging/conversion and is confirmed by process exit.
-        lastProgress = Math.max(lastProgress, Math.min(99, overallProgress));
+        const transferShare = 60;
+        lastProgress = Math.max(lastProgress, Math.min(transferShare, overallProgress * transferShare / 100));
         const transferFinished = rawProgress >= 100
           && downloadPartIndex === downloadWeights.length - 1;
         const partMessage = transferFinished
-          ? "Finalitzant el fitxer"
+          ? "Preparant el fitxer"
           : downloadWeights.length > 1
             ? `Descarregant (${downloadPartIndex + 1}/${downloadWeights.length})`
             : "Descarregant";
@@ -819,9 +943,11 @@ async function runDownload(job, tools, attempt = 0) {
       lastError = (lastError + chunk).slice(-64000);
     });
 
-    child.on("error", (error) => {
+    child.on("error", async (error) => {
       completed = true;
       activeDownload = null;
+      try { await cleanTemporaryDownload(tempDir, options.destinationFolder); }
+      catch (cleanupError) { console.warn("No s'ha pogut netejar la carpeta temporal:", cleanupError); }
       sendDownloadEvent({
         id: item.id,
         status: "error",
@@ -834,7 +960,7 @@ async function runDownload(job, tools, attempt = 0) {
       resolve();
     });
 
-    child.on("close", (code) => {
+    child.on("close", async (code) => {
       if (completed) {
         return;
       }
@@ -843,6 +969,7 @@ async function runDownload(job, tools, attempt = 0) {
       activeDownload = null;
 
       if (cancelRequested) {
+        await cleanTemporaryDownload(tempDir, options.destinationFolder);
         sendDownloadEvent({
           id: item.id,
           status: "canceled",
@@ -855,17 +982,14 @@ async function runDownload(job, tools, attempt = 0) {
       }
 
       if (code === 0) {
-        sendDownloadEvent({
-          id: item.id,
-          status: "completed",
-          progress: 100,
-          message: selectedFormat ? `Completat. Format: ${selectedFormat}` : "Completat"
-        });
+        resolve(finalizeMedia(item, options, downloadedPath, tempDir, tools, videoDuration));
+        return;
       } else if (attempt === 0 && /HTTP Error 403/i.test(lastError)) {
         // Extract fresh media URLs once; retrying the same expired URL cannot help.
         resolve(runDownload(job, tools, attempt + 1));
         return;
       } else {
+        await cleanTemporaryDownload(tempDir, options.destinationFolder);
         sendDownloadEvent({
           id: item.id,
           status: "error",
