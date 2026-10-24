@@ -62,16 +62,6 @@
           </div>
           <section id="panel-entries" class="tab-content" role="tabpanel" aria-labelledby="tab-entries">
             <h2>Qui hi participa?</h2>
-            <details id="savedLists" class="saved-lists">
-              <summary>Les meves classes <span id="classCount"></span></summary>
-              <div id="classList" class="class-list" aria-label="Classes desades"></div>
-              <form id="saveClassForm" class="save-class-form">
-                <label for="className" class="sr-only">Nom de la classe</label>
-                <input id="className" type="text" placeholder="Nom de la classe: 2n A…" maxlength="40" required />
-                <button type="submit" class="quiet">Desa</button>
-              </form>
-              <p class="field-note">També hi trobaràs les classes desades a la Ruleta.</p>
-            </details>
             <textarea id="entriesInput" aria-label="Participants, un per línia" spellcheck="false" maxlength="20000" placeholder="Anna&#10;Biel&#10;Clàudia"></textarea>
             <p id="entryFeedback" class="field-note" aria-live="polite"></p>
             <div class="field">
@@ -93,6 +83,16 @@
             <p id="splitNote" class="field-note"></p>
             <p id="editHint" class="field-note" hidden>Per retocar els equips, toca un nom a la pantalla i després un altre nom (s’intercanvien) o un altre equip (s’hi mou). També pots fixar-lo perquè no canviï d’equip.</p>
             <button id="unpinAll" class="quiet" hidden>Deixa anar els fixats</button>
+            <details id="savedLists" class="saved-lists">
+              <summary>Les meves classes <span id="classCount"></span></summary>
+              <div id="classList" class="class-list" aria-label="Classes desades"></div>
+              <form id="saveClassForm" class="save-class-form">
+                <label for="className" class="sr-only">Nom de la classe</label>
+                <input id="className" type="text" placeholder="Nom de la classe: 2n A…" maxlength="40" required />
+                <button type="submit" class="quiet">Desa</button>
+              </form>
+              <p class="field-note">També hi trobaràs les classes desades a la Ruleta.</p>
+            </details>
             <details class="ideas">
               <summary>Idees per a l’aula</summary>
               <ul>
