@@ -709,6 +709,7 @@ async function runDownload(job, tools, attempt = 0) {
     let downloadWeights = [1];
     let downloadPartIndex = 0;
     let lastRawProgress = 0;
+    let lastProgress = 0;
 
     sendDownloadEvent({
       id: item.id,
@@ -764,13 +765,19 @@ async function runDownload(job, tools, attempt = 0) {
         const overallProgress = totalWeight > 0
           ? ((completedWeight + (currentWeight * rawProgress / 100)) / totalWeight) * 100
           : rawProgress;
-        const partMessage = downloadWeights.length > 1
-          ? `Descarregant (${downloadPartIndex + 1}/${downloadWeights.length})`
-          : "Descarregant";
+        // The last percent belongs to merging/conversion and is confirmed by process exit.
+        lastProgress = Math.max(lastProgress, Math.min(99, overallProgress));
+        const transferFinished = rawProgress >= 100
+          && downloadPartIndex === downloadWeights.length - 1;
+        const partMessage = transferFinished
+          ? "Finalitzant el fitxer"
+          : downloadWeights.length > 1
+            ? `Descarregant (${downloadPartIndex + 1}/${downloadWeights.length})`
+            : "Descarregant";
 
         sendDownloadEvent({
           id: item.id,
-          progress: Math.max(0, Math.min(100, overallProgress)),
+          progress: lastProgress,
           status: "downloading",
           message: partMessage
         });

@@ -246,10 +246,30 @@ function applyDownloadUpdate(payload) {
     return;
   }
 
-  state.items.set(payload.id, {
+  const nextItem = {
     ...item,
     ...payload
-  });
+  };
+  if (item.status === "downloading" && payload.status === "downloading"
+    && payload.progress !== undefined) {
+    nextItem.progress = Math.max(item.progress || 0, payload.progress);
+  }
+  state.items.set(payload.id, nextItem);
+
+  // Keep the existing bar in the DOM so CSS can animate progress between updates.
+  const progressOnly = item.status === "downloading"
+    && payload.status === "downloading"
+    && payload.progress !== undefined
+    && Object.keys(payload).every((key) => ["id", "status", "progress", "message"].includes(key));
+  if (progressOnly) {
+    const row = document.getElementById(`download-${payload.id}`);
+    if (row) {
+      row.querySelector(".progress-bar").style.width = `${nextItem.progress}%`;
+      row.querySelector(".progress-percent").textContent = `${Math.round(nextItem.progress)}%`;
+      row.querySelector(".result-message").textContent = payload.message || "";
+      return;
+    }
+  }
 
   renderResults();
 

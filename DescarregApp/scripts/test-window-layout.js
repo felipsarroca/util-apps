@@ -38,6 +38,13 @@ app.whenReady().then(async () => {
       linksInput.value = 'https://example.com/video';
       await startDownloads();
       const item = [...state.items.values()][0];
+      applyDownloadUpdate({id: item.id, status: 'downloading', progress: 55, message: 'Descarregant'});
+      const bar = document.querySelector('.progress-bar');
+      applyDownloadUpdate({id: item.id, status: 'downloading', progress: 50, message: 'Descarregant'});
+      if (document.querySelector('.progress-bar') !== bar) throw new Error('Progress bar replaced');
+      if (state.items.get(item.id).progress !== 55) throw new Error('Progress went backwards');
+      applyDownloadUpdate({id: item.id, status: 'completed', progress: 100, message: 'Completat'});
+      if (!document.querySelector('.status-completed')) throw new Error('Completed status missing');
       applyDownloadUpdate({id: item.id, status: 'error', progress: 100,
         message: 'Ha fallat el processament final del fitxer.', details: 'Conversion failed'});
       applyDownloadUpdate({status: 'queue-completed', message: ''});

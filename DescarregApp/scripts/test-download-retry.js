@@ -23,11 +23,13 @@ async function scenario(outcomes, cancel = false) {
     const titleOnly = args.includes("--skip-download");
     if (titleOnly) extracts++;
     const outcome = titleOnly ? "" : outcomes[downloads++];
+    const stderr = typeof outcome === "object" ? outcome.stderr || "" : outcome || "";
+    const stdout = typeof outcome === "object" ? outcome.stdout || "" : "";
     process.nextTick(() => {
-      child.stdout.end(titleOnly ? "Video de prova\n" : "");
-      child.stderr.end(outcome || "");
+      child.stdout.end(titleOnly ? "Video de prova\n" : stdout);
+      child.stderr.end(stderr);
       if (cancel && !titleOnly) vm.runInContext("cancelRequested = true", context);
-      child.emit("close", outcome ? 1 : 0);
+      child.emit("close", stderr ? 1 : 0);
     });
     return child;
   };
@@ -67,4 +69,32 @@ test("cancellation takes priority over retry", async () => {
   const result = await scenario(["ERROR: HTTP Error 403"], true);
   assert.equal(result.downloads, 1);
   assert.equal(result.events.at(-1).status, "canceled");
+});
+
+test("progress never goes backwards or reaches 100 before conversion finishes", async () => {
+  const result = await scenario([{
+    stdout: [
+      'DOWNLOADS:[{"filesize":100},{"filesize":100}]',
+      'PROGRESS:40.0%', 'PROGRESS:39.0%', 'PROGRESS:100.0%',
+      'PROGRESS:1.0%', 'PROGRESS:0.5%', 'PROGRESS:100.0%',
+      '[VideoConvertor] Converting video'
+    ].join('\n') + '\n'
+  }]);
+  const progress = result.events.filter(event => event.progress !== undefined && event.status === "downloading")
+    .map(event => event.progress);
+  assert.deepEqual(progress, [...progress].sort((a, b) => a - b));
+  assert.ok(progress.every(value => value < 100));
+  assert.equal(result.events.at(-2).message, "Convertint el vídeo. Pot trigar uns minuts.");
+  assert.equal(result.events.at(-1).status, "completed");
+  assert.equal(result.events.at(-1).progress, 100);
+});
+
+test("100 percent transfer followed by a processing error is not completed", async () => {
+  const result = await scenario([{
+    stdout: 'PROGRESS:100.0%\n[VideoConvertor] Converting video\n',
+    stderr: 'ERROR: Postprocessing: Conversion failed!'
+  }]);
+  assert.ok(result.events.filter(event => event.status === "downloading")
+    .every(event => event.progress === undefined || event.progress < 100));
+  assert.equal(result.events.at(-1).status, "error");
 });
