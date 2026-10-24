@@ -516,6 +516,7 @@ function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, vid
     ...getYtDlpRuntimeArgs(tools),
     "--newline",
     "--no-color",
+    "--verbose",
     "--no-playlist",
     "--progress",
     "--progress-template",
@@ -549,10 +550,14 @@ function buildYtDlpArgs(url, format, destinationFolder, tools, audioBitrate, vid
     "before_dl:FORMAT:%(format)s",
     "--print",
     "before_dl:DOWNLOADS:%(requested_formats)j",
+    // Merge modern codecs into MKV first; AVI requires actual transcoding.
     "--merge-output-format",
-    videoFormat,
-    "--remux-video",
-    videoFormat,
+    videoFormat === "avi" ? "mkv" : videoFormat,
+    ...(videoFormat === "avi" ? [
+      "--recode-video", "avi",
+      "--postprocessor-args",
+      "VideoConvertor+ffmpeg_o:-c:v mpeg4 -q:v 3 -pix_fmt yuv420p -vf pad=ceil(iw/2)*2:ceil(ih/2)*2 -c:a libmp3lame -b:a 192k"
+    ] : ["--remux-video", videoFormat]),
     "-o",
     outputTemplate,
     url
@@ -771,11 +776,13 @@ async function runDownload(job, tools, attempt = 0) {
         });
       }
 
-      if (line.includes("[ExtractAudio]") || line.includes("[Merger]")) {
+      if (/\[(ExtractAudio|Merger|VideoConvertor|VideoRemuxer)\]/.test(line)) {
         sendDownloadEvent({
           id: item.id,
           status: "downloading",
-          message: "Processant el fitxer"
+          message: line.includes("[VideoConvertor]")
+            ? "Convertint el vídeo. Pot trigar uns minuts."
+            : "Processant el fitxer"
         });
       }
     };
@@ -802,7 +809,7 @@ async function runDownload(job, tools, attempt = 0) {
     });
 
     child.stderr.on("data", (chunk) => {
-      lastError += chunk;
+      lastError = (lastError + chunk).slice(-64000);
     });
 
     child.on("error", (error) => {
@@ -866,6 +873,9 @@ async function runDownload(job, tools, attempt = 0) {
 }
 
 function cleanError(errorText) {
+  if (/Postprocessing:|Conversion failed/i.test(errorText)) {
+    return "Ha fallat el processament final del fitxer. Consulta el detall i prem Reintentar per tornar-ho a provar.";
+  }
   if (/HTTP Error 403|HTTP Error 401|HTTP Error 429/i.test(errorText)) {
     return "El servidor ha rebutjat la descàrrega. Comprova si hi ha actualitzacions al menú Actualitza. Si continua fallant, consulta el detall de l'error.";
   }

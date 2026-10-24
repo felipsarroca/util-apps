@@ -1,6 +1,6 @@
 # DescarregApp
 
-DescarregApp 1.5.1 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
+DescarregApp 1.5.2 és una aplicació d'escriptori feta amb Electron per descarregar vídeos o àudio en local de manera senzilla. Fa servir `yt-dlp` com a motor de descàrrega, Deno per resoldre els controls JavaScript de YouTube i `FFmpeg` per convertir o fusionar fitxers.
 
 ![Captura principal de DescarregApp](docs/images/descarregapp-main.png)
 
@@ -19,6 +19,8 @@ DescarregApp 1.5.1 és una aplicació d'escriptori feta amb Electron per descarr
 - Resultats amb estat, percentatge i barra de progrés.
 - Progrés real de cada transferència.
 - Detall desplegable d'errors.
+- Botó «Reintentar» en descàrregues fallides o cancel·lades, amb el format i la carpeta originals.
+- Conversió real a AVI (vídeo MPEG-4 i àudio MP3) per evitar incompatibilitats de còdecs; pot trigar més que MP4 o MKV.
 - Preferències persistents.
 - Comprovació silenciosa de noves versions en iniciar l'app, amb avís si n'hi ha una de disponible; també es pot comprovar des del menú `Actualitza`.
 - `yt-dlp`, Deno i `FFmpeg` inclosos dins l'instal·lador de Windows.
@@ -46,6 +48,13 @@ https://ja.cat/descarregapp
 No cal instal·lar Node.js, Deno, `yt-dlp` ni `FFmpeg` a l'equip de l'usuari final. L'instal·lador ja inclou les eines necessàries.
 
 ## Actualitzacions
+
+### Novetats de la versió 1.5.2
+
+- Corregeix la sortida AVI: fusiona primer en MKV quan cal i converteix a MPEG-4/MP3 en lloc de copiar còdecs incompatibles amb AVI.
+- Afegeix «Reintentar» als errors i les cancel·lacions, mantenint l'enllaç, el format i la carpeta originals, sense duplicar l'element.
+- Mostra el format demanat en cada resultat i més informació tècnica en el detall dels errors.
+- Proves: `node scripts/test-avi.js` (Windows, eines incloses), `node --test scripts/test-download-retry.js scripts/test-update-check.js` i `npm run test:layout` (també comprova els reintents a la interfície).
 
 ### Novetats de la versió 1.5.1
 

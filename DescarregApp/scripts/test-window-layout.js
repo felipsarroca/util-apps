@@ -16,6 +16,13 @@ app.whenReady().then(async () => {
   ipcMain.handle("preferences:get", () => ({ destinationFolder: "C:\\Downloads" }));
   ipcMain.handle("preferences:save", () => ({}));
   ipcMain.handle("tools:status", () => ({ ok: true }));
+  const submissions = [];
+  let rejectSubmission = false;
+  ipcMain.handle("downloads:start", (_event, payload) => {
+    submissions.push(payload);
+    if (rejectSubmission) throw new Error("Network unavailable");
+    return { ok: true };
+  });
   const win = new BrowserWindow({ show: false, webPreferences: {
     preload: path.join(__dirname, "../src/preload.js"), sandbox: false,
     backgroundThrottling: false
@@ -25,6 +32,17 @@ app.whenReady().then(async () => {
   const layout = attachAdaptiveLayout(win, screen);
   try {
     await win.loadFile(path.join(__dirname, "../src/renderer/index.html"));
+    await win.webContents.executeJavaScript(`(async () => {
+      state.destinationFolder = 'C:/Downloads';
+      state.videoFormat = 'avi';
+      linksInput.value = 'https://example.com/video';
+      await startDownloads();
+      const item = [...state.items.values()][0];
+      applyDownloadUpdate({id: item.id, status: 'error', progress: 100,
+        message: 'Ha fallat el processament final del fitxer.', details: 'Conversion failed'});
+      applyDownloadUpdate({status: 'queue-completed', message: ''});
+      state.videoFormat = 'mkv';
+    })()`);
     // Content sizes exclude taskbar, title bar and application menu.
     for (const [name, width, height] of [
       ["desktop", 1920, 980],
@@ -56,6 +74,21 @@ app.whenReady().then(async () => {
       }
       if (name.startsWith("desktop")) assert.equal(win.webContents.getZoomFactor(), 1);
     }
+    await win.webContents.executeJavaScript(`(async () => {
+      const id = [...state.items.keys()][0];
+      await Promise.all([retryDownload(id), retryDownload(id)]);
+    })()`);
+    assert.equal(submissions.length, 2, "double click must enqueue once");
+    assert.deepEqual(submissions[1], submissions[0], "retry keeps URL, ID, format and destination");
+    rejectSubmission = true;
+    await win.webContents.executeJavaScript(`(async () => {
+      const id = [...state.items.keys()][0];
+      applyDownloadUpdate({ id, status: 'error', details: 'Failure' });
+      await retryDownload(id);
+      if (state.items.get(id).status !== 'error') throw new Error('IPC failure must remain retryable');
+      if (state.isRunning) throw new Error('Failed submission must release queue state');
+      if (!document.querySelector('.result-status button')) throw new Error('Missing retry button');
+    })()`);
     win.webContents.setZoomFactor(1.2);
     win.setContentSize(1366, 660);
     await new Promise(resolve => setTimeout(resolve, 250));

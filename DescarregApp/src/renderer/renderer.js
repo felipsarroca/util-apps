@@ -171,6 +171,15 @@ function renderResults() {
 
     details.append(title, message);
 
+    if (item.options) {
+      const settings = document.createElement("p");
+      settings.className = "result-message";
+      settings.textContent = item.options.outputFormat === "audio"
+        ? `MP3 · ${item.options.audioBitrate} kb/s`
+        : item.options.videoFormat.toUpperCase();
+      details.append(settings);
+    }
+
     if (item.details && item.status === "error") {
       const errorDetails = document.createElement("details");
       errorDetails.className = "error-details";
@@ -197,6 +206,16 @@ function renderResults() {
     percent.textContent = `${Math.round(item.progress || 0)}%`;
 
     statusArea.append(status, percent);
+
+    if (item.status === "error" || item.status === "canceled") {
+      const retryButton = document.createElement("button");
+      retryButton.type = "button";
+      retryButton.className = "secondary-button compact-button";
+      retryButton.textContent = "Reintentar";
+      retryButton.title = "Torna-ho a provar amb el format i la carpeta originals";
+      retryButton.addEventListener("click", () => retryDownload(item.id));
+      statusArea.append(retryButton);
+    }
 
     const progressTrack = document.createElement("div");
     progressTrack.className = "progress-track";
@@ -268,7 +287,15 @@ async function startDownloads() {
     return;
   }
 
-  const newItems = analysis.uniqueLinks.map(createItem);
+  const options = {
+    outputFormat: state.outputFormat,
+    audioBitrate: state.audioBitrate,
+    videoFormat: state.videoFormat,
+    destinationFolder: state.destinationFolder
+  };
+  const newItems = analysis.uniqueLinks.map((url, index) => ({
+    ...createItem(url, index), options: { ...options }
+  }));
   newItems.forEach((item) => state.items.set(item.id, item));
   state.isRunning = true;
   linksInput.value = "";
@@ -279,13 +306,30 @@ async function startDownloads() {
   renderResults();
   updateButtons();
 
-  const response = await window.descarregApp.startDownloads({
-    items: newItems.map(({ id, url }) => ({ id, url })),
-    outputFormat: state.outputFormat,
-    audioBitrate: state.audioBitrate,
-    videoFormat: state.videoFormat,
-    destinationFolder: state.destinationFolder
-  });
+  await submitDownloads(newItems, options);
+}
+
+async function retryDownload(id) {
+  const item = state.items.get(id);
+  if (!item || !["error", "canceled"].includes(item.status)) return;
+  const retried = { ...item, status: "pending", progress: 0, details: "", message: "Esperant torn" };
+  state.items.set(id, retried);
+  state.isRunning = true;
+  globalStatus.textContent = "Reintent afegit a la cua";
+  renderResults();
+  await submitDownloads([retried], item.options);
+}
+
+async function submitDownloads(newItems, options) {
+  let response;
+  try {
+    response = await window.descarregApp.startDownloads({
+      ...options,
+      items: newItems.map(({ id, url }) => ({ id, url }))
+    });
+  } catch (error) {
+    response = { ok: false, message: error.message || "No s'ha pogut iniciar la cua." };
+  }
 
   if (!response.ok) {
     for (const item of newItems) {
