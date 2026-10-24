@@ -6,19 +6,19 @@
     {
       title: "Gestió de l’aula",
       apps: [
-        { dir: "Ruleta", name: "ruleta", link: "ruletapp", tint: "--pastel-peach", text: "Una roda amb els noms de la classe o amb 600 propostes de 30 temes. Sense repeticions i amb historial.", tags: ["Torns", "Dinàmiques", "Biblioteca"] },
-        { dir: "Sorteig", name: "sorteig", link: "sorteigapp", tint: "--pastel-mint", text: "Paperets que surten d’un barret: tria’n uns quants o ordena tota la llista.", tags: ["Exposicions", "Càrrecs", "Temes"] },
-        { dir: "Equips", name: "equips", link: "equipsapp", tint: "--pastel-blue", text: "Grups equilibrats a l’atzar, amb condicions, nivells, noms d’equip i rols cooperatius.", tags: ["Cooperatiu", "Parelles", "Tornejos"] },
-        { dir: "Temps", name: "temps", link: "tempsapp", tint: "--pastel-sand", text: "Compte enrere amb anell de colors, cronòmetre amb marques, patata calenta i fases encadenades (1-2-4, debat, Tabata).", tags: ["Temps de treball", "Fases", "Jocs"] },
+        { dir: "Ruleta", name: "ruleta", link: "ruletapp", tint: "--pastel-peach", text: "Una roda amb els noms de la classe o amb 600 propostes de 30 temes. Sense repeticions i amb historial." },
+        { dir: "Sorteig", name: "sorteig", link: "sorteigapp", tint: "--pastel-mint", text: "Paperets que surten d’un barret: tria’n uns quants o ordena tota la llista." },
+        { dir: "Equips", name: "equips", link: "equipsapp", tint: "--pastel-blue", text: "Grups equilibrats a l’atzar, amb condicions, nivells, noms d’equip i rols cooperatius." },
+        { dir: "Temps", name: "temps", link: "tempsapp", tint: "--pastel-sand", text: "Compte enrere amb anell de colors, cronòmetre amb marques, patata calenta i fases encadenades (1-2-4, debat, Tabata)." },
       ],
     },
     {
       title: "Jocs i probabilitat",
       apps: [
-        { dir: "Moneda", name: "moneda", link: "monedapp", tint: "--pastel-sand", text: "D’una a deu monedes, cara i creu personalitzables i la llei dels grans nombres en directe.", tags: ["Probabilitat", "Decisions"] },
-        { dir: "Daus", name: "daus", link: "dausapp", tint: "--pastel-rose", text: "Fins a sis daus de 4 a 20 cares, amb suma o producte i la distribució dels resultats.", tags: ["Càlcul", "Estadística", "Jocs"] },
-        { dir: "Cartes", name: "cartes", link: "cartesapp", tint: "--pastel-blue", text: "Baralla espanyola o francesa, amb reposició o sense, i les probabilitats de les que queden.", tags: ["Probabilitat", "Repartiment"] },
-        { dir: "Nombres", name: "nombres", link: "nombresapp", tint: "--pastel-lilac", text: "Nombres en un interval, nombre secret, bombo amb tauler i veu, i lletres per a l’Stop.", tags: ["Bingo", "Llengua", "Matemàtiques"] },
+        { dir: "Moneda", name: "moneda", link: "monedapp", tint: "--pastel-sand", text: "D’una a deu monedes, cara i creu personalitzables i la llei dels grans nombres en directe." },
+        { dir: "Daus", name: "daus", link: "dausapp", tint: "--pastel-rose", text: "Fins a sis daus de 4 a 20 cares, amb suma o producte i la distribució dels resultats." },
+        { dir: "Cartes", name: "cartes", link: "cartesapp", tint: "--pastel-blue", text: "Baralla espanyola o francesa, amb reposició o sense, i les probabilitats de les que queden." },
+        { dir: "Nombres", name: "nombres", link: "nombresapp", tint: "--pastel-lilac", text: "Nombres en un interval, nombre secret, bombo amb tauler i veu, i lletres per a l’Stop." },
       ],
     },
   ];
@@ -35,15 +35,8 @@
       const card = document.createElement("article");
       card.className = "app-card";
       card.style.setProperty("--tint", `var(${app.tint})`);
-      card.innerHTML = `<div class="card-top"><img src="${app.dir}/favicon.svg" alt="" width="76" height="76" /><span class="card-arrow" aria-hidden="true">→</span></div><h3><a class="card-link" href="${app.dir}/">${app.name}<span>.</span></a></h3><p></p><div class="tags"></div><div class="short-link"><span>Enllaç curt: <code>ja.cat/${app.link}</code></span><button type="button" class="copy-link" aria-label="Copia l’enllaç ja.cat/${app.link}">Copia</button></div>`;
+      card.innerHTML = `<div class="card-top"><img src="${app.dir}/favicon.svg" alt="" width="76" height="76" /><span class="card-arrow" aria-hidden="true">→</span></div><h3><a class="card-link" href="${app.dir}/">${app.name}<span>.</span></a></h3><p></p><div class="short-link"><span>Enllaç curt: <code>ja.cat/${app.link}</code></span><button type="button" class="copy-link" aria-label="Copia l’enllaç ja.cat/${app.link}">Copia</button></div>`;
       card.querySelector("p").textContent = app.text;
-      card.querySelector(".tags").append(
-        ...app.tags.map((t) => {
-          const span = document.createElement("span");
-          span.textContent = t;
-          return span;
-        }),
-      );
       card.querySelector(".copy-link").addEventListener("click", () => A.copyText(`https://ja.cat/${app.link}`));
       cards.append(card);
     }

@@ -1,6 +1,6 @@
 /* Atzar a l'aula — service worker: les apps funcionen sense connexió un cop instal·lades.
    Primer es prova la xarxa (sempre la versió més nova) i, si no n'hi ha, es fa servir la còpia desada. */
-const CACHE = "atzar-1.10";
+const CACHE = "atzar-1.11";
 const APPS = ["Ruleta", "Sorteig", "Equips", "Temps", "Moneda", "Daus", "Cartes", "Nombres"];
 const ASSETS = [
   "./",
