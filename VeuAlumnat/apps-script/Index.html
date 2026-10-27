@@ -1,27 +1,72 @@
 <!doctype html><html lang="ca"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-:root{font-family:Arial,sans-serif;color:#292622;background:#f5f2ed;--brand:#831e12;--line:#ded8cf;--muted:#655f57}*{box-sizing:border-box}body{margin:0;background:#f5f2ed}
-header{background:var(--brand);color:#fff;padding:16px clamp(16px,4vw,48px)}header h1{font-size:21px;margin:0 0 3px}header p{margin:0;font-size:13px;opacity:.9}
-main{max-width:1060px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}#message{overflow-wrap:anywhere}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
-h2{font-size:18px;margin:0 0 10px;color:var(--brand)}h3{font-size:15px;margin:16px 0 6px}p{line-height:1.45}
-label{display:block;font-size:13px;font-weight:bold;margin:10px 0 4px}input,select{width:100%;padding:9px;border:1px solid #aaa39a;border-radius:6px;font-size:14px;background:#fff}
+:root{--brand:#8a1f12;--brand-2:#a8321f;--brand-soft:#f7ebe8;--ink:#25221e;--muted:#6b645b;--line:#e6dfd4;--bg:#f3efe8;--card:#fff;--ok:#1f7a3a;--ok-soft:#e4f2e8;--warn:#875700;--warn-soft:#fcf1d6;--bad:#a32616;--bad-soft:#fbe8e4;--gold:#c99a2e;--radius:14px;--shadow:0 1px 2px #0000000d,0 4px 16px #0000000a;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-size:15px}
+header{background:linear-gradient(120deg,#761a0f,#9c2a19);color:#fff;padding:12px clamp(16px,4vw,48px);display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:4px solid var(--gold)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}.mark{width:42px;height:42px;border-radius:12px;background:#fff;color:var(--brand);display:grid;place-items:center;font-size:22px;flex:none}
+header h1{font-size:21px;margin:0 0 2px;letter-spacing:.2px}header p{margin:0;font-size:13px;opacity:.88}
+.head-actions{display:flex;align-items:center;gap:12px;flex:none}.who{font-size:12.5px;opacity:.9}
+main{max-width:1080px;margin:auto;padding:18px 16px 96px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;min-width:0;box-shadow:var(--shadow)}
+h2{font-size:19px;margin:0 0 4px;color:var(--brand)}h3{font-size:15px;margin:18px 0 6px}p{line-height:1.5;margin:8px 0}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+input,select{width:100%;padding:9px 10px;border:1px solid #c9c0b4;border-radius:8px;font-size:14px;background:#fff;color:var(--ink);font-family:inherit}
+input:focus,select:focus{outline:3px solid #efc6bc;outline-offset:0;border-color:var(--brand)}button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #efc6bc;outline-offset:2px}
+button{border:0;border-radius:8px;background:var(--brand);color:#fff;padding:10px 16px;cursor:pointer;font-weight:600;margin:8px 8px 0 0;font-size:14px;font-family:inherit;transition:background .15s}
+button:hover{background:var(--brand-2)}button.secondary{background:#fff;color:var(--brand);border:1px solid #d9b6ae}button.secondary:hover{background:var(--brand-soft)}button:disabled{opacity:.55;cursor:wait}
+a{color:var(--brand)}.hidden{display:none!important}.muted{color:var(--muted);font-size:13px}.ok{color:var(--ok)}
+.warn{background:var(--bad-soft);color:var(--bad);padding:9px 12px;border-radius:8px;margin:8px 0;font-size:14px}
+.row{border-top:1px solid var(--line);padding:8px 0;font-size:14px;overflow-wrap:anywhere}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.bar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.bar>div{flex:1;min-width:220px}
-button{border:0;border-radius:6px;background:var(--brand);color:#fff;padding:10px 14px;cursor:pointer;font-weight:bold;margin:8px 7px 0 0;font-size:14px}button.secondary{background:#fff;color:var(--brand);border:1px solid var(--brand)}button:disabled{opacity:.5;cursor:wait}
-.muted{color:var(--muted);font-size:13px}.notice{padding:10px 12px;border-radius:6px;background:#f7edce;white-space:pre-wrap}#message.error{background:#fce6e3;color:#7d1c10}#message.ok{background:#e7f3e9;color:#235d31}
-.ok{color:#235d31}.warn{background:#fce6e3;color:#7d1c10;padding:8px 10px;border-radius:6px;margin:8px 0}
-.row{border-top:1px solid #e5e0d8;padding:8px 0;font-size:14px;overflow-wrap:anywhere}.row a,a{color:var(--brand)}.hidden{display:none!important}
-.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.step{margin:0;background:#fff;color:var(--muted);border:1px solid var(--line);text-align:left;padding:9px 10px;font-weight:normal}
-.step b{display:block;font-size:14px;color:#292622}.step.done{background:#e7f3e9;border-color:#b9d8bf}.step.now{border:2px solid var(--brand)}.step.now b{color:var(--brand)}.step.shown{box-shadow:0 0 0 3px #e8cfc9}
-.stat{font-size:15px;margin:6px 0}details{margin:10px 0}summary{cursor:pointer;font-weight:bold;color:var(--brand)}details ul{margin:8px 0;padding-left:20px;line-height:1.5;font-size:14px}
-.choice{display:flex;gap:8px;align-items:flex-start;font-weight:normal;font-size:14px;margin:6px 0}.choice input{width:auto;margin-top:3px}.pick{width:auto!important;flex:none!important;min-width:0!important;transform:scale(1.2)}.bulk{background:#f7f3ec;border-radius:6px;padding:8px}.bulk .choice{margin:0}.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
-.setup{border-top:1px solid var(--line);padding:4px 0 10px}.setup h3{margin-top:12px}.state-ok{color:#235d31;font-weight:bold}.state-todo{color:#7d1c10;font-weight:bold}table.mini{border-collapse:collapse;font-size:13px;margin:6px 0}table.mini td,table.mini th{border-bottom:1px solid var(--line);padding:3px 10px 3px 0;text-align:left}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px}.help-btn{margin:0;background:#fff;color:var(--brand);flex:none}
-dialog#help{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 12px 40px #0005}dialog#help::backdrop{background:#0006}
+details{margin:10px 0}summary{cursor:pointer;font-weight:600;color:var(--brand)}details ul{margin:8px 0;padding-left:20px;line-height:1.5;font-size:14px}
+.stat{font-size:15px;margin:6px 0}
+/* Capçalera de la recollida */
+.hero{display:flex;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;align-items:flex-start}
+.kicker{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.hero h2{font-size:22px;margin:2px 0 6px}.hero-links{display:flex;gap:8px;flex-wrap:wrap}.hero-links a{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;text-decoration:none;font-size:13.5px;font-weight:600;background:#fcfaf7}.hero-links a:hover{background:var(--brand-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600;background:#efeae2;color:var(--muted);white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.bad{background:var(--bad-soft);color:var(--bad)}.chip.brand{background:var(--brand-soft);color:var(--brand)}
+.next{display:flex;gap:12px;align-items:flex-start;background:var(--brand-soft);border-left:5px solid var(--brand);border-radius:10px;padding:12px 14px;margin:14px 0 0}
+.next.ok{background:var(--ok-soft);border-color:var(--ok)}.next.warn{background:var(--warn-soft);border-color:var(--gold)}
+.next .ico{font-size:22px;line-height:1.1}.next b{display:block;margin-bottom:2px;font-size:15px}.next p{margin:0;font-size:14px}.next button{margin-top:8px}
+/* Passos */
+.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 6px 8px;box-shadow:var(--shadow)}
+.step{position:relative;margin:0;background:none;color:var(--muted);border:0;padding:4px 4px 6px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;font-weight:400;border-radius:10px}
+.step:hover{background:#faf6f0}.step::before{content:"";position:absolute;top:21px;right:50%;width:100%;height:3px;background:var(--line)}.step:first-child::before{display:none}.step.done::before,.step.now::before{background:var(--ok)}
+.dot{position:relative;z-index:1;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid #d8d0c4;font-weight:700;color:var(--muted)}
+.step.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}.step.now .dot{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 0 0 5px var(--brand-soft)}
+.step b{font-size:14px;color:var(--ink)}.step small{font-size:12px;line-height:1.3}.step.shown{background:#faf6f0}.step.shown b{color:var(--brand);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:var(--gold)}
+/* Panell */
+.lead{color:var(--muted);margin:2px 0 10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}.kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fcfaf7}.kpi b{display:block;font-size:24px;line-height:1.2}.kpi span{font-size:12.5px;color:var(--muted)}.kpi.bad b{color:var(--bad)}.kpi.ok b{color:var(--ok)}
+.progress{margin:12px 0}.progress .lbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;gap:8px;color:var(--muted)}.progress .lbl b{font-size:14px;color:var(--ink)}
+.track{height:10px;background:#eee7dd;border-radius:999px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--brand),#c0442e);border-radius:999px;transition:width .4s}.fill.ok{background:var(--ok)}
+.box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0;background:#fcfaf7}.box h3{margin:0 0 6px}
+.checklist{list-style:none;padding:0;margin:8px 0;display:grid;gap:6px}.checklist li{display:flex;gap:8px;align-items:baseline;font-size:14px}.checklist .i{font-weight:700;width:18px;flex:none}.checklist .y{color:var(--ok)}.checklist .n{color:var(--bad)}
+table.list{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}table.list th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:2px solid var(--line);padding:6px 8px}table.list td{border-bottom:1px solid var(--line);padding:7px 8px;overflow-wrap:anywhere}
+.linkrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.linkrow input{flex:1;min-width:200px;width:auto;background:#fcfaf7}.linkrow button{margin:0}
+.pdfs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 14px;margin:8px 0;font-size:14px}
+/* Formularis de nova recollida i administració */
+.choice{display:flex;gap:8px;align-items:flex-start;font-weight:normal;font-size:14px;margin:6px 0}.choice input{width:auto;margin-top:3px}
+.pick{width:auto!important;flex:none!important;min-width:0!important;transform:scale(1.2)}.bulk{background:#f7f3ec;border-radius:8px;padding:8px}.bulk .choice{margin:0}
+.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
+.setup{border-top:1px solid var(--line);padding:4px 0 10px}.setup h3{margin-top:12px}.state-ok{color:var(--ok);font-weight:600}.state-todo{color:var(--bad);font-weight:600}
+table.mini{border-collapse:collapse;font-size:13px;margin:6px 0}table.mini td,table.mini th{border-bottom:1px solid var(--line);padding:3px 10px 3px 0;text-align:left}
+#previewBox{border:2px solid var(--ok);background:linear-gradient(0deg,#fff,var(--ok-soft))}#previewBox h2{color:var(--ok)}
+/* Avisos i finestres */
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;width:max-content;max-width:min(680px,calc(100vw - 24px));background:#2b2724;color:#fff;padding:11px 12px 11px 16px;border-radius:12px;box-shadow:0 8px 30px #0004;display:flex;gap:10px;align-items:flex-start;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
+.toast.ok{background:#1f5f33}.toast.error{background:#8d2214}.toast button{margin:0;background:transparent;color:#fff;padding:0 4px;font-size:16px;line-height:1.2}.toast button:hover{background:#ffffff22}
+.spin{width:16px;height:16px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;flex:none;margin-top:2px}.toast:not(.busy) .spin{display:none}@keyframes sp{to{transform:rotate(360deg)}}
+.help-btn{margin:0;background:#fff;color:var(--brand);flex:none}.help-btn:hover{background:var(--brand-soft)}
+dialog.dlg{border:0;border-radius:14px;padding:0;width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 12px 40px #0005}dialog.dlg::backdrop{background:#0006}
 .help-head{position:sticky;top:0;background:var(--brand);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center}.help-head h2{color:#fff;margin:0}.help-head button{margin:0;background:#fff;color:var(--brand)}
-.help-body{padding:6px 18px 16px;font-size:14px;line-height:1.5}.help-body ol,.help-body ul{padding-left:20px}.help-body li{margin:3px 0}
-@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}main{padding:10px}.card{padding:14px}button{width:100%;margin-right:0}.help-btn,.help-head button{width:auto}header{padding:12px 16px}header h1{font-size:19px}}
-</style></head><body><header><div><h1>La veu de l’alumnat</h1><p>Autoavaluació, informes i lliurament a les famílies · Escola Ramon Pont</p></div><button class="help-btn" onclick="$('help').showModal()" aria-haspopup="dialog">? Ajuda</button></header><main>
-<dialog id="help" aria-labelledby="helpTitle"><div class="help-head"><h2 id="helpTitle">Ajuda</h2><button onclick="$('help').close()" aria-label="Tanca l’ajuda">✕ Tanca</button></div><div class="help-body">
+.help-body{padding:6px 18px 16px;font-size:14px;line-height:1.55}.help-body ol,.help-body ul{padding-left:20px}.help-body li{margin:4px 0}
+.mailbody{white-space:pre-wrap;background:#fcfaf7;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.55}
+@media(max-width:760px){.steps{padding:10px 2px 6px}.step small{display:none}.dot{width:30px;height:30px}.step::before{top:19px}.step b{font-size:12.5px}}
+@media(max-width:700px){main{padding:10px 10px 96px}.card{padding:14px}button{width:100%;margin-right:0}.help-btn,.help-head button,.toast button,.step,.linkrow button{width:auto}header{padding:10px 16px}header h1{font-size:18px}header p,.who,.mark{display:none}.hero h2{font-size:19px}}
+</style></head><body><header><div class="brand"><div class="mark" aria-hidden="true">💬</div><div><h1>La veu de l’alumnat</h1><p>Autoavaluació, informes i lliurament a les famílies · Escola Ramon Pont</p></div></div><div class="head-actions"><span class="who" id="who"></span><button class="help-btn" onclick="$('help').showModal()" aria-haspopup="dialog">? Ajuda</button></div></header><main>
+<dialog id="help" class="dlg" aria-labelledby="helpTitle"><div class="help-head"><h2 id="helpTitle">Ajuda</h2><button onclick="$('help').close()" aria-label="Tanca l’ajuda">✕ Tanca</button></div><div class="help-body">
 <p><b>Què fa l’aplicació?</b> Converteix l’autoavaluació que l’alumnat respon en un formulari de Google en un informe PDF per a cada alumne i l’envia per correu a la seva família.</p>
 <h3>Els cinc passos</h3><ol>
 <li><b>Prepara.</b> Prem «＋ Nova recollida», tria curs i nom (p. ex. «1a avaluació»). Si ja tens el formulari, tria «Ja tinc el formulari» i enganxa’n l’enllaç d’edició. Si vols partir de l’anterior, tria «Prepara’n un de nou» i modifica’l amb «Obre el formulari per editar-lo». Amb «Previsualitza l’informe amb respostes d’exemple» veuràs com quedarà.</li>
@@ -43,15 +88,17 @@ dialog#help{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 3
 <li><b>No veig cap curs o recollida.</b> Demana a l’administració que t’afegeixi com a tutor del teu curs.</li></ul>
 <p><a href="https://felipsarroca.github.io/util-apps/VeuAlumnat/instruccions/" target="_blank" rel="noopener">Guia completa amb imatges ↗</a></p>
 </div></dialog>
-<div id="message" class="notice">S’està carregant l’espai de gestió…</div>
-<section class="card"><div class="bar"><div><label for="campaign">Recollida</label><select id="campaign" onchange="loadCampaign()"></select></div><button class="secondary" onclick="toggleNew()">＋ Nova recollida</button></div>
+<div id="message" class="toast busy" role="status" aria-live="polite"><span class="spin"></span><span id="msgText">S’està carregant l’espai de gestió…</span><button onclick="hideMessage()" aria-label="Tanca l’avís">✕</button></div>
+<dialog id="mailDlg" class="dlg" aria-labelledby="mailTitle"><div class="help-head"><h2 id="mailTitle">Previsualització del correu</h2><button onclick="$('mailDlg').close()" aria-label="Tanca">✕ Tanca</button></div><div class="help-body"><p class="muted">Assumpte</p><p id="mailSubject"><b></b></p><p class="muted">Missatge (el PDF va adjunt)</p><div id="mailBody" class="mailbody"></div></div></dialog>
+<section class="card"><div class="bar"><div><label for="campaign">Tria la recollida</label><select id="campaign" onchange="loadCampaign()"></select></div><button class="secondary" onclick="toggleNew()">＋ Nova recollida</button></div>
 <div id="newPanel" class="hidden"><h3>Nova recollida</h3><div class="grid"><div><label for="course">Curs</label><select id="course"></select></div><div><label for="year">Curs escolar</label><input id="year"></div><div><label for="label">Nom de la recollida</label><input id="label" list="labels" placeholder="1a avaluació"><datalist id="labels"><option>Preavaluació</option><option>1a avaluació</option><option>2a avaluació</option><option>3a avaluació</option></datalist></div></div>
 <label>Com vols començar?</label>
 <label class="choice"><input type="radio" name="mode" value="directe" checked onchange="modeUi()"> <span><b>Ja tinc el formulari</b> (l’alumnat ja l’ha respost o el respondrà): enganxo l’enllaç i l’app en farà els informes.</span></label>
 <label class="choice"><input type="radio" name="mode" value="copia" onchange="modeUi()"> <span><b>Prepara’n un de nou</b> copiant el de la recollida anterior del curs, per modificar-lo abans d’obrir-lo a l’alumnat.</span></label>
 <label for="sourceUrl" id="sourceLabel"></label><input id="sourceUrl" placeholder="https://docs.google.com/forms/d/…/edit"><p class="muted" id="sourceHelp"></p>
 <button onclick="createUi()">Crea la recollida</button><p class="muted">L’informe segueix l’estructura del formulari concret: cada secció és un apartat i cada pregunta de valoració, un bloc.</p></div></section>
-<nav id="steps" class="steps hidden"></nav>
+<section id="hero" class="card hidden"></section>
+<nav id="steps" class="steps hidden" aria-label="Passos de la recollida"></nav>
 <section id="panel" class="card hidden"></section>
 <section id="previewBox" class="card hidden"><h2>Previsualització llesta</h2><p>El PDF és exactament el que rebran les famílies. S’obre en una pestanya nova.</p><a id="previewLink" target="_blank" rel="noopener"><button>Obre el PDF ↗</button></a><button class="secondary" onclick="$('previewBox').classList.add('hidden')">Tanca</button></section>
 <section id="admin" class="card hidden"><details id="adminDetails"><summary id="adminSummary">Preparació del centre (administració)</summary>
@@ -73,14 +120,17 @@ function h(tag,attrs,...kids){const el=document.createElement(tag);Object.entrie
 function link(url,text){return h('a',{href:url,target:'_blank',rel:'noopener'},text)}
 function btn(text,fn,secondary){return h('button',{class:secondary?'secondary':'',onclick:()=>run(fn)},text)}
 function call(name,...args){return new Promise((ok,fail)=>google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[name](...args))}
-function message(s,err=false){$('message').textContent=s;$('message').className='notice '+(err?'error':'ok')}
-async function run(fn){try{document.querySelectorAll('button').forEach(b=>b.disabled=true);await fn()}catch(e){message(e.message||String(e),true)}finally{document.querySelectorAll('button').forEach(b=>b.disabled=false)}}
+let msgTimer=0,busy=false,autoTimer=0;
+/* Avís flotant: sempre visible encara que la pàgina estigui desplaçada. Els d'èxit s'amaguen sols; els errors es queden. */
+function message(s,err=false,working=false){clearTimeout(msgTimer);$('msgText').textContent=s;$('message').className='toast '+(err?'error':working?'busy':'ok');if(!err&&!working)msgTimer=setTimeout(hideMessage,8000)}
+function hideMessage(){$('message').classList.add('hidden')}
+async function run(fn){busy=true;message('S’està treballant…',false,true);try{document.querySelectorAll('button').forEach(b=>b.disabled=true);await fn()}catch(e){message(e.message||String(e),true)}finally{busy=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);if($('message').classList.contains('busy'))hideMessage()}}
 function fillSelect(el,items,getValue,getLabel){el.replaceChildren(...items.map(x=>h('option',{value:getValue(x)},getLabel(x))))}
 const STATUS={ESBORRANY:'esborrany',OBERTA:'oberta',TANCADA:'tancada',APROVADA:'aprovada'};
-async function refresh(selectId){state=await call('bootstrap');fillSelect($('course'),state.courses,x=>x,x=>x);fillSelect($('tutorCourse'),state.courses,x=>x,x=>x);
+async function refresh(selectId){state=await call('bootstrap');$('who').textContent=state.email;fillSelect($('course'),state.courses,x=>x,x=>x);fillSelect($('tutorCourse'),state.courses,x=>x,x=>x);
 fillSelect($('campaign'),state.campaigns,x=>x.id,x=>x.course+' · '+x.label+' · '+x.year+' ('+(STATUS[x.status]||x.status)+')');if(selectId)$('campaign').value=selectId;
 $('admin').classList.toggle('hidden',!state.admin);if(state.admin){$('controlLink').href=state.controlUrl;$('replyTo').value=state.replyTo||'';showSending();showAccess(state.access);showSetup(state.setup)}
-if(!state.campaigns.length){$('newPanel').classList.remove('hidden');$('steps').classList.add('hidden');$('panel').classList.add('hidden');return}await loadCampaignCore(true)}
+if(!state.campaigns.length){$('newPanel').classList.remove('hidden');$('steps').classList.add('hidden');$('panel').classList.add('hidden');$('hero').classList.add('hidden');return}await loadCampaignCore(true)}
 function showSending(){$('sendingState').textContent='Enviament a les famílies: '+(state.sendingEnabled?'ACTIVAT':'desactivat');$('sendingToggle').textContent=state.sendingEnabled?'Desactiva l’enviament':'Activa l’enviament'}
 function modeUi(){const direct=document.querySelector('input[name=mode]:checked').value==='directe';$('sourceLabel').textContent=direct?'Enllaç d’edició del formulari':'Formulari de partida (opcional)';$('sourceHelp').textContent=direct?'Obre el formulari a Google Forms i copia l’adreça de la barra del navegador (acaba en «/edit»). Si és d’un altre compte, primer afegeix-hi l’administració de l’app com a editora.':'Si el deixes buit, es copia el formulari de l’última recollida d’aquest curs.'}
 function toggleNew(){$('newPanel').classList.toggle('hidden')}
@@ -88,9 +138,43 @@ function currentStep(o){if(o.status==='ESBORRANY')return 0;if(o.status==='OBERTA
 async function loadCampaignCore(jump){ov=await call('campaignOverview',$('campaign').value);if(jump)shown=currentStep(ov);render()}
 function loadCampaign(){run(async()=>{await loadCampaignCore(true);$('previewBox').classList.add('hidden');message('Recollida carregada.')})}
 async function reload(){await loadCampaignCore(false)}
-function render(){const now=currentStep(ov);$('steps').classList.remove('hidden');$('panel').classList.remove('hidden');
-$('steps').replaceChildren(...STEPS.map((s,i)=>h('button',{class:'step'+(i<now?' done':'')+(i===now?' now':'')+(i===shown?' shown':''),onclick:()=>{shown=i;render()}},h('b',{},(i+1)+' · '+s),i<now?'Fet':i===now?'Pas actual':'Pendent')));
-$('panel').replaceChildren(...[panelPrepare,panelCollect,panelReview,panelGenerate,panelSend][shown](ov,now))}
+function chip(text,kind){return h('span',{class:'chip '+(kind||'')},text)}
+function pct(a,b){return b?Math.round(100*a/b):0}
+function prog(label,a,b,done){return h('div',{class:'progress'},h('div',{class:'lbl'},h('span',{},label),h('b',{},a+' de '+b+(b?' · '+pct(a,b)+' %':''))),h('div',{class:'track'},h('div',{class:'fill'+(done||(b&&a>=b)?' ok':''),style:'width:'+pct(a,b)+'%'})))}
+function kpis(list){return h('div',{class:'kpis'},list.map(([n,t,k])=>h('div',{class:'kpi '+(k||'')},h('b',{},String(n)),h('span',{},t))))}
+function goTo(i){shown=i;render();$('steps').scrollIntoView({behavior:'smooth',block:'start'})}
+const DELIVERY={PREPARAT:['pendent',''],EN_CURS:['enviant…','warn'],ENVIAT:['enviat','ok'],CONFIRMAT:['lectura confirmada ✓','ok']};
+function sentCount(o){return o.recipients.filter(r=>r.status==='ENVIAT'||r.status==='CONFIRMAT').length}
+function pendingIssues(o){return o.issues.length+o.legacyToCheck.length}
+/* Resum de cada pas, perquè el seguiment es vegi sense entrar-hi. */
+function stepMeta(o,i){if(i===0)return o.origin==='HISTORICA'?'Formulari importat':o.status==='ESBORRANY'?'Esborrany':'Formulari a punt';
+if(i===1)return o.status==='ESBORRANY'?'Encara tancat':o.entries.length+' de '+o.students+' han respost';
+if(i===2)return o.status==='ESBORRANY'||o.status==='OBERTA'?'Quan es tanqui':pendingIssues(o)?pendingIssues(o)+' per resoldre':'Sense incidències';
+if(i===3)return o.reports.length+' de '+o.entries.length+' PDF';
+return o.recipients.length?sentCount(o)+' de '+o.recipients.length+' enviats':'Pendent'}
+function nextAction(o,now){const n=o.entries.length,pend=pendingIssues(o),sent=sentCount(o);
+if(o.status==='ESBORRANY')return['brand','✏️','Prepara el formulari','Revisa’l, modifica’l si cal i previsualitza l’informe. Quan l’alumnat estigui a punt, obre’l.'];
+if(o.status==='OBERTA')return['brand','⏳','L’alumnat està responent',n+' de '+o.students+' alumnes han respost. Quan hagin acabat, tanca el formulari.'];
+if(now===2)return pend?['warn','⚠️','Hi ha '+pend+' incidències per resoldre','Resol-les al pas «Revisa» abans de generar els informes.']:['warn','📭','Encara no hi ha cap resposta identificada','Comprova que l’alumnat ha respost amb el compte de l’escola.'];
+if(now===3)return['brand','📄','Genera els informes','Falten '+(n-o.reports.length)+' PDF. El procés continua sol fins que els acaba.'];
+if(o.status==='APROVADA')return sent<o.recipients.length?['warn','📨','Enviament a mitges','Queden '+(o.recipients.length-sent)+' correus per enviar. Continua l’enviament.']:['ok','✅','Recollida enviada',sent+' correus enviats'+(o.recipients.some(r=>r.status==='CONFIRMAT')?' · '+o.recipients.filter(r=>r.status==='CONFIRMAT').length+' lectures confirmades':'')+'.'];
+if(!o.contactsApproved)return['warn','📇','Falta validar el directori de famílies','Ho fa l’administració a «Preparació del centre». Mentrestant, pots imprimir els informes o fer-te una prova.'];
+if(!o.recipients.length)return['brand','📨','Prepara els destinataris','Els '+o.reports.length+' informes estan fets. Prepara la llista de famílies que els rebran.'];
+if(!o.sendingEnabled)return['warn','🔒','Tot a punt, però l’enviament està desactivat','Pots enviar-te una prova. L’enviament real l’activa l’administració.'];
+return['brand','📨','Tot a punt per enviar','Revisa els destinataris, envia’t una prova i, quan ho vegis bé, aprova l’enviament.']}
+const ORIGIN={COPIA:'Còpia nova',DIRECTE:'Formulari propi',HISTORICA:'Importada'};
+const STATUS_CHIP={ESBORRANY:['Esborrany',''],OBERTA:['Oberta a l’alumnat','warn'],TANCADA:['Tancada','brand'],APROVADA:['Enviada','ok']};
+function renderHero(o,now){const [kind,ico,title,text]=nextAction(o,now),st=STATUS_CHIP[o.status]||[o.status,''];
+const next=h('div',{class:'next '+kind},h('div',{class:'ico','aria-hidden':'true'},ico),h('div',{},h('b',{},'Ara toca: '+title),h('p',{},text),shown!==now?h('button',{onclick:()=>goTo(now)},'Vés al pas '+(now+1)+' · '+STEPS[now]+' →'):''));
+$('hero').replaceChildren(h('div',{class:'hero'},h('div',{},h('div',{class:'kicker'},'Recollida · '+o.year),h('h2',{},o.course+' · '+o.label),
+h('div',{class:'chips'},chip(st[0],st[1]),chip(ORIGIN[o.origin]||o.origin),chip(o.entries.length+'/'+o.students+' respostes',o.students&&o.entries.length>=o.students?'ok':''),o.reports.length?chip(o.reports.length+' PDF','brand'):'')),
+h('div',{class:'hero-links'},o.editUrl?link(o.editUrl,'✏️ Formulari ↗'):'',o.folderUrl?link(o.folderUrl,'📁 Carpeta ↗'):'')),next);$('hero').classList.remove('hidden')}
+function render(){const now=currentStep(ov);$('steps').classList.remove('hidden');$('panel').classList.remove('hidden');renderHero(ov,now);
+$('steps').replaceChildren(...STEPS.map((s,i)=>h('button',{class:'step'+(i<now?' done':'')+(i===now?' now':'')+(i===shown?' shown':''),'aria-current':i===shown?'step':'false',onclick:()=>{shown=i;render()}},
+h('span',{class:'dot'},i<now?'✓':String(i+1)),h('b',{},s),h('small',{},stepMeta(ov,i)))));
+$('panel').replaceChildren(...[panelPrepare,panelCollect,panelReview,panelGenerate,panelSend][shown](ov,now));
+/* Mentre el formulari és obert, les dades s'actualitzen soles cada minut. */
+clearTimeout(autoTimer);if(ov.status==='OBERTA')autoTimer=setTimeout(()=>{if(!busy&&!document.hidden)reload().catch(()=>{})},60000)}
 function rules(){return h('details',{},h('summary',{},'Com es construeix l’informe a partir del formulari'),h('ul',{},
 h('li',{},'Cada secció del formulari és un apartat de l’informe, amb el seu títol (p. ex. «Matemàtiques» o «Com em sento a l’escola»).'),
 h('li',{},'Una pregunta d’escala o valoració obre un bloc. Si és d’1 a 4, es mostra amb l’escala oficial (NA, AS, AN, AE); si no, com «4 de 5».'),
@@ -99,65 +183,70 @@ h('li',{},'Les caselles de selecció surten com a llista i les graelles, com a t
 h('li',{},'Escriu «[tutor]» al títol d’una pregunta o secció perquè no surti a l’informe.'),
 h('li',{},'Les respostes buides no surten; si una optativa no té cap resposta, desapareix.'),
 h('li',{},'La pregunta del nom no surt a l’informe: l’alumne s’identifica pel correu escolar.')))}
-function panelPrepare(o,now){const s=o.summary,out=[h('h2',{},'1 · Prepara el formulari')];
-if(o.origin==='HISTORICA'){out.push(h('p',{},'Recollida importada d’un formulari que ja tenia respostes. El formulari original no es modifica des d’aquí.'),rules());return out}
-out.push(h('p',{},'Revisa el formulari i, si cal, modifica’l: afegeix o treu preguntes i seccions. L’informe en seguirà l’estructura.'),h('p',{},link(o.editUrl,'Obre el formulari per editar-lo ↗')),
-h('p',{class:'stat'},'Ara té '+s.sections+' seccions, '+s.levels+' preguntes de valoració i '+s.open+' preguntes obertes.'));
+function panelPrepare(o,now){const s=o.summary,out=[h('h2',{},'1 · Prepara el formulari'),h('p',{class:'lead'},'L’informe segueix l’estructura del formulari: cada secció és un apartat i cada pregunta de valoració, un bloc.')];
+out.push(kpis([[s.sections,'seccions'],[s.levels,'preguntes de valoració'],[s.open,'preguntes obertes']]));
 if(!o.collectsEmail)out.push(h('div',{class:'warn'},'Aquest formulari no recull el correu de l’alumnat: caldrà validar a mà de qui és cada resposta.'));
-out.push(rules(),btn('Previsualitza l’informe amb respostes d’exemple',()=>preview('')));
+if(o.origin==='HISTORICA'){out.push(h('p',{},'Recollida importada d’un formulari que ja tenia respostes. El formulari original no es modifica des d’aquí.'),rules(),btn('Previsualitza l’informe amb respostes d’exemple',()=>preview(''),true));return out}
+out.push(h('div',{class:'box'},h('h3',{},'Com es fa'),h('ol',{},h('li',{},'Obre el formulari i fes-hi els canvis que calgui (preguntes, seccions, «[tutor]» per amagar-ne alguna).'),h('li',{},'Previsualitza l’informe per veure com quedarà.'),h('li',{},'Quan l’alumnat estigui a punt, obre el formulari.'))),
+h('div',{class:'actions'},o.editUrl?h('a',{href:o.editUrl,target:'_blank',rel:'noopener'},h('button',{class:'secondary'},'✏️ Obre el formulari per editar-lo ↗')):'',btn('👁 Previsualitza l’informe amb respostes d’exemple',()=>preview(''),true)),rules());
 if(o.status==='ESBORRANY')out.push(h('div',{},btn('Obre el formulari a l’alumnat →',()=>setOpen(true))));return out}
-function panelCollect(o){const out=[h('h2',{},'2 · Recull les respostes')];
-if(o.origin==='HISTORICA'){out.push(h('p',{},'Recollida ja feta: '+o.responses+' respostes.'));return out}
-if(o.status==='ESBORRANY')out.push(h('p',{},'El formulari encara no està obert. Obre’l quan l’alumnat estigui a punt de respondre.'),btn('Obre el formulari a l’alumnat',()=>setOpen(true)));
-else{out.push(h('p',{},'Enllaç per a l’alumnat (Classroom o projector): ',link(o.responseUrl,'formulari ↗'),' ',h('button',{class:'secondary',onclick:()=>{navigator.clipboard.writeText(o.responseUrl);message('Enllaç copiat.')}},'Copia l’enllaç')),
-h('p',{class:'stat'},o.responses+' respostes · '+o.entries.length+' de '+o.students+' alumnes identificats'));
-if(o.missing.length)out.push(h('details',{},h('summary',{},'Encara no han respost ('+o.missing.length+')'),h('ul',{},o.missing.map(n=>h('li',{},n)))));
-out.push(btn('Actualitza',async()=>{await reload();message('Dades actualitzades.')},true));
-if(o.status==='OBERTA')out.push(btn('Tanca el formulari →',()=>setOpen(false)));else if(o.status==='TANCADA')out.push(btn('Torna a obrir el formulari',()=>setOpen(true),true))}return out}
+function missingChips(o){return o.missing.length?h('details',{},h('summary',{},'Encara no han respost ('+o.missing.length+')'),h('div',{class:'chips'},o.missing.map(n=>chip(n)))):''}
+function panelCollect(o){const out=[h('h2',{},'2 · Recull les respostes'),h('p',{class:'lead'},'L’alumnat respon amb el compte de l’escola; cada alumne, una sola vegada.')];
+if(o.origin==='HISTORICA'){out.push(prog('Alumnes identificats',o.entries.length,o.students),missingChips(o));return out}
+if(o.status==='ESBORRANY'){out.push(h('p',{},'El formulari encara no està obert. Obre’l quan l’alumnat estigui a punt de respondre.'),btn('Obre el formulari a l’alumnat →',()=>setOpen(true)));return out}
+const field=h('input',{readonly:'',value:o.responseUrl,'aria-label':'Enllaç per a l’alumnat'});field.onclick=()=>field.select();
+out.push(h('label',{},'Enllaç per a l’alumnat (Classroom o projector)'),h('div',{class:'linkrow'},field,h('button',{class:'secondary',onclick:()=>{navigator.clipboard.writeText(o.responseUrl);message('Enllaç copiat. Enganxa’l a Classroom.')}},'📋 Copia'),link(o.responseUrl,'Obre ↗')),
+prog('Alumnes que han respost',o.entries.length,o.students),missingChips(o));
+if(o.responses>o.entries.length){const k=o.responses-o.entries.length;out.push(h('p',{class:'muted'},k===1?'1 resposta encara sense identificar: la revisaràs al pas 3.':k+' respostes encara sense identificar: les revisaràs al pas 3.'))}
+if(o.status==='OBERTA')out.push(h('p',{class:'muted'},'Aquesta pantalla s’actualitza sola cada minut.'));
+out.push(h('div',{class:'actions'},btn('↻ Actualitza',async()=>{await reload();message('Dades actualitzades.')},true),o.status==='OBERTA'?btn('Tanca el formulari →',()=>setOpen(false)):o.status==='TANCADA'?btn('Torna a obrir el formulari',()=>setOpen(true),true):''));return out}
 const ISSUE={alumne_desconegut:'Correu que no és al cens del curs'};
-function panelReview(o){const out=[h('h2',{},'3 · Revisa les incidències')];
-if(o.status==='ESBORRANY'||o.status==='OBERTA'){out.push(h('p',{},'Primer cal tancar el formulari.'));return out}
-const pending=o.issues.length+o.legacyToCheck.length;
-out.push(h('p',{class:'stat'},o.responses+' respostes · '+o.entries.length+' alumnes identificats · '+o.missing.length+' sense resposta'));
+function panelReview(o){const out=[h('h2',{},'3 · Revisa les respostes'),h('p',{class:'lead'},'Comprova que cada resposta correspon a un alumne del cens. Fins que no hi hagi incidències no es poden generar els informes.')];
+if(o.status==='ESBORRANY'||o.status==='OBERTA'){out.push(h('p',{},'Primer cal tancar el formulari (pas 2).'));return out}
+const pending=pendingIssues(o);
+out.push(kpis([[o.responses,'respostes'],[o.entries.length,'alumnes identificats','ok'],[o.missing.length,'sense resposta'],[pending,'incidències',pending?'bad':'ok']]));
 if(!pending&&o.entries.length)out.push(h('p',{class:'ok'},'✓ Cap incidència. Pots passar a generar els informes.'));
 if(!o.entries.length)out.push(h('p',{},'Encara no hi ha cap resposta identificada.'));
 o.issues.forEach(x=>out.push(h('div',{class:'warn'},(ISSUE[x.type]||x.type)+': '+x.detail)));
-o.warnings.forEach(x=>out.push(h('div',{class:'row'},'Ha respost més d’una vegada (s’agafa la resposta més recent): '+x.detail)));
-if(o.missing.length)out.push(h('details',{},h('summary',{},'Alumnes sense resposta ('+o.missing.length+')'),h('ul',{},o.missing.map(n=>h('li',{},n)))));
+if(o.warnings.length)out.push(h('details',{},h('summary',{},'Han respost més d’una vegada ('+o.warnings.length+')'),h('p',{class:'muted'},'S’agafa la resposta més recent.'),...o.warnings.map(x=>h('div',{class:'row'},x.detail))));
+out.push(missingChips(o));
 if(o.legacyToCheck.length){out.push(h('h3',{},'Respostes sense correu: confirma de qui són ('+o.legacyToCheck.length+')'));
 if(o.legacyToCheck.some(x=>x.suggestedStudentId))out.push(btn('Valida totes les propostes úniques',async()=>{if(!confirm('Has revisat les propostes de sota? Només es validen les completes i úniques.'))return;const r=await call('approveSuggestedLegacyBatch',o.id);await reload();message(r.approved+' validades. Pendents: '+r.remaining+'. '+r.unresolved.join(', '))}));
 o.legacyToCheck.forEach(x=>{const input=h('input',{placeholder:'ID de l’alumne al cens'});input.value=x.suggestedStudentId||'';
 out.push(h('div',{class:'row inline'},h('span',{},(x.writtenName||'Sense nom')+' → '+(x.suggestedStudentName||'sense proposta')),input,btn('Valida',async()=>{await call('approveLegacyResponse',o.id,x.responseId,input.value);await reload();message('Correspondència validada.')},true)))})}
-if(!pending&&o.entries.length)out.push(h('div',{},btn('Continua: genera els informes →',()=>{shown=3;render()})));return out}
-function studentPicker(o){return h('select',{},o.entries.map(e=>h('option',{value:e.studentId},e.student)))}
-function panelGenerate(o){const out=[h('h2',{},'4 · Genera els informes')];
+if(o.entries.length){const pick=studentPicker(o);out.push(h('h3',{},'Previsualitza l’informe d’un alumne'),h('div',{class:'inline'},pick,btn('👁 Previsualitza',()=>preview(pick.value),true)))}
+if(!pending&&o.entries.length)out.push(h('div',{},btn('Continua: genera els informes →',()=>goTo(3))));return out}
+function studentPicker(o){return h('select',{'aria-label':'Alumne'},o.entries.map(e=>h('option',{value:e.studentId},e.student)))}
+function panelGenerate(o){const out=[h('h2',{},'4 · Genera els informes'),h('p',{class:'lead'},'Es crea un PDF per alumne a la carpeta privada de la recollida. El professorat del curs hi té accés.')];
 if(o.status!=='TANCADA'&&o.status!=='APROVADA'){out.push(h('p',{},'Primer cal tancar el formulari i revisar les incidències.'));return out}
-out.push(h('p',{class:'stat'},o.reports.length+' de '+o.entries.length+' informes generats'));
-if(o.entries.length){const pick=studentPicker(o);out.push(h('div',{class:'inline'},pick,btn('Previsualitza l’informe d’aquest alumne',()=>preview(pick.value),true)))}
-if(o.status==='TANCADA'){if(o.reports.length<o.entries.length)out.push(h('div',{},btn('Genera els PDF',()=>generate(false))));
-else if(o.reports.length)out.push(h('div',{},btn('Regenera tots els PDF',()=>{if(confirm('Es tornaran a fer tots els PDF i els anteriors aniran a la paperera. Continuar?'))return generate(true)},true),btn('Continua: envia a les famílies →',()=>{shown=4;render()})))}
-if(o.folderUrl)out.push(h('p',{},link(o.folderUrl,'Carpeta privada dels PDF ↗')));
-if(o.reports.length)out.push(h('details',{},h('summary',{},'Informes ('+o.reports.length+')'),...o.reports.map(r=>h('div',{class:'row'},link(r.pdfUrl,r.student)))));return out}
-function panelSend(o){const out=[h('h2',{},'5 · Envia a les famílies')];
-if(!o.reports.length){out.push(h('p',{},'Primer cal generar els PDF.'));return out}
-const count={};o.recipients.forEach(r=>count[r.status]=(count[r.status]||0)+1);
-out.push(h('p',{class:o.contactsApproved?'ok':''},(o.contactsApproved?'✓ ':'✗ ')+'Directori de famílies '+(o.contactsApproved?'validat':'pendent de validar (administració)')),
-h('p',{class:o.sendingEnabled?'ok':''},(o.sendingEnabled?'✓ Enviament activat':'✗ Enviament desactivat (administració)')),
-h('p',{class:'stat'},o.recipients.length?o.recipients.length+' destinataris: '+Object.entries(count).map(([k,v])=>v+' '+k.toLowerCase()).join(' · '):'Encara no s’han preparat els destinataris.'),
-h('p',{class:'muted'},'Cada adreça familiar rep un missatge propi amb el PDF adjunt.'),
-btn('Envia’m una prova a mi',async()=>{const to=await call('sendTestMail',o.id);message('Correu de prova enviat a '+to+'.')},true));
-const pick=studentPicker(o);out.push(h('div',{class:'inline'},pick,btn('Previsualitza el correu',async()=>{const m=await call('previewMail',o.id,pick.value);message('Assumpte: '+m.subject+'\n\n'+m.body)},true)));
-if(o.status==='TANCADA'){out.push(btn('Prepara els destinataris',async()=>{const r=await call('prepareDeliveries',o.id);await reload();message(r.recipients+' destinataris preparats.'+(r.studentsWithoutRecipient.length?' Sense adreça (imprimeix-los a sota): '+r.studentsWithoutRecipient.join(', '):''))},!!o.recipients.length));
-if(o.recipients.length&&o.sendingEnabled)out.push(btn('Aprova i envia a totes les famílies',async()=>{if(!confirm('S’enviaran '+o.recipients.length+' correus i la recollida ja no es podrà reobrir ni regenerar. Continuar?'))return;await call('approveCampaign',o.id);await sendAll(o.id)}))}
+out.push(prog('Informes generats',o.reports.length,o.entries.length));
+if(o.entries.length){const pick=studentPicker(o);out.push(h('div',{class:'inline'},pick,btn('👁 Previsualitza l’informe d’aquest alumne',()=>preview(pick.value),true)))}
+if(o.status==='TANCADA'){if(o.reports.length<o.entries.length)out.push(h('div',{},btn('📄 Genera els PDF',()=>generate(false))));
+else if(o.reports.length)out.push(h('div',{class:'actions'},btn('Continua: envia a les famílies →',()=>goTo(4)),btn('Regenera tots els PDF',()=>{if(confirm('Es tornaran a fer tots els PDF i els anteriors aniran a la paperera. Continuar?'))return generate(true)},true)))}
+if(o.reports.length)out.push(h('details',{},h('summary',{},'Obre un informe concret ('+o.reports.length+')'),h('div',{class:'pdfs'},o.reports.map(r=>link(r.pdfUrl,'📄 '+r.student)))));
+if(o.folderUrl)out.push(h('p',{},link(o.folderUrl,'📁 Obre la carpeta amb tots els PDF ↗')));return out}
+function check(ok,text){return h('li',{},h('span',{class:'i '+(ok?'y':'n')},ok?'✓':'✗'),h('span',{},text))}
+function panelSend(o){const out=[h('h2',{},'5 · Envia a les famílies'),h('p',{class:'lead'},'Cada adreça familiar rep un missatge propi amb el PDF adjunt. Les famílies sense correu reben l’informe en paper.')];
+if(!o.reports.length){out.push(h('p',{},'Primer cal generar els PDF (pas 4).'));return out}
+const count={};o.recipients.forEach(r=>count[r.status]=(count[r.status]||0)+1);const sent=sentCount(o);
+out.push(h('ul',{class:'checklist'},check(o.reports.length>=o.entries.length,'Informes generats ('+o.reports.length+')'),check(o.contactsApproved,o.contactsApproved?'Directori de famílies validat':'Directori de famílies pendent de validar (administració)'),
+check(!!o.recipients.length,o.recipients.length?o.recipients.length+' destinataris preparats':'Destinataris per preparar'),check(o.sendingEnabled,o.sendingEnabled?'Enviament activat':'Enviament desactivat (administració)')));
+if(o.recipients.length)out.push(prog('Correus enviats',sent,o.recipients.length));
+out.push(h('div',{class:'box'},h('h3',{},'Comprova-ho abans d’enviar'),h('div',{class:'actions'},btn('✉️ Envia’m una prova a mi',async()=>{const to=await call('sendTestMail',o.id);message('Correu de prova enviat a '+to+'.')},true)),
+(()=>{const pick=studentPicker(o);return h('div',{class:'inline'},pick,btn('👁 Previsualitza el correu',async()=>{const m=await call('previewMail',o.id,pick.value);$('mailSubject').firstChild.textContent=m.subject;$('mailBody').textContent=m.body;$('mailDlg').showModal()},true))})()));
+if(o.status==='TANCADA'){const acts=[btn(o.recipients.length?'Torna a preparar els destinataris':'Prepara els destinataris',async()=>{const r=await call('prepareDeliveries',o.id);await reload();message(r.recipients+' destinataris preparats.'+(r.studentsWithoutRecipient.length?' Sense adreça (imprimeix-los a sota): '+r.studentsWithoutRecipient.join(', '):''))},!!o.recipients.length)];
+if(o.recipients.length&&o.sendingEnabled)acts.unshift(btn('📨 Aprova i envia a totes les famílies',async()=>{if(!confirm('S’enviaran '+o.recipients.length+' correus i la recollida ja no es podrà reobrir ni regenerar. Continuar?'))return;await call('approveCampaign',o.id);await sendAll(o.id)}));
+out.push(h('div',{class:'actions'},acts))}
 if(o.status==='APROVADA'&&count.PREPARAT)out.push(btn('Continua l’enviament ('+count.PREPARAT+' pendents)',()=>sendAll(o.id)));
-if(o.recipients.length)out.push(h('details',{},h('summary',{},'Destinataris'),...o.recipients.map(r=>h('div',{class:'row'},r.student+' · '+r.email+' · '+r.status))));
-out.push(h('h3',{},'Lliurament en paper'),h('p',{class:'muted'},'Un sol PDF a doble cara, preparat per imprimir. Cada informe acaba amb un acusament de lectura que la família retalla, signa i retorna.'),
-btn('PDF de tots els informes',()=>printBundle(o.id,false),true),btn('PDF només dels alumnes sense correu familiar',()=>printBundle(o.id,true),true));return out}
-async function sendAll(id){let r,total=0;do{r=await call('sendCampaignBatch',id,20);total+=r.sent;message(total+' correus enviats; '+r.remaining+' pendents…')}while(r.remaining>0&&r.sent>0);await refresh(id);message(total+' correus enviats.'+(r.remaining?' Queden '+r.remaining+' pendents: torna-ho a provar.':''))}
-async function printBundle(id,only){message('S’està preparant el PDF per imprimir…');const r=await call('generatePrintBundle',id,only);$('previewLink').href=r.url;$('previewBox').classList.remove('hidden');$('previewBox').scrollIntoView({behavior:'smooth'});message('PDF per imprimir amb '+r.count+' informes.'+(r.students.length?' Alumnes: '+r.students.join(', '):''))}
-async function preview(studentId){message('S’està preparant el PDF…');const r=await call('previewReport',ov.id,studentId);$('previewLink').href=r.url;$('previewBox').classList.remove('hidden');$('previewBox').scrollIntoView({behavior:'smooth'});message('PDF preparat: prem «Obre el PDF».')}
+if(o.recipients.length)out.push(h('details',{},h('summary',{},'Destinataris ('+o.recipients.length+')'),h('table',{class:'list'},h('tr',{},h('th',{},'Alumne'),h('th',{},'Correu familiar'),h('th',{},'Estat')),
+...o.recipients.map(r=>{const d=DELIVERY[r.status]||[r.status,''];return h('tr',{},h('td',{},r.student),h('td',{},r.email),h('td',{},chip(d[0],d[1])))}))));
+out.push(h('div',{class:'box'},h('h3',{},'🖨 Lliurament en paper'),h('p',{class:'muted'},'Un sol PDF a doble cara, preparat per imprimir. Cada informe acaba amb un acusament de lectura que la família retalla, signa i retorna.'),
+h('div',{class:'actions'},btn('PDF només dels alumnes sense correu familiar',()=>printBundle(o.id,true),true),btn('PDF de tots els informes',()=>printBundle(o.id,false),true))));return out}
+async function sendAll(id){let r,total=0;do{r=await call('sendCampaignBatch',id,20);total+=r.sent;message(total+' correus enviats; '+r.remaining+' pendents…',false,true)}while(r.remaining>0&&r.sent>0);await refresh(id);message(total+' correus enviats.'+(r.remaining?' Queden '+r.remaining+' pendents: torna-ho a provar.':''))}
+async function printBundle(id,only){message('S’està preparant el PDF per imprimir…',false,true);const r=await call('generatePrintBundle',id,only);$('previewLink').href=r.url;$('previewBox').classList.remove('hidden');$('previewBox').scrollIntoView({behavior:'smooth'});message('PDF per imprimir amb '+r.count+' informes.'+(r.students.length?' Alumnes: '+r.students.join(', '):''))}
+async function preview(studentId){message('S’està preparant el PDF…',false,true);const r=await call('previewReport',ov.id,studentId);$('previewLink').href=r.url;$('previewBox').classList.remove('hidden');$('previewBox').scrollIntoView({behavior:'smooth'});message('PDF preparat: prem «Obre el PDF».')}
 async function setOpen(open){const r=await call('setCampaignOpen',ov.id,open);await refresh(ov.id);message(open?'Formulari obert a l’alumnat.':'Formulari tancat. Ja no accepta respostes.')}
-async function generate(regenerate){let r,total=0,first=true;do{r=await call('generateReports',ov.id,first&&regenerate);first=false;total+=r.created;message(total+' PDF fets; '+r.remaining+' pendents…')}while(r.remaining>0&&r.created>0);await reload();message(total+' PDF generats.')}
+async function generate(regenerate){let r,total=0,first=true;do{r=await call('generateReports',ov.id,first&&regenerate);first=false;total+=r.created;message(total+' PDF fets; '+r.remaining+' pendents…',false,true)}while(r.remaining>0&&r.created>0);await reload();message(total+' PDF generats.')}
 function createUi(){run(async()=>{const mode=document.querySelector('input[name=mode]:checked').value;const r=await call('createCampaign',$('course').value,$('year').value,$('label').value,$('sourceUrl').value,mode);$('newPanel').classList.add('hidden');$('sourceUrl').value='';$('label').value='';await refresh(r.id);message(r.responses?'Recollida registrada amb '+r.responses+' respostes.':'Recollida creada. Revisa el formulari i obre’l quan vulguis.')})}
 function importRoster(){run(async()=>{const r=await call('importStudents',$('roster').value);$('roster').value='';await updateSetup();message('Cens importat: '+r.students+' alumnes.'+(r.pending?' Fitxes només amb nom, pendents de completar: '+r.pending+'.':''))})}
 /* Llegeix el CSV en UTF-8; si hi ha caràcters trencats, el torna a llegir en la codificació de Windows. */
