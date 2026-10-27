@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Guia de La veu de l’alumnat</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Maquetació: columna de lectura amb índex lateral; cada pas porta una il·lustració de pantalla amb dades inventades. Colors de l'escola (granat i daurat). */
+:root{
+  --bg:#FBFAF8; --surface:#FFFFFF; --sunk:#F3EFEA; --fg:#24201D; --muted:#5E5650; --line:#DED6CC;
+  --red:#831E12; --red-soft:#F6E7E3; --gold:#8A6A00; --gold-soft:#FBF4DE; --ok:#2F6B3A; --ok-soft:#E4F0E5; --warn:#8A4B00; --warn-soft:#FDEFD9;
+  --screen:#FFFFFF; --chrome:#ECE7E1;
+  --display:"Bitter",Georgia,"Times New Roman",serif; --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1A1715; --surface:#221E1B; --sunk:#2A2522; --fg:#EDE6DF; --muted:#B3A79D; --line:#3D3530;
+  --red:#E58A7B; --red-soft:#3A221D; --gold:#D9B44A; --gold-soft:#332A14; --ok:#8CC795; --ok-soft:#1E2E21; --warn:#E8B26A; --warn-soft:#33261A;
+  --screen:#26211E; --chrome:#312B27; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1A1715; --surface:#221E1B; --sunk:#2A2522; --fg:#EDE6DF; --muted:#B3A79D; --line:#3D3530;
+  --red:#E58A7B; --red-soft:#3A221D; --gold:#D9B44A; --gold-soft:#332A14; --ok:#8CC795; --ok-soft:#1E2E21; --warn:#E8B26A; --warn-soft:#33261A;
+  --screen:#26211E; --chrome:#312B27; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--body)}
+a{color:var(--red);text-underline-offset:2px}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:24px}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:14px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:block;padding:5px 10px;border-radius:6px;color:var(--muted);text-decoration:none}
+nav.toc a:hover{background:var(--sunk);color:var(--fg)}
+nav.toc .grp{margin:14px 10px 4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+@media (max-width:900px){nav.toc{position:static;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--surface)}}
+main{min-width:0;max-width:760px}
+h1,h2,h3{font-family:var(--display);line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,4.4vw,44px);font-weight:700;color:var(--red)}
+h2{font-size:27px;font-weight:600;margin-top:64px;padding-top:12px;scroll-margin-top:20px}
+h3{font-size:19px;font-weight:600;margin-top:36px;scroll-margin-top:20px}
+p,ul,ol{margin:12px 0}
+li{margin:4px 0}
+.lede{font-size:18px;color:var(--muted);max-width:62ch}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gold)}
+.who{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.04em;padding:3px 10px;border-radius:99px;margin-top:10px}
+.who.coord{background:var(--red-soft);color:var(--red)}
+.who.tutor{background:var(--gold-soft);color:var(--gold)}
+.who.tots{background:var(--sunk);color:var(--muted)}
+.hero{display:grid;gap:18px;padding-bottom:8px}
+.link-big{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.link-big code{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--red)}
+.link-big span{color:var(--muted);font-size:14px}
+.roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:620px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-width:0}
+.role h3{margin:0 0 6px;font-size:17px}
+.role p{margin:0;font-size:15px;color:var(--muted)}
+.steps{counter-reset:s;list-style:none;padding:0;display:grid;gap:10px}
+.steps>li{counter-increment:s;position:relative;padding-left:40px;margin:0}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--red);color:var(--bg);font:600 14px/26px var(--body);text-align:center}
+.ui{font-weight:600;background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:0 6px;white-space:nowrap}
+code,.path{font-family:var(--mono);font-size:.88em}
+.path{background:var(--sunk);padding:2px 6px;border-radius:5px;word-break:break-word}
+.note,.warn,.todo,.tip{border-radius:10px;padding:14px 16px;margin:18px 0;font-size:15px}
+.note{background:var(--sunk)}
+.tip{background:var(--ok-soft)}
+.tip strong:first-child{color:var(--ok)}
+.warn{background:var(--warn-soft)}
+.warn strong:first-child{color:var(--warn)}
+.todo{border:2px dashed var(--gold);background:var(--gold-soft)}
+.todo strong:first-child{color:var(--gold)}
+.note>*:first-child,.warn>*:first-child,.todo>*:first-child,.tip>*:first-child{margin-top:0}
+.note>*:last-child,.warn>*:last-child,.todo>*:last-child,.tip>*:last-child{margin-bottom:0}
+.table-wrap{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:15px;background:var(--surface)}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunk);font-weight:600;font-size:13px;letter-spacing:.02em}
+tr:last-child td{border-bottom:0}
+figure{margin:22px 0}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+/* Il·lustracions de pantalla */
+.screen{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--screen);box-shadow:0 1px 0 var(--line),0 10px 28px -18px rgba(0,0,0,.35);font-size:14px}
+.bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--chrome);border-bottom:1px solid var(--line)}
+.dots{display:flex;gap:5px}.dots i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+.url{flex:1;min-width:0;background:var(--screen);border-radius:6px;padding:3px 10px;font:12px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.body{padding:16px;display:grid;gap:10px}
+.fake-h{font:600 16px var(--display);color:var(--fg)}
+.fake-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fbtn{display:inline-block;background:var(--red);color:var(--bg);border-radius:7px;padding:6px 12px;font-weight:600;font-size:13px}
+.fbtn.sec{background:transparent;color:var(--red);border:1px solid var(--red)}
+.fbtn.hl{box-shadow:0 0 0 3px var(--gold)}
+.finput{flex:1;min-width:140px;border:1px solid var(--line);border-radius:7px;padding:6px 10px;color:var(--muted);font-size:13px;background:var(--surface)}
+.flabel{font-size:12px;color:var(--muted);font-weight:600}
+.fstat{font-size:13px;color:var(--muted)}
+.fok{color:var(--ok);font-weight:600;font-size:13px}
+.fmsg{background:var(--ok-soft);color:var(--ok);border-radius:7px;padding:7px 10px;font-size:13px}
+.ftabs{display:flex;flex-wrap:wrap;gap:4px}
+.ftabs span{padding:4px 10px;border-radius:99px;font-size:12px;background:var(--sunk);color:var(--muted)}
+.ftabs span.on{background:var(--red);color:var(--bg);font-weight:600}
+.callout{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--bg);font:700 12px var(--body);flex:none}
+.grid-sheet{overflow-x:auto}
+.grid-sheet table{font:12.5px var(--mono);background:var(--screen)}
+.grid-sheet th,.grid-sheet td{padding:5px 9px;border:1px solid var(--line);white-space:nowrap}
+.grid-sheet th{background:var(--chrome);color:var(--muted);font-weight:500;text-align:center}
+.grid-sheet td.hd{background:var(--gold-soft);font-weight:600}
+.sheet-tabs{display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px;background:var(--chrome);border-top:1px solid var(--line)}
+.sheet-tabs span{padding:3px 12px;font:12px var(--body);border-radius:4px 4px 0 0;color:var(--muted)}
+.sheet-tabs span.on{background:var(--screen);color:var(--fg);font-weight:600}
+.menu-path{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}
+.menu-path b{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 10px;font-weight:600}
+.menu-path i{font-style:normal;color:var(--muted)}
+.checks{display:grid;gap:6px;font-size:13px}
+.checks label{display:flex;gap:8px;align-items:center}
+.box{width:15px;height:15px;border:1.5px solid var(--muted);border-radius:3px;display:inline-grid;place-items:center;font-size:11px;line-height:1;flex:none}
+.box.on{background:var(--red);border-color:var(--red);color:var(--bg)}
+.map{display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);gap:10px;align-items:stretch}
+@media (max-width:620px){.map{grid-template-columns:minmax(0,1fr)}.map .arrow{transform:rotate(90deg);height:30px}}
+.arrow{display:grid;place-items:center;color:var(--gold);font-size:22px}
+.fq{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface);font-size:13px;display:grid;gap:4px}
+.fq .t{font-weight:600}
+.fq .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.scale{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+.scale span{display:grid;justify-items:center;gap:2px}
+.scale span::after{content:"";width:13px;height:13px;border:1.5px solid var(--muted);border-radius:50%}
+.scale span.on::after{background:var(--red);border-color:var(--red)}
+.rep{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--sunk);font-size:13px;display:grid;gap:3px}
+.rep .top{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.rep .top em{font-style:normal;color:var(--red)}
+.rep .lab{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.slip{border-top:1.5px dashed var(--muted);padding-top:12px;display:grid;gap:8px;font-size:13px}
+.slip .cut{font-size:11px;color:var(--muted)}
+.slip .boxed{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:10px;background:var(--surface)}
+.slip .line{display:flex;gap:8px;align-items:flex-end}
+.slip .line span{flex:none;color:var(--muted)}
+.slip .line i{flex:1;border-bottom:1px solid var(--muted);height:14px}
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:20px 0}
+@media (max-width:700px){.flow{grid-template-columns:minmax(0,1fr)}}
+.flow a{display:grid;gap:4px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);text-decoration:none;color:var(--fg);min-width:0}
+.flow a b{font:600 22px var(--display);color:var(--red)}
+.flow a span{font-size:13px;color:var(--muted)}
+.where{display:grid;gap:10px}
+.where div{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+@media (max-width:560px){.where div{grid-template-columns:minmax(0,1fr);gap:2px}}
+.where b{font-size:14px}
+.where p{margin:0;font-size:14.5px}
+details.faq{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:8px 0}
+details.faq summary{cursor:pointer;padding:12px 14px;font-weight:600;font-size:15px}
+details.faq>div{padding:0 14px 12px;font-size:15px}
+details.faq>div>*:first-child{margin-top:0}
+.cl{list-style:none;padding:0;display:grid;gap:6px}
+.cl li{display:flex;gap:10px;align-items:flex-start;margin:0}
+.cl li::before{content:"";flex:none;width:16px;height:16px;margin-top:4px;border:1.5px solid var(--muted);border-radius:4px}
+footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<nav class="toc" aria-label="Índex">
+  <ol>
+    <li><a href="#inici">Què és i qui fa què</a></li>
+    <li><a href="#on">On és cada cosa</a></li>
+    <li class="grp">Coordinació · inici de curs</li>
+    <li><a href="#cens">1. Cens de l’alumnat</a></li>
+    <li><a href="#families">2. Adreces de les famílies</a></li>
+    <li><a href="#acces">3. Persones amb accés</a></li>
+    <li><a href="#enviament">4. Activar l’enviament</a></li>
+    <li class="grp">Formularis</li>
+    <li><a href="#formulari">Com ha de ser el formulari</a></li>
+    <li class="grp">Tutoria · cada recollida</li>
+    <li><a href="#pas1">Pas 1 · Prepara</a></li>
+    <li><a href="#pas2">Pas 2 · Recull</a></li>
+    <li><a href="#pas3">Pas 3 · Revisa</a></li>
+    <li><a href="#pas4">Pas 4 · Genera</a></li>
+    <li><a href="#pas5">Pas 5 · Envia</a></li>
+    <li><a href="#paper">Lliurament en paper</a></li>
+    <li class="grp">Ajuda</li>
+    <li><a href="#problemes">Si surt un missatge</a></li>
+    <li><a href="#llista">Llista de comprovació</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="inici">
+  <div class="eyebrow">Escola Ramon Pont · ESO</div>
+  <h1>Guia de La veu de l’alumnat</h1>
+  <p class="lede">L’alumnat respon un formulari d’autoavaluació. L’aplicació en fa un informe PDF per a cada alumne i l’envia a la família per correu, o el prepara per imprimir. Aquesta guia explica tot el procés, pas a pas.</p>
+  <div class="link-big"><code>ja.cat/veualumnat</code><span>Obre-la sempre amb el compte <strong>@ramonpont.cat</strong>. Amb un compte personal no funciona.</span></div>
+</header>
+
+<h2 style="margin-top:40px">Qui fa què</h2>
+<div class="roles">
+  <div class="role">
+    <h3>Coordinació o cap d’estudis</h3>
+    <p>Un cop a l’inici de cada curs: carrega el cens i les adreces de les famílies, dona accés als tutors i activa l’enviament. Pot fer també totes les recollides de tots els cursos.</p>
+    <span class="who coord">Apartats 1 a 4</span>
+  </div>
+  <div class="role">
+    <h3>Tutor o tutora</h3>
+    <p>Cada vegada que hi ha una autoavaluació (preavaluació, 1a avaluació…): prepara el formulari, el passa a l’alumnat, genera els informes i els envia. Només veu el seu curs.</p>
+    <span class="who tutor">Passos 1 a 5</span>
+  </div>
+</div>
+<p>El procés de tutoria en cinc passos:</p>
+<div class="flow">
+  <a href="#pas1"><b>1</b><strong>Prepara</strong><span>Còpia del formulari</span></a>
+  <a href="#pas2"><b>2</b><strong>Recull</strong><span>L’alumnat respon</span></a>
+  <a href="#pas3"><b>3</b><strong>Revisa</strong><span>Només excepcions</span></a>
+  <a href="#pas4"><b>4</b><strong>Genera</strong><span>Un PDF per alumne</span></a>
+  <a href="#pas5"><b>5</b><strong>Envia</strong><span>Correu o paper</span></a>
+</div>
+
+<h2 id="on">On és cada cosa</h2>
+<p>Ningú no ha de desar dades de l’alumnat en carpetes personals ni en ordinadors compartits. Cada element té un lloc fix:</p>
+<div class="where">
+  <div><b>L’aplicació</b><p><code>ja.cat/veualumnat</code>. Funciona al navegador; no cal instal·lar res.</p></div>
+  <div><b>Cens de l’alumnat</b><p>Un full de càlcul de Google al Drive del centre, amb una pestanya per curs. Vegeu <a href="#cens">apartat 1</a>.</p></div>
+  <div><b>CSV de les famílies</b><p>A la carpeta <strong>Baixades</strong> del teu ordinador, només el temps de carregar-lo. Després s’esborra. Vegeu <a href="#families">apartat 2</a>.</p></div>
+  <div><b>Formulari de partida</b><p>El formulari d’autoavaluació de cada curs, al Drive del centre. Només cal la primera vegada: després l’app copia el de la recollida anterior.</p></div>
+  <div><b>Còpies, respostes i PDF</b><p>Els crea l’app sola a la carpeta privada <span class="path">La veu de l’alumnat · fitxers privats</span> del compte propietari de l’app (felip.sarroca@ramonpont.cat), amb una subcarpeta per recollida, per exemple <span class="path">2026-2027 · 4t.ESO · Preavaluació</span>. No cal moure res.</p></div>
+</div>
+
+<h2 id="cens">1. Cens de l’alumnat</h2>
+<span class="who coord">Coordinació · un cop l’any</span>
+<p>El cens diu a l’app quins alumnes hi ha a cada curs i quin és el correu escolar de cadascun. Amb el correu, l’app reconeix qui ha respost el formulari.</p>
+
+<div class="todo"><strong>Pas per completar.</strong> D’on s’obté el cens cada curs i qui en manté el full original. Afegiu-hi aquí el camí exacte (per exemple, l’exportació de Clickedu o el full que prepara secretaria).</div>
+
+<h3>Característiques del full</h3>
+<ul>
+  <li>És un <strong>full de càlcul de Google</strong> al Drive del centre.</li>
+  <li>Té <strong>una pestanya per curs</strong>. El nom pot ser «1r.ESO», «1r ESO», «Primer d’ESO»… L’app el reconeix.</li>
+  <li>A cada pestanya hi ha una fila de capçalera (en una de les tres primeres files) amb aquestes columnes, en qualsevol ordre:
+    <ul>
+      <li><strong>Nom i cognoms</strong> (o «Cognoms, Nom»)</li>
+      <li><strong>ID</strong> de l’alumne (també val «Identificador» o «RALC»)</li>
+      <li><strong>Correu</strong> escolar @ramonpont.cat</li>
+    </ul>
+  </li>
+  <li>Hi ha d’haver accés de lectura per al compte propietari de l’app (felip.sarroca@ramonpont.cat). Si el full és seu o és en una unitat compartida del centre, ja el té.</li>
+</ul>
+
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració d’un full de càlcul de cens amb pestanyes per curs">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">docs.google.com/spreadsheets/…</div></div>
+    <div class="grid-sheet"><table>
+      <tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+      <tr><th>1</th><td class="hd">Nom i cognoms</td><td class="hd">ID</td><td class="hd">Grup</td><td class="hd">Correu</td></tr>
+      <tr><th>2</th><td>Exemple Mostra, Anna</td><td>100231</td><td>4t A</td><td>anna.exemple@ramonpont.cat</td></tr>
+      <tr><th>3</th><td>Prova Model, Pau</td><td>100232</td><td>4t A</td><td>pau.prova@ramonpont.cat</td></tr>
+      <tr><th>4</th><td>Assaig Ficció, Laia</td><td>100233</td><td>4t A</td><td>laia.assaig@ramonpont.cat</td></tr>
+    </table></div>
+    <div class="sheet-tabs"><span>1r.ESO</span><span>2n.ESO</span><span>3r.ESO</span><span class="on">4t.ESO</span></div>
+  </div>
+  <figcaption>Il·lustració amb dades inventades. Les columnes poden estar en qualsevol ordre; les que sobren («Grup») no molesten.</figcaption>
+</figure>
+
+<h3>Carregar-lo a l’app</h3>
+<ol class="steps">
+  <li>Obre el full del cens i copia l’enllaç de la barra d’adreces.</li>
+  <li>A <code>ja.cat/veualumnat</code>, obre <span class="ui">Preparació del centre (administració)</span>.</li>
+  <li>A <span class="ui">1 · Cens de l’alumnat</span>, enganxa l’enllaç i prem <span class="ui">Importa el cens</span>.</li>
+  <li>Comprova el missatge: «Cens importat: N alumnes identificats».</li>
+</ol>
+<div class="note">Si a algun alumne li falta l’ID o el correu, l’app l’importa com a fitxa pendent i ho diu al missatge. Completa’l al full i torna a importar. Si hi ha errors greus, l’app no substitueix el cens anterior.</div>
+
+<h2 id="families">2. Adreces de les famílies</h2>
+<span class="who coord">Coordinació · un cop l’any i quan hi hagi canvis</span>
+<p>Les adreces surten de Clickedu en un fitxer CSV. L’app només necessita quatre dades: curs, nom de l’alumne, nom del responsable i correu.</p>
+
+<h3>Exportar el llistat des de Clickedu</h3>
+<figure>
+  <div class="menu-path" aria-label="Camí de menús a Clickedu">
+    <b>Administració</b><i>›</i><b>Gestió d’usuaris</b><i>›</i><b>Llistats</b><i>›</i><b>Llistat de pares i mares</b>
+  </div>
+</figure>
+<ol class="steps">
+  <li>A Clickedu, ves a <span class="ui">Administració</span> › <span class="ui">Gestió d’usuaris</span> › <span class="ui">Llistats</span> › <span class="ui">Llistat de pares i mares</span>.</li>
+  <li>Selecciona les <strong>quatre classes d’ESO</strong> i fes clic a <span class="ui">Generar</span>.</li>
+  <li>A les dades bàsiques, marca <strong>Nom alumne</strong>, <strong>Nom i cognoms</strong> i <strong>Correu electrònic</strong>.</li>
+  <li>Deixa marcat <strong>Ordenar per classe i alumne</strong> i torna a fer clic a <span class="ui">Generar</span>.</li>
+  <li>Quan aparegui el llistat, al menú de dalt fes clic a <span class="ui">Exportar a excel</span>.</li>
+  <li>El navegador desa un fitxer amb un nom com <span class="path">llistat_responsables_20261026_215245.csv</span> a la carpeta <strong>Baixades</strong>. Deixa’l allà: no el moguis a Drive ni a cap carpeta compartida.</li>
+</ol>
+
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració de les opcions del llistat de pares i mares">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">Clickedu · Llistat de pares i mares</div></div>
+    <div class="body">
+      <div class="flabel">Classes</div>
+      <div class="checks" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr))">
+        <label><span class="box on">✓</span>1r ESO</label><label><span class="box on">✓</span>2n ESO</label><label><span class="box on">✓</span>3r ESO</label><label><span class="box on">✓</span>4t ESO</label>
+      </div>
+      <div class="flabel">Dades bàsiques</div>
+      <div class="checks" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">
+        <label><span class="box on">✓</span>Nom alumne</label><label><span class="box on">✓</span>Nom i cognoms</label><label><span class="box on">✓</span>Correu electrònic</label><label><span class="box"></span>Telèfon</label>
+      </div>
+      <div class="checks"><label><span class="box on">✓</span>Ordenar per classe i alumne</label></div>
+      <div class="fake-row"><span class="fbtn hl">Generar</span><span class="fstat">→ després, a dalt: <strong>Exportar a excel</strong></span></div>
+    </div>
+  </div>
+  <figcaption>Esquema de les opcions que cal marcar (no és una captura de Clickedu). Les altres dades no calen: com menys dades personals, millor.</figcaption>
+</figure>
+
+<p>El fitxer té aquesta forma (dades inventades):</p>
+<div class="table-wrap grid-sheet"><table>
+  <tr><td class="hd">Núm.</td><td class="hd">Curs</td><td class="hd">Curs escolar</td><td class="hd">Nom alumne</td><td class="hd">Nom i cognoms</td><td class="hd">Correu electrònic</td></tr>
+  <tr><td>1</td><td>Quart d’ESO</td><td>2026-2027</td><td>Exemple Mostra, Anna</td><td>Jordi Exemple Riu</td><td>familia.exemple@correu.cat</td></tr>
+  <tr><td>2</td><td>Quart d’ESO</td><td>2026-2027</td><td>Exemple Mostra, Anna</td><td>Marta Mostra Pla</td><td>marta.mostra@correu.cat</td></tr>
+</table></div>
+<p>Si l’any vinent Clickedu canvia l’ordre de les columnes, el separador o la manera d’escriure el curs («4t ESO», «Quart d’ESO»…), l’app ho continua entenent.</p>
+
+<h3>Carregar-lo a l’app</h3>
+<ol class="steps">
+  <li>A <span class="ui">Preparació del centre</span> › <span class="ui">2 · Adreces de les famílies</span>, tria el fitxer de Baixades i prem <span class="ui">Importa els responsables</span>.</li>
+  <li>Si el nom d’un alumne no coincideix exactament amb el cens (un accent, un cognom de més), l’app el mostra. Tria l’alumne correcte a la llista o prem <span class="ui">Exclou: no és al cens</span> si ja no és a l’escola. La llista es refà sola.</li>
+  <li>Quan no quedi cap nom pendent, prem <span class="ui">Valida el directori</span>.</li>
+  <li><strong>Esborra el CSV de Baixades</strong> i buida la paperera. Conté dades personals de totes les famílies.</li>
+</ol>
+
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració de la validació de noms del CSV">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
+    <div class="body">
+      <div class="fake-h">2 · Adreces de les famílies</div>
+      <div class="fstat">Aquests noms del CSV no coincideixen amb el cens. Tria l’alumne o exclou-lo:</div>
+      <div class="fake-row"><span class="fstat" style="min-width:150px">4t.ESO · «Exemple Mostra, Ana»</span><span class="finput">Exemple Mostra, Anna ▾</span><span class="fbtn sec">Valida</span><span class="fbtn sec">Exclou: no és al cens</span></div>
+      <div class="fake-row"><span class="fbtn hl">Valida el directori</span></div>
+    </div>
+  </div>
+  <figcaption>Les correspondències que valideu es recorden per a les importacions següents.</figcaption>
+</figure>
+
+<h2 id="acces">3. Persones amb accés</h2>
+<span class="who coord">Coordinació · a l’inici de curs</span>
+<p>Només entren a l’app les persones de la llista. Cada curs canvien els tutors:</p>
+<ol class="steps">
+  <li>A <span class="ui">3 · Persones amb accés</span>, prem <span class="ui">Treu l’accés</span> als tutors de l’any anterior que ja no ho són.</li>
+  <li>Per a cada tutor nou: escriu el <strong>correu institucional</strong>, tria el <strong>curs</strong> i el rol <span class="ui">Tutor/a d’un curs</span>, i prem <span class="ui">Dona accés</span>. Si un curs té dos tutors, afegeix-los tots dos.</li>
+  <li>Per a la cap d’estudis o la coordinació, tria <span class="ui">Cap d’estudis o coordinació (tots els cursos)</span>.</li>
+  <li>Envia als tutors l’enllaç <code>ja.cat/veualumnat</code> i aquesta guia.</li>
+</ol>
+
+<h2 id="enviament">4. Activar l’enviament</h2>
+<span class="who coord">Coordinació</span>
+<p>Mentre l’enviament està desactivat, els tutors poden fer-ho tot fins a preparar els destinataris, però no poden enviar a les famílies.</p>
+<ol class="steps">
+  <li>Comprova que el directori està validat (apartat 2).</li>
+  <li>A <span class="ui">4 · Enviament</span>, prem <span class="ui">Activa l’enviament</span> i confirma.</li>
+  <li>Opcional: a <span class="ui">Adreça de resposta de les famílies</span>, escriu una adreça del centre (per exemple, la de tutoria) i prem <span class="ui">Desa l’adreça</span>. Les respostes de les famílies arribaran allà.</li>
+</ol>
+
+<h2 id="formulari">Com ha de ser el formulari</h2>
+<span class="who tots">Coordinació i tutoria</span>
+<p>L’informe calca el formulari: no cal configurar res. Si afegiu o canvieu preguntes, l’informe canvia sol. Només cal seguir aquestes regles.</p>
+
+<h3>On ha de ser</h3>
+<ul>
+  <li>És un <strong>Google Forms</strong> creat amb un compte @ramonpont.cat.</li>
+  <li>Si enganxes l’enllaç d’un formulari nou a l’app, el compte propietari de l’app (felip.sarroca@ramonpont.cat) n’ha de ser <strong>col·laborador</strong>. Al formulari: ⋮ › <span class="ui">Afegeix col·laboradors</span>.</li>
+  <li>Només cal la primera vegada de cada curs. A partir d’aquí, cada recollida copia la de l’anterior.</li>
+</ul>
+
+<h3>Què es converteix en què</h3>
+<div class="table-wrap"><table>
+  <tr><th>Al formulari</th><th>A l’informe</th></tr>
+  <tr><td>Títol d’una <strong>secció</strong> («Matemàtiques», «Com em sento a l’escola»)</td><td>Un apartat amb aquest títol</td></tr>
+  <tr><td>Pregunta d’<strong>escala lineal</strong> o de <strong>valoració</strong></td><td>Obre un bloc. De l’1 al 4 es mostra amb l’escala oficial: 1 NA, 2 AS, 3 AN, 4 AE. Altres escales surten com «4 de 5».</td></tr>
+  <tr><td>Pregunta de <strong>paràgraf</strong> o resposta curta just després d’una valoració</td><td>S’afegeix al mateix bloc, amb el títol de la pregunta com a etiqueta</td></tr>
+  <tr><td><strong>Caselles de selecció</strong> / <strong>graella</strong></td><td>Llista / taula</td></tr>
+  <tr><td>«<strong>[tutor]</strong>» al títol d’una pregunta o secció</td><td>No surt a l’informe (útil per a preguntes només per a tutoria)</td></tr>
+  <tr><td>Resposta en blanc</td><td>No surt. Una matèria sense cap resposta (optativa no cursada) desapareix.</td></tr>
+  <tr><td>Pregunta del nom</td><td>No surt. L’alumne s’identifica pel correu escolar.</td></tr>
+</table></div>
+
+<figure>
+  <div class="map">
+    <div class="fq" aria-label="Pregunta del formulari">
+      <span class="k">Formulari · secció</span>
+      <span class="t">Matemàtiques</span>
+      <span>Quin nivell preveus assolir?</span>
+      <div class="scale"><span>1</span><span>2</span><span class="on">3</span><span>4</span></div>
+      <span style="margin-top:6px">Què pots fer per millorar?</span>
+      <span style="border-bottom:1px solid var(--line);color:var(--muted)">Fer els exercicis cada dia</span>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="rep" aria-label="Bloc de l’informe">
+      <div class="top"><span>Matemàtiques</span><em>3 · AN</em></div>
+      <span class="lab">Què pots fer per millorar?</span>
+      <span>Fer els exercicis cada dia</span>
+    </div>
+  </div>
+  <figcaption>Una secció del formulari i el bloc que en surt a l’informe.</figcaption>
+</figure>
+
+<div class="tip"><strong>Consells.</strong> No marqueu com a obligatòries les preguntes de les optatives: si queden en blanc, desapareixen de l’informe. No cal activar «Recull adreces electròniques» ni limitar a una resposta: l’app ho configura sola a cada còpia.</div>
+
+<h2 id="pas1">Pas 1 · Prepara el formulari</h2>
+<span class="who tutor">Tutoria</span>
+<ol class="steps">
+  <li>Obre <code>ja.cat/veualumnat</code> i prem <span class="ui">＋ Nova recollida</span>.</li>
+  <li>Tria el <strong>curs</strong>. El curs escolar ja hi surt.</li>
+  <li>Escriu el <strong>nom de la recollida</strong>: «Preavaluació», «1a avaluació»…</li>
+  <li>Deixa en blanc <span class="ui">Formulari de partida</span>: es copiarà el de la recollida anterior del teu curs. Només la primera vegada cal enganxar-hi l’enllaç d’edició del formulari.</li>
+  <li>Deixa marcat <span class="ui">Fes-ne una còpia nova</span> i prem <span class="ui">Crea la recollida</span>.</li>
+  <li>Prem <span class="ui">Obre el formulari per editar-lo ↗</span> si vols canviar alguna pregunta. Després, <span class="ui">Previsualitza l’informe amb respostes d’exemple</span> per veure com quedarà.</li>
+</ol>
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració del formulari de nova recollida">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
+    <div class="body">
+      <div class="fake-h">Nova recollida</div>
+      <div class="fake-row"><span class="flabel" style="width:150px">Curs</span><span class="finput">4t.ESO ▾</span></div>
+      <div class="fake-row"><span class="flabel" style="width:150px">Curs escolar</span><span class="finput">2026-2027</span></div>
+      <div class="fake-row"><span class="flabel" style="width:150px">Nom de la recollida</span><span class="finput" style="color:var(--fg)">1a avaluació</span></div>
+      <div class="fake-row"><span class="flabel" style="width:150px">Formulari de partida</span><span class="finput">Buit: es copia el de la recollida anterior del mateix curs</span></div>
+      <div class="checks"><label><span class="box on" style="border-radius:50%">●</span>Fes-ne una còpia nova (recomanat)</label></div>
+      <div class="fake-row"><span class="fbtn hl">Crea la recollida</span></div>
+    </div>
+  </div>
+  <figcaption>La còpia es comparteix amb tu perquè la puguis editar. La recollida anterior queda intacta.</figcaption>
+</figure>
+
+<h2 id="pas2">Pas 2 · Recull les respostes</h2>
+<span class="who tutor">Tutoria</span>
+<ol class="steps">
+  <li>Prem <span class="ui">Obre el formulari a l’alumnat →</span>.</li>
+  <li>Copia l’<strong>enllaç per a l’alumnat</strong> i comparteix-lo a Classroom o mostra’l al projector.</li>
+  <li>L’alumnat respon amb el seu compte escolar. Cada alumne només pot respondre una vegada.</li>
+  <li>Prem <span class="ui">Actualitza</span> per veure qui ha respost i qui falta.</li>
+  <li>Quan hagin acabat, prem <span class="ui">Tanca el formulari →</span>. Si cal, el pots tornar a obrir.</li>
+</ol>
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració del pas de recollida">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
+    <div class="body">
+      <div class="fake-h">2 · Recull les respostes</div>
+      <div class="fake-row"><span class="fstat">Enllaç per a l’alumnat (Classroom o projector): <a href="#pas2" tabindex="-1">formulari ↗</a></span><span class="fbtn sec">Copia</span></div>
+      <div class="fok">24 de 27 alumnes han respost</div>
+      <div class="fake-row"><span class="fbtn sec">Actualitza</span><span class="fbtn hl">Tanca el formulari →</span></div>
+    </div>
+  </div>
+</figure>
+
+<h2 id="pas3">Pas 3 · Revisa les incidències</h2>
+<span class="who tutor">Tutoria</span>
+<p>Només apareixen els casos que necessiten una decisió:</p>
+<ul>
+  <li><strong>Correus fora del cens</strong>: algú ha respost amb un compte que no és del curs.</li>
+  <li><strong>Respostes sense correu</strong> (només en formularis antics): l’app proposa l’alumne. Prem <span class="ui">Valida</span> en cada cas o <span class="ui">Valida totes les propostes úniques</span>.</li>
+  <li><strong>Alumnes que no han respost</strong>: no tindran informe. Si cal, torna a obrir el formulari.</li>
+</ul>
+<p>Quan no en quedi cap, prem <span class="ui">Continua: genera els informes →</span>.</p>
+
+<h2 id="pas4">Pas 4 · Genera els informes</h2>
+<span class="who tutor">Tutoria</span>
+<ol class="steps">
+  <li>Tria un alumne i prem <span class="ui">Previsualitza l’informe d’aquest alumne</span>. Revisa’l.</li>
+  <li>Prem <span class="ui">Genera els PDF</span>. Es fan sols, en tandes; el missatge diu quants en queden.</li>
+  <li>Els PDF es desen a la <span class="ui">Carpeta privada dels PDF ↗</span> de la recollida.</li>
+</ol>
+<div class="note">Si canvies alguna cosa després, prem <span class="ui">Regenera tots els PDF</span>: els anteriors van a la paperera. Ja no es pot fer quan s’ha començat a enviar.</div>
+
+<h2 id="pas5">Pas 5 · Envia a les famílies</h2>
+<span class="who tutor">Tutoria</span>
+<ol class="steps">
+  <li>Prem <span class="ui">Envia’m una prova a mi</span> i mira el correu i el PDF a la teva bústia.</li>
+  <li>Opcional: tria un alumne i prem <span class="ui">Previsualitza el correu</span>.</li>
+  <li>Prem <span class="ui">Prepara els destinataris</span>. L’app diu quantes adreces hi ha i quins alumnes no en tenen (aquests, en paper).</li>
+  <li>Prem <span class="ui">Aprova i envia a totes les famílies</span> i confirma. Els lots de 20 s’envien sols; no tanquis la pestanya fins que acabi.</li>
+</ol>
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració del pas d’enviament">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
+    <div class="body">
+      <div class="fake-h">5 · Envia a les famílies</div>
+      <div class="fok">✓ Enviament activat</div>
+      <div class="fake-row"><span class="fbtn sec">Envia’m una prova a mi</span><span class="fbtn sec">Prepara els destinataris</span></div>
+      <div class="fmsg">41 destinataris preparats. Sense adreça (imprimeix-los a sota): Prova Model, Pau</div>
+      <div class="fake-row"><span class="fbtn hl">Aprova i envia a totes les famílies</span></div>
+    </div>
+  </div>
+  <figcaption>Si un alumne té dos responsables amb adreces diferents, cada adreça rep el seu correu.</figcaption>
+</figure>
+<div class="warn"><strong>Atenció.</strong> Un cop aprovat l’enviament, la recollida ja no es pot reobrir ni regenerar. Si l’enviament s’atura (es tanca la pestanya o s’acaba la quota diària de correus), torna a la recollida i prem <span class="ui">Continua l’enviament (N pendents)</span>.</div>
+<p>Si no surt el botó <span class="ui">Aprova i envia a totes les famílies</span>, l’enviament encara no està activat. Demana-ho a coordinació (<a href="#enviament">apartat 4</a>).</p>
+
+<h2 id="paper">Lliurament en paper</h2>
+<span class="who tutor">Tutoria</span>
+<p>Al pas 5, a <span class="ui">Lliurament en paper</span>, hi ha dos botons:</p>
+<ul>
+  <li><span class="ui">PDF de tots els informes</span>: tot el grup en un sol fitxer.</li>
+  <li><span class="ui">PDF només dels alumnes sense correu familiar</span>: només els que no han rebut el correu.</li>
+</ul>
+<p>El fitxer està preparat per imprimir <strong>a doble cara</strong>: cada informe comença en un full nou. Els colors es llegeixen bé en blanc i negre.</p>
+<p>Cada informe acaba amb un <strong>acusament de lectura</strong> retallable. L’alumne el porta a casa i el retorna signat al tutor o tutora.</p>
+<figure>
+  <div class="screen" style="max-width:520px" role="img" aria-label="Il·lustració de l’acusament de lectura al final de l’informe">
+    <div class="body">
+      <div class="slip">
+        <span class="cut">✂ Retalleu per aquesta línia i retorneu aquesta part al tutor o tutora</span>
+        <div class="boxed">
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong style="font-family:var(--display)">Acusament de lectura</strong><span class="fstat">Preavaluació · 4t.ESO · 2026-2027</span></div>
+          <span>Alumne/a: <strong>Exemple Mostra, Anna</strong></span>
+          <span class="fstat">Com a pare, mare o tutor/a legal, declaro que he llegit aquesta autoavaluació.</span>
+          <div class="line"><span>Nom i cognoms</span><i></i></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="line"><span>DNI/NIE</span><i></i></div><div class="line"><span>Data</span><i></i></div></div>
+          <div class="line"><span>Signatura</span><i></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</figure>
+
+<h2 id="problemes">Si surt un missatge</h2>
+<p>Els missatges de l’app diuen què passa. Aquests són els més habituals:</p>
+
+<details class="faq"><summary>«Cal obrir aquesta aplicació amb el compte institucional del centre.»</summary><div><p>Has obert l’app amb un compte personal. Obre <code>ja.cat/veualumnat</code> en una finestra on hagis entrat amb el compte @ramonpont.cat, o canvia de compte a la icona de perfil del navegador.</p></div></details>
+<details class="faq"><summary>«Aquest compte encara no està autoritzat.»</summary><div><p>Coordinació encara no t’ha afegit a <a href="#acces">Persones amb accés</a>.</p></div></details>
+<details class="faq"><summary>«És la primera recollida de 4t.ESO: enganxa l’enllaç d’edició del formulari de partida.»</summary><div><p>És la primera vegada d’aquest curs. Enganxa l’enllaç del formulari (l’adreça que surt quan l’edites, acabada en <code>/edit</code>).</p></div></details>
+<details class="faq"><summary>«El compte del centre no pot editar aquest formulari…»</summary><div><p>Afegeix felip.sarroca@ramonpont.cat com a col·laborador del formulari (⋮ › Afegeix col·laboradors) i torna-ho a provar.</p></div></details>
+<details class="faq"><summary>«Falta la pestanya 3r.ESO al cens.»</summary><div><p>Al full del cens hi falta la pestanya d’aquest curs, o té un nom que no inclou «ESO». Reanomena-la, per exemple «3r ESO».</p></div></details>
+<details class="faq"><summary>«Al CSV no es troben les columnes de curs, nom de l’alumne, nom del responsable i correu.»</summary><div><p>A l’exportació de Clickedu hi falta alguna dada bàsica. Torna-la a fer marcant Nom alumne, Nom i cognoms i Correu electrònic.</p></div></details>
+<details class="faq"><summary>«Queden N incidències de contactes per resoldre.»</summary><div><p>Hi ha noms del CSV sense assignar. Tria l’alumne o exclou-los i torna a prémer <span class="ui">Valida el directori</span>.</p></div></details>
+<details class="faq"><summary>«Cal resoldre N incidències abans de generar els PDF.»</summary><div><p>Torna al <a href="#pas3">pas 3</a> i resol les incidències pendents.</p></div></details>
+<details class="faq"><summary>«Cal validar el directori familiar abans de preparar enviaments.»</summary><div><p>Coordinació ha de carregar i validar el CSV de famílies (<a href="#families">apartat 2</a>). Cada importació nova deixa el directori pendent de validar.</p></div></details>
+<details class="faq"><summary>«Ja s’han enviat informes d’aquesta recollida; no es poden regenerar.»</summary><div><p>És intencionat: les famílies ja tenen la versió enviada. Si cal corregir un informe concret, parla amb coordinació.</p></div></details>
+<details class="faq"><summary>«Quota diària insuficient per a aquest lot.»</summary><div><p>Google limita els correus diaris. L’endemà, prem <span class="ui">Continua l’enviament</span>: només s’envien els pendents.</p></div></details>
+
+<h2 id="llista">Llista de comprovació</h2>
+<h3>Coordinació, a l’inici de curs</h3>
+<ul class="cl">
+  <li>Cens nou carregat, sense fitxes pendents.</li>
+  <li>CSV de famílies exportat de Clickedu, carregat i directori validat.</li>
+  <li>CSV esborrat de Baixades i de la paperera.</li>
+  <li>Tutors antics retirats i tutors nous afegits.</li>
+  <li>Enviament activat i adreça de resposta desada.</li>
+  <li>Enllaç <code>ja.cat/veualumnat</code> i aquesta guia enviats als tutors.</li>
+</ul>
+<h3>Tutoria, a cada recollida</h3>
+<ul class="cl">
+  <li>Recollida creada i formulari revisat.</li>
+  <li>Formulari obert, compartit a l’alumnat i tancat.</li>
+  <li>Incidències resoltes.</li>
+  <li>Informe d’un alumne previsualitzat i PDF generats.</li>
+  <li>Prova enviada a mi mateix i revisada.</li>
+  <li>Destinataris preparats i enviament completat.</li>
+  <li>Informes en paper impresos per als alumnes sense correu; acusaments recollits.</li>
+</ul>
+
+<footer>
+  Les dades personals (cens, adreces, respostes i PDF) es queden al Google Workspace del centre, en carpetes privades. Les il·lustracions d’aquesta guia fan servir noms i adreces inventats.
+</footer>
+</main>
+</div>
+</body>
+</html>
