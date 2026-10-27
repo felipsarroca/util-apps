@@ -92,6 +92,9 @@ function config_(key) {
 }
 function idFromUrl_(value) {
   const s = String(value || '').trim();
+  if (/\/forms\/d\/e\/|forms\.gle\//.test(s)) {
+    throw new Error('Aquest és l’enllaç per respondre. Enganxa l’enllaç d’edició: obre el formulari a Google Forms i copia l’adreça de la barra del navegador (acaba en «/edit»).');
+  }
   const m = s.match(/\/d\/([A-Za-z0-9_-]+)/);
   if (m) return m[1];
   if (/^[A-Za-z0-9_-]{20,}$/.test(s)) return s;

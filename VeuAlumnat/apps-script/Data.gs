@@ -35,6 +35,7 @@ function importStudents(sourceUrl) {
   replaceRows_('students', next);
   replaceRows_('issues', rows_('issues').filter(r => !String(r[1]).startsWith('cens_')).concat(pending));
   setConfig_('ROSTER_SOURCE_ID', source.getId());
+  setConfig_('ROSTER_IMPORTED_AT', now_());
   setConfig_('CONTACTS_APPROVED', 'NO');
   return {students: next.length, pending: pending.length,
     byCourse: VA.COURSES.map(c => [c, next.filter(r => r[1] === c).length])};
@@ -101,8 +102,6 @@ function importContactsCsv(text) {
   requireAccess_('*', ['admin']);
   if (typeof text !== 'string' || text.length > 2 * 1024 * 1024) throw new Error('El CSV és massa gran o no és text.');
   const table = contactsTable_(text), c = table.cols;
-  /* Es conserva unes hores perquè validar una correspondència el pugui tornar a importar sol. */
-  try { CacheService.getUserCache().put('contactsCsv', text, 21600); } catch (e) { /* massa gran: caldrà tornar-lo a carregar */ }
   const rows = [null].concat(table.rows.map(r => [r[0], r[c.course], '', r[c.student], r[c.guardian], r[c.email]]
     .map(v => v == null ? '' : v)));
   const students = rows_('students');
@@ -149,6 +148,10 @@ function importContactsCsv(text) {
   const next = [...grouped.values()].map(x => [x.student[0], x.student[1], [...x.names].join(' i '), x.email, 'PENDENT', 'SI']);
   replaceRows_('contacts', next);
   replaceRows_('issues', rows_('issues').filter(r => !String(r[1]).startsWith('contacte_')).concat(issues));
+  /* Es desa l'últim CSV a la carpeta privada: validar una correspondència el torna a aplicar sense haver-lo de pujar. */
+  saveContactsCsv_(text);
+  setConfig_('CONTACTS_UNMATCHED', JSON.stringify([...unmatched.values()]));
+  setConfig_('CONTACTS_IMPORTED_AT', now_());
   setConfig_('CONTACTS_APPROVED', 'NO');
   return {originalRows: rows.length - 1, uniqueRecipients: next.length, issues: issues.length,
     unmatched: [...unmatched.values()]};
@@ -178,10 +181,20 @@ function approveContactAlias(course, writtenName, studentId) {
   replaceRows_('contactAliases', all);
   return {student: student[2], reimport: reimportContacts_()};
 }
-/* Torna a aplicar l'últim CSV carregat, si encara és a la memòria temporal. */
+function saveContactsCsv_(text) {
+  const id = config_('CONTACTS_CSV_FILE_ID');
+  if (id) {
+    try { const file = DriveApp.getFileById(id); if (!file.isTrashed()) { file.setContent(text); return; } }
+    catch (e) { /* s'ha esborrat: se'n crea un de nou */ }
+  }
+  setConfig_('CONTACTS_CSV_FILE_ID', rootFolder_().createFile('Responsables · darrer CSV carregat.csv', text, 'text/csv').getId());
+}
+/* Torna a aplicar l'últim CSV carregat. */
 function reimportContacts_() {
-  const text = CacheService.getUserCache().get('contactsCsv');
-  return text ? importContactsCsv(text) : null;
+  const id = config_('CONTACTS_CSV_FILE_ID');
+  if (!id) return null;
+  try { return importContactsCsv(DriveApp.getFileById(id).getBlob().getDataAsString('UTF-8')); }
+  catch (e) { return null; }
 }
 function excludeContactName(course, writtenName) {
   requireAccess_('*', ['admin']);
@@ -204,6 +217,31 @@ function approveContacts() {
   replaceRows_('contacts', contacts.map(r => [r[0], r[1], r[2], r[3], 'SI', r[5]]));
   setConfig_('CONTACTS_APPROVED', 'SI');
   return contacts.length;
+}
+
+/* Estat de la preparació del centre: el que ja està desat i serveix per a totes les recollides del curs. */
+function setupStatus() {
+  requireAccess_('*', ['admin']);
+  const students = rows_('students').filter(r => r[4] === 'SI');
+  const contacts = rows_('contacts').filter(r => r[5] === 'SI');
+  const withMail = new Set(contacts.map(r => String(r[0])));
+  let unmatched = [];
+  try { unmatched = JSON.parse(config_('CONTACTS_UNMATCHED') || '[]'); } catch (e) { /* format antic */ }
+  const pending = rows_('issues').filter(r => ['contacte_sense_alumne', 'contacte_format', 'contacte_correu_invalid']
+    .includes(String(r[1])) && String(r[4]) !== 'SI').length;
+  const sourceId = config_('ROSTER_SOURCE_ID');
+  return {
+    roster: {count: students.length, date: config_('ROSTER_IMPORTED_AT'),
+      url: sourceId ? 'https://docs.google.com/spreadsheets/d/' + sourceId + '/edit' : ''},
+    courses: VA.COURSES.map(c => {
+      const list = students.filter(r => r[1] === c);
+      return {course: c, students: list.length, withMail: list.filter(r => withMail.has(String(r[0]))).length,
+        withoutMail: list.filter(r => !withMail.has(String(r[0]))).map(r => String(r[2]))};
+    }),
+    contacts: {recipients: contacts.length, pending, unmatched: pending ? unmatched : [],
+      approved: config_('CONTACTS_APPROVED') === 'SI', date: config_('CONTACTS_IMPORTED_AT')},
+    logo: {loaded: !!config_('LOGO_FILE_ID'), date: config_('LOGO_UPLOADED_AT')}
+  };
 }
 
 function dataSummary(course) {

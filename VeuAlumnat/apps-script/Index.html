@@ -13,7 +13,8 @@ button{border:0;border-radius:6px;background:var(--brand);color:#fff;padding:10p
 .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.step{margin:0;background:#fff;color:var(--muted);border:1px solid var(--line);text-align:left;padding:9px 10px;font-weight:normal}
 .step b{display:block;font-size:14px;color:#292622}.step.done{background:#e7f3e9;border-color:#b9d8bf}.step.now{border:2px solid var(--brand)}.step.now b{color:var(--brand)}.step.shown{box-shadow:0 0 0 3px #e8cfc9}
 .stat{font-size:15px;margin:6px 0}details{margin:10px 0}summary{cursor:pointer;font-weight:bold;color:var(--brand)}details ul{margin:8px 0;padding-left:20px;line-height:1.5;font-size:14px}
-.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
+.choice{display:flex;gap:8px;align-items:flex-start;font-weight:normal;font-size:14px;margin:6px 0}.choice input{width:auto;margin-top:3px}.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
+.setup{border-top:1px solid var(--line);padding:4px 0 10px}.setup h3{margin-top:12px}.state-ok{color:#235d31;font-weight:bold}.state-todo{color:#7d1c10;font-weight:bold}table.mini{border-collapse:collapse;font-size:13px;margin:6px 0}table.mini td,table.mini th{border-bottom:1px solid var(--line);padding:3px 10px 3px 0;text-align:left}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px}.help-btn{margin:0;background:#fff;color:var(--brand);flex:none}
 dialog#help{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 12px 40px #0005}dialog#help::backdrop{background:#0006}
 .help-head{position:sticky;top:0;background:var(--brand);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center}.help-head h2{color:#fff;margin:0}.help-head button{margin:0;background:#fff;color:var(--brand)}
@@ -23,7 +24,7 @@ dialog#help{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 3
 <dialog id="help" aria-labelledby="helpTitle"><div class="help-head"><h2 id="helpTitle">Ajuda</h2><button onclick="$('help').close()" aria-label="Tanca l’ajuda">✕ Tanca</button></div><div class="help-body">
 <p><b>Què fa l’aplicació?</b> Converteix l’autoavaluació que l’alumnat respon en un formulari de Google en un informe PDF per a cada alumne i l’envia per correu a la seva família.</p>
 <h3>Els cinc passos</h3><ol>
-<li><b>Prepara.</b> Prem «＋ Nova recollida», tria curs i nom (p. ex. «1a avaluació»). Si deixes buit el formulari de partida, es copia el de la recollida anterior del curs. Revisa’l i fes-hi els canvis que vulguis amb «Obre el formulari per editar-lo». Amb «Previsualitza l’informe amb respostes d’exemple» veuràs com quedarà.</li>
+<li><b>Prepara.</b> Prem «＋ Nova recollida», tria curs i nom (p. ex. «1a avaluació»). Si ja tens el formulari, tria «Ja tinc el formulari» i enganxa’n l’enllaç d’edició. Si vols partir de l’anterior, tria «Prepara’n un de nou» i modifica’l amb «Obre el formulari per editar-lo». Amb «Previsualitza l’informe amb respostes d’exemple» veuràs com quedarà.</li>
 <li><b>Recull.</b> Prem «Obre el formulari a l’alumnat», copia l’enllaç amb «Copia l’enllaç» i comparteix-lo a Classroom. Cada alumne respon una sola vegada amb el compte de l’escola. Quan hagin acabat, prem «Tanca el formulari».</li>
 <li><b>Revisa.</b> Comprova qui ha respost i qui no. Si hi ha incidències (alumnes que no són al cens, noms per validar), resol-les aquí. Pots previsualitzar l’informe de qualsevol alumne.</li>
 <li><b>Genera.</b> «Genera els PDF» crea tots els informes a la carpeta de la recollida. Si n’hi ha molts, el procés continua sol fins que els acaba.</li>
@@ -35,6 +36,7 @@ dialog#help{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 3
 <li>Les respostes buides no apareixen. La pregunta del nom tampoc.</li></ul>
 <h3>Preguntes freqüents</h3><ul>
 <li><b>On es desa tot?</b> Al Google Drive de l’escola, a la carpeta «La veu de l’alumnat · fitxers privats», amb una subcarpeta per recollida (formulari, respostes i PDF). El professorat del curs hi té accés de lectura.</li>
+<li><b>Cal tornar a carregar el cens o les famílies a cada avaluació?</b> No. Es carreguen un cop a l’inici de curs i queden desats per a totes les recollides. A «Preparació del centre» en veus l’estat i pots actualitzar-los si canvia alguna dada.</li>
 <li><b>Qui rep el correu?</b> Els contactes familiars aprovats per l’administració. Fins que no s’activa l’enviament, només es poden fer proves.</li>
 <li><b>Des de quin compte surten els correus?</b> Del compte que administra l’aplicació. Si la família respon, el missatge arriba a l’adreça de resposta configurada.</li>
 <li><b>M’he equivocat en un formulari.</b> Mentre no s’hagin enviat els informes, pots corregir-lo i prémer «Regenera tots els PDF».</li>
@@ -43,23 +45,27 @@ dialog#help{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 3
 </div></dialog>
 <div id="message" class="notice">S’està carregant l’espai de gestió…</div>
 <section class="card"><div class="bar"><div><label for="campaign">Recollida</label><select id="campaign" onchange="loadCampaign()"></select></div><button class="secondary" onclick="toggleNew()">＋ Nova recollida</button></div>
-<div id="newPanel" class="hidden"><h3>Nova recollida</h3><div class="grid"><div><label for="course">Curs</label><select id="course"></select></div><div><label for="year">Curs escolar</label><input id="year"></div><div><label for="label">Nom de la recollida</label><input id="label" placeholder="1a avaluació"></div></div>
-<label for="sourceUrl">Formulari de partida</label><input id="sourceUrl" placeholder="Buit: es copia el de la recollida anterior del mateix curs">
-<label><input type="radio" name="mode" value="copia" checked style="width:auto"> Fes-ne una còpia nova (recomanat: la recollida anterior queda intacta)</label>
-<label><input type="radio" name="mode" value="directe" style="width:auto"> Fes servir aquest mateix formulari (ja l’has preparat expressament)</label>
-<button onclick="createUi()">Crea la recollida</button><p class="muted">Després podràs modificar el formulari lliurement: l’informe en seguirà l’estructura.</p></div></section>
+<div id="newPanel" class="hidden"><h3>Nova recollida</h3><div class="grid"><div><label for="course">Curs</label><select id="course"></select></div><div><label for="year">Curs escolar</label><input id="year"></div><div><label for="label">Nom de la recollida</label><input id="label" list="labels" placeholder="1a avaluació"><datalist id="labels"><option>Preavaluació</option><option>1a avaluació</option><option>2a avaluació</option><option>3a avaluació</option></datalist></div></div>
+<label>Com vols començar?</label>
+<label class="choice"><input type="radio" name="mode" value="directe" checked onchange="modeUi()"> <span><b>Ja tinc el formulari</b> (l’alumnat ja l’ha respost o el respondrà): enganxo l’enllaç i l’app en farà els informes.</span></label>
+<label class="choice"><input type="radio" name="mode" value="copia" onchange="modeUi()"> <span><b>Prepara’n un de nou</b> copiant el de la recollida anterior del curs, per modificar-lo abans d’obrir-lo a l’alumnat.</span></label>
+<label for="sourceUrl" id="sourceLabel"></label><input id="sourceUrl" placeholder="https://docs.google.com/forms/d/…/edit"><p class="muted" id="sourceHelp"></p>
+<button onclick="createUi()">Crea la recollida</button><p class="muted">L’informe segueix l’estructura del formulari concret: cada secció és un apartat i cada pregunta de valoració, un bloc.</p></div></section>
 <nav id="steps" class="steps hidden"></nav>
 <section id="panel" class="card hidden"></section>
 <section id="previewBox" class="card hidden"><h2>Previsualització llesta</h2><p>El PDF és exactament el que rebran les famílies. S’obre en una pestanya nova.</p><a id="previewLink" target="_blank" rel="noopener"><button>Obre el PDF ↗</button></a><button class="secondary" onclick="$('previewBox').classList.add('hidden')">Tanca</button></section>
-<section id="admin" class="card hidden"><details><summary>Preparació del centre (administració)</summary>
-<p class="muted">Les dades personals es desen al full de control privat del compte institucional. <a id="controlLink" target="_blank" rel="noopener">Obre el full de control</a></p>
-<p class="muted">A l’inici de cada curs, en aquest ordre: cens, famílies, persones amb accés i enviament. La resta de l’any no cal tornar-hi.</p>
-<h3>1 · Cens de l’alumnat</h3><label for="roster">Enllaç del cens escolar (una pestanya per curs: «1r.ESO», «1r ESO»…)</label><input id="roster" placeholder="https://docs.google.com/spreadsheets/d/…"><button onclick="importRoster()">Importa el cens</button>
-<h3>2 · Adreces de les famílies</h3><label for="contactsFile">CSV de responsables (columnes de curs, nom de l’alumne, nom del responsable i correu)</label><input id="contactsFile" type="file" accept=".csv,text/csv"><button onclick="importContacts()">Importa els responsables</button><button class="secondary" onclick="approveContactsUi()">Valida el directori</button><div id="contactsIssues"></div>
-<h3>3 · Persones amb accés</h3><div class="grid"><div><label for="tutorMail">Correu institucional</label><input id="tutorMail"></div><div><label for="tutorRole">Rol</label><select id="tutorRole" onchange="$('tutorCourse').disabled=this.value==='admin'"><option value="tutor">Tutor/a d’un curs</option><option value="admin">Cap d’estudis o coordinació (tots els cursos)</option></select></div><div><label for="tutorCourse">Curs</label><select id="tutorCourse"></select></div></div><button onclick="addTutorUi()">Dona accés</button><div id="accessList"></div>
-<h3>4 · Enviament</h3><label for="replyTo">Adreça de resposta de les famílies (opcional)</label><input id="replyTo" placeholder="tutoria@ramonpont.cat"><button class="secondary" onclick="replyToUi()">Desa l’adreça</button>
-<p id="sendingState" class="stat"></p><button id="sendingToggle" class="secondary" onclick="toggleSending()"></button>
-<h3>Logotip</h3><input id="logo" type="file" accept="image/png,image/jpeg"><button onclick="uploadLogoUi()">Carrega el logotip</button></details></section>
+<section id="admin" class="card hidden"><details id="adminDetails"><summary id="adminSummary">Preparació del centre (administració)</summary>
+<p class="muted">Tot el que hi ha aquí queda desat i serveix per a totes les recollides del curs: preavaluació, 1a, 2a i 3a avaluació. Només cal tornar-hi si alguna dada canvia (alumnes nous, una adreça familiar…). <a id="controlLink" target="_blank" rel="noopener">Obre el full de control</a></p>
+<div class="setup"><h3>1 · Cens de l’alumnat</h3><p id="stRoster" class="stat"></p><div id="coursesTable"></div><button class="secondary" id="tgRoster" onclick="toggleForm('Roster')"></button>
+<div id="fmRoster" class="hidden"><label for="roster">Enllaç del cens escolar (una pestanya per curs: «1r.ESO», «1r ESO»…)</label><input id="roster" placeholder="https://docs.google.com/spreadsheets/d/…"><button onclick="importRoster()">Importa el cens</button></div></div>
+<div class="setup"><h3>2 · Adreces de les famílies</h3><p id="stContacts" class="stat"></p><div id="contactsIssues"></div><button id="approveContactsBtn" class="hidden" onclick="approveContactsUi()">Valida el directori</button><button class="secondary" id="tgContacts" onclick="toggleForm('Contacts')"></button>
+<div id="fmContacts" class="hidden"><label for="contactsFile">CSV de responsables (columnes de curs, nom de l’alumne, nom del responsable i correu)</label><input id="contactsFile" type="file" accept=".csv,text/csv"><button onclick="importContacts()">Importa els responsables</button><p class="muted">El nou CSV substitueix l’anterior. Les correspondències de noms que ja has validat es conserven.</p></div></div>
+<div class="setup"><h3>3 · Persones amb accés</h3><div id="accessList"></div><button class="secondary" id="tgAccess" onclick="toggleForm('Access')">＋ Dona accés a algú més</button>
+<div id="fmAccess" class="hidden"><div class="grid"><div><label for="tutorMail">Correu institucional</label><input id="tutorMail"></div><div><label for="tutorRole">Rol</label><select id="tutorRole" onchange="$('tutorCourse').disabled=this.value==='admin'"><option value="tutor">Tutor/a d’un curs</option><option value="admin">Cap d’estudis o coordinació (tots els cursos)</option></select></div><div><label for="tutorCourse">Curs</label><select id="tutorCourse"></select></div></div><button onclick="addTutorUi()">Dona accés</button></div></div>
+<div class="setup"><h3>4 · Enviament</h3><p id="sendingState" class="stat"></p><button id="sendingToggle" class="secondary" onclick="toggleSending()"></button>
+<label for="replyTo">Adreça de resposta de les famílies (opcional)</label><div class="inline"><input id="replyTo" placeholder="tutoria@ramonpont.cat"><button class="secondary" onclick="replyToUi()">Desa l’adreça</button></div></div>
+<div class="setup"><h3>5 · Logotip de l’escola</h3><p id="stLogo" class="stat"></p><button class="secondary" id="tgLogo" onclick="toggleForm('Logo')"></button>
+<div id="fmLogo" class="hidden"><input id="logo" type="file" accept="image/png,image/jpeg"><button onclick="uploadLogoUi()">Carrega el logotip</button></div></div></details></section>
 </main><script>
 let state={campaigns:[],courses:[],admin:false},ov=null,shown=0;const $=id=>document.getElementById(id);
 const STEPS=['Prepara','Recull','Revisa','Genera','Envia'];
@@ -73,9 +79,10 @@ function fillSelect(el,items,getValue,getLabel){el.replaceChildren(...items.map(
 const STATUS={ESBORRANY:'esborrany',OBERTA:'oberta',TANCADA:'tancada',APROVADA:'aprovada'};
 async function refresh(selectId){state=await call('bootstrap');fillSelect($('course'),state.courses,x=>x,x=>x);fillSelect($('tutorCourse'),state.courses,x=>x,x=>x);
 fillSelect($('campaign'),state.campaigns,x=>x.id,x=>x.course+' · '+x.label+' · '+x.year+' ('+(STATUS[x.status]||x.status)+')');if(selectId)$('campaign').value=selectId;
-$('admin').classList.toggle('hidden',!state.admin);if(state.admin){$('controlLink').href=state.controlUrl;$('replyTo').value=state.replyTo||'';showSending();showAccess(state.access)}
+$('admin').classList.toggle('hidden',!state.admin);if(state.admin){$('controlLink').href=state.controlUrl;$('replyTo').value=state.replyTo||'';showSending();showAccess(state.access);showSetup(state.setup)}
 if(!state.campaigns.length){$('newPanel').classList.remove('hidden');$('steps').classList.add('hidden');$('panel').classList.add('hidden');return}await loadCampaignCore(true)}
 function showSending(){$('sendingState').textContent='Enviament a les famílies: '+(state.sendingEnabled?'ACTIVAT':'desactivat');$('sendingToggle').textContent=state.sendingEnabled?'Desactiva l’enviament':'Activa l’enviament'}
+function modeUi(){const direct=document.querySelector('input[name=mode]:checked').value==='directe';$('sourceLabel').textContent=direct?'Enllaç d’edició del formulari':'Formulari de partida (opcional)';$('sourceHelp').textContent=direct?'Obre el formulari a Google Forms i copia l’adreça de la barra del navegador (acaba en «/edit»). Si és d’un altre compte, primer afegeix-hi l’administració de l’app com a editora.':'Si el deixes buit, es copia el formulari de l’última recollida d’aquest curs.'}
 function toggleNew(){$('newPanel').classList.toggle('hidden')}
 function currentStep(o){if(o.status==='ESBORRANY')return 0;if(o.status==='OBERTA')return 1;if(o.status==='APROVADA')return 4;if(o.issues.length||o.legacyToCheck.length||!o.entries.length)return 2;if(o.reports.length<o.entries.length)return 3;return 4}
 async function loadCampaignCore(jump){ov=await call('campaignOverview',$('campaign').value);if(jump)shown=currentStep(ov);render()}
@@ -152,22 +159,40 @@ async function preview(studentId){message('S’està preparant el PDF…');const
 async function setOpen(open){const r=await call('setCampaignOpen',ov.id,open);await refresh(ov.id);message(open?'Formulari obert a l’alumnat.':'Formulari tancat. Ja no accepta respostes.')}
 async function generate(regenerate){let r,total=0,first=true;do{r=await call('generateReports',ov.id,first&&regenerate);first=false;total+=r.created;message(total+' PDF fets; '+r.remaining+' pendents…')}while(r.remaining>0&&r.created>0);await reload();message(total+' PDF generats.')}
 function createUi(){run(async()=>{const mode=document.querySelector('input[name=mode]:checked').value;const r=await call('createCampaign',$('course').value,$('year').value,$('label').value,$('sourceUrl').value,mode);$('newPanel').classList.add('hidden');$('sourceUrl').value='';$('label').value='';await refresh(r.id);message(r.responses?'Recollida registrada amb '+r.responses+' respostes.':'Recollida creada. Revisa el formulari i obre’l quan vulguis.')})}
-function importRoster(){run(async()=>{const r=await call('importStudents',$('roster').value);message('Cens importat: '+r.students+' alumnes identificats. Fitxes només amb nom, pendents de completar: '+r.pending+'.')})}
+function importRoster(){run(async()=>{const r=await call('importStudents',$('roster').value);$('roster').value='';await updateSetup();message('Cens importat: '+r.students+' alumnes.'+(r.pending?' Fitxes només amb nom, pendents de completar: '+r.pending+'.':''))})}
 /* Llegeix el CSV en UTF-8; si hi ha caràcters trencats, el torna a llegir en la codificació de Windows. */
 function readCsv(f,enc){return new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=fail;r.readAsText(f,enc)})}
-function importContacts(){run(async()=>{const f=$('contactsFile').files[0];if(!f)throw Error('Tria el CSV de responsables.');let text=await readCsv(f,'utf-8');if(text.includes('�'))text=await readCsv(f,'windows-1252');showContacts(await call('importContactsCsv',text))})}
-function showContacts(x,prefix){const box=$('contactsIssues');box.replaceChildren();if(!x){message((prefix||'')+'Torna a carregar el CSV per aplicar-ho.');return}
-x.unmatched.forEach(item=>{const select=h('select',{},item.candidates.map(c=>h('option',{value:c.id},c.name+' (ID '+c.id+')')));const input=h('input',{placeholder:'O bé, ID correcte del cens'});box.append(h('div',{class:'row inline'},h('strong',{},item.course+' · '+item.writtenName),select,input,
-btn('Valida',async()=>{const r=await call('approveContactAlias',item.course,item.writtenName,input.value||select.value);showContacts(r.reimport,'Validat amb '+r.student+'. ')}),
-btn('Exclou: no és al cens',async()=>{if(!confirm('Confirmes que aquest nom no correspon a cap alumne del cens actual?'))return;const r=await call('excludeContactName',item.course,item.writtenName);showContacts(r.reimport,'Nom exclòs. ')},true)))});
-message((prefix||'')+x.uniqueRecipients+' adreces úniques importades; '+x.unmatched.length+' noms per relacionar amb el cens.'+(x.unmatched.length?' Valida’ls a sota.':' Ja pots validar el directori.'),!!x.unmatched.length)}
+function importContacts(){run(async()=>{const f=$('contactsFile').files[0];if(!f)throw Error('Tria el CSV de responsables.');let text=await readCsv(f,'utf-8');if(text.includes('�'))text=await readCsv(f,'windows-1252');$('contactsFile').value='';const x=await call('importContactsCsv',text);await updateSetup();contactsMessage(x)})}
+function contactsMessage(x,prefix){if(!x){message((prefix||'')+'Torna a carregar el CSV per aplicar-ho.');return}message((prefix||'')+x.uniqueRecipients+' adreces úniques; '+x.unmatched.length+' noms per relacionar amb el cens.'+(x.unmatched.length?' Relaciona’ls a la secció «Adreces de les famílies».':' Ja pots validar el directori.'),!!x.unmatched.length)}
+async function afterContactFix(r,prefix){await updateSetup();contactsMessage(r.reimport,prefix)}
+function renderUnmatched(list){const box=$('contactsIssues');box.replaceChildren(...list.map(item=>{const select=h('select',{},item.candidates.map(c=>h('option',{value:c.id},c.name+' (ID '+c.id+')')));const input=h('input',{placeholder:'O bé, ID correcte del cens'});return h('div',{class:'row inline'},h('strong',{},item.course+' · '+item.writtenName),select,input,
+btn('Valida',async()=>{const r=await call('approveContactAlias',item.course,item.writtenName,input.value||select.value);await afterContactFix(r,'Relacionat amb '+r.student+'. ')}),
+btn('Exclou: no és al cens',async()=>{if(!confirm('Confirmes que aquest nom no correspon a cap alumne del cens actual?'))return;await afterContactFix(await call('excludeContactName',item.course,item.writtenName),'Nom exclòs. ')},true))}))}
+function day(s){return s?' el '+new Date(s).toLocaleDateString('ca'):''}
+function mark(ok,text){return h('span',{class:ok?'state-ok':'state-todo'},(ok?'✓ ':'✗ ')+text)}
+/* Mostra el que ja està desat; el formulari per canviar-ho només s’obre si cal. */
+function setForm(k,open,label){$('fm'+k).classList.toggle('hidden',!open);$('tg'+k).textContent=open?'Amaga':label;$('tg'+k).dataset.label=label}
+function toggleForm(k){setForm(k,$('fm'+k).classList.contains('hidden'),$('tg'+k).dataset.label)}
+async function updateSetup(){state.setup=await call('setupStatus');showSetup(state.setup)}
+function showSetup(s){if(!s)return;const r=s.roster,c=s.contacts,todo=[];
+$('stRoster').replaceChildren(r.count?mark(true,r.count+' alumnes carregats'+day(r.date)+'. '):mark(false,'Encara no s’ha carregat el cens.'),r.url?link(r.url,'Obre el cens ↗'):'');
+setForm('Roster',!r.count,'Actualitza el cens');if(!r.count)todo.push('cens');
+$('coursesTable').replaceChildren(r.count?h('table',{class:'mini'},h('tr',{},h('th',{},'Curs'),h('th',{},'Alumnes'),h('th',{},'Amb adreça familiar'),h('th',{},'Sense adreça')),
+...s.courses.filter(x=>x.students).map(x=>h('tr',{},h('td',{},x.course),h('td',{},String(x.students)),h('td',{},String(x.withMail)),h('td',{},x.withoutMail.length?h('details',{},h('summary',{},String(x.withoutMail.length)),x.withoutMail.join(' · ')):'0')))):'');
+const contactsOk=c.recipients&&c.approved;
+$('stContacts').replaceChildren(!c.recipients&&!c.pending?mark(false,'Encara no s’ha carregat el CSV de famílies.'):contactsOk?mark(true,c.recipients+' adreces validades'+day(c.date)+'.'):
+mark(false,c.pending?'Hi ha '+c.pending+' noms del CSV per relacionar amb el cens. Relaciona’ls a sota.':c.recipients+' adreces carregades, pendents de validar.'));
+renderUnmatched(c.unmatched||[]);$('approveContactsBtn').classList.toggle('hidden',contactsOk||!c.recipients||!!c.pending);
+setForm('Contacts',!c.recipients&&!c.pending,'Carrega un CSV nou');if(!contactsOk)todo.push('famílies');
+$('stLogo').replaceChildren(s.logo.loaded?mark(true,'Logotip carregat'+day(s.logo.date)+'.'):mark(false,'Falta el logotip.'));setForm('Logo',!s.logo.loaded,'Canvia el logotip');if(!s.logo.loaded)todo.push('logotip');
+setForm('Access',false,'＋ Dona accés a algú més');$('adminSummary').textContent='Preparació del centre · '+(todo.length?'falta: '+todo.join(', '):'✓ tot desat');if(todo.length)$('adminDetails').open=true}
 function showAccess(list){const ROLE={admin:'cap d’estudis / coordinació',cap_estudis:'cap d’estudis',tutor:'tutor/a'};$('accessList').replaceChildren(...(list||[]).map(a=>h('div',{class:'row inline'},h('span',{},a.email+' · '+ROLE[a.role]+(a.course==='*'?' · tots els cursos':' · '+a.course)),
 btn('Treu l’accés',async()=>{if(!confirm('Treure l’accés de '+a.email+'?'))return;showAccess(await call('removeAccess',a.email,a.course));message('Accés retirat.')},true))))}
 function schoolYear(){const d=new Date(),y=d.getFullYear()-(d.getMonth()<7?1:0);return y+'-'+(y+1)}
-function approveContactsUi(){run(async()=>{const n=await call('approveContacts');message(n+' adreces familiars validades.')})}
-function uploadLogoUi(){run(async()=>{const f=$('logo').files[0];if(!f)throw Error('Tria el logotip.');const data=await new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=fail;r.readAsDataURL(f)});message(await call('uploadLogo',data))})}
-function addTutorUi(){run(async()=>{showAccess(await call('addTutor',$('tutorMail').value,$('tutorCourse').value,$('tutorRole').value));$('tutorMail').value='';message('Accés configurat.')})}
+function approveContactsUi(){run(async()=>{const n=await call('approveContacts');await updateSetup();message(n+' adreces familiars validades.')})}
+function uploadLogoUi(){run(async()=>{const f=$('logo').files[0];if(!f)throw Error('Tria el logotip.');const data=await new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=fail;r.readAsDataURL(f)});const m=await call('uploadLogo',data);$('logo').value='';await updateSetup();message(m)})}
+function addTutorUi(){run(async()=>{showAccess(await call('addTutor',$('tutorMail').value,$('tutorCourse').value,$('tutorRole').value));$('tutorMail').value='';setForm('Access',false,'＋ Dona accés a algú més');message('Accés configurat.')})}
 function replyToUi(){run(async()=>{const v=await call('configureReplyTo',$('replyTo').value);message(v?'Les famílies respondran a '+v+'.':'Adreça de resposta eliminada.')})}
 function toggleSending(){run(async()=>{const next=!state.sendingEnabled;if(next&&!confirm('Activar l’enviament real a les famílies?'))return;state.sendingEnabled=await call('setSendingEnabled',next);showSending();if(ov)await reload();message(next?'Enviament activat.':'Enviament desactivat.')})}
-$('year').value=schoolYear();run(async()=>{await refresh();message('Espai de gestió carregat.')});
+$('year').value=schoolYear();modeUi();run(async()=>{await refresh();message('Espai de gestió carregat.')});
 </script></body></html>

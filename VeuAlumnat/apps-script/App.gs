@@ -19,7 +19,8 @@ function bootstrap() {
     .sort((a, b) => String(b[7]).localeCompare(String(a[7])))
     .map(r => ({id: r[0], course: r[1], year: r[2], label: r[3], status: r[5]}));
   return {email, admin, courses, campaigns, controlUrl: admin ? control_().getUrl() : '',
-    sendingEnabled: config_('SENDING_ENABLED') === 'SI', replyTo: config_('REPLY_TO'), access: admin ? accessList_() : []};
+    sendingEnabled: config_('SENDING_ENABLED') === 'SI', replyTo: config_('REPLY_TO'), access: admin ? accessList_() : [],
+    setup: admin ? setupStatus() : null};
 }
 
 function uploadLogo(dataUrl) {
@@ -29,12 +30,10 @@ function uploadLogo(dataUrl) {
   if (!m) throw new Error('Cal un logotip PNG o JPEG.');
   const bytes = Utilities.base64Decode(m[2]);
   if (bytes.length > 2 * 1024 * 1024) throw new Error('El logotip supera 2 MB.');
-  const folder = config_('ROOT_FOLDER_ID') ? DriveApp.getFolderById(config_('ROOT_FOLDER_ID'))
-    : DriveApp.createFolder('La veu de l’alumnat · fitxers privats');
-  if (!config_('ROOT_FOLDER_ID')) setConfig_('ROOT_FOLDER_ID', folder.getId());
-  const file = folder.createFile(Utilities.newBlob(bytes, m[1], 'logo-escola.' + (m[1] === 'image/png' ? 'png' : 'jpg')));
+  const file = rootFolder_().createFile(Utilities.newBlob(bytes, m[1], 'logo-escola.' + (m[1] === 'image/png' ? 'png' : 'jpg')));
   setConfig_('LOGO_FILE_ID', file.getId());
   setConfig_('LOGO_PNG_FILE_ID', '');
+  setConfig_('LOGO_UPLOADED_AT', now_());
   return 'Logotip carregat.';
 }
 

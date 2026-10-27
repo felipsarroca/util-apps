@@ -27,10 +27,14 @@ const state = {
   contacts: [], contactAliases: [], issues: []
 };
 context.Utilities = {parseCsv: s => s.trim().split(/\r?\n/).map(line => line.split(';'))};
+context.Utilities.formatDate = d => d.toISOString().slice(0, 19);
 context.requireAccess_ = () => true;
 context.rows_ = name => state[name] || [];
 context.replaceRows_ = (name, rows) => {state[name] = rows};
 context.setConfig_ = () => {};
+const savedCsv = [];
+context.DriveApp = {createFolder: () => ({getId: () => 'arrel',
+  createFile: (name, text) => { savedCsv.push(text); return {getId: () => 'csv'}; }})};
 const csv = 'Núm.;Curs;Curs escolar;Nom alumne;Nom i cognoms;Correu electrònic\n'
   + '1;Quart d\'ESO;2026-2027;Júlia Exemple;Mare Exemple;familia@example.net\n'
   + '2;Quart d\'ESO;2026-2027;Júlia Exemple;Pare Exemple;familia@example.net\n'
@@ -207,4 +211,9 @@ assert.equal(state.campaigns.find(r => r[0] === 'h')[6], 'nova');
 assert.equal(run("origin_(rows_('campaigns').find(r => r[0] === 'h'))"), 'HISTORICA');
 assert.deepEqual(shared.folder, ['tutor4@ramonpont.cat']);
 assert.deepEqual(shared.form, [], 'el formulari històric no es comparteix');
+assert.ok(savedCsv.length > 0, 'el CSV de famílies queda desat per tornar-lo a aplicar');
+const coreOnly = vm.createContext({});
+vm.runInContext(fs.readFileSync(path.join(root, 'Core.gs'), 'utf8'), coreOnly);
+assert.throws(() => vm.runInContext("idFromUrl_('https://docs.google.com/forms/d/e/1FAIpQLSexemple/viewform')", coreOnly), /enllaç per respondre/);
+assert.equal(vm.runInContext("idFromUrl_('https://docs.google.com/forms/d/1abcDEF_ghi-123456789012/edit')", coreOnly), '1abcDEF_ghi-123456789012');
 console.log('Totes les comprovacions locals són correctes');

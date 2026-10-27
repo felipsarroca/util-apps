@@ -70,13 +70,15 @@ function structureSummary_(structure) {
   return {sections: structure.sections.filter(s => s.title).length, levels, open, identity: !!structure.identityId};
 }
 
+function rootFolder_() {
+  const rootId = config_('ROOT_FOLDER_ID');
+  if (rootId) return DriveApp.getFolderById(rootId);
+  const root = DriveApp.createFolder('La veu de l’alumnat · fitxers privats');
+  setConfig_('ROOT_FOLDER_ID', root.getId());
+  return root;
+}
 function campaignFolder_(year, course, label) {
-  let rootId = config_('ROOT_FOLDER_ID');
-  if (!rootId) {
-    const root = DriveApp.createFolder('La veu de l’alumnat · fitxers privats');
-    rootId = root.getId(); setConfig_('ROOT_FOLDER_ID', rootId);
-  }
-  return DriveApp.getFolderById(rootId).createFolder(year + ' · ' + course + ' · ' + label);
+  return rootFolder_().createFolder(year + ' · ' + course + ' · ' + label);
 }
 
 /* L'app treballa amb el compte propietari: el professorat del curs ha de poder obrir la carpeta (PDF, respostes)
