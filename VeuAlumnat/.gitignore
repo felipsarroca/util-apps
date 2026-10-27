@@ -1,0 +1,8 @@
+# Repositori públic: només es publiquen el codi, les proves i la guia.
+# Dades personals (CSV de famílies), enllaços als formularis, documentació interna,
+# logotip i maquetes queden només a la còpia local de Drive.
+/*
+!/.gitignore
+!/GUIA.md
+!/apps-script/
+!/tests/

@@ -1,0 +1,155 @@
+function importStudents(sourceUrl) {
+  requireAccess_('*', ['admin']);
+  const source = SpreadsheetApp.openById(idFromUrl_(sourceUrl));
+  const next = [], issues = [], pending = [], seenId = new Set(), seenMail = new Set();
+  VA.COURSES.forEach(course => {
+    const sh = source.getSheetByName(course);
+    if (!sh) throw new Error('Falta la pestanya ' + course + ' al cens.');
+    const n = sh.getLastRow();
+    const data = n < 3 ? [] : sh.getRange(3, 1, n - 2, 8).getDisplayValues();
+    data.forEach((r, i) => {
+      const id = String(r[5] || '').trim(), name = String(r[4] || '').trim(), email = mailKey_(r[7]);
+      if (!id && !name && !email) return;
+      if (name && !id && !email) {
+        pending.push(['', 'cens_pendent', course + ':' + (i + 3), 'Nom sense ID ni correu escolar; no s’ha importat', 'NO']);
+        return;
+      }
+      if (!id || !name || !email || !email.endsWith('@ramonpont.cat')
+          || id.length > 60 || name.length > 150 || email.length > 254 || /[\r\n\x00-\x1f]/.test(name)) {
+        issues.push(['', 'cens_incomplet', course + ':' + (i + 3), 'Falten ID, nom o correu escolar vàlid', 'NO']);
+        return;
+      }
+      if (seenId.has(id) || seenMail.has(email)) {
+        issues.push(['', 'cens_duplicat', course + ':' + (i + 3), 'ID o correu escolar duplicat', 'NO']);
+        return;
+      }
+      seenId.add(id); seenMail.add(email);
+      next.push([id, course, name, email, 'SI']);
+    });
+  });
+  if (issues.length) {
+    replaceRows_('issues', rows_('issues').filter(r => !String(r[1]).startsWith('cens_')).concat(issues, pending));
+    throw new Error('El cens té ' + issues.length + ' incidències. No s’ha substituït el cens anterior.');
+  }
+  replaceRows_('students', next);
+  replaceRows_('issues', rows_('issues').filter(r => !String(r[1]).startsWith('cens_')).concat(pending));
+  setConfig_('ROSTER_SOURCE_ID', source.getId());
+  setConfig_('CONTACTS_APPROVED', 'NO');
+  return {students: next.length, pending: pending.length,
+    byCourse: VA.COURSES.map(c => [c, next.filter(r => r[1] === c).length])};
+}
+
+function importContactsCsv(text) {
+  requireAccess_('*', ['admin']);
+  if (typeof text !== 'string' || text.length > 2 * 1024 * 1024) throw new Error('El CSV és massa gran o no és text.');
+  const rows = Utilities.parseCsv(String(text || ''), ';');
+  const expected = ['Núm.', 'Curs', 'Curs escolar', 'Nom alumne', 'Nom i cognoms', 'Correu electrònic'];
+  if (!rows.length || rows[0].length !== 6 || expected.some((h, i) => normalize_(rows[0][i]) !== normalize_(h))) {
+    throw new Error('El CSV no té les sis columnes esperades. Cal exportar-lo sense canviar la capçalera.');
+  }
+  const courseMap = {"Primer d'ESO": '1r.ESO', "Segon d'ESO": '2n.ESO', "Tercer d'ESO": '3r.ESO', "Quart d'ESO": '4t.ESO'};
+  const students = rows_('students');
+  if (!students.length) throw new Error('Primer cal importar el cens d’alumnes.');
+  const lookup = new Map();
+  students.forEach(r => {
+    const key = r[1] + '|' + nameKey_(r[2]);
+    lookup.set(key, (lookup.get(key) || []).concat([r]));
+  });
+  const aliases = new Map(rows_('contactAliases').filter(r => r[3] === 'SI')
+    .map(r => [r[0] + '|' + nameKey_(r[1]), String(r[2])]));
+  const byId = new Map(students.map(r => [String(r[0]), r]));
+  const grouped = new Map(), issues = [], unmatched = new Map();
+  rows.slice(1).forEach((r, i) => {
+    if (r.every(x => !String(x).trim())) return;
+    const course = courseMap[String(r[1]).trim()];
+    const candidates = lookup.get(course + '|' + nameKey_(r[3])) || [];
+    const aliasId = aliases.get(course + '|' + nameKey_(r[3]));
+    if (aliasId === 'EXCLOS') {
+      issues.push(['', 'contacte_exclos', String(i + 2), String(r[1]) + ' · ' + String(r[3]), 'SI']);
+      return;
+    }
+    const alias = byId.get(aliasId);
+    const student = alias && alias[1] === course ? alias : (candidates.length === 1 ? candidates[0] : null);
+    const email = mailKey_(r[5]), guardian = String(r[4] || '').trim();
+    if (guardian.length > 150 || email.length > 254 || String(r[3]).length > 150) {
+      issues.push(['', 'contacte_format', String(i + 2), 'Text massa llarg', 'NO']); return;
+    }
+    if (!student) {
+      issues.push(['', 'contacte_sense_alumne', String(i + 2), String(r[1]) + ' · ' + String(r[3]), 'NO']);
+      const key = course + '|' + nameKey_(r[3]);
+      if (!unmatched.has(key)) unmatched.set(key, {course, writtenName: String(r[3]),
+        candidates: suggestStudents_(String(r[3]), students.filter(s => s[1] === course))});
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      issues.push(['', email ? 'contacte_correu_invalid' : 'contacte_sense_correu', student[0], guardian, 'NO']);
+      return;
+    }
+    const key = student[0] + '|' + email;
+    if (!grouped.has(key)) grouped.set(key, {student, email, names: new Set()});
+    grouped.get(key).names.add(guardian);
+  });
+  const next = [...grouped.values()].map(x => [x.student[0], x.student[1], [...x.names].join(' i '), x.email, 'PENDENT', 'SI']);
+  replaceRows_('contacts', next);
+  replaceRows_('issues', rows_('issues').filter(r => !String(r[1]).startsWith('contacte_')).concat(issues));
+  setConfig_('CONTACTS_APPROVED', 'NO');
+  return {originalRows: rows.length - 1, uniqueRecipients: next.length, issues: issues.length,
+    unmatched: [...unmatched.values()]};
+}
+
+function editDistance_(a, b) {
+  const x = nameKey_(a), y = nameKey_(b), prev = Array.from({length: y.length + 1}, (_, i) => i);
+  for (let i = 1; i <= x.length; i++) {
+    let diag = prev[0]; prev[0] = i;
+    for (let j = 1; j <= y.length; j++) {
+      const old = prev[j]; prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (x[i - 1] === y[j - 1] ? 0 : 1));
+      diag = old;
+    }
+  }
+  return prev[y.length];
+}
+function suggestStudents_(name, students) {
+  return students.map(r => ({id: String(r[0]), name: String(r[2]), distance: editDistance_(name, r[2])}))
+    .sort((a, b) => a.distance - b.distance).slice(0, 3);
+}
+function approveContactAlias(course, writtenName, studentId) {
+  requireAccess_('*', ['admin']);
+  const student = rows_('students').find(r => String(r[0]) === String(studentId) && r[1] === course);
+  if (!student || !String(writtenName).trim() || String(writtenName).length > 150) throw new Error('Correspondència no vàlida.');
+  const all = rows_('contactAliases').filter(r => !(r[0] === course && nameKey_(r[1]) === nameKey_(writtenName)));
+  all.push([course, String(writtenName).trim(), String(studentId), 'SI']);
+  replaceRows_('contactAliases', all);
+  return {student: student[2]};
+}
+function excludeContactName(course, writtenName) {
+  requireAccess_('*', ['admin']);
+  if (!VA.COURSES.includes(course) || !String(writtenName).trim() || String(writtenName).length > 150) {
+    throw new Error('Nom o curs no vàlid.');
+  }
+  const all = rows_('contactAliases').filter(r => !(r[0] === course && nameKey_(r[1]) === nameKey_(writtenName)));
+  all.push([course, String(writtenName).trim(), 'EXCLOS', 'SI']);
+  replaceRows_('contactAliases', all);
+  return true;
+}
+
+function approveContacts() {
+  requireAccess_('*', ['admin']);
+  const issues = rows_('issues').filter(r => ['contacte_sense_alumne', 'contacte_format', 'contacte_correu_invalid'].includes(String(r[1]))
+    && String(r[4]) !== 'SI');
+  if (issues.length) throw new Error('Queden ' + issues.length + ' incidències de contactes per resoldre.');
+  const contacts = rows_('contacts');
+  if (!contacts.length) throw new Error('No hi ha contactes importats.');
+  replaceRows_('contacts', contacts.map(r => [r[0], r[1], r[2], r[3], 'SI', r[5]]));
+  setConfig_('CONTACTS_APPROVED', 'SI');
+  return contacts.length;
+}
+
+function dataSummary(course) {
+  requireAccess_(course, ['admin', 'cap_estudis', 'tutor']);
+  const students = rows_('students').filter(r => r[1] === course && r[4] === 'SI');
+  const contacts = rows_('contacts').filter(r => r[1] === course && r[5] === 'SI');
+  const withContacts = new Set(contacts.map(r => String(r[0])));
+  return {students: students.length, uniqueAddresses: contacts.length,
+    studentsWithoutAddress: students.filter(r => !withContacts.has(String(r[0]))).length,
+    contactsApproved: config_('CONTACTS_APPROVED') === 'SI'};
+}

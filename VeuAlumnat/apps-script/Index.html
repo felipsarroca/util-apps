@@ -1,0 +1,137 @@
+<!doctype html><html lang="ca"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{font-family:Arial,sans-serif;color:#292622;background:#f5f2ed;--brand:#831e12;--line:#ded8cf;--muted:#655f57}*{box-sizing:border-box}body{margin:0;background:#f5f2ed}
+header{background:var(--brand);color:#fff;padding:16px clamp(16px,4vw,48px)}header h1{font-size:21px;margin:0 0 3px}header p{margin:0;font-size:13px;opacity:.9}
+main{max-width:1060px;margin:auto;padding:16px;display:grid;gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+h2{font-size:18px;margin:0 0 10px;color:var(--brand)}h3{font-size:15px;margin:16px 0 6px}p{line-height:1.45}
+label{display:block;font-size:13px;font-weight:bold;margin:10px 0 4px}input,select{width:100%;padding:9px;border:1px solid #aaa39a;border-radius:6px;font-size:14px;background:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.bar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.bar>div{flex:1;min-width:220px}
+button{border:0;border-radius:6px;background:var(--brand);color:#fff;padding:10px 14px;cursor:pointer;font-weight:bold;margin:8px 7px 0 0;font-size:14px}button.secondary{background:#fff;color:var(--brand);border:1px solid var(--brand)}button:disabled{opacity:.5;cursor:wait}
+.muted{color:var(--muted);font-size:13px}.notice{padding:10px 12px;border-radius:6px;background:#f7edce;white-space:pre-wrap}#message.error{background:#fce6e3;color:#7d1c10}#message.ok{background:#e7f3e9;color:#235d31}
+.ok{color:#235d31}.warn{background:#fce6e3;color:#7d1c10;padding:8px 10px;border-radius:6px;margin:8px 0}
+.row{border-top:1px solid #e5e0d8;padding:8px 0;font-size:14px;overflow-wrap:anywhere}.row a,a{color:var(--brand)}.hidden{display:none!important}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.step{margin:0;background:#fff;color:var(--muted);border:1px solid var(--line);text-align:left;padding:9px 10px;font-weight:normal}
+.step b{display:block;font-size:14px;color:#292622}.step.done{background:#e7f3e9;border-color:#b9d8bf}.step.now{border:2px solid var(--brand)}.step.now b{color:var(--brand)}.step.shown{box-shadow:0 0 0 3px #e8cfc9}
+.stat{font-size:15px;margin:6px 0}details{margin:10px 0}summary{cursor:pointer;font-weight:bold;color:var(--brand)}details ul{margin:8px 0;padding-left:20px;line-height:1.5;font-size:14px}
+iframe{width:100%;height:70vh;border:1px solid var(--line);border-radius:8px;background:#fff}.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
+@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}main{padding:10px}.card{padding:14px}button{width:100%;margin-right:0}}
+</style></head><body><header><h1>La veu de l’alumnat</h1><p>Autoavaluació, informes i lliurament a les famílies · Escola Ramon Pont</p></header><main>
+<div id="message" class="notice">S’està carregant l’espai de gestió…</div>
+<section class="card"><div class="bar"><div><label for="campaign">Recollida</label><select id="campaign" onchange="loadCampaign()"></select></div><button class="secondary" onclick="toggleNew()">＋ Nova recollida</button></div>
+<div id="newPanel" class="hidden"><h3>Nova recollida</h3><div class="grid"><div><label for="course">Curs</label><select id="course"></select></div><div><label for="year">Curs escolar</label><input id="year" value="2026-2027"></div><div><label for="label">Nom de la recollida</label><input id="label" placeholder="1a avaluació"></div></div>
+<label for="sourceUrl">Formulari de partida</label><input id="sourceUrl" placeholder="Buit: es copia el de la recollida anterior del mateix curs">
+<label><input type="radio" name="mode" value="copia" checked style="width:auto"> Fes-ne una còpia nova (recomanat: la recollida anterior queda intacta)</label>
+<label><input type="radio" name="mode" value="directe" style="width:auto"> Fes servir aquest mateix formulari (ja l’has preparat expressament)</label>
+<button onclick="createUi()">Crea la recollida</button><p class="muted">Després podràs modificar el formulari lliurement: l’informe en seguirà l’estructura.</p></div></section>
+<nav id="steps" class="steps hidden"></nav>
+<section id="panel" class="card hidden"></section>
+<section id="previewBox" class="card hidden"><div class="bar"><h2 style="flex:1;margin:0">Previsualització de l’informe</h2><button class="secondary" onclick="$('previewBox').classList.add('hidden')">Tanca</button></div><p class="muted">Aproximació en pantalla. El PDF final pot paginar lleugerament diferent.</p><iframe id="previewFrame" sandbox title="Previsualització"></iframe></section>
+<section id="admin" class="card hidden"><details><summary>Preparació del centre (administració)</summary>
+<p class="muted">Les dades personals es desen al full de control privat del compte institucional. <a id="controlLink" target="_blank" rel="noopener">Obre el full de control</a></p>
+<h3>Cens i famílies</h3><label for="roster">Enllaç del cens escolar</label><input id="roster" placeholder="https://docs.google.com/spreadsheets/d/…"><button onclick="importRoster()">Importa el cens</button>
+<label for="contactsFile">CSV de responsables</label><input id="contactsFile" type="file" accept=".csv,text/csv"><button onclick="importContacts()">Importa els responsables</button><button class="secondary" onclick="approveContactsUi()">Valida el directori</button><div id="contactsIssues"></div>
+<h3>Logotip</h3><input id="logo" type="file" accept="image/png,image/jpeg"><button onclick="uploadLogoUi()">Carrega el logotip</button>
+<h3>Tutors</h3><div class="grid"><div><label for="tutorMail">Correu institucional</label><input id="tutorMail"></div><div><label for="tutorCourse">Curs assignat</label><select id="tutorCourse"></select></div></div><button onclick="addTutorUi()">Dona accés al tutor</button>
+<h3>Enviament</h3><label for="replyTo">Adreça de resposta de les famílies (opcional)</label><input id="replyTo" placeholder="tutoria@ramonpont.cat"><button class="secondary" onclick="replyToUi()">Desa l’adreça</button>
+<p id="sendingState" class="stat"></p><button id="sendingToggle" class="secondary" onclick="toggleSending()"></button></details></section>
+</main><script>
+let state={campaigns:[],courses:[],admin:false},ov=null,shown=0;const $=id=>document.getElementById(id);
+const STEPS=['Prepara','Recull','Revisa','Genera','Envia'];
+function h(tag,attrs,...kids){const el=document.createElement(tag);Object.entries(attrs||{}).forEach(([k,v])=>{if(k.startsWith('on'))el[k]=v;else if(k==='class')el.className=v;else el.setAttribute(k,v)});kids.flat().forEach(k=>{if(k!=null&&k!==false)el.append(k)});return el}
+function link(url,text){return h('a',{href:url,target:'_blank',rel:'noopener'},text)}
+function btn(text,fn,secondary){return h('button',{class:secondary?'secondary':'',onclick:()=>run(fn)},text)}
+function call(name,...args){return new Promise((ok,fail)=>google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[name](...args))}
+function message(s,err=false){$('message').textContent=s;$('message').className='notice '+(err?'error':'ok')}
+async function run(fn){try{document.querySelectorAll('button').forEach(b=>b.disabled=true);await fn()}catch(e){message(e.message||String(e),true)}finally{document.querySelectorAll('button').forEach(b=>b.disabled=false)}}
+function fillSelect(el,items,getValue,getLabel){el.replaceChildren(...items.map(x=>h('option',{value:getValue(x)},getLabel(x))))}
+const STATUS={ESBORRANY:'esborrany',OBERTA:'oberta',TANCADA:'tancada',APROVADA:'aprovada'};
+async function refresh(selectId){state=await call('bootstrap');fillSelect($('course'),state.courses,x=>x,x=>x);fillSelect($('tutorCourse'),state.courses,x=>x,x=>x);
+fillSelect($('campaign'),state.campaigns,x=>x.id,x=>x.course+' · '+x.label+' · '+x.year+' ('+(STATUS[x.status]||x.status)+')');if(selectId)$('campaign').value=selectId;
+$('admin').classList.toggle('hidden',!state.admin);if(state.admin){$('controlLink').href=state.controlUrl;$('replyTo').value=state.replyTo||'';showSending()}
+if(!state.campaigns.length){$('newPanel').classList.remove('hidden');$('steps').classList.add('hidden');$('panel').classList.add('hidden');return}await loadCampaignCore(true)}
+function showSending(){$('sendingState').textContent='Enviament a les famílies: '+(state.sendingEnabled?'ACTIVAT':'desactivat');$('sendingToggle').textContent=state.sendingEnabled?'Desactiva l’enviament':'Activa l’enviament'}
+function toggleNew(){$('newPanel').classList.toggle('hidden')}
+function currentStep(o){if(o.status==='ESBORRANY')return 0;if(o.status==='OBERTA')return 1;if(o.status==='APROVADA')return 4;if(o.issues.length||o.legacyToCheck.length||!o.entries.length)return 2;if(o.reports.length<o.entries.length)return 3;return 4}
+async function loadCampaignCore(jump){ov=await call('campaignOverview',$('campaign').value);if(jump)shown=currentStep(ov);render()}
+function loadCampaign(){run(async()=>{await loadCampaignCore(true);$('previewBox').classList.add('hidden');message('Recollida carregada.')})}
+async function reload(){await loadCampaignCore(false)}
+function render(){const now=currentStep(ov);$('steps').classList.remove('hidden');$('panel').classList.remove('hidden');
+$('steps').replaceChildren(...STEPS.map((s,i)=>h('button',{class:'step'+(i<now?' done':'')+(i===now?' now':'')+(i===shown?' shown':''),onclick:()=>{shown=i;render()}},h('b',{},(i+1)+' · '+s),i<now?'Fet':i===now?'Pas actual':'Pendent')));
+$('panel').replaceChildren(...[panelPrepare,panelCollect,panelReview,panelGenerate,panelSend][shown](ov,now))}
+function rules(){return h('details',{},h('summary',{},'Com es construeix l’informe a partir del formulari'),h('ul',{},
+h('li',{},'Cada secció del formulari és un apartat de l’informe, amb el seu títol (p. ex. «Matemàtiques» o «Com em sento a l’escola»).'),
+h('li',{},'Una pregunta d’escala o valoració obre un bloc. Si és d’1 a 4, es mostra amb l’escala oficial (NA, AS, AN, AE); si no, com «4 de 5».'),
+h('li',{},'Les preguntes obertes que la segueixen s’hi afegeixen, amb el títol de la pregunta com a etiqueta.'),
+h('li',{},'Les caselles de selecció surten com a llista i les graelles, com a taula.'),
+h('li',{},'Escriu «[tutor]» al títol d’una pregunta o secció perquè no surti a l’informe.'),
+h('li',{},'Les respostes buides no surten; si una optativa no té cap resposta, desapareix.'),
+h('li',{},'La pregunta del nom no surt a l’informe: l’alumne s’identifica pel correu escolar.')))}
+function panelPrepare(o,now){const s=o.summary,out=[h('h2',{},'1 · Prepara el formulari')];
+if(o.origin==='HISTORICA'){out.push(h('p',{},'Recollida importada d’un formulari que ja tenia respostes. El formulari original no es modifica des d’aquí.'),rules());return out}
+out.push(h('p',{},'Revisa el formulari i, si cal, modifica’l: afegeix o treu preguntes i seccions. L’informe en seguirà l’estructura.'),h('p',{},link(o.editUrl,'Obre el formulari per editar-lo ↗')),
+h('p',{class:'stat'},'Ara té '+s.sections+' seccions, '+s.levels+' preguntes de valoració i '+s.open+' preguntes obertes.'));
+if(!o.collectsEmail)out.push(h('div',{class:'warn'},'Aquest formulari no recull el correu de l’alumnat: caldrà validar a mà de qui és cada resposta.'));
+out.push(rules(),btn('Previsualitza l’informe amb respostes d’exemple',()=>preview('')),btn('Genera un PDF d’exemple',async()=>{const r=await call('generateSampleReport',o.id);message('PDF d’exemple creat. Obre’l per revisar la paginació.');window.open(r.url,'_blank','noopener')},true));
+if(o.status==='ESBORRANY')out.push(h('div',{},btn('Obre el formulari a l’alumnat →',()=>setOpen(true))));return out}
+function panelCollect(o){const out=[h('h2',{},'2 · Recull les respostes')];
+if(o.origin==='HISTORICA'){out.push(h('p',{},'Recollida ja feta: '+o.responses+' respostes.'));return out}
+if(o.status==='ESBORRANY')out.push(h('p',{},'El formulari encara no està obert. Obre’l quan l’alumnat estigui a punt de respondre.'),btn('Obre el formulari a l’alumnat',()=>setOpen(true)));
+else{out.push(h('p',{},'Enllaç per a l’alumnat (Classroom o projector): ',link(o.responseUrl,'formulari ↗'),' ',h('button',{class:'secondary',onclick:()=>{navigator.clipboard.writeText(o.responseUrl);message('Enllaç copiat.')}},'Copia l’enllaç')),
+h('p',{class:'stat'},o.responses+' respostes · '+o.entries.length+' de '+o.students+' alumnes identificats'));
+if(o.missing.length)out.push(h('details',{},h('summary',{},'Encara no han respost ('+o.missing.length+')'),h('ul',{},o.missing.map(n=>h('li',{},n)))));
+out.push(btn('Actualitza',async()=>{await reload();message('Dades actualitzades.')},true));
+if(o.status==='OBERTA')out.push(btn('Tanca el formulari →',()=>setOpen(false)));else if(o.status==='TANCADA')out.push(btn('Torna a obrir el formulari',()=>setOpen(true),true))}return out}
+const ISSUE={alumne_desconegut:'Correu que no és al cens del curs'};
+function panelReview(o){const out=[h('h2',{},'3 · Revisa les incidències')];
+if(o.status==='ESBORRANY'||o.status==='OBERTA'){out.push(h('p',{},'Primer cal tancar el formulari.'));return out}
+const pending=o.issues.length+o.legacyToCheck.length;
+out.push(h('p',{class:'stat'},o.responses+' respostes · '+o.entries.length+' alumnes identificats · '+o.missing.length+' sense resposta'));
+if(!pending&&o.entries.length)out.push(h('p',{class:'ok'},'✓ Cap incidència. Pots passar a generar els informes.'));
+if(!o.entries.length)out.push(h('p',{},'Encara no hi ha cap resposta identificada.'));
+o.issues.forEach(x=>out.push(h('div',{class:'warn'},(ISSUE[x.type]||x.type)+': '+x.detail)));
+o.warnings.forEach(x=>out.push(h('div',{class:'row'},'Ha respost més d’una vegada (s’agafa la resposta més recent): '+x.detail)));
+if(o.missing.length)out.push(h('details',{},h('summary',{},'Alumnes sense resposta ('+o.missing.length+')'),h('ul',{},o.missing.map(n=>h('li',{},n)))));
+if(o.legacyToCheck.length){out.push(h('h3',{},'Respostes sense correu: confirma de qui són ('+o.legacyToCheck.length+')'));
+if(o.legacyToCheck.some(x=>x.suggestedStudentId))out.push(btn('Valida totes les propostes úniques',async()=>{if(!confirm('Has revisat les propostes de sota? Només es validen les completes i úniques.'))return;const r=await call('approveSuggestedLegacyBatch',o.id);await reload();message(r.approved+' validades. Pendents: '+r.remaining+'. '+r.unresolved.join(', '))}));
+o.legacyToCheck.forEach(x=>{const input=h('input',{placeholder:'ID de l’alumne al cens'});input.value=x.suggestedStudentId||'';
+out.push(h('div',{class:'row inline'},h('span',{},(x.writtenName||'Sense nom')+' → '+(x.suggestedStudentName||'sense proposta')),input,btn('Valida',async()=>{await call('approveLegacyResponse',o.id,x.responseId,input.value);await reload();message('Correspondència validada.')},true)))})}
+if(!pending&&o.entries.length)out.push(h('div',{},btn('Continua: genera els informes →',()=>{shown=3;render()})));return out}
+function studentPicker(o){return h('select',{},o.entries.map(e=>h('option',{value:e.studentId},e.student)))}
+function panelGenerate(o){const out=[h('h2',{},'4 · Genera els informes')];
+if(o.status!=='TANCADA'&&o.status!=='APROVADA'){out.push(h('p',{},'Primer cal tancar el formulari i revisar les incidències.'));return out}
+out.push(h('p',{class:'stat'},o.reports.length+' de '+o.entries.length+' informes generats'));
+if(o.entries.length){const pick=studentPicker(o);out.push(h('div',{class:'inline'},pick,btn('Previsualitza l’informe d’aquest alumne',()=>preview(pick.value),true)))}
+if(o.status==='TANCADA'){if(o.reports.length<o.entries.length)out.push(h('div',{},btn('Genera els PDF',()=>generate(false))));
+else if(o.reports.length)out.push(h('div',{},btn('Regenera tots els PDF',()=>{if(confirm('Es tornaran a fer tots els PDF i els anteriors aniran a la paperera. Continuar?'))return generate(true)},true),btn('Continua: envia a les famílies →',()=>{shown=4;render()})))}
+if(o.folderUrl)out.push(h('p',{},link(o.folderUrl,'Carpeta privada dels PDF ↗')));
+if(o.reports.length)out.push(h('details',{},h('summary',{},'Informes ('+o.reports.length+')'),...o.reports.map(r=>h('div',{class:'row'},link(r.pdfUrl,r.student)))));return out}
+function panelSend(o){const out=[h('h2',{},'5 · Envia a les famílies')];
+if(!o.reports.length){out.push(h('p',{},'Primer cal generar els PDF.'));return out}
+const count={};o.recipients.forEach(r=>count[r.status]=(count[r.status]||0)+1);
+out.push(h('p',{class:o.contactsApproved?'ok':''},(o.contactsApproved?'✓ ':'✗ ')+'Directori de famílies '+(o.contactsApproved?'validat':'pendent de validar (administració)')),
+h('p',{class:o.sendingEnabled?'ok':''},(o.sendingEnabled?'✓ Enviament activat':'✗ Enviament desactivat (administració)')),
+h('p',{class:'stat'},o.recipients.length?o.recipients.length+' destinataris: '+Object.entries(count).map(([k,v])=>v+' '+k.toLowerCase()).join(' · '):'Encara no s’han preparat els destinataris.'),
+h('p',{class:'muted'},'Cada adreça familiar rep un missatge propi amb el PDF adjunt.'),
+btn('Envia’m una prova a mi',async()=>{const to=await call('sendTestMail',o.id);message('Correu de prova enviat a '+to+'.')},true));
+const pick=studentPicker(o);out.push(h('div',{class:'inline'},pick,btn('Previsualitza el correu',async()=>{const m=await call('previewMail',o.id,pick.value);message('Assumpte: '+m.subject+'\n\n'+m.body)},true)));
+if(o.status==='TANCADA'){out.push(btn('Prepara els destinataris',async()=>{const r=await call('prepareDeliveries',o.id);await reload();message(r.recipients+' destinataris preparats.'+(r.studentsWithoutRecipient.length?' Sense adreça: '+r.studentsWithoutRecipient.join(', '):''))},!!o.recipients.length));
+if(o.recipients.length)out.push(btn('Aprova la recollida per enviar',async()=>{if(!confirm('Un cop aprovada, la recollida no es pot reobrir ni regenerar. Continuar?'))return;const r=await call('approveCampaign',o.id);await refresh(o.id);message('Recollida aprovada: '+r.reports+' informes i '+r.recipients+' destinataris.')}))}
+if(o.status==='APROVADA'&&count.PREPARAT)out.push(btn('Envia el següent lot (10)',async()=>{if(!confirm('Enviar ara fins a 10 correus a les famílies?'))return;const r=await call('sendCampaignBatch',o.id,10);await reload();message(r.sent+' enviats; '+r.remaining+' pendents.')}));
+if(o.recipients.length)out.push(h('details',{},h('summary',{},'Destinataris'),...o.recipients.map(r=>h('div',{class:'row'},r.student+' · '+r.email+' · '+r.status))));return out}
+async function preview(studentId){const html=await call('previewReport',ov.id,studentId);$('previewFrame').srcdoc=html;$('previewBox').classList.remove('hidden');$('previewBox').scrollIntoView({behavior:'smooth'});message('Previsualització preparada.')}
+async function setOpen(open){const r=await call('setCampaignOpen',ov.id,open);await refresh(ov.id);message(open?'Formulari obert a l’alumnat.':'Formulari tancat. Ja no accepta respostes.')}
+async function generate(regenerate){let r,total=0,first=true;do{r=await call('generateReports',ov.id,first&&regenerate);first=false;total+=r.created;message(total+' PDF fets; '+r.remaining+' pendents…')}while(r.remaining>0&&r.created>0);await reload();message(total+' PDF generats.')}
+function createUi(){run(async()=>{const mode=document.querySelector('input[name=mode]:checked').value;const r=await call('createCampaign',$('course').value,$('year').value,$('label').value,$('sourceUrl').value,mode);$('newPanel').classList.add('hidden');$('sourceUrl').value='';$('label').value='';await refresh(r.id);message(r.responses?'Recollida registrada amb '+r.responses+' respostes.':'Recollida creada. Revisa el formulari i obre’l quan vulguis.')})}
+function importRoster(){run(async()=>{const r=await call('importStudents',$('roster').value);message('Cens importat: '+r.students+' alumnes identificats. Fitxes només amb nom, pendents de completar: '+r.pending+'.')})}
+function importContacts(){run(async()=>{const f=$('contactsFile').files[0];if(!f)throw Error('Tria el CSV de responsables.');const text=await new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=fail;r.readAsText(f,'windows-1252')});const x=await call('importContactsCsv',text);const box=$('contactsIssues');box.replaceChildren();
+x.unmatched.forEach(item=>{const select=h('select',{},item.candidates.map(c=>h('option',{value:c.id},c.name+' (ID '+c.id+')')));const input=h('input',{placeholder:'O bé, ID correcte del cens'});const row=h('div',{class:'row inline'},h('strong',{},item.course+' · '+item.writtenName),select,input,
+btn('Valida',async()=>{const r=await call('approveContactAlias',item.course,item.writtenName,input.value||select.value);row.remove();message('Correspondència validada amb '+r.student+'. Torna a importar el CSV.')}),
+btn('Exclou: no és al cens',async()=>{if(!confirm('Confirmes que aquest nom no correspon a cap alumne del cens actual?'))return;await call('excludeContactName',item.course,item.writtenName);row.remove();message('Nom exclòs. Torna a importar el CSV.')},true));box.append(row)});
+message(x.uniqueRecipients+' adreces úniques importades; '+x.issues+' incidències.'+(x.issues?' Valida les correspondències i torna a importar el CSV.':''),!!x.issues)})}
+function approveContactsUi(){run(async()=>{const n=await call('approveContacts');message(n+' adreces familiars validades.')})}
+function uploadLogoUi(){run(async()=>{const f=$('logo').files[0];if(!f)throw Error('Tria el logotip.');const data=await new Promise((ok,fail)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=fail;r.readAsDataURL(f)});message(await call('uploadLogo',data))})}
+function addTutorUi(){run(async()=>{await call('addTutor',$('tutorMail').value,$('tutorCourse').value,'tutor');message('Accés del tutor configurat.')})}
+function replyToUi(){run(async()=>{const v=await call('configureReplyTo',$('replyTo').value);message(v?'Les famílies respondran a '+v+'.':'Adreça de resposta eliminada.')})}
+function toggleSending(){run(async()=>{const next=!state.sendingEnabled;if(next&&!confirm('Activar l’enviament real a les famílies?'))return;state.sendingEnabled=await call('setSendingEnabled',next);showSending();if(ov)await reload();message(next?'Enviament activat.':'Enviament desactivat.')})}
+run(async()=>{await refresh();message('Espai de gestió carregat.')});
+</script></body></html>
