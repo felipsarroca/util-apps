@@ -13,7 +13,7 @@ button{border:0;border-radius:6px;background:var(--brand);color:#fff;padding:10p
 .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.step{margin:0;background:#fff;color:var(--muted);border:1px solid var(--line);text-align:left;padding:9px 10px;font-weight:normal}
 .step b{display:block;font-size:14px;color:#292622}.step.done{background:#e7f3e9;border-color:#b9d8bf}.step.now{border:2px solid var(--brand)}.step.now b{color:var(--brand)}.step.shown{box-shadow:0 0 0 3px #e8cfc9}
 .stat{font-size:15px;margin:6px 0}details{margin:10px 0}summary{cursor:pointer;font-weight:bold;color:var(--brand)}details ul{margin:8px 0;padding-left:20px;line-height:1.5;font-size:14px}
-iframe{width:100%;height:70vh;border:1px solid var(--line);border-radius:8px;background:#fff}.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
+.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
 @media(max-width:700px){.steps{grid-template-columns:1fr 1fr}main{padding:10px}.card{padding:14px}button{width:100%;margin-right:0}}
 </style></head><body><header><h1>La veu de l’alumnat</h1><p>Autoavaluació, informes i lliurament a les famílies · Escola Ramon Pont</p></header><main>
 <div id="message" class="notice">S’està carregant l’espai de gestió…</div>
@@ -25,7 +25,7 @@ iframe{width:100%;height:70vh;border:1px solid var(--line);border-radius:8px;bac
 <button onclick="createUi()">Crea la recollida</button><p class="muted">Després podràs modificar el formulari lliurement: l’informe en seguirà l’estructura.</p></div></section>
 <nav id="steps" class="steps hidden"></nav>
 <section id="panel" class="card hidden"></section>
-<section id="previewBox" class="card hidden"><div class="bar"><h2 style="flex:1;margin:0">Previsualització de l’informe</h2><button class="secondary" onclick="$('previewBox').classList.add('hidden')">Tanca</button></div><p class="muted">Aproximació en pantalla. El PDF final pot paginar lleugerament diferent.</p><iframe id="previewFrame" sandbox title="Previsualització"></iframe></section>
+<section id="previewBox" class="card hidden"><h2>Previsualització llesta</h2><p>El PDF és exactament el que rebran les famílies. S’obre en una pestanya nova.</p><a id="previewLink" target="_blank" rel="noopener"><button>Obre el PDF ↗</button></a><button class="secondary" onclick="$('previewBox').classList.add('hidden')">Tanca</button></section>
 <section id="admin" class="card hidden"><details><summary>Preparació del centre (administració)</summary>
 <p class="muted">Les dades personals es desen al full de control privat del compte institucional. <a id="controlLink" target="_blank" rel="noopener">Obre el full de control</a></p>
 <h3>Cens i famílies</h3><label for="roster">Enllaç del cens escolar</label><input id="roster" placeholder="https://docs.google.com/spreadsheets/d/…"><button onclick="importRoster()">Importa el cens</button>
@@ -71,7 +71,7 @@ if(o.origin==='HISTORICA'){out.push(h('p',{},'Recollida importada d’un formula
 out.push(h('p',{},'Revisa el formulari i, si cal, modifica’l: afegeix o treu preguntes i seccions. L’informe en seguirà l’estructura.'),h('p',{},link(o.editUrl,'Obre el formulari per editar-lo ↗')),
 h('p',{class:'stat'},'Ara té '+s.sections+' seccions, '+s.levels+' preguntes de valoració i '+s.open+' preguntes obertes.'));
 if(!o.collectsEmail)out.push(h('div',{class:'warn'},'Aquest formulari no recull el correu de l’alumnat: caldrà validar a mà de qui és cada resposta.'));
-out.push(rules(),btn('Previsualitza l’informe amb respostes d’exemple',()=>preview('')),btn('Genera un PDF d’exemple',async()=>{const r=await call('generateSampleReport',o.id);message('PDF d’exemple creat. Obre’l per revisar la paginació.');window.open(r.url,'_blank','noopener')},true));
+out.push(rules(),btn('Previsualitza l’informe amb respostes d’exemple',()=>preview('')));
 if(o.status==='ESBORRANY')out.push(h('div',{},btn('Obre el formulari a l’alumnat →',()=>setOpen(true))));return out}
 function panelCollect(o){const out=[h('h2',{},'2 · Recull les respostes')];
 if(o.origin==='HISTORICA'){out.push(h('p',{},'Recollida ja feta: '+o.responses+' respostes.'));return out}
@@ -118,7 +118,7 @@ if(o.status==='TANCADA'){out.push(btn('Prepara els destinataris',async()=>{const
 if(o.recipients.length)out.push(btn('Aprova la recollida per enviar',async()=>{if(!confirm('Un cop aprovada, la recollida no es pot reobrir ni regenerar. Continuar?'))return;const r=await call('approveCampaign',o.id);await refresh(o.id);message('Recollida aprovada: '+r.reports+' informes i '+r.recipients+' destinataris.')}))}
 if(o.status==='APROVADA'&&count.PREPARAT)out.push(btn('Envia el següent lot (10)',async()=>{if(!confirm('Enviar ara fins a 10 correus a les famílies?'))return;const r=await call('sendCampaignBatch',o.id,10);await reload();message(r.sent+' enviats; '+r.remaining+' pendents.')}));
 if(o.recipients.length)out.push(h('details',{},h('summary',{},'Destinataris'),...o.recipients.map(r=>h('div',{class:'row'},r.student+' · '+r.email+' · '+r.status))));return out}
-async function preview(studentId){const html=await call('previewReport',ov.id,studentId);$('previewFrame').srcdoc=html;$('previewBox').classList.remove('hidden');$('previewBox').scrollIntoView({behavior:'smooth'});message('Previsualització preparada.')}
+async function preview(studentId){message('S’està preparant el PDF…');const r=await call('previewReport',ov.id,studentId);$('previewLink').href=r.url;$('previewBox').classList.remove('hidden');$('previewBox').scrollIntoView({behavior:'smooth'});message('PDF preparat: prem «Obre el PDF».')}
 async function setOpen(open){const r=await call('setCampaignOpen',ov.id,open);await refresh(ov.id);message(open?'Formulari obert a l’alumnat.':'Formulari tancat. Ja no accepta respostes.')}
 async function generate(regenerate){let r,total=0,first=true;do{r=await call('generateReports',ov.id,first&&regenerate);first=false;total+=r.created;message(total+' PDF fets; '+r.remaining+' pendents…')}while(r.remaining>0&&r.created>0);await reload();message(total+' PDF generats.')}
 function createUi(){run(async()=>{const mode=document.querySelector('input[name=mode]:checked').value;const r=await call('createCampaign',$('course').value,$('year').value,$('label').value,$('sourceUrl').value,mode);$('newPanel').classList.add('hidden');$('sourceUrl').value='';$('label').value='';await refresh(r.id);message(r.responses?'Recollida registrada amb '+r.responses+' respostes.':'Recollida creada. Revisa el formulari i obre’l quan vulguis.')})}

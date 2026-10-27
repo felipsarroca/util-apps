@@ -55,70 +55,16 @@ function usesOfficialScale_(structure) {
   return structure.sections.some(s => s.blocks.some(b => b.level && b.level.scale.min === 1 && b.level.scale.max === 4));
 }
 
-function reportHtml_(model, meta) {
-  const e = escapeHtml_;
-  const paragraphs = t => String(t).replace(/\r\n?/g, '\n').trim().split(/\n\s*\n/)
-    .map(p => '<p class="a">' + e(p.trim()).replace(/\n/g, '<br>') + '</p>').join('');
-  const value = v => v.text ? paragraphs(v.text)
-    : v.list ? '<ul class="a">' + v.list.map(x => '<li>' + e(x) + '</li>').join('') + '</ul>'
-    : '<table class="g">' + v.table.map(r => '<tr><td class="gr">' + e(r[0]) + '</td><td>' + e(r[1]) + '</td></tr>').join('') + '</table>';
-  const level = l => l.code
-    ? '<span class="lv">' + l.code + ' · ' + l.abbr + '</span>&nbsp; <span class="lvn">' + e(l.name) + '</span>'
-    : '<span class="lv">' + e(l.text) + '</span>';
-  const block = b => '<div class="b">' + (b.title ? '<div class="bt">' + e(b.title) + '</div>' : '')
-    + (b.level ? '<div class="bl">' + level(b.level) + '</div>' : '')
-    + b.items.map(i => (i.label ? '<div class="q">' + e(i.label) + '</div>' : '') + value(i.value)).join('') + '</div>';
-  const sections = model.map(s => (s.title ? '<h2>' + e(s.title) + '</h2>' : '') + s.blocks.map(block).join('')).join('');
-  const legend = meta.legend ? '<p class="legend">' + Object.keys(LEVELS)
-    .map(k => k + ' ' + LEVELS[k][0] + ' · ' + LEVELS[k][1]).join('&nbsp;&nbsp;&nbsp; ') + '</p>' : '';
-  const logo = meta.logo ? '<img src="' + meta.logo + '" width="56" height="56">' : '';
-  const confirm = meta.confirmUrl ? '<div class="b"><div class="bt">Confirmació de lectura</div><p class="a">'
-    + '<a href="' + e(meta.confirmUrl) + '">He llegit l’autoavaluació del meu fill o filla · Confirmeu-ho aquí</a></p></div>' : '';
-  return '<!doctype html><html><head><meta charset="utf-8"><style>'
-    + 'body{font-family:Arial,sans-serif;color:#252525;font-size:10pt;margin:0}'
-    + '.head td{vertical-align:middle}.school{font-size:15pt;font-weight:bold;color:#831E12;padding-left:10px}'
-    + '.rule{border-top:2px solid #831E12;margin:8px 0 18px}'
-    + 'h1{font-size:22pt;margin:0 0 6px}.meta{color:#646464;margin:0 0 14px}'
-    + '.student{background:#F8F6F2;padding:10px 12px;margin-bottom:14px}.intro{line-height:1.4;margin:0 0 8px}'
-    + '.legend{font-size:8.5pt;font-weight:bold;color:#831E12;margin:0 0 16px}'
-    + 'h2{font-size:13pt;color:#831E12;border-bottom:1px solid #DDD7CE;padding-bottom:4px;margin:20px 0 10px}'
-    + '.b{background:#F8F6F2;border:1px solid #DDD7CE;padding:10px 14px;margin:0 0 10px;page-break-inside:avoid}'
-    + '.bt{font-size:12pt;font-weight:bold;margin:0 0 6px}.bl{margin:0 0 8px}'
-    + '.lv{background:#831E12;color:#fff;font-weight:bold;padding:2px 7px}.lvn{color:#831E12;font-weight:bold}'
-    + '.q{font-size:8.5pt;font-weight:bold;color:#646464;text-transform:uppercase;margin:8px 0 3px}'
-    + '.a{line-height:1.4;margin:0 0 6px}ul.a{padding-left:18px}.g{border-collapse:collapse;margin:0 0 6px}'
-    + '.g td{border:1px solid #DDD7CE;padding:3px 8px}.gr{color:#646464}'
-    + '.foot{color:#646464;font-size:8pt;margin-top:18px;border-top:1px solid #DDD7CE;padding-top:6px}'
-    + '</style></head><body>'
-    + '<table class="head"><tr><td>' + logo + '</td><td class="school">Escola Ramon Pont</td></tr></table><div class="rule"></div>'
-    + '<h1>La meva autoavaluació</h1><p class="meta">' + e(meta.label + ' · ' + meta.course + ' · Curs ' + meta.year) + '</p>'
-    + '<div class="student"><b>Alumne/a:</b> ' + e(meta.student) + '</div>'
-    + '<p class="intro">Aquest document recull la reflexió que he fet sobre el meu aprenentatge. És la meva valoració personal, no la qualificació del professorat.</p>'
-    + legend + (sections || '<p class="a">No hi ha respostes per mostrar.</p>') + confirm
-    + '<p class="foot">Autoavaluació de l’alumne/a · No substitueix l’informe d’avaluació del centre · Generat el '
-    + e(meta.generated) + '</p></body></html>';
-}
-
-let logoCache_ = null;
-function logoDataUri_() {
-  if (logoCache_ !== null) return logoCache_;
-  const id = config_('LOGO_FILE_ID');
-  if (!id) return (logoCache_ = '');
-  const blob = DriveApp.getFileById(id).getBlob();
-  return (logoCache_ = 'data:' + blob.getContentType() + ';base64,' + Utilities.base64Encode(blob.getBytes()));
-}
-
 function reportMeta_(campaign, studentName, structure, token) {
   const confirmUrl = config_('CONFIRMATION_ENABLED') === 'SI' && config_('CONFIRMATION_URL') && token
     ? config_('CONFIRMATION_URL') + '?mode=confirm&token=' + encodeURIComponent(token) : '';
-  return {student: studentName, label: campaign[3], course: campaign[1], year: campaign[2], logo: logoDataUri_(),
-    legend: usesOfficialScale_(structure), confirmUrl,
+  return {student: studentName, label: campaign[3], course: campaign[1], year: campaign[2], logo: logoJpeg_(),
+    legend: usesOfficialScale_(structure), confirmUrl, title: 'Autoavaluació · ' + studentName + ' · ' + campaign[3],
     generated: Utilities.formatDate(new Date(), 'Europe/Madrid', 'dd/MM/yyyy')};
 }
 
-function renderPdf_(html, name, folder) {
-  const blob = Utilities.newBlob(html, 'text/html', 'informe.html').getAs(MimeType.PDF).setName(name + '.pdf');
-  return folder.createFile(blob);
+function savePdf_(model, meta, name, folder) {
+  return folder.createFile(Utilities.newBlob(buildReportPdf_(model, meta), 'application/pdf', name + '.pdf'));
 }
 
 function campaign_(id) {
@@ -285,19 +231,18 @@ function sampleAnswers_(structure) {
   return answers;
 }
 
+/* Crea el PDF real (d'exemple o d'un alumne) a la carpeta de proves i en retorna l'enllaç.
+   Només es conserva l'última previsualització. */
 function previewReport(id, studentId) {
-  const data = collectCampaign_(id);
-  if (!studentId) {
-    const model = reportModel_(data.structure, sampleAnswers_(data.structure));
-    return reportHtml_(model, reportMeta_(data.campaign, 'Alumne/a d’exemple', data.structure, ''));
+  const data = collectCampaign_(id), c = data.campaign;
+  let model, name;
+  if (studentId) {
+    const entry = data.entries.find(e => String(e.student[0]) === String(studentId));
+    if (!entry) throw new Error('Aquest alumne no té cap resposta identificada.');
+    model = entry.model; name = entry.student[2];
+  } else {
+    model = reportModel_(data.structure, sampleAnswers_(data.structure)); name = 'Alumne/a d’exemple';
   }
-  const entry = data.entries.find(e => String(e.student[0]) === String(studentId));
-  if (!entry) throw new Error('Aquest alumne no té cap resposta identificada.');
-  return reportHtml_(entry.model, reportMeta_(data.campaign, entry.student[2], data.structure, ''));
-}
-
-function generateSampleReport(id) {
-  const data = collectCampaign_(id);
   const rootId = config_('ROOT_FOLDER_ID');
   if (!rootId) throw new Error('Primer cal carregar el logotip oficial.');
   let folderId = config_('SAMPLE_FOLDER_ID');
@@ -305,9 +250,11 @@ function generateSampleReport(id) {
     folderId = DriveApp.getFolderById(rootId).createFolder('Proves de maquetació').getId();
     setConfig_('SAMPLE_FOLDER_ID', folderId);
   }
-  const model = reportModel_(data.structure, sampleAnswers_(data.structure));
-  const html = reportHtml_(model, reportMeta_(data.campaign, 'Alumne/a d’exemple', data.structure, ''));
-  const pdf = renderPdf_(html, 'Exemple · ' + data.campaign[1] + ' · ' + data.campaign[3], DriveApp.getFolderById(folderId));
+  const previous = config_('PREVIEW_FILE_ID');
+  if (previous) { try { DriveApp.getFileById(previous).setTrashed(true); } catch (e) { /* ja no hi és */ } }
+  const pdf = savePdf_(model, reportMeta_(c, name, data.structure, ''), 'Previsualització · ' + name + ' · ' + c[3],
+    DriveApp.getFolderById(folderId));
+  setConfig_('PREVIEW_FILE_ID', pdf.getId());
   return {url: pdf.getUrl(), name: pdf.getName()};
 }
 
@@ -345,10 +292,10 @@ function generateReports(id, regenerate) {
     && String(r[2]) === entry.responseId && r[8] === confirmationState));
   let created = 0;
   for (const entry of pending) {
-    if (Date.now() - started > 240000) break;
+    if (Date.now() - started > 270000) break;
     const token = uuid_() + uuid_();
-    const html = reportHtml_(entry.model, reportMeta_(campaign, entry.student[2], data.structure, token));
-    const pdf = renderPdf_(html, 'Autoavaluació · ' + entry.student[2] + ' · ' + campaign[3], folder);
+    const pdf = savePdf_(entry.model, reportMeta_(campaign, entry.student[2], data.structure, token),
+      'Autoavaluació · ' + entry.student[2] + ' · ' + campaign[3], folder);
     putRows_('reports', [[id, entry.student[0], entry.responseId, pdf.getId(), 'GENERAT', now_(), 1, token, confirmationState]]);
     created++;
   }

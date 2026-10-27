@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '../apps-script');
 const context = vm.createContext({});
-for (const name of ['Core.gs', 'Data.gs', 'Forms.gs', 'Mail.gs', 'Reports.gs']) {
+for (const name of ['Core.gs', 'Data.gs', 'Forms.gs', 'Mail.gs', 'Pdf.gs', 'Reports.gs']) {
   vm.runInContext(fs.readFileSync(path.join(root, name), 'utf8'), context, {filename: name});
 }
 const run = code => vm.runInContext(code, context);
@@ -128,15 +128,31 @@ assert.equal(model[1].blocks[0].items.length, 1);
 assert.equal(model[1].blocks[0].items[0].value.list.length, 2);
 assert.equal(model[2].blocks[0].items[0].value.table.length, 1);
 assert.equal(model[2].blocks[1].level.code, '2');
-context.meta = {student: '<script>x</script>', label: 'Preavaluació', course: '4t.ESO', year: '2026-2027',
-  logo: '', legend: true, confirmUrl: '', generated: '27/10/2026'};
-const html = run('reportHtml_(model, meta)');
-assert.match(html, /&lt;script&gt;/);
-assert.doesNotMatch(html, /<script>/);
-assert.match(html, /3 · AN/);
-assert.match(html, /Assoliment satisfactori/);
-assert.doesNotMatch(html, /privat/);
-assert.match(html, /<li>Vídeos<\/li>/);
+// PDF propi: estructura vàlida, caràcters catalans i cap targeta partida entre pàgines.
+assert.deepEqual([...run("winAnsi_('l·l ’à€😀ŀ')")], [108, 183, 108, 32, 146, 224, 128, 108, 183]);
+assert.ok(run("pdfWrap_('paraula '.repeat(300), 'F1', 10, 120).length") > 20);
+context.meta = {student: 'Júlia Exemple', label: 'Preavaluació', course: '4t.ESO', year: '2026-2027', logo: '',
+  legend: true, confirmUrl: 'https://script.google.com/x?token=a', generated: '27/10/2026', title: 'Prova'};
+const pdf = Buffer.from([...run('buildReportPdf_(model, meta)')].map(b => b & 255)).toString('latin1');
+assert.match(pdf, /^%PDF-1\.4/);
+assert.match(pdf, /\/URI \(https:\/\/script\.google\.com\/x\?token=a\)/);
+const xrefAt = Number(pdf.match(/startxref\n(\d+)/)[1]);
+assert.equal(pdf.slice(xrefAt, xrefAt + 4), 'xref');
+const firstObj = Number(pdf.match(/xref\n0 \d+\n0000000000 65535 f \n(\d{10})/)[1]);
+assert.equal(pdf.slice(firstObj, firstObj + 7), '1 0 obj');
+const long = 'Repassaré els apunts cada divendres i demanaré ajuda quan no entengui un concepte. ';
+context.longModel = [{title: '', blocks: Array.from({length: 16}, (_, i) => ({title: 'Matèria ' + i,
+  level: {code: '3', abbr: 'AN', name: 'Assoliment notable'},
+  items: [{label: 'Compromís de millora', value: {text: long.repeat(i % 5 === 2 ? 9 : 1)}}]}))},
+  {title: 'Una resposta molt llarga', blocks: [{title: 'Reflexió', level: null,
+    items: [{label: 'Per què?', value: {text: long.repeat(120)}}]}]}];
+const placed = [], originalDraw = context.drawCard_;
+context.drawCard_ = (page, piece, top) => { placed.push({top, height: piece.height, title: piece.titleLines.length}); };
+run('buildReportPdf_(longModel, meta)');
+context.drawCard_ = originalDraw;
+assert.ok(placed.length > 17);
+placed.forEach(p => { assert.ok(p.top <= 841.89 - 128 + 0.01); assert.ok(p.top - p.height >= 54 - 0.01); });
+assert.equal(placed.length - 16 > 1, true);
 assert.equal(run('reportModel_(structure, sampleAnswers_(structure)).length'), 3);
 // Formulari de partida d'una recollida nova i origen de les recollides antigues.
 state.campaigns = [['a', '1r.ESO', '2026-2027', 'Pre', 'formA', 'TANCADA', 'f', '2026-10-01T00:00:00', 'COPIA'],
