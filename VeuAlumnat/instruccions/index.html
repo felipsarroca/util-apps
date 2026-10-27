@@ -63,6 +63,7 @@ li{margin:4px 0}
 .steps>li{counter-increment:s;position:relative;padding-left:40px;margin:0}
 .steps>li::before{content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--red);color:var(--bg);font:600 14px/26px var(--body);text-align:center}
 .ui{font-weight:600;background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:0 6px;white-space:nowrap}
+@media (max-width:560px){.ui{white-space:normal;overflow-wrap:anywhere}}
 code,.path{font-family:var(--mono);font-size:.88em}
 .path{background:var(--sunk);padding:2px 6px;border-radius:5px;word-break:break-word}
 .note,.warn,.todo,.tip{border-radius:10px;padding:14px 16px;margin:18px 0;font-size:15px}
@@ -154,6 +155,24 @@ details.faq>div>*:first-child{margin-top:0}
 .cl{list-style:none;padding:0;display:grid;gap:6px}
 .cl li{display:flex;gap:10px;align-items:flex-start;margin:0}
 .cl li::before{content:"";flex:none;width:16px;height:16px;margin-top:4px;border:1.5px solid var(--muted);border-radius:4px}
+.fchip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;background:var(--sunk);color:var(--muted)}
+.fchip.ok{background:var(--ok-soft);color:var(--ok)}.fchip.warn{background:var(--warn-soft);color:var(--warn)}.fchip.red{background:var(--red-soft);color:var(--red)}
+.fnext{display:flex;gap:10px;align-items:flex-start;background:var(--red-soft);border-left:4px solid var(--red);border-radius:8px;padding:9px 12px;font-size:13px}
+.fnext.warn{background:var(--gold-soft);border-color:var(--gold)}.fnext b{display:block;color:var(--red)}
+.fsteps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));text-align:center;font-size:12px;color:var(--muted)}
+.fsteps span{position:relative;display:grid;justify-items:center;gap:2px}
+.fsteps span::before{content:"";position:absolute;top:12px;right:50%;width:100%;height:2px;background:var(--line)}.fsteps span:first-child::before{display:none}
+.fsteps span.done::before,.fsteps span.now::before{background:var(--ok)}
+.fsteps i{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--body);font-style:normal;background:var(--screen);border:1.5px solid var(--line)}
+.fsteps .done i{background:var(--ok);border-color:var(--ok);color:var(--bg)}.fsteps .now i{background:var(--red);border-color:var(--red);color:var(--bg);box-shadow:0 0 0 4px var(--red-soft)}
+.fsteps b{color:var(--fg);font-size:12.5px}
+@media (max-width:560px){.fsteps small{display:none}}
+.fprog{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}.fprog div{display:flex;justify-content:space-between}.fprog div b{color:var(--fg)}
+.fprog s{display:block;height:8px;border-radius:99px;background:var(--sunk);overflow:hidden;text-decoration:none}.fprog s i{display:block;height:100%;background:var(--red);border-radius:99px}.fprog s i.ok{background:var(--ok)}
+.fkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}@media (max-width:560px){.fkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fkpis span{border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:11.5px;color:var(--muted);background:var(--surface)}.fkpis b{display:block;font-size:18px;color:var(--fg)}
+.fcheck{display:grid;gap:3px;font-size:13px}.fcheck .y{color:var(--ok);font-weight:700}.fcheck .n{color:var(--red);font-weight:700}
+.ftoast{justify-self:center;background:#1f5f33;color:#fff;border-radius:9px;padding:6px 12px;font-size:12.5px}
 footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 </style>
@@ -170,9 +189,11 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
     <li><a href="#families">2. Adreces de les famílies</a></li>
     <li><a href="#acces">3. Persones amb accés</a></li>
     <li><a href="#enviament">4. Activar l’enviament</a></li>
+    <li><a href="#estat">Estat de la preparació</a></li>
     <li class="grp">Formularis</li>
     <li><a href="#formulari">Com ha de ser el formulari</a></li>
     <li class="grp">Tutoria · cada recollida</li>
+    <li><a href="#pantalla">La pantalla d’una recollida</a></li>
     <li><a href="#pas1">Pas 1 · Prepara</a></li>
     <li><a href="#pas2">Pas 2 · Recull</a></li>
     <li><a href="#pas3">Pas 3 · Revisa</a></li>
@@ -197,7 +218,7 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
 <div class="roles">
   <div class="role">
     <h3>Coordinació o cap d’estudis</h3>
-    <p>Un cop a l’inici de cada curs: carrega el cens i les adreces de les famílies, dona accés als tutors i activa l’enviament. Pot fer també totes les recollides de tots els cursos.</p>
+    <p>Un cop a l’inici de cada curs: carrega el cens i les adreces de les famílies, dona accés als tutors i activa l’enviament. Queda desat per a totes les recollides del curs. Pot fer també totes les recollides de tots els cursos.</p>
     <span class="who coord">Apartats 1 a 4</span>
   </div>
   <div class="role">
@@ -208,7 +229,7 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
 </div>
 <p>El procés de tutoria en cinc passos:</p>
 <div class="flow">
-  <a href="#pas1"><b>1</b><strong>Prepara</strong><span>Còpia del formulari</span></a>
+  <a href="#pas1"><b>1</b><strong>Prepara</strong><span>El formulari</span></a>
   <a href="#pas2"><b>2</b><strong>Recull</strong><span>L’alumnat respon</span></a>
   <a href="#pas3"><b>3</b><strong>Revisa</strong><span>Només excepcions</span></a>
   <a href="#pas4"><b>4</b><strong>Genera</strong><span>Un PDF per alumne</span></a>
@@ -220,9 +241,9 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
 <div class="where">
   <div><b>L’aplicació</b><p><code>ja.cat/veualumnat</code>. Funciona al navegador; no cal instal·lar res.</p></div>
   <div><b>Cens de l’alumnat</b><p>Un full de càlcul de Google al Drive del centre, amb una pestanya per curs. Vegeu <a href="#cens">apartat 1</a>.</p></div>
-  <div><b>CSV de les famílies</b><p>A la carpeta <strong>Baixades</strong> del teu ordinador, només el temps de carregar-lo. Després s’esborra. Vegeu <a href="#families">apartat 2</a>.</p></div>
-  <div><b>Formulari de partida</b><p>El formulari d’autoavaluació de cada curs, al Drive del centre. Només cal la primera vegada: després l’app copia el de la recollida anterior.</p></div>
-  <div><b>Còpies, respostes i PDF</b><p>Els crea l’app sola a la carpeta privada <span class="path">La veu de l’alumnat · fitxers privats</span> del compte propietari de l’app (felip.sarroca@ramonpont.cat), amb una subcarpeta per recollida, per exemple <span class="path">2026-2027 · 4t.ESO · Preavaluació</span>. No cal moure res.</p></div>
+  <div><b>CSV de les famílies</b><p>A la carpeta <strong>Baixades</strong> del teu ordinador, només el temps de carregar-lo. L’app en desa una còpia a la seva carpeta privada; després esborra el de Baixades. Vegeu <a href="#families">apartat 2</a>.</p></div>
+  <div><b>Formulari</b><p>El formulari d’autoavaluació de cada curs, al Drive del centre. N’hi ha prou d’enganxar-ne l’enllaç d’edició quan crees la recollida. També pots fer que l’app copiï el de la recollida anterior.</p></div>
+  <div><b>Còpies, respostes i PDF</b><p>Els crea l’app sola a la carpeta privada <span class="path">La veu de l’alumnat · fitxers privats</span> del compte propietari de l’app (felip.sarroca@ramonpont.cat), amb una subcarpeta per recollida, per exemple <span class="path">2026-2027 · 4t.ESO · Preavaluació</span>. Els tutors del curs hi tenen accés de lectura. No cal moure res.</p></div>
 </div>
 
 <h2 id="cens">1. Cens de l’alumnat</h2>
@@ -263,9 +284,9 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
 <h3>Carregar-lo a l’app</h3>
 <ol class="steps">
   <li>Obre el full del cens i copia l’enllaç de la barra d’adreces.</li>
-  <li>A <code>ja.cat/veualumnat</code>, obre <span class="ui">Preparació del centre (administració)</span>.</li>
-  <li>A <span class="ui">1 · Cens de l’alumnat</span>, enganxa l’enllaç i prem <span class="ui">Importa el cens</span>.</li>
-  <li>Comprova el missatge: «Cens importat: N alumnes identificats».</li>
+  <li>A <code>ja.cat/veualumnat</code>, obre <span class="ui">Preparació del centre</span>, al final de la pàgina.</li>
+  <li>A <span class="ui">1 · Cens de l’alumnat</span>, enganxa l’enllaç i prem <span class="ui">Importa el cens</span>. Si ja n’hi ha un de carregat, primer prem <span class="ui">Actualitza el cens</span>.</li>
+  <li>Comprova l’estat: «✓ N alumnes carregats el …» i la taula amb els alumnes de cada curs.</li>
 </ol>
 <div class="note">Si a algun alumne li falta l’ID o el correu, l’app l’importa com a fitxa pendent i ho diu al missatge. Completa’l al full i torna a importar. Si hi ha errors greus, l’app no substitueix el cens anterior.</div>
 
@@ -317,23 +338,27 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
 
 <h3>Carregar-lo a l’app</h3>
 <ol class="steps">
-  <li>A <span class="ui">Preparació del centre</span> › <span class="ui">2 · Adreces de les famílies</span>, tria el fitxer de Baixades i prem <span class="ui">Importa els responsables</span>.</li>
-  <li>Si el nom d’un alumne no coincideix exactament amb el cens (un accent, un cognom de més), l’app el mostra. Tria l’alumne correcte a la llista o prem <span class="ui">Exclou: no és al cens</span> si ja no és a l’escola. La llista es refà sola.</li>
+  <li>A <span class="ui">Preparació del centre</span> › <span class="ui">2 · Adreces de les famílies</span>, tria el fitxer de Baixades i prem <span class="ui">Importa els responsables</span>. Si ja n’hi havia un, primer prem <span class="ui">Carrega un CSV nou</span>.</li>
+  <li>Si el nom d’un alumne no coincideix exactament amb el cens (un accent, un cognom de més), surt a la llista amb l’alumne que l’app proposa. Les propostes molt semblants ja surten marcades.</li>
+  <li>Revisa-les. Si alguna no és bona, tria l’alumne correcte al desplegable o escriu-ne l’ID. Quan totes les marcades estiguin bé, prem <span class="ui">Valida els marcats</span>.</li>
+  <li>Els noms que no corresponen a cap alumne actual, resol-los un per un amb <span class="ui">Exclou: no és al cens</span>.</li>
   <li>Quan no quedi cap nom pendent, prem <span class="ui">Valida el directori</span>.</li>
-  <li><strong>Esborra el CSV de Baixades</strong> i buida la paperera. Conté dades personals de totes les famílies.</li>
+  <li><strong>Esborra el CSV de Baixades</strong> i buida la paperera. L’app ja n’ha desat una còpia a la seva carpeta privada.</li>
 </ol>
 
 <figure>
-  <div class="screen" role="img" aria-label="Il·lustració de la validació de noms del CSV">
+  <div class="screen" role="img" aria-label="Il·lustració de la validació en bloc de noms del CSV">
     <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
     <div class="body">
       <div class="fake-h">2 · Adreces de les famílies</div>
-      <div class="fstat">Aquests noms del CSV no coincideixen amb el cens. Tria l’alumne o exclou-lo:</div>
-      <div class="fake-row"><span class="fstat" style="min-width:150px">4t.ESO · «Exemple Mostra, Ana»</span><span class="finput">Exemple Mostra, Anna ▾</span><span class="fbtn sec">Valida</span><span class="fbtn sec">Exclou: no és al cens</span></div>
-      <div class="fake-row"><span class="fbtn hl">Valida el directori</span></div>
+      <div class="fstat" style="color:var(--red);font-weight:600">✗ Hi ha 3 noms del CSV per relacionar amb el cens.</div>
+      <div class="fake-row" style="background:var(--sunk);border-radius:7px;padding:6px 8px"><label class="checks"><span style="display:flex;gap:6px;align-items:center"><span class="box"></span>Marca-ho tot</span></label><span class="fstat">2 de 3 marcats</span><span class="fbtn hl">Valida els marcats</span></div>
+      <div class="fake-row"><span class="box on">✓</span><span class="fstat" style="min-width:150px"><strong>4t.ESO · Ana Exemple</strong> →</span><span class="finput">Exemple Mostra, Anna ▾</span></div>
+      <div class="fake-row"><span class="box on">✓</span><span class="fstat" style="min-width:150px"><strong>4t.ESO · Pau Prova</strong> →</span><span class="finput">Prova Model, Pau ▾</span></div>
+      <div class="fake-row"><span class="box"></span><span class="fstat" style="min-width:150px"><strong>4t.ESO · M. Assaig</strong> →</span><span class="finput">Assaig Ficció, Laia ▾</span><span class="fbtn sec">Exclou: no és al cens</span></div>
     </div>
   </div>
-  <figcaption>Les correspondències que valideu es recorden per a les importacions següents.</figcaption>
+  <figcaption>Il·lustració amb noms inventats. La proposta dubtosa (la tercera) surt sense marcar. Les correspondències validades es recorden per a les importacions següents.</figcaption>
 </figure>
 
 <h2 id="acces">3. Persones amb accés</h2>
@@ -341,10 +366,11 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
 <p>Només entren a l’app les persones de la llista. Cada curs canvien els tutors:</p>
 <ol class="steps">
   <li>A <span class="ui">3 · Persones amb accés</span>, prem <span class="ui">Treu l’accés</span> als tutors de l’any anterior que ja no ho són.</li>
-  <li>Per a cada tutor nou: escriu el <strong>correu institucional</strong>, tria el <strong>curs</strong> i el rol <span class="ui">Tutor/a d’un curs</span>, i prem <span class="ui">Dona accés</span>. Si un curs té dos tutors, afegeix-los tots dos.</li>
+  <li>Per a cada tutor nou: prem <span class="ui">＋ Dona accés a algú més</span>, escriu el <strong>correu institucional</strong>, tria el <strong>curs</strong> i el rol <span class="ui">Tutor/a d’un curs</span>, i prem <span class="ui">Dona accés</span>. Si un curs té dos tutors, afegeix-los tots dos.</li>
   <li>Per a la cap d’estudis o la coordinació, tria <span class="ui">Cap d’estudis o coordinació (tots els cursos)</span>.</li>
   <li>Envia als tutors l’enllaç <code>ja.cat/veualumnat</code> i aquesta guia.</li>
 </ol>
+<div class="note">Quan dones accés a un tutor, l’app li comparteix les carpetes de les recollides del seu curs i li permet editar-ne els formularis. Google li envia l’avís habitual de «s’ha compartit amb vós».</div>
 
 <h2 id="enviament">4. Activar l’enviament</h2>
 <span class="who coord">Coordinació</span>
@@ -355,6 +381,28 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
   <li>Opcional: a <span class="ui">Adreça de resposta de les famílies</span>, escriu una adreça del centre (per exemple, la de tutoria) i prem <span class="ui">Desa l’adreça</span>. Les respostes de les famílies arribaran allà.</li>
 </ol>
 
+<h3>Logotip</h3>
+<p>A <span class="ui">5 · Logotip de l’escola</span> hi ha el logotip que surt a la capçalera dels informes. Només cal canviar-lo si l’escola en té un de nou: prem <span class="ui">Canvia el logotip</span>.</p>
+
+<h2 id="estat">Estat de la preparació</h2>
+<span class="who coord">Coordinació</span>
+<p>Tot el que es carrega a <span class="ui">Preparació del centre</span> queda desat i serveix per a la preavaluació i per a la 1a, 2a i 3a avaluació. No cal tornar-ho a carregar a cada recollida. El títol de la secció en mostra l’estat:</p>
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració de l’estat de la preparació del centre">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
+    <div class="body">
+      <div class="fake-h" style="color:var(--red)">▾ Preparació del centre · ✓ tot desat</div>
+      <div class="flabel">1 · Cens de l’alumnat</div>
+      <div class="fake-row"><span class="fok">✓ 118 alumnes carregats el 12/10/2026.</span><span class="fbtn sec">Actualitza el cens</span></div>
+      <div class="flabel">2 · Adreces de les famílies</div>
+      <div class="fake-row"><span class="fok">✓ 96 adreces validades el 14/10/2026.</span><span class="fbtn sec">Carrega un CSV nou</span></div>
+      <div class="flabel">5 · Logotip de l’escola</div>
+      <div class="fake-row"><span class="fok">✓ Logotip carregat.</span><span class="fbtn sec">Canvia el logotip</span></div>
+    </div>
+  </div>
+  <figcaption>Si falta alguna cosa, el títol diu què («falta: famílies») i la secció s’obre sola amb el camp per carregar-la.</figcaption>
+</figure>
+
 <h2 id="formulari">Com ha de ser el formulari</h2>
 <span class="who tots">Coordinació i tutoria</span>
 <p>L’informe calca el formulari: no cal configurar res. Si afegiu o canvieu preguntes, l’informe canvia sol. Només cal seguir aquestes regles.</p>
@@ -362,8 +410,8 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
 <h3>On ha de ser</h3>
 <ul>
   <li>És un <strong>Google Forms</strong> creat amb un compte @ramonpont.cat.</li>
-  <li>Si enganxes l’enllaç d’un formulari nou a l’app, el compte propietari de l’app (felip.sarroca@ramonpont.cat) n’ha de ser <strong>col·laborador</strong>. Al formulari: ⋮ › <span class="ui">Afegeix col·laboradors</span>.</li>
-  <li>Només cal la primera vegada de cada curs. A partir d’aquí, cada recollida copia la de l’anterior.</li>
+  <li>A l’app s’enganxa l’<strong>enllaç d’edició</strong>: el de la barra del navegador quan edites el formulari, acabat en <code>/edit</code>. No serveix l’enllaç per respondre que es passa a l’alumnat.</li>
+  <li>Si el formulari és d’un altre compte, el compte propietari de l’app (felip.sarroca@ramonpont.cat) n’ha de ser <strong>col·laborador</strong>. Al formulari: ⋮ › <span class="ui">Afegeix col·laboradors</span>.</li>
 </ul>
 
 <h3>Què es converteix en què</h3>
@@ -398,17 +446,53 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
   <figcaption>Una secció del formulari i el bloc que en surt a l’informe.</figcaption>
 </figure>
 
-<div class="tip"><strong>Consells.</strong> No marqueu com a obligatòries les preguntes de les optatives: si queden en blanc, desapareixen de l’informe. No cal activar «Recull adreces electròniques» ni limitar a una resposta: l’app ho configura sola a cada còpia.</div>
+<div class="tip"><strong>Consells.</strong> No marqueu com a obligatòries les preguntes de les optatives: si queden en blanc, desapareixen de l’informe. Si el formulari és nou (encara sense respostes), l’app activa sola «Recull adreces electròniques» i el limita a una resposta per alumne. Si ja té respostes, no el toca.</div>
+
+<h2 id="pantalla">La pantalla d’una recollida</h2>
+<span class="who tutor">Tutoria</span>
+<p>Quan tries una recollida a <span class="ui">Tria la recollida</span>, l’app mostra on és i què cal fer a continuació:</p>
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració de la capçalera d’una recollida i dels cinc passos">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
+    <div class="body">
+      <div class="flabel" style="letter-spacing:.06em">RECOLLIDA · 2026-2027 <span class="callout">1</span></div>
+      <div class="fake-h" style="color:var(--red);font-size:18px">4t.ESO · Preavaluació</div>
+      <div class="fake-row"><span class="fchip red">Tancada</span><span class="fchip">Còpia nova</span><span class="fchip">27/29 respostes</span><span class="fchip red">27 PDF</span><span class="callout">2</span></div>
+      <div class="fnext"><span>📨</span><div><b>Ara toca: Prepara els destinataris</b>Els 27 informes estan fets. Prepara la llista de famílies que els rebran.</div><span class="callout">3</span></div>
+      <div class="fsteps" style="margin-top:6px">
+        <span class="done"><i>✓</i><b>Prepara</b><small>Formulari a punt</small></span>
+        <span class="done"><i>✓</i><b>Recull</b><small>27 de 29 han respost</small></span>
+        <span class="done"><i>✓</i><b>Revisa</b><small>Sense incidències</small></span>
+        <span class="done"><i>✓</i><b>Genera</b><small>27 de 27 PDF</small></span>
+        <span class="now"><i>5</i><b>Envia</b><small>Pendent</small></span>
+      </div>
+      <div style="text-align:center"><span class="callout">4</span></div>
+    </div>
+  </div>
+  <figcaption>Il·lustració amb dades inventades.</figcaption>
+</figure>
+<ol class="steps">
+  <li><strong>Capçalera:</strong> curs, nom de la recollida i accessos directes <span class="ui">Formulari ↗</span> i <span class="ui">Carpeta ↗</span>.</li>
+  <li><strong>Etiquetes d’estat:</strong> si el formulari és obert o tancat, quants alumnes han respost i quants PDF hi ha.</li>
+  <li><strong>«Ara toca»:</strong> diu sempre el pas següent. Si estàs mirant un altre pas, hi surt un botó per tornar al pas actual.</li>
+  <li><strong>Els cinc passos:</strong> en verd els fets i en granat el pas actual, amb un resum a sota. Fes-hi clic per veure qualsevol pas.</li>
+</ol>
+<div class="note">Els avisos de l’app surten a la part de baix de la pantalla. Mentre treballa, l’avís mostra un cercle que gira: espera que acabi abans de tancar la pestanya.</div>
 
 <h2 id="pas1">Pas 1 · Prepara el formulari</h2>
 <span class="who tutor">Tutoria</span>
 <ol class="steps">
   <li>Obre <code>ja.cat/veualumnat</code> i prem <span class="ui">＋ Nova recollida</span>.</li>
   <li>Tria el <strong>curs</strong>. El curs escolar ja hi surt.</li>
-  <li>Escriu el <strong>nom de la recollida</strong>: «Preavaluació», «1a avaluació»…</li>
-  <li>Deixa en blanc <span class="ui">Formulari de partida</span>: es copiarà el de la recollida anterior del teu curs. Només la primera vegada cal enganxar-hi l’enllaç d’edició del formulari.</li>
-  <li>Deixa marcat <span class="ui">Fes-ne una còpia nova</span> i prem <span class="ui">Crea la recollida</span>.</li>
-  <li>Prem <span class="ui">Obre el formulari per editar-lo ↗</span> si vols canviar alguna pregunta. Després, <span class="ui">Previsualitza l’informe amb respostes d’exemple</span> per veure com quedarà.</li>
+  <li>Tria o escriu el <strong>nom de la recollida</strong>: «Preavaluació», «1a avaluació»…</li>
+  <li>A <span class="ui">Com vols començar?</span>, tria una opció:
+    <ul>
+      <li><span class="ui">Ja tinc el formulari</span>: enganxa’n l’enllaç d’edició (acabat en <code>/edit</code>). Serveix també si l’alumnat ja l’ha respost: l’app en farà els informes directament.</li>
+      <li><span class="ui">Prepara’n un de nou</span>: l’app copia el formulari de la recollida anterior del curs. Si deixes l’enllaç en blanc, agafa l’últim.</li>
+    </ul>
+  </li>
+  <li>Prem <span class="ui">Crea la recollida</span>.</li>
+  <li>Si vols canviar alguna pregunta, prem <span class="ui">✏️ Obre el formulari per editar-lo ↗</span>. Després, prem <span class="ui">👁 Previsualitza l’informe amb respostes d’exemple</span> per veure com quedarà.</li>
 </ol>
 <figure>
   <div class="screen" role="img" aria-label="Il·lustració del formulari de nova recollida">
@@ -417,22 +501,23 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
       <div class="fake-h">Nova recollida</div>
       <div class="fake-row"><span class="flabel" style="width:150px">Curs</span><span class="finput">4t.ESO ▾</span></div>
       <div class="fake-row"><span class="flabel" style="width:150px">Curs escolar</span><span class="finput">2026-2027</span></div>
-      <div class="fake-row"><span class="flabel" style="width:150px">Nom de la recollida</span><span class="finput" style="color:var(--fg)">1a avaluació</span></div>
-      <div class="fake-row"><span class="flabel" style="width:150px">Formulari de partida</span><span class="finput">Buit: es copia el de la recollida anterior del mateix curs</span></div>
-      <div class="checks"><label><span class="box on" style="border-radius:50%">●</span>Fes-ne una còpia nova (recomanat)</label></div>
+      <div class="fake-row"><span class="flabel" style="width:150px">Nom de la recollida</span><span class="finput" style="color:var(--fg)">1a avaluació ▾</span></div>
+      <div class="flabel">Com vols començar?</div>
+      <div class="checks"><label><span class="box on" style="border-radius:50%">●</span><span><strong>Ja tinc el formulari</strong>: enganxo l’enllaç i l’app en farà els informes.</span></label><label><span class="box" style="border-radius:50%"></span><span><strong>Prepara’n un de nou</strong> copiant el de la recollida anterior del curs.</span></label></div>
+      <div class="fake-row"><span class="flabel" style="width:150px">Enllaç d’edició</span><span class="finput">https://docs.google.com/forms/d/…/edit</span></div>
       <div class="fake-row"><span class="fbtn hl">Crea la recollida</span></div>
     </div>
   </div>
-  <figcaption>La còpia es comparteix amb tu perquè la puguis editar. La recollida anterior queda intacta.</figcaption>
+  <figcaption>Si enganxes per error l’enllaç per respondre, l’app t’avisa i t’explica quin cal.</figcaption>
 </figure>
 
 <h2 id="pas2">Pas 2 · Recull les respostes</h2>
 <span class="who tutor">Tutoria</span>
 <ol class="steps">
   <li>Prem <span class="ui">Obre el formulari a l’alumnat →</span>.</li>
-  <li>Copia l’<strong>enllaç per a l’alumnat</strong> i comparteix-lo a Classroom o mostra’l al projector.</li>
+  <li>Prem <span class="ui">📋 Copia</span> al costat de l’<strong>enllaç per a l’alumnat</strong> i enganxa’l a Classroom, o mostra’l al projector.</li>
   <li>L’alumnat respon amb el seu compte escolar. Cada alumne només pot respondre una vegada.</li>
-  <li>Prem <span class="ui">Actualitza</span> per veure qui ha respost i qui falta.</li>
+  <li>La barra de progrés mostra quants alumnes han respost. S’actualitza sola cada minut; també pots prémer <span class="ui">↻ Actualitza</span>. A <span class="ui">Encara no han respost</span> hi ha qui falta.</li>
   <li>Quan hagin acabat, prem <span class="ui">Tanca el formulari →</span>. Si cal, el pots tornar a obrir.</li>
 </ol>
 <figure>
@@ -440,59 +525,82 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
     <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
     <div class="body">
       <div class="fake-h">2 · Recull les respostes</div>
-      <div class="fake-row"><span class="fstat">Enllaç per a l’alumnat (Classroom o projector): <a href="#pas2" tabindex="-1">formulari ↗</a></span><span class="fbtn sec">Copia</span></div>
-      <div class="fok">24 de 27 alumnes han respost</div>
-      <div class="fake-row"><span class="fbtn sec">Actualitza</span><span class="fbtn hl">Tanca el formulari →</span></div>
+      <div class="flabel">Enllaç per a l’alumnat (Classroom o projector)</div>
+      <div class="fake-row"><span class="finput">https://docs.google.com/forms/d/e/…/viewform</span><span class="fbtn sec">📋 Copia</span></div>
+      <div class="fprog"><div><span>Alumnes que han respost</span><b>24 de 27 · 89 %</b></div><s><i style="width:89%"></i></s></div>
+      <div class="fake-row"><span class="fstat" style="color:var(--red);font-weight:600">▸ Encara no han respost (3)</span></div>
+      <div class="fake-row"><span class="fbtn sec">↻ Actualitza</span><span class="fbtn hl">Tanca el formulari →</span></div>
     </div>
   </div>
 </figure>
 
-<h2 id="pas3">Pas 3 · Revisa les incidències</h2>
+<h2 id="pas3">Pas 3 · Revisa les respostes</h2>
 <span class="who tutor">Tutoria</span>
-<p>Només apareixen els casos que necessiten una decisió:</p>
+<p>A dalt hi ha el recompte: respostes, alumnes identificats, alumnes sense resposta i incidències. Només cal fer alguna cosa si hi ha incidències:</p>
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració del recompte del pas de revisió">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
+    <div class="body">
+      <div class="fake-h">3 · Revisa les respostes</div>
+      <div class="fkpis"><span><b>28</b>respostes</span><span><b style="color:var(--ok)">27</b>alumnes identificats</span><span><b>2</b>sense resposta</span><span><b style="color:var(--ok)">0</b>incidències</span></div>
+      <div class="fok">✓ Cap incidència. Pots passar a generar els informes.</div>
+    </div>
+  </div>
+</figure>
 <ul>
   <li><strong>Correus fora del cens</strong>: algú ha respost amb un compte que no és del curs.</li>
-  <li><strong>Respostes sense correu</strong> (només en formularis antics): l’app proposa l’alumne. Prem <span class="ui">Valida</span> en cada cas o <span class="ui">Valida totes les propostes úniques</span>.</li>
+  <li><strong>Respostes sense correu</strong> (formularis que no recollien el correu): l’app proposa l’alumne. Prem <span class="ui">Valida</span> en cada cas o <span class="ui">Valida totes les propostes úniques</span>.</li>
   <li><strong>Alumnes que no han respost</strong>: no tindran informe. Si cal, torna a obrir el formulari.</li>
 </ul>
-<p>Quan no en quedi cap, prem <span class="ui">Continua: genera els informes →</span>.</p>
+<p>També pots triar un alumne i prémer <span class="ui">👁 Previsualitza</span> per veure’n l’informe. Quan no quedi cap incidència, prem <span class="ui">Continua: genera els informes →</span>.</p>
 
 <h2 id="pas4">Pas 4 · Genera els informes</h2>
 <span class="who tutor">Tutoria</span>
 <ol class="steps">
-  <li>Tria un alumne i prem <span class="ui">Previsualitza l’informe d’aquest alumne</span>. Revisa’l.</li>
-  <li>Prem <span class="ui">Genera els PDF</span>. Es fan sols, en tandes; el missatge diu quants en queden.</li>
-  <li>Els PDF es desen a la <span class="ui">Carpeta privada dels PDF ↗</span> de la recollida.</li>
+  <li>Tria un alumne i prem <span class="ui">👁 Previsualitza l’informe d’aquest alumne</span>. Revisa’l.</li>
+  <li>Prem <span class="ui">📄 Genera els PDF</span>. Es fan sols, en tandes; la barra i l’avís de baix diuen quants en queden.</li>
+  <li>Els PDF es desen a la carpeta de la recollida: <span class="ui">📁 Obre la carpeta amb tots els PDF ↗</span>. També pots obrir-ne un de concret des de <span class="ui">Obre un informe concret</span>.</li>
 </ol>
+<figure>
+  <div class="screen" role="img" aria-label="Il·lustració del pas de generació">
+    <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
+    <div class="body">
+      <div class="fake-h">4 · Genera els informes</div>
+      <div class="fprog"><div><span>Informes generats</span><b>12 de 27 · 44 %</b></div><s><i style="width:44%"></i></s></div>
+      <div class="ftoast">⟳ 12 PDF fets; 15 pendents…</div>
+    </div>
+  </div>
+</figure>
 <div class="note">Si canvies alguna cosa després, prem <span class="ui">Regenera tots els PDF</span>: els anteriors van a la paperera. Ja no es pot fer quan s’ha començat a enviar.</div>
 
 <h2 id="pas5">Pas 5 · Envia a les famílies</h2>
 <span class="who tutor">Tutoria</span>
+<p>A dalt hi ha una llista de comprovació: informes generats, directori validat, destinataris preparats i enviament activat. Si algun punt surt amb ✗, «Ara toca» diu què cal fer.</p>
 <ol class="steps">
-  <li>Prem <span class="ui">Envia’m una prova a mi</span> i mira el correu i el PDF a la teva bústia.</li>
-  <li>Opcional: tria un alumne i prem <span class="ui">Previsualitza el correu</span>.</li>
   <li>Prem <span class="ui">Prepara els destinataris</span>. L’app diu quantes adreces hi ha i quins alumnes no en tenen (aquests, en paper).</li>
-  <li>Prem <span class="ui">Aprova i envia a totes les famílies</span> i confirma. Els lots de 20 s’envien sols; no tanquis la pestanya fins que acabi.</li>
+  <li>A <span class="ui">Comprova-ho abans d’enviar</span>, prem <span class="ui">✉️ Envia’m una prova a mi</span> i mira el correu i el PDF a la teva bústia. També pots triar un alumne i prémer <span class="ui">👁 Previsualitza el correu</span>: s’obre en una finestra.</li>
+  <li>Prem <span class="ui">📨 Aprova i envia a totes les famílies</span> i confirma. Els lots de 20 s’envien sols; no tanquis la pestanya fins que l’avís de baix digui que ha acabat.</li>
+  <li>A <span class="ui">Destinataris</span> hi ha l’estat de cada correu: pendent, enviat o lectura confirmada.</li>
 </ol>
 <figure>
   <div class="screen" role="img" aria-label="Il·lustració del pas d’enviament">
     <div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">ja.cat/veualumnat</div></div>
     <div class="body">
       <div class="fake-h">5 · Envia a les famílies</div>
-      <div class="fok">✓ Enviament activat</div>
-      <div class="fake-row"><span class="fbtn sec">Envia’m una prova a mi</span><span class="fbtn sec">Prepara els destinataris</span></div>
-      <div class="fmsg">41 destinataris preparats. Sense adreça (imprimeix-los a sota): Prova Model, Pau</div>
-      <div class="fake-row"><span class="fbtn hl">Aprova i envia a totes les famílies</span></div>
+      <div class="fcheck"><span><span class="y">✓</span> Informes generats (27)</span><span><span class="y">✓</span> Directori de famílies validat</span><span><span class="y">✓</span> 41 destinataris preparats</span><span><span class="y">✓</span> Enviament activat</span></div>
+      <div class="fprog"><div><span>Correus enviats</span><b>41 de 41 · 100 %</b></div><s><i class="ok" style="width:100%"></i></s></div>
+      <div class="fake-row"><span class="fstat">Exemple Mostra, Anna · familia.exemple@correu.cat</span><span class="fchip ok">lectura confirmada ✓</span></div>
+      <div class="fake-row"><span class="fstat">Prova Model, Pau · pau.familia@correu.cat</span><span class="fchip ok">enviat</span></div>
     </div>
   </div>
   <figcaption>Si un alumne té dos responsables amb adreces diferents, cada adreça rep el seu correu.</figcaption>
 </figure>
 <div class="warn"><strong>Atenció.</strong> Un cop aprovat l’enviament, la recollida ja no es pot reobrir ni regenerar. Si l’enviament s’atura (es tanca la pestanya o s’acaba la quota diària de correus), torna a la recollida i prem <span class="ui">Continua l’enviament (N pendents)</span>.</div>
-<p>Si no surt el botó <span class="ui">Aprova i envia a totes les famílies</span>, l’enviament encara no està activat. Demana-ho a coordinació (<a href="#enviament">apartat 4</a>).</p>
+<p>Si no surt el botó <span class="ui">📨 Aprova i envia a totes les famílies</span>, l’enviament encara no està activat («Ara toca» ho indica). Demana-ho a coordinació (<a href="#enviament">apartat 4</a>).</p>
 
 <h2 id="paper">Lliurament en paper</h2>
 <span class="who tutor">Tutoria</span>
-<p>Al pas 5, a <span class="ui">Lliurament en paper</span>, hi ha dos botons:</p>
+<p>Al pas 5, a <span class="ui">🖨 Lliurament en paper</span>, hi ha dos botons:</p>
 <ul>
   <li><span class="ui">PDF de tots els informes</span>: tot el grup en un sol fitxer.</li>
   <li><span class="ui">PDF només dels alumnes sense correu familiar</span>: només els que no han rebut el correu.</li>
@@ -523,10 +631,11 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
 <details class="faq"><summary>«Cal obrir aquesta aplicació amb el compte institucional del centre.»</summary><div><p>Has obert l’app amb un compte personal. Obre <code>ja.cat/veualumnat</code> en una finestra on hagis entrat amb el compte @ramonpont.cat, o canvia de compte a la icona de perfil del navegador.</p></div></details>
 <details class="faq"><summary>«Aquest compte encara no està autoritzat.»</summary><div><p>Coordinació encara no t’ha afegit a <a href="#acces">Persones amb accés</a>.</p></div></details>
 <details class="faq"><summary>«És la primera recollida de 4t.ESO: enganxa l’enllaç d’edició del formulari de partida.»</summary><div><p>És la primera vegada d’aquest curs. Enganxa l’enllaç del formulari (l’adreça que surt quan l’edites, acabada en <code>/edit</code>).</p></div></details>
+<details class="faq"><summary>«Aquest és l’enllaç per respondre. Enganxa l’enllaç d’edició…»</summary><div><p>Has enganxat l’enllaç que es passa a l’alumnat. Obre el formulari a Google Forms (mode edició) i copia l’adreça de la barra del navegador, acabada en <code>/edit</code>.</p></div></details>
 <details class="faq"><summary>«El compte del centre no pot editar aquest formulari…»</summary><div><p>Afegeix felip.sarroca@ramonpont.cat com a col·laborador del formulari (⋮ › Afegeix col·laboradors) i torna-ho a provar.</p></div></details>
 <details class="faq"><summary>«Falta la pestanya 3r.ESO al cens.»</summary><div><p>Al full del cens hi falta la pestanya d’aquest curs, o té un nom que no inclou «ESO». Reanomena-la, per exemple «3r ESO».</p></div></details>
 <details class="faq"><summary>«Al CSV no es troben les columnes de curs, nom de l’alumne, nom del responsable i correu.»</summary><div><p>A l’exportació de Clickedu hi falta alguna dada bàsica. Torna-la a fer marcant Nom alumne, Nom i cognoms i Correu electrònic.</p></div></details>
-<details class="faq"><summary>«Queden N incidències de contactes per resoldre.»</summary><div><p>Hi ha noms del CSV sense assignar. Tria l’alumne o exclou-los i torna a prémer <span class="ui">Valida el directori</span>.</p></div></details>
+<details class="faq"><summary>«Queden N incidències de contactes per resoldre.»</summary><div><p>Hi ha noms del CSV sense assignar. Marca les propostes correctes i prem <span class="ui">Valida els marcats</span>, exclou els que no són al cens i torna a prémer <span class="ui">Valida el directori</span>.</p></div></details>
 <details class="faq"><summary>«Cal resoldre N incidències abans de generar els PDF.»</summary><div><p>Torna al <a href="#pas3">pas 3</a> i resol les incidències pendents.</p></div></details>
 <details class="faq"><summary>«Cal validar el directori familiar abans de preparar enviaments.»</summary><div><p>Coordinació ha de carregar i validar el CSV de famílies (<a href="#families">apartat 2</a>). Cada importació nova deixa el directori pendent de validar.</p></div></details>
 <details class="faq"><summary>«Ja s’han enviat informes d’aquesta recollida; no es poden regenerar.»</summary><div><p>És intencionat: les famílies ja tenen la versió enviada. Si cal corregir un informe concret, parla amb coordinació.</p></div></details>
@@ -538,6 +647,7 @@ footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--line);font-si
   <li>Cens nou carregat, sense fitxes pendents.</li>
   <li>CSV de famílies exportat de Clickedu, carregat i directori validat.</li>
   <li>CSV esborrat de Baixades i de la paperera.</li>
+  <li>«Preparació del centre · ✓ tot desat».</li>
   <li>Tutors antics retirats i tutors nous afegits.</li>
   <li>Enviament activat i adreça de resposta desada.</li>
   <li>Enllaç <code>ja.cat/veualumnat</code> i aquesta guia enviats als tutors.</li>
