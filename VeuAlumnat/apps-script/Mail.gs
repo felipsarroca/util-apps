@@ -1,25 +1,62 @@
+/* El cens desa «Cognoms, Nom»; al correu es parla de l'alumne pel nom. */
+function firstName_(name) {
+  const s = String(name || '').trim();
+  return s.includes(',') ? s.split(',').slice(1).join(',').trim() : s.split(/\s+/)[0];
+}
+function fullName_(name) {
+  const s = String(name || '').trim();
+  return s.includes(',') ? firstName_(s) + ' ' + s.split(',')[0].trim() : s;
+}
+
+/* Contingut del correu en blocs, per obtenir-ne la versió de text i la versió amb format. */
+function mailBlocks_(studentName, campaign, withConfirmation) {
+  const name = firstName_(studentName);
+  return [
+    {p: 'Benvolguda família,'},
+    {p: name + ' ha dedicat una estona a pensar com està aprenent: ha valorat cada matèria i s’ha proposat què pot fer per millorar. '
+      + 'Us adjuntem el document amb la seva reflexió de la ' + String(campaign[3]).toLowerCase() + ' (curs ' + campaign[2] + ').'},
+    {p: 'Us proposem que el llegiu junts. Aquestes preguntes us poden ajudar a començar la conversa:'},
+    {list: ['De quina matèria n’estàs més satisfet o satisfeta? Per què?',
+      'Quin dels teus compromisos et sembla més important?',
+      'Com et podem ajudar des de casa a complir-lo?']},
+    {note: 'Recordeu que és la seva valoració personal: no substitueix l’informe d’avaluació del centre.'},
+    withConfirmation ? {p: 'Al final del document trobareu un enllaç per confirmar que l’heu llegit.'} : null,
+    {p: 'Gràcies per fer-li costat en aquest camí.'},
+    {sign: 'Escola Ramon Pont'}
+  ].filter(Boolean);
+}
 function mailContent_(studentName, campaign, withConfirmation) {
-  const intro = 'Us fem arribar l’autoavaluació que ' + studentName + ' ha fet en el marc de ' + campaign[3] + '.';
-  const purpose = 'Amb aquesta activitat volem donar veu a l’alumnat i ajudar-lo a valorar el seu propi aprenentatge.';
-  const detail = 'Al document hi trobareu la valoració que fa del seu aprenentatge i els compromisos de millora que s’ha proposat.';
-  const distinction = 'És una reflexió personal de l’alumne/a i no substitueix l’informe d’avaluació del centre.';
-  const confirmation = withConfirmation
-    ? 'Al final del document trobareu un enllaç per confirmar que heu llegit l’autoavaluació.' : '';
-  const paragraphs = ['Benvolguda família,', intro, purpose, detail, distinction,
-    'Us animem a comentar-la amb el vostre fill o filla.', confirmation,
-    'Si teniu cap dubte, podeu respondre aquest missatge.', 'Atentament,', 'Escola Ramon Pont'].filter(Boolean);
-  return paragraphs.join('\n\n');
+  return mailBlocks_(studentName, campaign, withConfirmation).map(b => b.list ? b.list.map(x => '· ' + x).join('\n')
+    : b.sign ? 'Una salutació cordial,\n' + b.sign : b.p || b.note).join('\n\n');
+}
+function mailHtml_(studentName, campaign, withConfirmation) {
+  const e = escapeHtml_, p = 'margin:0 0 14px;line-height:1.55';
+  const body = mailBlocks_(studentName, campaign, withConfirmation).map(b => b.list
+    ? '<ul style="margin:0 0 16px;padding-left:20px;line-height:1.6">' + b.list.map(x => '<li>' + e(x) + '</li>').join('') + '</ul>'
+    : b.note ? '<p style="' + p + ';background:#F8F6F2;border-left:4px solid #B78C00;padding:10px 14px;color:#4a4540">' + e(b.note) + '</p>'
+    : b.sign ? '<p style="margin:22px 0 0;line-height:1.5">Una salutació cordial,<br><b style="color:#831E12">' + e(b.sign) + '</b></p>'
+    : '<p style="' + p + '">' + e(b.p) + '</p>').join('');
+  return '<div style="background:#f5f2ed;padding:24px 12px;font-family:Arial,sans-serif;color:#252525;font-size:15px">'
+    + '<div style="max-width:600px;margin:auto;background:#fff;border:1px solid #DDD7CE;border-radius:12px;overflow:hidden">'
+    + '<div style="background:#831E12;color:#fff;padding:18px 24px"><div style="font-size:19px;font-weight:bold">Escola Ramon Pont</div>'
+    + '<div style="font-size:12px;letter-spacing:.06em;opacity:.9">LA VEU DE L’ALUMNAT · ' + e(String(campaign[3]).toUpperCase()) + '</div></div>'
+    + '<div style="padding:22px 24px">' + body + '</div>'
+    + '<div style="background:#F8F6F2;color:#646464;font-size:12px;padding:12px 24px">Trobareu l’informe adjunt en PDF.</div>'
+    + '</div></div>';
 }
 function escapeHtml_(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 function mailMessage_(studentName, campaign, pdf) {
-  const body = mailContent_(studentName, campaign, config_('CONFIRMATION_ENABLED') === 'SI' && !!config_('CONFIRMATION_URL'));
+  const confirm = config_('CONFIRMATION_ENABLED') === 'SI' && !!config_('CONFIRMATION_URL');
   const options = {attachments: [pdf.getBlob()], name: 'Escola Ramon Pont',
-    htmlBody: body.split('\n\n').map(p => '<p>' + escapeHtml_(p) + '</p>').join('')};
+    htmlBody: mailHtml_(studentName, campaign, confirm)};
   if (config_('REPLY_TO')) options.replyTo = config_('REPLY_TO');
-  return {subject: 'La meva autoavaluació · ' + campaign[3] + ' · ' + studentName, body, options};
+  return {subject: mailSubject_(studentName, campaign), body: mailContent_(studentName, campaign, confirm), options};
+}
+function mailSubject_(studentName, campaign) {
+  return 'L’autoavaluació de ' + fullName_(studentName) + ' · ' + campaign[3];
 }
 
 /* Envia el primer informe de la recollida només al compte de qui prova, per veure el correu real. */
@@ -68,7 +105,7 @@ function previewMail(id, studentId) {
   requireAccess_(campaign[1], ['admin', 'cap_estudis', 'tutor']);
   const student = rows_('students').find(r => String(r[0]) === String(studentId) && r[1] === campaign[1]);
   if (!student) throw new Error('Alumne desconegut.');
-  return {subject: 'La meva autoavaluació · ' + campaign[3] + ' · ' + student[2],
+  return {subject: mailSubject_(student[2], campaign),
     body: mailContent_(student[2], campaign, config_('CONFIRMATION_ENABLED') === 'SI' && !!config_('CONFIRMATION_URL'))};
 }
 

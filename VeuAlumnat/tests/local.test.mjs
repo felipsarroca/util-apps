@@ -16,7 +16,10 @@ assert.equal(run("isQuestion_({getType: () => 'RATING'})"), true);
 assert.equal(run("safeRows_([['=IMPORTXML(1)', 'correcte']])[0][0]"), "'=IMPORTXML(1)");
 const campaign = ['id', '4t.ESO', '2026-2027', 'Preavaluació'];
 context.campaign = campaign;
-assert.match(run("mailContent_('Júlia Exemple', campaign, true)"), /donar veu a l’alumnat/);
+assert.match(run("mailContent_('Exemple Exemple, Júlia', campaign, true)"), /^Benvolguda família,\n\nJúlia ha dedicat/);
+assert.doesNotMatch(run("mailContent_('Exemple, Júlia', campaign, true)"), /respondre aquest missatge/);
+assert.equal(run("mailSubject_('Exemple Exemple, Júlia', campaign)"), 'L’autoavaluació de Júlia Exemple Exemple · Preavaluació');
+assert.match(run("mailHtml_('Exemple, <b>Júlia</b>', campaign, false)"), /&lt;b&gt;Júlia&lt;\/b&gt; ha dedicat/);
 assert.match(run("mailContent_('Júlia Exemple', campaign, true)"), /enllaç per confirmar/);
 assert.doesNotMatch(run("mailContent_('Júlia Exemple', campaign, false)"), /enllaç per confirmar/);
 const state = {
