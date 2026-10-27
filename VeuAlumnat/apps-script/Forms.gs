@@ -104,7 +104,7 @@ function sourceFormId_(course, sourceUrl) {
 }
 
 function createCampaign(course, year, label, sourceUrl, mode) {
-  requireAccess_(course, ['admin', 'cap_estudis', 'tutor']);
+  const me = requireAccess_(course, ['admin', 'cap_estudis', 'tutor']);
   if (!VA.COURSES.includes(course) || !/^20\d\d-20\d\d$/.test(year)
       || typeof label !== 'string' || !label.trim() || label.length > 80 || /[\r\n\x00-\x1f]/.test(label)) {
     throw new Error('Cal indicar curs, curs escolar (p. ex. 2026-2027) i nom de la recollida.');
@@ -129,6 +129,8 @@ function createCampaign(course, year, label, sourceUrl, mode) {
       throw new Error('La còpia del formulari no conserva totes les preguntes. S’ha deixat sense publicar a la carpeta de la recollida.');
     }
     if (form.getResponses().length) throw new Error('La còpia conté respostes; no es pot usar com a formulari nou.');
+    /* La còpia és del compte propietari de l'app: qui crea la recollida l'ha de poder editar. */
+    try { form.addEditor(me); } catch (e) { /* ja n'és propietari */ }
   }
   const responses = form.getResponses().length;
   let status = 'ESBORRANY';
