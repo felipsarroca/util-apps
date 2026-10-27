@@ -40,6 +40,19 @@ const imported = run('importContactsCsv(csv)');
 assert.equal(imported.uniqueRecipients, 1);
 assert.equal(imported.unmatched.length, 1);
 assert.equal(state.contacts[0][2], 'Mare Exemple i Pare Exemple');
+// Altres anys: el curs escrit de moltes maneres i un CSV amb una altra capçalera i un altre separador.
+for (const [text, course] of [["Quart d'ESO", '4t.ESO'], ['4t ESO', '4t.ESO'], ['4t.ESO', '4t.ESO'], ['1ESO', '1r.ESO'],
+  ['2n ESO B', '2n.ESO'], ['Tercer curs ESO', '3r.ESO'], ['3r', ''], ['Primer de Batxillerat', '']]) {
+  assert.equal(run(`courseOf_(${JSON.stringify(text)})`), course, text);
+}
+context.Utilities.parseCsv = (s, sep) => s.trim().split(/\r?\n/).map(line => line.split(sep));
+context.csv2 = 'Correu electrònic,Alumne/a,Responsable\nfamilia@example.net,Júlia Exemple,Mare Exemple';
+assert.throws(() => run('contactsTable_(csv2)'), /columnes de curs/);
+context.csv2 = 'Correu electrònic,Nom de l’alumne,Curs,Responsable\nfamilia@example.net,Júlia Exemple,4t ESO,Mare Exemple';
+assert.deepEqual({...run('contactsTable_(csv2).cols')}, {course: 2, student: 1, guardian: 3, email: 0});
+state.contacts = [];
+assert.equal(run('importContactsCsv(csv2)').uniqueRecipients, 1);
+assert.equal(state.contacts[0][3], 'familia@example.net');
 const roster = {
   '1r.ESO': [['', '', '', '', 'Exemple, Aina', '101', '', 'aina@ramonpont.cat'],
     ['', '', '', '', 'Fitxa pendent', '', '', '']],
@@ -156,6 +169,18 @@ context.drawCard_ = originalDraw;
 assert.ok(placed.length > 17);
 placed.forEach(p => { assert.ok(p.top <= 841.89 - 128 + 0.01); assert.ok(p.top - p.height >= 54 - 0.01); });
 assert.equal(placed.length - 16 > 1, true);
+// Acusament de lectura al final, sencer dins la pàgina; el PDF conjunt comença cada informe en una cara anvers.
+const slips = [], originalSlip = context.drawSlip_;
+context.drawSlip_ = (page, m, top) => slips.push(top);
+const pagesShort = run('layoutReport_(model, meta)').length, pagesLong = run('layoutReport_(longModel, meta)').length;
+context.drawSlip_ = originalSlip;
+assert.equal(slips.length, 2);
+slips.forEach(top => { assert.ok(top <= 841.89 - 128 + 0.01); assert.ok(top - run('SLIP_HEIGHT') >= 54 - 0.01); });
+assert.match(Buffer.from([...run('buildReportPdf_(model, meta)')].map(b => b & 255)).toString('latin1'), /<416375736[0-9a-f]*>/);
+context.bundleIn = [{model, meta: context.meta}, {model: context.longModel, meta: context.meta}];
+const bundle = Buffer.from([...run("buildBundlePdf_(bundleIn, 'Conjunt', true)")].map(b => b & 255)).toString('latin1');
+const even = n => n + n % 2;
+assert.equal(Number(bundle.match(/\/Count (\d+)/)[1]), even(pagesShort) + even(pagesLong));
 assert.equal(run('reportModel_(structure, sampleAnswers_(structure)).length'), 3);
 // Formulari de partida d'una recollida nova i origen de les recollides antigues.
 state.campaigns = [['a', '1r.ESO', '2026-2027', 'Pre', 'formA', 'TANCADA', 'f', '2026-10-01T00:00:00', 'COPIA'],

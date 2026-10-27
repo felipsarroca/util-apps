@@ -6,8 +6,10 @@ const PDF_WIDTHS = {
   F1: [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,761,556,0,222,556,333,1000,556,556,333,1000,667,333,1000,0,611,0,0,222,222,333,333,350,556,1000,333,1000,500,333,944,0,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500],
   F2: [278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,761,556,0,278,556,500,1000,556,556,333,1000,667,333,1000,0,611,0,0,278,278,500,500,350,556,1000,333,1000,556,333,944,0,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556]
 };
-const PDF_COLORS = {red: [0x83, 0x1E, 0x12], gold: [0xB7, 0x8C, 0x00], ink: [0x25, 0x25, 0x25], muted: [0x64, 0x64, 0x64],
-  line: [0xDD, 0xD7, 0xCE], paper: [0xF8, 0xF6, 0xF2], white: [0xFF, 0xFF, 0xFF]};
+/* Colors pensats també per a impressió en blanc i negre: el text és sempre fosc (lluminositat < 40 %) sobre
+   fons molt clars (> 90 %), i les vores són prou grises perquè no desapareguin. El color no porta mai informació sola. */
+const PDF_COLORS = {red: [0x83, 0x1E, 0x12], gold: [0xB7, 0x8C, 0x00], goldTint: [0xFB, 0xF4, 0xDE], ink: [0x25, 0x25, 0x25],
+  muted: [0x55, 0x55, 0x55], line: [0xB9, 0xB1, 0xA4], paper: [0xF8, 0xF6, 0xF2], white: [0xFF, 0xFF, 0xFF]};
 const WINANSI_EXTRA = {'€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84, '…': 0x85, '†': 0x86, '‡': 0x87, 'ˆ': 0x88, '‰': 0x89,
   'Š': 0x8A, '‹': 0x8B, 'Œ': 0x8C, 'Ž': 0x8E, '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '•': 0x95, '–': 0x96,
   '—': 0x97, '˜': 0x98, '™': 0x99, 'š': 0x9A, '›': 0x9B, 'œ': 0x9C, 'ž': 0x9E, 'Ÿ': 0x9F};
@@ -74,9 +76,9 @@ function pdfRoundRect_(page, x, y, w, h, r, fill, stroke) {
     + n(x) + ' ' + n(y + r - k) + ' ' + n(x + r - k) + ' ' + n(y) + ' ' + n(x + r) + ' ' + n(y) + ' c h '
     + (fill && stroke ? 'B' : fill ? 'f' : 'S'));
 }
-function pdfLine_(page, x1, y1, x2, y2, color, width) {
-  page.ops.push(pdfColor_(color, 'RG') + ' ' + pdfNum_(width) + ' w ' + pdfNum_(x1) + ' ' + pdfNum_(y1) + ' m '
-    + pdfNum_(x2) + ' ' + pdfNum_(y2) + ' l S');
+function pdfLine_(page, x1, y1, x2, y2, color, width, dash) {
+  page.ops.push(pdfColor_(color, 'RG') + ' ' + pdfNum_(width) + ' w ' + (dash ? '[' + dash + '] 0 d ' : '')
+    + pdfNum_(x1) + ' ' + pdfNum_(y1) + ' m ' + pdfNum_(x2) + ' ' + pdfNum_(y2) + ' l S' + (dash ? ' [] 0 d' : ''));
 }
 
 /* Files d'una targeta amb la posició de la línia base respecte de la vora superior. */
@@ -152,16 +154,41 @@ function drawFrame_(page, meta, number, total) {
   pdfText_(page, 'LA VEU DE L’ALUMNAT', 112, H - 66, 'F1', 9, PDF_COLORS.muted);
   const badge = winAnsi_(String(meta.label).toUpperCase());
   const bw = Math.min(220, pdfWidth_(badge, 'F2', 8.5) + 24);
-  pdfRoundRect_(page, W - PDF.M - bw, H - 68, bw, 24, 8, PDF_COLORS.gold, null);
-  pdfText_(page, badge, W - PDF.M - bw / 2, H - 60.5, 'F2', 8.5, PDF_COLORS.white, 'center');
+  pdfRoundRect_(page, W - PDF.M - bw, H - 68, bw, 24, 8, PDF_COLORS.goldTint, PDF_COLORS.gold);
+  pdfText_(page, badge, W - PDF.M - bw / 2, H - 60.5, 'F2', 8.5, PDF_COLORS.red, 'center');
   pdfLine_(page, PDF.M, H - 99, W - PDF.M, H - 99, PDF_COLORS.line, 0.8);
   pdfText_(page, 'Autoavaluació de l’alumne/a · No substitueix l’informe d’avaluació del centre · ' + meta.generated,
     PDF.M, 28, 'F1', 8.5, PDF_COLORS.muted);
   pdfText_(page, number + ' / ' + total, W - PDF.M, 28, 'F1', 8.5, PDF_COLORS.muted, 'right');
 }
 
-/* Maqueta l'informe complet i en retorna els bytes del PDF. */
-function buildReportPdf_(model, meta) {
+/* Acusament de lectura per si l'informe es lliura imprès: es retalla per la línia i es torna al tutor o tutora. */
+const SLIP_HEIGHT = 196;
+function drawSlip_(page, meta, top) {
+  const x = PDF.M, w = PDF.W - 2 * PDF.M, left = x + PDF.PAD, right = x + w - PDF.PAD;
+  pdfLine_(page, x, top, x + w, top, PDF_COLORS.muted, 0.8, '4 3');
+  pdfText_(page, 'Retalleu per aquesta línia i retorneu aquesta part al tutor o tutora', x + w / 2, top - 12,
+    'F1', 8, PDF_COLORS.muted, 'center');
+  const box = top - 22, h = SLIP_HEIGHT - 22;
+  pdfRoundRect_(page, x, box - h, w, h, 9, PDF_COLORS.white, PDF_COLORS.line);
+  pdfText_(page, 'Acusament de lectura', left, box - 24, 'F2', 12, PDF_COLORS.ink);
+  pdfText_(page, meta.label + ' · ' + meta.course + ' · ' + meta.year, right, box - 24, 'F1', 8.5, PDF_COLORS.muted, 'right');
+  pdfText_(page, 'Alumne/a: ' + meta.student, left, box - 42, 'F2', 10.3, PDF_COLORS.ink);
+  pdfText_(page, 'Com a pare, mare o tutor/a legal, declaro que he llegit aquesta autoavaluació.', left, box - 60,
+    'F1', 10.3, PDF_COLORS.ink);
+  const field = (label, y, from, to) => {
+    pdfText_(page, label, from, y, 'F1', 10, PDF_COLORS.ink);
+    pdfLine_(page, from + pdfWidth_(winAnsi_(label), 'F1', 10) + 6, y - 2, to, y - 2, PDF_COLORS.muted, 0.6);
+  };
+  const mid = x + w * 0.58;
+  field('Nom i cognoms:', box - 92, left, right);
+  field('DNI/NIE:', box - 122, left, mid - 16);
+  field('Data:', box - 122, mid, right);
+  field('Signatura:', box - 160, left, mid - 16);
+}
+
+/* Maqueta l'informe complet i en retorna les pàgines, ja amb capçalera i peu. */
+function layoutReport_(model, meta) {
   const pages = [], width = PDF.W - 2 * PDF.M, x = PDF.M;
   let page, y;
   const newPage = () => { page = {ops: [], links: []}; pages.push(page); y = PDF.TOP; };
@@ -171,7 +198,7 @@ function buildReportPdf_(model, meta) {
   y -= 34;
   pdfText_(page, meta.label + ' · ' + meta.course + ' · Curs ' + meta.year, x, y - 10, 'F1', 10, PDF_COLORS.muted);
   y -= 32;
-  pdfRoundRect_(page, x, y - 45, width, 45, 3, PDF_COLORS.paper, null);
+  pdfRoundRect_(page, x, y - 45, width, 45, 3, PDF_COLORS.paper, PDF_COLORS.line);
   pdfText_(page, 'Alumne/a', x + 20, y - 26.5, 'F2', 11, PDF_COLORS.ink);
   pdfText_(page, meta.student, x + 100, y - 26.5, 'F1', 11, PDF_COLORS.ink);
   y -= 68;
@@ -207,9 +234,29 @@ function buildReportPdf_(model, meta) {
     pdfText_(page, 'Confirmació de lectura', x + PDF.PAD, y - 26, 'F2', 12, PDF_COLORS.ink);
     pdfText_(page, 'He llegit l’autoavaluació del meu fill o filla · Confirmeu-ho aquí', x + PDF.PAD, y - 44, 'F2', 10.3, PDF_COLORS.red);
     page.links.push({rect: [x, y - 58, x + width, y], url: meta.confirmUrl});
+    y -= 58 + PDF.GAP;
   }
+  /* Separat del contingut i, si cal, sol a la pàgina següent: es pot retallar sense perdre res de l'informe. */
+  if (!fits(28 + SLIP_HEIGHT)) newPage(); else y -= 28;
+  drawSlip_(page, meta, y);
   pages.forEach((p, i) => drawFrame_(p, meta, i + 1, pages.length));
-  return pdfBytes_(pages, meta.logo, meta.title || 'Autoavaluació');
+  return pages;
+}
+
+function buildReportPdf_(model, meta) {
+  return pdfBytes_(layoutReport_(model, meta), meta.logo, meta.title || 'Autoavaluació');
+}
+
+/* Un sol PDF amb diversos informes per imprimir-los de cop. Amb duplex, cada informe comença en una
+   cara anvers: s'hi afegeix una pàgina en blanc quan en té un nombre senar. */
+function buildBundlePdf_(reports, title, duplex) {
+  const pages = [];
+  reports.forEach(r => {
+    const own = layoutReport_(r.model, r.meta);
+    own.forEach(p => pages.push(p));
+    if (duplex && own.length % 2) pages.push({ops: [], links: []});
+  });
+  return pdfBytes_(pages, reports.length ? reports[0].meta.logo : '', title);
 }
 
 function pdfUtf16_(s) {

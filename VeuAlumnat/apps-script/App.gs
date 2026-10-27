@@ -19,7 +19,7 @@ function bootstrap() {
     .sort((a, b) => String(b[7]).localeCompare(String(a[7])))
     .map(r => ({id: r[0], course: r[1], year: r[2], label: r[3], status: r[5]}));
   return {email, admin, courses, campaigns, controlUrl: admin ? control_().getUrl() : '',
-    sendingEnabled: config_('SENDING_ENABLED') === 'SI', replyTo: config_('REPLY_TO')};
+    sendingEnabled: config_('SENDING_ENABLED') === 'SI', replyTo: config_('REPLY_TO'), access: admin ? accessList_() : []};
 }
 
 function uploadLogo(dataUrl) {

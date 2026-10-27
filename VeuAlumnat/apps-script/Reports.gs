@@ -301,3 +301,25 @@ function generateReports(id, regenerate) {
   }
   return {created, total: data.entries.length, remaining: pending.length - created, folderUrl: folder.getUrl()};
 }
+
+/* Un sol PDF per imprimir a doble cara: tots els informes o només els dels alumnes sense adreça familiar.
+   Cada informe porta l'acusament de lectura per retornar-lo signat. Substitueix l'anterior del mateix tipus. */
+function generatePrintBundle(id, onlyWithoutEmail) {
+  const data = collectCampaign_(id), campaign = data.campaign;
+  if (!['TANCADA', 'APROVADA'].includes(campaign[5])) throw new Error('Cal tancar el formulari abans de preparar els informes.');
+  if (data.issues.length) throw new Error('Cal resoldre ' + data.issues.length + ' incidències abans de preparar els informes.');
+  const withEmail = new Set(rows_('contacts').filter(r => r[5] === 'SI').map(r => String(r[0])));
+  const entries = data.entries.filter(e => !onlyWithoutEmail || !withEmail.has(String(e.student[0])));
+  if (!entries.length) throw new Error(onlyWithoutEmail ? 'Tots els alumnes amb resposta tenen adreça familiar.' : 'No hi ha informes per imprimir.');
+  if (!campaign[6]) {
+    campaign[6] = campaignFolder_(campaign[2], campaign[1], campaign[3]).getId();
+    replaceRows_('campaigns', rows_('campaigns').map(r => r[0] === id ? campaign : r));
+  }
+  const folder = DriveApp.getFolderById(String(campaign[6]));
+  const name = 'Per imprimir · ' + campaign[1] + ' · ' + campaign[3] + (onlyWithoutEmail ? ' · sense correu' : ' · tots');
+  const old = folder.getFilesByName(name + '.pdf');
+  while (old.hasNext()) old.next().setTrashed(true);
+  const reports = entries.map(e => ({model: e.model, meta: reportMeta_(campaign, e.student[2], data.structure, '')}));
+  const file = folder.createFile(Utilities.newBlob(buildBundlePdf_(reports, name, true), 'application/pdf', name + '.pdf'));
+  return {url: file.getUrl(), count: entries.length, students: onlyWithoutEmail ? entries.map(e => e.student[2]) : []};
+}

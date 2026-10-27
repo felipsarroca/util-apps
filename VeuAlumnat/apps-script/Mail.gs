@@ -111,7 +111,7 @@ function previewMail(id, studentId) {
 
 function approveCampaign(id) {
   const campaign = campaign_(id);
-  requireAccess_(campaign[1], ['admin', 'cap_estudis']);
+  requireAccess_(campaign[1], ['admin', 'cap_estudis', 'tutor']);
   if (campaign[5] !== 'TANCADA') throw new Error('Cal tancar la recollida.');
   const audit = collectCampaign_(id);
   if (audit.issues.length) throw new Error('Queden incidències de respostes.');
@@ -132,7 +132,7 @@ function approveCampaign(id) {
 
 function sendCampaignBatch(id, limit) {
   const campaign = campaign_(id);
-  requireAccess_(campaign[1], ['admin', 'cap_estudis']);
+  requireAccess_(campaign[1], ['admin', 'cap_estudis', 'tutor']);
   if (config_('SENDING_ENABLED') !== 'SI') throw new Error('L’enviament està desactivat a la configuració.');
   if (campaign[5] !== 'APROVADA') throw new Error('Cal aprovar la remesa abans d’enviar-la.');
   if (config_('CONTACTS_APPROVED') !== 'SI') throw new Error('El directori familiar ja no està validat.');

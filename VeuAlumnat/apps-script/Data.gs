@@ -3,12 +3,13 @@ function importStudents(sourceUrl) {
   const source = SpreadsheetApp.openById(idFromUrl_(sourceUrl));
   const next = [], issues = [], pending = [], seenId = new Set(), seenMail = new Set();
   VA.COURSES.forEach(course => {
-    const sh = source.getSheetByName(course);
+    const sh = courseSheet_(source, course);
     if (!sh) throw new Error('Falta la pestanya ' + course + ' al cens.');
-    const n = sh.getLastRow();
-    const data = n < 3 ? [] : sh.getRange(3, 1, n - 2, 8).getDisplayValues();
-    data.forEach((r, i) => {
-      const id = String(r[5] || '').trim(), name = String(r[4] || '').trim(), email = mailKey_(r[7]);
+    const n = sh.getLastRow(), layout = rosterLayout_(sh);
+    const data = n < layout.first ? [] : sh.getRange(layout.first, 1, n - layout.first + 1, layout.width).getDisplayValues();
+    data.forEach((r, j) => {
+      const i = j + layout.first - 3;
+      const id = String(r[layout.id] || '').trim(), name = String(r[layout.name] || '').trim(), email = mailKey_(r[layout.email]);
       if (!id && !name && !email) return;
       if (name && !id && !email) {
         pending.push(['', 'cens_pendent', course + ':' + (i + 3), 'Nom sense ID ni correu escolar; no s’ha importat', 'NO']);
@@ -39,15 +40,71 @@ function importStudents(sourceUrl) {
     byCourse: VA.COURSES.map(c => [c, next.filter(r => r[1] === c).length])};
 }
 
+/* Pestanya d'un curs: «1r.ESO», «1r ESO», «1ESO», «Primer d'ESO»… */
+function courseSheet_(source, course) {
+  const exact = source.getSheetByName(course);
+  if (exact || !source.getSheets) return exact;
+  return source.getSheets().find(sh => courseOf_(sh.getName()) === course) || null;
+}
+/* Columnes del cens. Busca la capçalera a les tres primeres files; si no la troba, usa el format
+   del cens actual (dades des de la fila 3; nom a E, ID a F, correu escolar a H). */
+function rosterLayout_(sh) {
+  const width = Math.max(8, Math.min(sh.getLastColumn ? sh.getLastColumn() : 8, 40));
+  const fixed = {first: 3, width, id: 5, name: 4, email: 7};
+  const n = sh.getLastRow();
+  if (n < 2) return fixed;
+  const all = sh.getRange(1, 1, n, width).getDisplayValues();
+  for (let r = 0; r < Math.min(3, all.length); r++) {
+    const cols = all[r].map(normalize_);
+    const email = cols.findIndex(c => /\b(correu|email|e mail)\b/.test(c));
+    const id = cols.findIndex(c => /^(id|id alumne|identificador|idalu|ralc)\b/.test(c));
+    /* Millor «Cognoms, Nom» que una columna només amb el nom de pila. */
+    let name = cols.findIndex(c => /\bnom\b/.test(c) && /\bcognoms?\b/.test(c));
+    if (name < 0 && !cols.some(c => /\bcognoms?\b/.test(c))) name = cols.findIndex(c => /^(nom|nom complet|alumne|alumne a)$/.test(c));
+    if (email < 0 || id < 0 || name < 0) continue;
+    const mails = all.slice(r + 1).map(row => String(row[email]).trim()).filter(Boolean);
+    if (mails.length && mails.filter(m => m.includes('@')).length * 2 >= mails.length) return {first: r + 2, width, id, name, email};
+  }
+  return fixed;
+}
+
+/* «Quart d'ESO», «4t ESO», «4t.ESO», «4ESO», «4rt ESO A»… → «4t.ESO». Sense «ESO», no és cap curs. */
+function courseOf_(text) {
+  const s = normalize_(text).replace(/(\d)(r|n|t|rt)?eso\b/, '$1 eso');
+  if (!/\beso\b/.test(s)) return '';
+  const words = {primer: 1, segon: 2, tercer: 3, quart: 4, primero: 1, segundo: 2, tercero: 3, cuarto: 4};
+  const m = s.match(/\b([1-4])(?:r|n|t|rt|o|a)?\b/) || s.match(/\b(primer|segon|tercer|quart|primero|segundo|tercero|cuarto)\b/);
+  return m ? VA.COURSES[(Number(m[1]) || words[m[1]]) - 1] : '';
+}
+
+/* Columnes del CSV de responsables pel nom de la capçalera, amb qualsevol separador habitual. */
+function contactsTable_(text) {
+  const firstLine = String(text).split(/\r?\n/)[0];
+  const sep = [';', '\t', ','].sort((a, b) => firstLine.split(b).length - firstLine.split(a).length)[0];
+  const rows = Utilities.parseCsv(String(text), sep);
+  const head = (rows[0] || []).map(normalize_);
+  const find = test => head.findIndex(test);
+  const cols = {
+    course: find(h => /^(curs|nivell|grup|curs alumne|nivell alumne)$/.test(h)),
+    student: find(h => /\balumne\b/.test(h)),
+    guardian: find(h => /\b(responsable|tutor|pare|mare|familiar)\b/.test(h) || h === 'nom i cognoms'),
+    email: find(h => /\b(correu|email|e mail|mail)\b/.test(h))
+  };
+  if (Object.keys(cols).some(k => cols[k] < 0)) {
+    throw new Error('Al CSV no es troben les columnes de curs, nom de l’alumne, nom del responsable i correu. '
+      + 'Comprova que la primera fila és la capçalera.');
+  }
+  return {rows: rows.slice(1), cols};
+}
+
 function importContactsCsv(text) {
   requireAccess_('*', ['admin']);
   if (typeof text !== 'string' || text.length > 2 * 1024 * 1024) throw new Error('El CSV és massa gran o no és text.');
-  const rows = Utilities.parseCsv(String(text || ''), ';');
-  const expected = ['Núm.', 'Curs', 'Curs escolar', 'Nom alumne', 'Nom i cognoms', 'Correu electrònic'];
-  if (!rows.length || rows[0].length !== 6 || expected.some((h, i) => normalize_(rows[0][i]) !== normalize_(h))) {
-    throw new Error('El CSV no té les sis columnes esperades. Cal exportar-lo sense canviar la capçalera.');
-  }
-  const courseMap = {"Primer d'ESO": '1r.ESO', "Segon d'ESO": '2n.ESO', "Tercer d'ESO": '3r.ESO', "Quart d'ESO": '4t.ESO'};
+  const table = contactsTable_(text), c = table.cols;
+  /* Es conserva unes hores perquè validar una correspondència el pugui tornar a importar sol. */
+  try { CacheService.getUserCache().put('contactsCsv', text, 21600); } catch (e) { /* massa gran: caldrà tornar-lo a carregar */ }
+  const rows = [null].concat(table.rows.map(r => [r[0], r[c.course], '', r[c.student], r[c.guardian], r[c.email]]
+    .map(v => v == null ? '' : v)));
   const students = rows_('students');
   if (!students.length) throw new Error('Primer cal importar el cens d’alumnes.');
   const lookup = new Map();
@@ -61,7 +118,7 @@ function importContactsCsv(text) {
   const grouped = new Map(), issues = [], unmatched = new Map();
   rows.slice(1).forEach((r, i) => {
     if (r.every(x => !String(x).trim())) return;
-    const course = courseMap[String(r[1]).trim()];
+    const course = courseOf_(r[1]);
     const candidates = lookup.get(course + '|' + nameKey_(r[3])) || [];
     const aliasId = aliases.get(course + '|' + nameKey_(r[3]));
     if (aliasId === 'EXCLOS') {
@@ -119,7 +176,12 @@ function approveContactAlias(course, writtenName, studentId) {
   const all = rows_('contactAliases').filter(r => !(r[0] === course && nameKey_(r[1]) === nameKey_(writtenName)));
   all.push([course, String(writtenName).trim(), String(studentId), 'SI']);
   replaceRows_('contactAliases', all);
-  return {student: student[2]};
+  return {student: student[2], reimport: reimportContacts_()};
+}
+/* Torna a aplicar l'últim CSV carregat, si encara és a la memòria temporal. */
+function reimportContacts_() {
+  const text = CacheService.getUserCache().get('contactsCsv');
+  return text ? importContactsCsv(text) : null;
 }
 function excludeContactName(course, writtenName) {
   requireAccess_('*', ['admin']);
@@ -129,7 +191,7 @@ function excludeContactName(course, writtenName) {
   const all = rows_('contactAliases').filter(r => !(r[0] === course && nameKey_(r[1]) === nameKey_(writtenName)));
   all.push([course, String(writtenName).trim(), 'EXCLOS', 'SI']);
   replaceRows_('contactAliases', all);
-  return true;
+  return {reimport: reimportContacts_()};
 }
 
 function approveContacts() {

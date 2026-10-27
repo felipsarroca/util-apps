@@ -115,13 +115,27 @@ function requireAccess_(course, roles) {
   if (!entry) throw new Error('Aquest compte no té accés a aquest curs o operació.');
   return email;
 }
+/* tutor: un curs. admin: tots els cursos i la preparació del centre (cap d'estudis, coordinació). */
 function addTutor(email, course, role) {
   requireAccess_('*', ['admin']);
-  if (!VA.COURSES.includes(course) || !['tutor', 'cap_estudis'].includes(role)) throw new Error('Curs o rol incorrecte.');
+  if (role === 'admin') course = '*';
+  if (!(VA.COURSES.includes(course) || course === '*') || !['tutor', 'cap_estudis', 'admin'].includes(role)) {
+    throw new Error('Curs o rol incorrecte.');
+  }
   const e = mailKey_(email);
   if (!e.endsWith('@ramonpont.cat')) throw new Error('Cal un correu institucional.');
   const data = rows_('access').filter(r => !(mailKey_(r[0]) === e && r[1] === course));
   data.push([e, course, role, 'SI']);
   replaceRows_('access', data);
-  return true;
+  return accessList_();
+}
+function accessList_() {
+  return rows_('access').filter(r => r[3] === 'SI').map(r => ({email: String(r[0]), course: String(r[1]), role: String(r[2])}));
+}
+/* Cada curs canvien els tutors: es treu l'accés sense tocar cap altra dada. */
+function removeAccess(email, course) {
+  const me = requireAccess_('*', ['admin']), e = mailKey_(email);
+  if (e === me && course === '*') throw new Error('No et pots treure a tu mateix l’accés d’administració.');
+  replaceRows_('access', rows_('access').filter(r => !(mailKey_(r[0]) === e && String(r[1]) === String(course))));
+  return accessList_();
 }
