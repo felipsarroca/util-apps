@@ -216,4 +216,12 @@ const coreOnly = vm.createContext({});
 vm.runInContext(fs.readFileSync(path.join(root, 'Core.gs'), 'utf8'), coreOnly);
 assert.throws(() => vm.runInContext("idFromUrl_('https://docs.google.com/forms/d/e/1FAIpQLSexemple/viewform')", coreOnly), /enllaç per respondre/);
 assert.equal(vm.runInContext("idFromUrl_('https://docs.google.com/forms/d/1abcDEF_ghi-123456789012/edit')", coreOnly), '1abcDEF_ghi-123456789012');
+// Validació en bloc de noms del CSV de famílies.
+state.students = [['100', '4t.ESO', 'Exemple, Júlia', '', 'SI'], ['101', '4t.ESO', 'Prova, Joan', '', 'SI']];
+state.contactAliases = [['4t.ESO', 'Julia Exemple', '999', 'SI']];
+context.reimportContacts_ = () => null;
+const bulk = run("approveContactAliases([{course: '4t.ESO', writtenName: 'Julia Exemple', studentId: '100'}, {course: '4t.ESO', writtenName: 'Joan Prova', studentId: '101'}])");
+assert.equal(JSON.stringify(bulk.students), JSON.stringify(['Exemple, Júlia', 'Prova, Joan']));
+assert.equal(state.contactAliases.length, 2, 'substitueix la correspondència anterior del mateix nom');
+assert.throws(() => run("approveContactAliases([{course: '4t.ESO', writtenName: 'X', studentId: '555'}])"), /no vàlida/);
 console.log('Totes les comprovacions locals són correctes');

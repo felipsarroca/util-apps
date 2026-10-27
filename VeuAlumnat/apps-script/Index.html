@@ -13,7 +13,7 @@ button{border:0;border-radius:6px;background:var(--brand);color:#fff;padding:10p
 .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.step{margin:0;background:#fff;color:var(--muted);border:1px solid var(--line);text-align:left;padding:9px 10px;font-weight:normal}
 .step b{display:block;font-size:14px;color:#292622}.step.done{background:#e7f3e9;border-color:#b9d8bf}.step.now{border:2px solid var(--brand)}.step.now b{color:var(--brand)}.step.shown{box-shadow:0 0 0 3px #e8cfc9}
 .stat{font-size:15px;margin:6px 0}details{margin:10px 0}summary{cursor:pointer;font-weight:bold;color:var(--brand)}details ul{margin:8px 0;padding-left:20px;line-height:1.5;font-size:14px}
-.choice{display:flex;gap:8px;align-items:flex-start;font-weight:normal;font-size:14px;margin:6px 0}.choice input{width:auto;margin-top:3px}.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
+.choice{display:flex;gap:8px;align-items:flex-start;font-weight:normal;font-size:14px;margin:6px 0}.choice input{width:auto;margin-top:3px}.pick{width:auto!important;flex:none!important;min-width:0!important;transform:scale(1.2)}.bulk{background:#f7f3ec;border-radius:6px;padding:8px}.bulk .choice{margin:0}.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
 .setup{border-top:1px solid var(--line);padding:4px 0 10px}.setup h3{margin-top:12px}.state-ok{color:#235d31;font-weight:bold}.state-todo{color:#7d1c10;font-weight:bold}table.mini{border-collapse:collapse;font-size:13px;margin:6px 0}table.mini td,table.mini th{border-bottom:1px solid var(--line);padding:3px 10px 3px 0;text-align:left}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px}.help-btn{margin:0;background:#fff;color:var(--brand);flex:none}
 dialog#help{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 12px 40px #0005}dialog#help::backdrop{background:#0006}
@@ -165,9 +165,20 @@ function readCsv(f,enc){return new Promise((ok,fail)=>{const r=new FileReader();
 function importContacts(){run(async()=>{const f=$('contactsFile').files[0];if(!f)throw Error('Tria el CSV de responsables.');let text=await readCsv(f,'utf-8');if(text.includes('�'))text=await readCsv(f,'windows-1252');$('contactsFile').value='';const x=await call('importContactsCsv',text);await updateSetup();contactsMessage(x)})}
 function contactsMessage(x,prefix){if(!x){message((prefix||'')+'Torna a carregar el CSV per aplicar-ho.');return}message((prefix||'')+x.uniqueRecipients+' adreces úniques; '+x.unmatched.length+' noms per relacionar amb el cens.'+(x.unmatched.length?' Relaciona’ls a la secció «Adreces de les famílies».':' Ja pots validar el directori.'),!!x.unmatched.length)}
 async function afterContactFix(r,prefix){await updateSetup();contactsMessage(r.reimport,prefix)}
-function renderUnmatched(list){const box=$('contactsIssues');box.replaceChildren(...list.map(item=>{const select=h('select',{},item.candidates.map(c=>h('option',{value:c.id},c.name+' (ID '+c.id+')')));const input=h('input',{placeholder:'O bé, ID correcte del cens'});return h('div',{class:'row inline'},h('strong',{},item.course+' · '+item.writtenName),select,input,
-btn('Valida',async()=>{const r=await call('approveContactAlias',item.course,item.writtenName,input.value||select.value);await afterContactFix(r,'Relacionat amb '+r.student+'. ')}),
-btn('Exclou: no és al cens',async()=>{if(!confirm('Confirmes que aquest nom no correspon a cap alumne del cens actual?'))return;await afterContactFix(await call('excludeContactName',item.course,item.writtenName),'Nom exclòs. ')},true))}))}
+/* Cada nom porta marcada la proposta més probable; es poden validar d'un en un o tots els marcats alhora. */
+function renderUnmatched(list){const box=$('contactsIssues');box.replaceChildren();if(!list.length)return;const rows=list.map(item=>{const best=item.candidates[0];
+const check=h('input',{type:'checkbox',class:'pick','aria-label':'Selecciona '+item.writtenName});check.checked=!!best&&best.distance<=3;
+const select=h('select',{},item.candidates.map(c=>h('option',{value:c.id},c.name+' (ID '+c.id+')')));const input=h('input',{placeholder:'O bé, ID correcte del cens'});
+input.oninput=()=>{if(input.value.trim())check.checked=true};select.onchange=()=>{check.checked=true};
+const el=h('div',{class:'row inline'},check,h('strong',{},item.course+' · '+item.writtenName),h('span',{class:'muted'},'→'),select,input,
+btn('Valida',async()=>{const r=await call('approveContactAlias',item.course,item.writtenName,input.value.trim()||select.value);await afterContactFix(r,'Relacionat amb '+r.student+'. ')},true),
+btn('Exclou: no és al cens',async()=>{if(!confirm('Confirmes que aquest nom no correspon a cap alumne del cens actual?'))return;await afterContactFix(await call('excludeContactName',item.course,item.writtenName),'Nom exclòs. ')},true));
+return {item,check,select,input,el}});
+const count=h('span',{class:'muted'});const refreshCount=()=>{count.textContent=rows.filter(r=>r.check.checked).length+' de '+rows.length+' marcats'};rows.forEach(r=>r.check.addEventListener('change',refreshCount));refreshCount();
+const all=h('input',{type:'checkbox',class:'pick','aria-label':'Marca-ho tot'});all.onchange=()=>{rows.forEach(r=>r.check.checked=all.checked);refreshCount()};
+box.append(h('p',{class:'muted'},'Revisa la proposta de cada nom. Marca els que estan bé i valida’ls tots alhora; els dubtosos, corregeix-los o exclou-los un per un.'),
+h('div',{class:'row inline bulk'},h('label',{class:'choice'},all,h('span',{},'Marca-ho tot')),count,btn('Valida els marcats',async()=>{const picked=rows.filter(r=>r.check.checked);if(!picked.length)throw Error('Marca almenys un nom.');
+const r=await call('approveContactAliases',picked.map(p=>({course:p.item.course,writtenName:p.item.writtenName,studentId:p.input.value.trim()||p.select.value})));await afterContactFix(r,r.students.length+' noms relacionats. ')})),...rows.map(r=>r.el))}
 function day(s){return s?' el '+new Date(s).toLocaleDateString('ca'):''}
 function mark(ok,text){return h('span',{class:ok?'state-ok':'state-todo'},(ok?'✓ ':'✗ ')+text)}
 /* Mostra el que ja està desat; el formulari per canviar-ho només s’obre si cal. */

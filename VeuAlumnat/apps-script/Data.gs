@@ -173,13 +173,25 @@ function suggestStudents_(name, students) {
     .sort((a, b) => a.distance - b.distance).slice(0, 3);
 }
 function approveContactAlias(course, writtenName, studentId) {
+  const r = approveContactAliases([{course, writtenName, studentId}]);
+  return {student: r.students[0], reimport: r.reimport};
+}
+/* Valida de cop totes les correspondències marcades i torna a aplicar el CSV una sola vegada. */
+function approveContactAliases(items) {
   requireAccess_('*', ['admin']);
-  const student = rows_('students').find(r => String(r[0]) === String(studentId) && r[1] === course);
-  if (!student || !String(writtenName).trim() || String(writtenName).length > 150) throw new Error('Correspondència no vàlida.');
-  const all = rows_('contactAliases').filter(r => !(r[0] === course && nameKey_(r[1]) === nameKey_(writtenName)));
-  all.push([course, String(writtenName).trim(), String(studentId), 'SI']);
+  if (!Array.isArray(items) || !items.length || items.length > 500) throw new Error('No hi ha cap correspondència marcada.');
+  const students = rows_('students');
+  const checked = items.map(x => {
+    const course = String(x && x.course), name = String(x && x.writtenName || '').trim();
+    const student = students.find(r => String(r[0]) === String(x && x.studentId) && r[1] === course);
+    if (!student || !name || name.length > 150) throw new Error('Correspondència no vàlida: ' + (name || 'sense nom') + '.');
+    return {course, name, student};
+  });
+  const keys = new Set(checked.map(x => x.course + '|' + nameKey_(x.name)));
+  const all = rows_('contactAliases').filter(r => !keys.has(r[0] + '|' + nameKey_(r[1])));
+  checked.forEach(x => all.push([x.course, x.name, String(x.student[0]), 'SI']));
   replaceRows_('contactAliases', all);
-  return {student: student[2], reimport: reimportContacts_()};
+  return {students: checked.map(x => String(x.student[2])), reimport: reimportContacts_()};
 }
 function saveContactsCsv_(text) {
   const id = config_('CONTACTS_CSV_FILE_ID');
