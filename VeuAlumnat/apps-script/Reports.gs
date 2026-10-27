@@ -243,17 +243,14 @@ function previewReport(id, studentId) {
   } else {
     model = reportModel_(data.structure, sampleAnswers_(data.structure)); name = 'Alumne/a d’exemple';
   }
-  const rootId = config_('ROOT_FOLDER_ID');
-  if (!rootId) throw new Error('Primer cal carregar el logotip oficial.');
-  let folderId = config_('SAMPLE_FOLDER_ID');
-  if (!folderId) {
-    folderId = DriveApp.getFolderById(rootId).createFolder('Proves de maquetació').getId();
-    setConfig_('SAMPLE_FOLDER_ID', folderId);
-  }
+  if (!config_('ROOT_FOLDER_ID')) throw new Error('Primer cal carregar el logotip oficial.');
+  /* Dins la carpeta de la recollida, perquè el professorat del curs també el pugui obrir. */
+  const folder = ensureCampaignFolder_(c), found = folder.getFoldersByName('Previsualitzacions');
+  const previews = found.hasNext() ? found.next() : folder.createFolder('Previsualitzacions');
   const previous = config_('PREVIEW_FILE_ID');
   if (previous) { try { DriveApp.getFileById(previous).setTrashed(true); } catch (e) { /* ja no hi és */ } }
   const pdf = savePdf_(model, reportMeta_(c, name, data.structure, ''), 'Previsualització · ' + name + ' · ' + c[3],
-    DriveApp.getFolderById(folderId));
+    previews);
   setConfig_('PREVIEW_FILE_ID', pdf.getId());
   return {url: pdf.getUrl(), name: pdf.getName()};
 }
@@ -267,12 +264,7 @@ function generateReports(id, regenerate) {
   }
   if (campaign[5] !== 'TANCADA') throw new Error('Cal tancar el formulari abans de generar els informes.');
   if (data.issues.length) throw new Error('Cal resoldre ' + data.issues.length + ' incidències abans de generar els PDF.');
-  if (!campaign[6]) {
-    campaign[6] = campaignFolder_(campaign[2], campaign[1], campaign[3]).getId();
-    campaign[8] = origin_(campaign) === 'HISTORICA' || !campaign[8] ? 'HISTORICA' : campaign[8];
-    replaceRows_('campaigns', rows_('campaigns').map(r => r[0] === id ? campaign : r));
-  }
-  const folder = DriveApp.getFolderById(String(campaign[6]));
+  const folder = ensureCampaignFolder_(campaign);
   if (regenerate === true) {
     if (rows_('deliveries').some(r => r[0] === id && r[5] !== 'PREPARAT')) {
       throw new Error('Ja s’han enviat informes d’aquesta recollida; no es poden regenerar.');
@@ -311,11 +303,7 @@ function generatePrintBundle(id, onlyWithoutEmail) {
   const withEmail = new Set(rows_('contacts').filter(r => r[5] === 'SI').map(r => String(r[0])));
   const entries = data.entries.filter(e => !onlyWithoutEmail || !withEmail.has(String(e.student[0])));
   if (!entries.length) throw new Error(onlyWithoutEmail ? 'Tots els alumnes amb resposta tenen adreça familiar.' : 'No hi ha informes per imprimir.');
-  if (!campaign[6]) {
-    campaign[6] = campaignFolder_(campaign[2], campaign[1], campaign[3]).getId();
-    replaceRows_('campaigns', rows_('campaigns').map(r => r[0] === id ? campaign : r));
-  }
-  const folder = DriveApp.getFolderById(String(campaign[6]));
+  const folder = ensureCampaignFolder_(campaign);
   const name = 'Per imprimir · ' + campaign[1] + ' · ' + campaign[3] + (onlyWithoutEmail ? ' · sense correu' : ' · tots');
   const old = folder.getFilesByName(name + '.pdf');
   while (old.hasNext()) old.next().setTrashed(true);

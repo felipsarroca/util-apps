@@ -2,7 +2,7 @@
 <style>
 :root{font-family:Arial,sans-serif;color:#292622;background:#f5f2ed;--brand:#831e12;--line:#ded8cf;--muted:#655f57}*{box-sizing:border-box}body{margin:0;background:#f5f2ed}
 header{background:var(--brand);color:#fff;padding:16px clamp(16px,4vw,48px)}header h1{font-size:21px;margin:0 0 3px}header p{margin:0;font-size:13px;opacity:.9}
-main{max-width:1060px;margin:auto;padding:16px;display:grid;gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+main{max-width:1060px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}#message{overflow-wrap:anywhere}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
 h2{font-size:18px;margin:0 0 10px;color:var(--brand)}h3{font-size:15px;margin:16px 0 6px}p{line-height:1.45}
 label{display:block;font-size:13px;font-weight:bold;margin:10px 0 4px}input,select{width:100%;padding:9px;border:1px solid #aaa39a;border-radius:6px;font-size:14px;background:#fff}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.bar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.bar>div{flex:1;min-width:220px}
@@ -14,8 +14,33 @@ button{border:0;border-radius:6px;background:var(--brand);color:#fff;padding:10p
 .step b{display:block;font-size:14px;color:#292622}.step.done{background:#e7f3e9;border-color:#b9d8bf}.step.now{border:2px solid var(--brand)}.step.now b{color:var(--brand)}.step.shown{box-shadow:0 0 0 3px #e8cfc9}
 .stat{font-size:15px;margin:6px 0}details{margin:10px 0}summary{cursor:pointer;font-weight:bold;color:var(--brand)}details ul{margin:8px 0;padding-left:20px;line-height:1.5;font-size:14px}
 .inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.inline input,.inline select{width:auto;flex:1;min-width:180px}
-@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}main{padding:10px}.card{padding:14px}button{width:100%;margin-right:0}}
-</style></head><body><header><h1>La veu de l’alumnat</h1><p>Autoavaluació, informes i lliurament a les famílies · Escola Ramon Pont</p></header><main>
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}.help-btn{margin:0;background:#fff;color:var(--brand);flex:none}
+dialog#help{border:0;border-radius:12px;padding:0;width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 12px 40px #0005}dialog#help::backdrop{background:#0006}
+.help-head{position:sticky;top:0;background:var(--brand);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center}.help-head h2{color:#fff;margin:0}.help-head button{margin:0;background:#fff;color:var(--brand)}
+.help-body{padding:6px 18px 16px;font-size:14px;line-height:1.5}.help-body ol,.help-body ul{padding-left:20px}.help-body li{margin:3px 0}
+@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}main{padding:10px}.card{padding:14px}button{width:100%;margin-right:0}.help-btn,.help-head button{width:auto}header{padding:12px 16px}header h1{font-size:19px}}
+</style></head><body><header><div><h1>La veu de l’alumnat</h1><p>Autoavaluació, informes i lliurament a les famílies · Escola Ramon Pont</p></div><button class="help-btn" onclick="$('help').showModal()" aria-haspopup="dialog">? Ajuda</button></header><main>
+<dialog id="help" aria-labelledby="helpTitle"><div class="help-head"><h2 id="helpTitle">Ajuda</h2><button onclick="$('help').close()" aria-label="Tanca l’ajuda">✕ Tanca</button></div><div class="help-body">
+<p><b>Què fa l’aplicació?</b> Converteix l’autoavaluació que l’alumnat respon en un formulari de Google en un informe PDF per a cada alumne i l’envia per correu a la seva família.</p>
+<h3>Els cinc passos</h3><ol>
+<li><b>Prepara.</b> Prem «＋ Nova recollida», tria curs i nom (p. ex. «1a avaluació»). Si deixes buit el formulari de partida, es copia el de la recollida anterior del curs. Revisa’l i fes-hi els canvis que vulguis amb «Obre el formulari per editar-lo». Amb «Previsualitza l’informe amb respostes d’exemple» veuràs com quedarà.</li>
+<li><b>Recull.</b> Prem «Obre el formulari a l’alumnat», copia l’enllaç amb «Copia l’enllaç» i comparteix-lo a Classroom. Cada alumne respon una sola vegada amb el compte de l’escola. Quan hagin acabat, prem «Tanca el formulari».</li>
+<li><b>Revisa.</b> Comprova qui ha respost i qui no. Si hi ha incidències (alumnes que no són al cens, noms per validar), resol-les aquí. Pots previsualitzar l’informe de qualsevol alumne.</li>
+<li><b>Genera.</b> «Genera els PDF» crea tots els informes a la carpeta de la recollida. Si n’hi ha molts, el procés continua sol fins que els acaba.</li>
+<li><b>Envia.</b> «Prepara els destinataris», revisa la llista, prova-ho amb «Envia’m una prova a mi» i, finalment, «Aprova i envia a totes les famílies». Per a les famílies sense correu hi ha «PDF només dels alumnes sense correu familiar», per imprimir a doble cara, amb el resguard de lectura per retornar signat.</li></ol>
+<h3>Com ha de ser el formulari</h3><ul>
+<li>Cada <b>secció</b> del formulari és un apartat de l’informe.</li>
+<li>Una pregunta de <b>valoració</b> (escala 1–4 o NA/AS/AN/AE) obre un bloc; les preguntes obertes que la segueixen hi queden incloses.</li>
+<li>Escriu <b>[tutor]</b> al títol d’una pregunta o secció perquè no surti a l’informe.</li>
+<li>Les respostes buides no apareixen. La pregunta del nom tampoc.</li></ul>
+<h3>Preguntes freqüents</h3><ul>
+<li><b>On es desa tot?</b> Al Google Drive de l’escola, a la carpeta «La veu de l’alumnat · fitxers privats», amb una subcarpeta per recollida (formulari, respostes i PDF). El professorat del curs hi té accés de lectura.</li>
+<li><b>Qui rep el correu?</b> Els contactes familiars aprovats per l’administració. Fins que no s’activa l’enviament, només es poden fer proves.</li>
+<li><b>Des de quin compte surten els correus?</b> Del compte que administra l’aplicació. Si la família respon, el missatge arriba a l’adreça de resposta configurada.</li>
+<li><b>M’he equivocat en un formulari.</b> Mentre no s’hagin enviat els informes, pots corregir-lo i prémer «Regenera tots els PDF».</li>
+<li><b>No veig cap curs o recollida.</b> Demana a l’administració que t’afegeixi com a tutor del teu curs.</li></ul>
+<p><a href="https://felipsarroca.github.io/util-apps/VeuAlumnat/instruccions/" target="_blank" rel="noopener">Guia completa amb imatges ↗</a></p>
+</div></dialog>
 <div id="message" class="notice">S’està carregant l’espai de gestió…</div>
 <section class="card"><div class="bar"><div><label for="campaign">Recollida</label><select id="campaign" onchange="loadCampaign()"></select></div><button class="secondary" onclick="toggleNew()">＋ Nova recollida</button></div>
 <div id="newPanel" class="hidden"><h3>Nova recollida</h3><div class="grid"><div><label for="course">Curs</label><select id="course"></select></div><div><label for="year">Curs escolar</label><input id="year"></div><div><label for="label">Nom de la recollida</label><input id="label" placeholder="1a avaluació"></div></div>

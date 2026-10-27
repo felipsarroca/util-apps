@@ -190,4 +190,21 @@ assert.equal(run("sourceFormId_('1r.ESO', '')"), 'formB');
 assert.throws(() => run("sourceFormId_('2n.ESO', '')"), /primera recollida/);
 assert.equal(run("origin_(['x', '4t.ESO', '2026-2027', 'Pre', 'f', 'TANCADA', '', ''])"), 'HISTORICA');
 assert.equal(run("origin_(['x', '4t.ESO', '2026-2027', 'Pre', 'f', 'TANCADA', 'carpeta', '', 'DIRECTE'])"), 'DIRECTE');
+
+// Una recollida històrica conserva l'origen quan se li crea carpeta, i el professorat del curs hi té accés.
+const shared = {folder: [], form: []};
+const fakeFile = (kind, owner) => ({getOwner: () => ({getEmail: () => owner}), getEditors: () => [], getViewers: () => [],
+  addViewers: list => shared[kind].push(...list), addEditors: list => shared[kind].push(...list)});
+context.DriveApp = {getFolderById: () => ({...fakeFile('folder', 'admin@ramonpont.cat'), createFolder: () => ({getId: () => 'nova'})}),
+  getFileById: () => fakeFile('form', 'admin@ramonpont.cat')};
+context.config_ = key => key === 'ROOT_FOLDER_ID' ? 'arrel' : '';
+state.access = [['admin@ramonpont.cat', '*', 'admin', 'SI'], ['tutor4@ramonpont.cat', '4t.ESO', 'tutor', 'SI'],
+  ['tutor1@ramonpont.cat', '1r.ESO', 'tutor', 'SI'], ['antic@ramonpont.cat', '4t.ESO', 'tutor', 'NO']];
+state.campaigns.push(['h', '4t.ESO', '2026-2027', 'Pre', 'formH', 'TANCADA', '', '2026-09-01T00:00:00']);
+context.historic = state.campaigns[2];
+run('ensureCampaignFolder_(historic)');
+assert.equal(state.campaigns.find(r => r[0] === 'h')[6], 'nova');
+assert.equal(run("origin_(rows_('campaigns').find(r => r[0] === 'h'))"), 'HISTORICA');
+assert.deepEqual(shared.folder, ['tutor4@ramonpont.cat']);
+assert.deepEqual(shared.form, [], 'el formulari històric no es comparteix');
 console.log('Totes les comprovacions locals són correctes');

@@ -79,6 +79,49 @@ function campaignFolder_(year, course, label) {
   return DriveApp.getFolderById(rootId).createFolder(year + ' · ' + course + ' · ' + label);
 }
 
+/* L'app treballa amb el compte propietari: el professorat del curs ha de poder obrir la carpeta (PDF, respostes)
+   i editar el formulari. Només s'afegeixen els comptes actius que encara no hi tenen accés. */
+function campaignPeople_(course) {
+  return [...new Set(rows_('access').filter(r => r[3] === 'SI' && (r[1] === course || r[1] === '*'))
+    .map(r => mailKey_(r[0])).filter(Boolean))];
+}
+function shareCampaign_(campaign) {
+  const people = campaignPeople_(campaign[1]);
+  if (!people.length) return;
+  const have = list => new Set(list.map(u => mailKey_(u.getEmail())));
+  if (campaign[6]) {
+    try {
+      const folder = DriveApp.getFolderById(String(campaign[6]));
+      const done = have(folder.getEditors().concat(folder.getViewers()));
+      done.add(mailKey_(folder.getOwner().getEmail()));
+      const missing = people.filter(e => !done.has(e));
+      if (missing.length) folder.addViewers(missing);
+    } catch (e) { /* la carpeta ja no existeix o el compte no la pot compartir */ }
+  }
+  if (campaign[4] && origin_(campaign) !== 'HISTORICA') {
+    try {
+      const file = DriveApp.getFileById(String(campaign[4]));
+      const done = have(file.getEditors());
+      done.add(mailKey_(file.getOwner().getEmail()));
+      const missing = people.filter(e => !done.has(e));
+      if (missing.length) file.addEditors(missing);
+    } catch (e) { /* formulari d'un altre propietari */ }
+  }
+}
+function ensureCampaignFolder_(campaign) {
+  if (!campaign[6]) {
+    campaign[6] = campaignFolder_(campaign[2], campaign[1], campaign[3]).getId();
+    if (!campaign[8]) campaign[8] = 'HISTORICA'; // sense carpeta pròpia: és una recollida importada
+    replaceRows_('campaigns', rows_('campaigns').map(r => r[0] === campaign[0] ? campaign : r));
+  }
+  shareCampaign_(campaign);
+  return DriveApp.getFolderById(String(campaign[6]));
+}
+/* Quan s'afegeix professorat, se li obren les recollides que ja existeixen del seu curs. */
+function shareCourseCampaigns_(course) {
+  rows_('campaigns').filter(r => course === '*' || r[1] === course).forEach(shareCampaign_);
+}
+
 function openFormForEdit_(formId) {
   try { return FormApp.openById(formId); }
   catch (e) { throw new Error('El compte del centre no pot editar aquest formulari. Afegeix-lo com a col·laborador i torna-ho a provar.'); }
@@ -144,8 +187,9 @@ function createCampaign(course, year, label, sourceUrl, mode) {
     form.setDestination(FormApp.DestinationType.SPREADSHEET, sheet.getId());
   }
   const id = uuid_();
-  putRows_('campaigns', [[id, course, year, label, form.getId(), status, folder.getId(), now_(),
-    mode === 'copia' ? 'COPIA' : 'DIRECTE']]);
+  const row = [id, course, year, label, form.getId(), status, folder.getId(), now_(), mode === 'copia' ? 'COPIA' : 'DIRECTE'];
+  putRows_('campaigns', [row]);
+  shareCampaign_(row);
   const structure = formStructure_(form);
   return {id, status, responses, collectsEmail: form.collectsEmail(), summary: structureSummary_(structure)};
 }

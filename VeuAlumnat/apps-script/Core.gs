@@ -127,6 +127,7 @@ function addTutor(email, course, role) {
   const data = rows_('access').filter(r => !(mailKey_(r[0]) === e && r[1] === course));
   data.push([e, course, role, 'SI']);
   replaceRows_('access', data);
+  shareCourseCampaigns_(course);
   return accessList_();
 }
 function accessList_() {
