@@ -50,6 +50,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Gestió de centre'
         },
         {
+            name: 'La veu de l’alumnat',
+            path: 'https://ja.cat/veualumnat',
+            icon: 'VeuAlumnat/favicon.svg',
+            description: 'Autoavaluació de l’alumnat, informes i lliurament a les famílies.',
+            category: 'Gestió de centre'
+        },
+        {
             name: 'BiblioPrompt',
             path: 'https://ja.cat/biblioprompt',
             icon: 'BiblioPrompt/favicon.svg',

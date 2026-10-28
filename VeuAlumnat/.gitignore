@@ -3,6 +3,7 @@
 # logotip i maquetes queden només a la còpia local de Drive.
 /*
 !/.gitignore
+!/favicon.svg
 !/GUIA.md
 !/apps-script/
 !/tests/
