@@ -96,6 +96,11 @@ main {
     margin-top: 0.6rem;
 }
 
+.cc-credit .cc-license-link {
+    display: flex;
+    flex-shrink: 0;
+}
+
 .cc-credit img {
     height: 28px;
     width: auto;
