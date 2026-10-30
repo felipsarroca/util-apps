@@ -373,3 +373,10 @@ Obra sota llicència:
 ```text
 CC BY-NC-SA 4.0
 ```
+
+## Llicència
+
+- **Codi font:** [GNU AGPL v3](https://www.gnu.org/licenses/agpl-3.0.html).
+- **Continguts** (textos, documentació i imatges): [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca).
+
+Vegeu el fitxer [LICENSE](LICENSE).
