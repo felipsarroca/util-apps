@@ -248,7 +248,7 @@ function Census({ session }: { session: Session }) {
             <tr>
               <th className="pick"><input type="checkbox" checked={all} onChange={(e) => setPicked(e.target.checked ? new Set(students.map((x) => x.id)) : new Set())} aria-label="Tria tots els alumnes del curs" /></th>
               <th>Alumne</th><th>Grup</th><th>Correu</th>
-              {electives.map((e) => <th key={e.subjectId}>{s.subjects.find((x) => x.id === e.subjectId)?.short}</th>)}
+              {electives.map((e) => <th key={e.subjectId} className="opt">{s.subjects.find((x) => x.id === e.subjectId)?.short}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -267,7 +267,7 @@ function Census({ session }: { session: Session }) {
                 </td>
                 <td className="muted">{st.email}</td>
                 {electives.map((e) => (
-                  <td key={e.subjectId}>
+                  <td key={e.subjectId} className="opt">
                     <input type="checkbox" checked={st.electives.includes(e.subjectId)} onChange={(ev) => setElective(session, st.id, e.subjectId, ev.target.checked)} aria-label={`${fullName(st)} cursa ${e.subjectId}`} style={{ width: 18, height: 18, accentColor: 'var(--brand)' }} />
                   </td>
                 ))}
