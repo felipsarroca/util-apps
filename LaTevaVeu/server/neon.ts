@@ -30,5 +30,8 @@ const app = buildApp({
   yearId: need('ACADEMIC_YEAR'),
   allowedOrigin: process.env.ALLOWED_ORIGIN,
   logger: true,
+  // Neon recull la sortida d'errors: així els errors inesperats queden als registres de la funció.
+  onError: (e) => console.error('Error del servidor:', e instanceof Error ? `${e.message}
+${e.stack}` : e),
 })
 export default toFetch(app)

@@ -17,6 +17,8 @@ export interface AppOptions {
   /** Origen autoritzat del frontend (p. ex. https://felipsarroca.github.io). */
   allowedOrigin?: string
   logger?: boolean
+  /** Rep els errors inesperats (p. ex. per escriure'ls on la plataforma els recull). */
+  onError?: (err: unknown) => void
 }
 
 export function buildApp(o: AppOptions) {
@@ -40,6 +42,7 @@ export function buildApp(o: AppOptions) {
     const status = (err as { statusCode?: number }).statusCode
     if (status && status < 500) return reply.code(status).send({ error: 'Petició no vàlida.' })
     app.log.error(err)
+    o.onError?.(err)
     return reply.code(500).send({ error: 'Hi ha hagut un error al servidor.' })
   })
 
