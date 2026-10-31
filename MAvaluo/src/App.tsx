@@ -87,19 +87,21 @@ export default function App() {
     ? 'Compte pendent de verificació'
     : student
       ? `${gradeById(student.gradeId).name} · Grup ${student.group}`
-      : session?.role === 'admin'
-        ? 'Administració'
-        : 'Professorat'
+      : session?.direction
+        ? 'Equip Directiu'
+        : session?.role === 'admin'
+          ? 'Administració'
+          : 'Professorat'
 
   return (
     <>
       {session && (
         <header className="topbar no-print">
-          <a className="brandmark" href="#" onClick={(e) => e.preventDefault()} aria-label="M’avaluo">
+          <a className="brandmark" href="#" onClick={(e) => e.preventDefault()} aria-label="La teva veu">
             <img src={asset('logo-escola-ramon-pont.png')} alt="" />
             <span>
-              <b>M’avaluo</b>
-              <small>La veu de l’alumnat</small>
+              <b>La teva veu</b>
+              <small>Escola Ramon Pont</small>
             </span>
           </a>
           {!GOOGLE_CLIENT_ID && <span className="demo-flag" title="Les dades són fictícies i es desen només en aquest navegador">Demostració</span>}

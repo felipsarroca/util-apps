@@ -34,7 +34,7 @@ export function SegScale({ name, scale, value, onChange, label }: { name: string
       {scale.allowNA && (
         <div className="seg-opt na">
           <input type="radio" id={`${id}-na`} name={name} value={NA} checked={value === NA} onChange={() => onChange(NA)} />
-          <label htmlFor={`${id}-na`}>No escau</label>
+          <label htmlFor={`${id}-na`}>{scale.naLabel ?? 'No escau'}</label>
         </div>
       )}
     </div>
@@ -55,6 +55,15 @@ export function BigScale({ name, scale, value, onChange, label }: { name: string
           </label>
         </div>
       ))}
+      {scale.allowNA && (
+        <div className="big-opt na">
+          <input type="radio" id={`${id}-na`} name={name} value={NA} checked={value === NA} onChange={() => onChange(NA)} />
+          <label htmlFor={`${id}-na`}>
+            <span className="em" aria-hidden="true">🤷</span>
+            <span>{scale.naLabel ?? 'No escau'}</span>
+          </label>
+        </div>
+      )}
     </div>
   )
 }

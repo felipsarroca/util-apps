@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { templateById, visibleStudents } from '../data/api'
 import type { DemoState } from '../data/seed'
@@ -72,6 +72,18 @@ export const groupLabel = (s: Student) => `${gradeById(s.gradeId).name} ${s.grou
  * i s'obre el diàleg d'impressió del navegador (permet «Desa com a PDF»).
  */
 export function PrintJob({ state, items, duplex, onDone }: { state: DemoState; items: { studentId: string; campaignId: string }[]; duplex: boolean; onDone: () => void }) {
+  return (
+    <PrintPortal onDone={onDone}>
+      {items.map((it) => {
+        const m = buildReportModel(state, it.studentId, it.campaignId)
+        return m ? <ReportPages key={`${it.studentId}-${it.campaignId}`} model={m} duplex={duplex} /> : null
+      })}
+    </PrintPortal>
+  )
+}
+
+/** Imprimeix qualsevol conjunt de pàgines A4 (es preparen fora de la pantalla). */
+export function PrintPortal({ children, onDone }: { children: ReactNode; onDone: () => void }) {
   const [ready, setReady] = useState(false)
   useEffect(() => {
     document.body.classList.add('printing')
@@ -93,13 +105,5 @@ export function PrintJob({ state, items, duplex, onDone }: { state: DemoState; i
       window.clearTimeout(t)
     }
   }, [ready, onDone])
-  return createPortal(
-    <div className="print-root">
-      {items.map((it) => {
-        const m = buildReportModel(state, it.studentId, it.campaignId)
-        return m ? <ReportPages key={`${it.studentId}-${it.campaignId}`} model={m} duplex={duplex} /> : null
-      })}
-    </div>,
-    document.body,
-  )
+  return createPortal(<div className="print-root">{children}</div>, document.body)
 }

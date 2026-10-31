@@ -9,8 +9,10 @@ const DEMO: { email: string; em: string; label: string; hint: string }[] = [
   { email: 'pau.serra@ramonpont.cat', em: '🧒', label: 'Alumne de 3r', hint: 'Cicle mitjà' },
   { email: 'laia.puig@ramonpont.cat', em: '👧', label: 'Alumna de 5è', hint: 'Cicle superior, amb objectiu anterior' },
   { email: 'marc.vidal@ramonpont.cat', em: '🧑', label: 'Alumne de 2n d’ESO', hint: 'Amb optativa de francès' },
-  { email: 'tutoria.2eso@ramonpont.cat', em: '📋', label: 'Tutoria de 2n d’ESO', hint: 'Només veu els seus grups' },
-  { email: 'admin.demo@ramonpont.cat', em: '🛡️', label: 'Administració', hint: 'Configuració completa' },
+  { email: 'tutoria.2eso@ramonpont.cat', em: '📋', label: 'Marta Riera', hint: 'Matemàtiques ESO i tutora de 2n' },
+  { email: 'sergi.prat@ramonpont.cat', em: '🏃', label: 'Sergi Prat', hint: 'Especialista d’EF: tres etapes' },
+  { email: 'direccio.demo@ramonpont.cat', em: '🧭', label: 'Equip Directiu', hint: 'Visió de centre i moderació' },
+  { email: 'admin.demo@ramonpont.cat', em: '🛡️', label: 'Administració', hint: 'Configuració, sense resultats' },
   { email: 'nou.usuari@ramonpont.cat', em: '❔', label: 'Compte no registrat', hint: 'De l’escola, però fora del cens' },
 ]
 
@@ -64,14 +66,14 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
           </div>
           <div>
             <h1 className="login-title">
-              M’<span>avaluo</span>
+              La teva <span>veu</span>
             </h1>
-            <p className="login-sub">La veu de l’alumnat</p>
+            <p className="login-sub">La teva mirada ens ajuda a millorar</p>
           </div>
           <ul className="login-steps">
-            <li><span aria-hidden="true">🔐</span>Entra amb el compte de l’escola</li>
-            <li><span aria-hidden="true">💭</span>Pensa com has treballat aquest trimestre</li>
-            <li><span aria-hidden="true">🌱</span>Proposa’t un objectiu per millorar</li>
+            <li><span aria-hidden="true">💭</span><p><b>Em miro</b> · penso en com aprenc i què puc millorar</p></li>
+            <li><span aria-hidden="true">👀</span><p><b>Et veig</b> · explico com visc les classes</p></li>
+            <li><span aria-hidden="true">🔐</span>Només amb el compte de l’escola</li>
           </ul>
         </section>
 

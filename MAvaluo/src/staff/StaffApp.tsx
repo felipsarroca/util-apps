@@ -1,34 +1,52 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { useDemoState, visibleGrades } from '../data/api'
+import { isDirection, useDemoState, visibleGrades } from '../data/api'
 import { gradeShort, GRADES } from '../domain/catalog'
 import type { GradeId, ResponseStatus, Session } from '../domain/types'
 import { buildReportModel, ReportPages, SheetViewer } from '../report/Report'
 import { fmtDate, fmtShort, Icon, Modal } from '../ui/common'
 import { CampaignsScreen } from './Campaigns'
 import { EditorScreen } from './Editor'
+import { CenterScreen, FeedbackCampaignsScreen, MyReportsScreen, SelfAssessScreen } from './EtVeig'
 import { PeopleScreen } from './People'
 import { ReportsScreen } from './Reports'
 import { CAMPAIGN_LABEL, CAMPAIGN_TONE, currentCampaign, fullName, PrintJob, RESP_LABEL, RESP_TONE, trackingRows } from './shared'
+import { AssignmentsScreen, FeedbackFormsScreen, ModulesScreen } from './Settings'
 import { SubjectsScreen } from './Subjects'
 
-type Screen = 'dashboard' | 'tracking' | 'reports' | 'campaigns' | 'templates' | 'subjects' | 'people' | 'audit'
+type Screen =
+  | 'dashboard' | 'tracking' | 'reports' | 'campaigns'
+  | 'self' | 'myreports' | 'center' | 'fbcampaigns' | 'fbforms'
+  | 'templates' | 'subjects' | 'assign' | 'people' | 'modules' | 'audit'
 
-const NAV: { id: Screen; label: string; icon: string; admin?: boolean; group: string }[] = [
-  { id: 'dashboard', label: 'Tauler', icon: 'home', group: 'Seguiment' },
-  { id: 'tracking', label: 'Respostes', icon: 'list', group: 'Seguiment' },
-  { id: 'reports', label: 'Informes i famílies', icon: 'file', group: 'Seguiment' },
-  { id: 'campaigns', label: 'Recollides', icon: 'calendar', group: 'Configuració' },
-  { id: 'templates', label: 'Qüestionaris', icon: 'edit', admin: true, group: 'Configuració' },
-  { id: 'subjects', label: 'Matèries', icon: 'book', admin: true, group: 'Configuració' },
-  { id: 'people', label: 'Alumnat i accessos', icon: 'users', admin: true, group: 'Configuració' },
-  { id: 'audit', label: 'Registre', icon: 'history', admin: true, group: 'Configuració' },
+/** Qui veu cada entrada: administració, Equip Directiu, tutoria (grups d'«Em miro»), qui fa classe o qui pot veure resultats. */
+type Need = 'admin' | 'dir' | 'tutor' | 'teaches' | 'results'
+const NAV: { id: Screen; label: string; icon: string; need: Need; group: string }[] = [
+  { id: 'dashboard', label: 'Tauler', icon: 'home', need: 'tutor', group: 'Em miro' },
+  { id: 'tracking', label: 'Respostes', icon: 'list', need: 'tutor', group: 'Em miro' },
+  { id: 'reports', label: 'Així em veig i famílies', icon: 'file', need: 'tutor', group: 'Em miro' },
+  { id: 'campaigns', label: 'Recollides', icon: 'calendar', need: 'tutor', group: 'Em miro' },
+  { id: 'self', label: 'La meva autoavaluació', icon: 'edit', need: 'teaches', group: 'Et veig' },
+  { id: 'myreports', label: 'Així et veiem', icon: 'eye', need: 'results', group: 'Et veig' },
+  { id: 'center', label: 'Visió de centre', icon: 'chart', need: 'dir', group: 'Et veig' },
+  { id: 'fbcampaigns', label: 'Recollides i moderació', icon: 'calendar', need: 'admin', group: 'Et veig' },
+  { id: 'fbforms', label: 'Preguntes', icon: 'list', need: 'admin', group: 'Et veig' },
+  { id: 'templates', label: 'Qüestionaris d’Em miro', icon: 'edit', need: 'admin', group: 'Configuració' },
+  { id: 'subjects', label: 'Matèries', icon: 'book', need: 'admin', group: 'Configuració' },
+  { id: 'assign', label: 'Assignacions docents', icon: 'users', need: 'admin', group: 'Configuració' },
+  { id: 'people', label: 'Alumnat i accessos', icon: 'users', need: 'admin', group: 'Configuració' },
+  { id: 'modules', label: 'Apartats', icon: 'settings', need: 'admin', group: 'Configuració' },
+  { id: 'audit', label: 'Registre', icon: 'history', need: 'admin', group: 'Configuració' },
 ]
 
 export function StaffApp({ session }: { session: Session }) {
-  const [screen, setScreen] = useState<Screen>('dashboard')
   const s = useDemoState()
   const isAdmin = session.role === 'admin'
-  const nav = NAV.filter((n) => !n.admin || isAdmin)
+  const dir = isDirection(session)
+  const teaches = s.assignments.some((a) => a.teacherEmail === session.email) || s.feedbackCampaigns.some((c) => c.teachers.includes(session.email))
+  const tutor = isAdmin || (session.groups?.length ?? 0) > 0
+  const allowed: Record<Need, boolean> = { admin: isAdmin, dir, tutor, teaches, results: teaches || dir }
+  const nav = NAV.filter((n) => allowed[n.need])
+  const [screen, setScreen] = useState<Screen>(() => nav[0]?.id ?? 'dashboard')
   const pendingIdentity = s.audit.filter((a) => a.action === 'Incidència d’identitat').length
   return (
     <div className="staff">
@@ -48,15 +66,35 @@ export function StaffApp({ session }: { session: Session }) {
         })}
       </nav>
       <main className="staff-main">
-        {screen === 'dashboard' && <Dashboard session={session} go={setScreen} />}
-        {screen === 'tracking' && <Tracking session={session} />}
-        {screen === 'reports' && <ReportsScreen session={session} />}
-        {screen === 'campaigns' && <CampaignsScreen session={session} />}
+        {!s.modules.emMiro && nav.find((n) => n.id === screen)?.group === 'Em miro' && <ModuleOff name="Em miro" />}
+        {!s.modules.etVeig && nav.find((n) => n.id === screen)?.group === 'Et veig' && <ModuleOff name="Et veig" />}
+        {screen === 'dashboard' && tutor && <Dashboard session={session} go={setScreen} />}
+        {screen === 'tracking' && tutor && <Tracking session={session} />}
+        {screen === 'reports' && tutor && <ReportsScreen session={session} />}
+        {screen === 'campaigns' && tutor && <CampaignsScreen session={session} />}
+        {screen === 'self' && teaches && <SelfAssessScreen session={session} />}
+        {screen === 'myreports' && (teaches || dir) && <MyReportsScreen session={session} />}
+        {screen === 'center' && dir && <CenterScreen session={session} />}
+        {screen === 'fbcampaigns' && isAdmin && <FeedbackCampaignsScreen session={session} />}
+        {screen === 'fbforms' && isAdmin && <FeedbackFormsScreen session={session} />}
         {screen === 'templates' && isAdmin && <EditorScreen session={session} />}
         {screen === 'subjects' && isAdmin && <SubjectsScreen session={session} />}
+        {screen === 'assign' && isAdmin && <AssignmentsScreen session={session} />}
         {screen === 'people' && isAdmin && <PeopleScreen session={session} />}
+        {screen === 'modules' && isAdmin && <ModulesScreen session={session} />}
         {screen === 'audit' && isAdmin && <Audit />}
       </main>
+    </div>
+  )
+}
+
+function ModuleOff({ name }: { name: string }) {
+  return (
+    <div className="notice warn">
+      <Icon name="alert" />
+      <div>
+        L’apartat «{name}» està desactivat: l’alumnat no el veu. Es pot tornar a activar a <b>Configuració › Apartats</b>.
+      </div>
     </div>
   )
 }
@@ -92,7 +130,7 @@ function Dashboard({ session, go }: { session: Session; go: (s: Screen) => void 
 
   return (
     <>
-      <PageHead title={`${greeting()}, ${session.name.split(' ')[0]}`} sub={`Resum de les autoavaluacions · ${scope}`} />
+      <PageHead title={`${greeting()}, ${session.name.split(' ')[0]}`} sub={`Em miro · resum de les autoavaluacions · ${scope}`} />
       <div className="kpis">
         <div className="card kpi accent">
           <span className="l">Participació</span>

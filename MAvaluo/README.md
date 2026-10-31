@@ -1,8 +1,13 @@
-# M'avaluo · La veu de l'alumnat
+# La teva veu
 
-Aplicació web d'autoavaluació per a l'alumnat de l'Escola Ramon Pont, de 3r de primària a 4t d'ESO. Implementa el [pla mestre](Pla_mestre_Veu_alumnat_autoavaluacions_v1.md).
+*La teva mirada ens ajuda a millorar.* Aplicació web de l'Escola Ramon Pont per a l'alumnat de 3r de primària a 4t d'ESO, amb dos apartats que es poden activar o desactivar:
 
-**Estat (30 d'octubre de 2026):** prototip funcional complet en **mode de demostració**. Les dades són fictícies i es desen al navegador. Encara no hi ha servidor, base de dades real ni enviament de correus.
+- **Em miro**: l'alumne s'autoavalua en cada avaluació i en surt l'informe individual **Així em veig**.
+- **Et veig**: l'alumne valora una vegada cada docent que li fa classe, i en surt l'informe agregat **Així et veiem**, contrastat amb l'autoavaluació del docent.
+
+Implementa les fases 1 i 2 del [pla mestre v2](La_teva_veu_pla_mestre_v2.md). La carpeta i l'URL encara es diuen `MAvaluo`.
+
+**Estat (31 d'octubre de 2026):** prototip funcional en **mode de demostració**. Les dades són fictícies i es desen al navegador. Encara no hi ha servidor, base de dades real ni enviament de correus.
 
 ## Requisit d'entrada
 
@@ -11,8 +16,9 @@ Només s'hi pot entrar amb un compte **@ramonpont.cat**. Tenir aquest compte no 
 | Compte | Què veu |
 | --- | --- |
 | Alumne al cens | Només la seva autoavaluació, el seu curs i les seves matèries |
-| Professorat | Només els grups que té assignats |
-| Administració | Tot, amb registre de cada acció |
+| Professorat | A «Em miro», només els grups que té assignats; a «Et veig», la seva autoavaluació i el seu informe quan es publica |
+| Equip Directiu | Tots els informes d'«Et veig», la visió de centre i la moderació de comentaris; mai qui ha dit què |
+| Administració | La configuració, amb registre de cada acció; no veu resultats d'«Et veig» |
 | Compte de l'escola fora del cens | Pantalla «Encara no tens accés», sense cap dada |
 | Compte d'un altre domini | Rebutjat abans d'entrar |
 
@@ -26,7 +32,21 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`) i es
 - Desa automàticament; es pot parar i continuar. Revisió final amb les respostes pendents. Es pot modificar fins al tancament.
 - Lletra gran, lletra de lectura fàcil (Atkinson Hyperlegible), navegació amb teclat i tancament automàtic de la sessió després de 20 minuts d'inactivitat.
 
-**Professorat i administració**
+**Et veig: alumnat**
+- Llista dels seus docents (també especialistes), en ordre aleatori estable; cada docent es valora una sola vegada per recollida, no per matèria.
+- Preguntes per etapa: cicle mitjà (6 afirmacions, una per pantalla, escala de cares), cicle superior (12) i ESO (18), agrupades en dimensions. Sempre hi ha l'opció «No ho sé / No ho puc valorar».
+- Comentaris opcionals, confirmació abans de lliurar; un cop lliurat no es pot canviar.
+
+**Et veig: professorat i Equip Directiu**
+- Autoavaluació del docent: una per etapa, amb les mateixes afirmacions en primera persona i etiquetes opcionals de context per grup.
+- Informe «Així et veiem»: dimensions, mirall alumnat-docent amb quatre quadrants, detall per afirmació, resultats per grup, evolució i comentaris moderats. Imprimible en A4.
+- Confidencialitat: les respostes es desen sense identificar l'alumne; no es mostra cap agregat amb menys de 15 respostes.
+- Visió de centre (Equip Directiu): participació, dimensions per etapa amb la variació respecte de la recollida anterior, i mapa de calor del professorat en ordre alfabètic.
+- Recollides independents de les avaluacions: `Esborrany → Programada → Oberta → Tancada → Moderació → Informes generats → Publicada → Arxivada`. Les assignacions es congelen en obrir-les.
+- Moderació de comentaris amb marques automàtiques (insults, noms propis, dades de contacte, frases que identifiquen).
+- Configuració: apartats actius, assignacions docents per grup i matèria, i editor de preguntes amb versions.
+
+**Em miro: professorat i administració**
 - Tauler amb participació per grup i activitat recent.
 - Respostes: estat i progrés de cada alumne, amb l'informe.
 - Informes i famílies: informe A4 paginat, un sol PDF dels seleccionats o només dels que no tenen correu familiar, opció de doble cara (cada informe comença en cara nova), acusament de lectura retallable i preparació de l'enviament amb els destinataris validats.
@@ -35,6 +55,16 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`) i es
 - Matèries per curs: ordre, comunes i optatives, activació.
 - Alumnat i accessos: permisos per grup, cens amb optatives, importació CSV amb validació prèvia, incidències d'identitat.
 - Registre d'operacions.
+
+## Comptes de prova
+
+| Compte | Per provar |
+| --- | --- |
+| Alumne de 3r, Alumna de 5è, Alumne de 2n d'ESO | Les dues experiències de cada etapa |
+| Marta Riera | Docent i tutora d'ESO: autoavaluació i el seu informe |
+| Sergi Prat | Especialista d'EF a les tres etapes |
+| Equip Directiu | Visió de centre, tots els informes i moderació |
+| Administració | Configuració, sense accés als resultats |
 
 ## Desenvolupament
 
@@ -58,7 +88,7 @@ Per activar Google real: copia `.env.example` a `.env.local` i posa-hi `VITE_GOO
 | `src/data` | Identificació i capa de dades (`api.ts`: simula el servidor amb control de permisos) |
 | `src/student` | Flux de l'alumnat i components de pregunta |
 | `src/staff` | Pantalles de professorat i administració |
-| `src/report` | Informe A4 amb paginació per blocs |
+| `src/report` | Informes A4 «Així em veig» i «Així et veiem», amb paginació per blocs |
 | `db/schema.sql` | Esquema previst per a Neon PostgreSQL |
 | `tests` | Proves dels criteris d'acceptació del pla mestre |
 

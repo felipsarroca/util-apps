@@ -36,7 +36,7 @@ export function buildReportModel(s: DemoState, studentId: string, campaignId: st
   }
 }
 
-interface Block {
+export interface Block {
   id: string
   node: ReactNode
   keepWithNext?: boolean
@@ -201,8 +201,9 @@ function useBlocks(m: ReportModel, acknowledgement: boolean): Block[] {
           <div className="rp-head">
             <img src={asset('logo-escola-ramon-pont.png')} alt="" />
             <div>
-              <div className="school">{SCHOOL.name}</div>
-              <h1>La veu de l’alumnat · Autoavaluació</h1>
+              <div className="school">{SCHOOL.name} · La teva veu · Em miro</div>
+              <h1>Així em veig</h1>
+              <div className="rp-sub">Autoavaluació personal</div>
             </div>
             <div className="meta">
               <b>
@@ -299,10 +300,21 @@ function usePagination(blocks: Block[]): { pages: number[][]; measureRef: React.
 
 export function ReportPages({ model, duplex = false, acknowledgement = true }: { model: ReportModel; duplex?: boolean; acknowledgement?: boolean }) {
   const blocks = useBlocks(model, acknowledgement)
-  const { pages, measureRef } = usePagination(blocks)
   const grade = gradeById(model.student.gradeId)
-  const ref = `${model.campaign.id}·${model.student.id}·r${model.response?.revision ?? 0}·${model.template.id}`
   const name = `${model.student.name} ${model.student.surname}`
+  return (
+    <PagedDoc
+      blocks={blocks}
+      duplex={duplex}
+      cont={[<><b>{name}</b> · {grade.name} {model.student.group}</>, `${model.campaign.label} · continuació`]}
+      foot={[`${name} · ${model.campaign.label} ${model.campaign.year}`, `Ref. ${model.campaign.id}·${model.student.id}·r${model.response?.revision ?? 0}·${model.template.id}`]}
+    />
+  )
+}
+
+/** Document A4 paginat per blocs: capçalera de continuació i peu amb el número de pàgina. */
+export function PagedDoc({ blocks, duplex = false, cont, foot }: { blocks: Block[]; duplex?: boolean; cont: [ReactNode, ReactNode]; foot: [ReactNode, ReactNode] }) {
+  const { pages, measureRef } = usePagination(blocks)
   const all = duplex && pages.length % 2 === 1 ? [...pages, null] : pages
   return (
     <>
@@ -324,10 +336,8 @@ export function ReportPages({ model, duplex = false, acknowledgement = true }: {
             <div className="page-body">
               {pi > 0 && (
                 <div className="rp-cont">
-                  <span>
-                    <b>{name}</b> · {grade.name} {model.student.group}
-                  </span>
-                  <span>{model.campaign.label} · continuació</span>
+                  <span>{cont[0]}</span>
+                  <span>{cont[1]}</span>
                 </div>
               )}
               {p.map((bi) => (
@@ -335,10 +345,8 @@ export function ReportPages({ model, duplex = false, acknowledgement = true }: {
               ))}
             </div>
             <div className="page-foot">
-              <span>
-                {name} · {model.campaign.label} {model.campaign.year}
-              </span>
-              <span>Ref. {ref}</span>
+              <span>{foot[0]}</span>
+              <span>{foot[1]}</span>
               <span>
                 Pàgina {pi + 1} de {pages.length}
               </span>

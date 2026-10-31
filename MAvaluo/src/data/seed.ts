@@ -2,8 +2,13 @@
 
 import { GRADES, SUBJECTS, initialGradeSubjects } from '../domain/catalog'
 import { buildSteps, keyOf, requiredKeys, subjectsForStudent } from '../domain/engine'
+import { flagComment, stageOfGrade, teachersForStudent } from '../domain/feedback'
+import { FEEDBACK_SCALES, INITIAL_FEEDBACK_FORMS } from '../domain/feedbackForms'
 import { INITIAL_SCALES, INITIAL_TEMPLATES } from '../domain/templates'
-import type { Answers, AuditEntry, Campaign, GradeId, GradeSubject, Scale, StaffMember, Student, StudentResponse, Subject, TemplateVersion } from '../domain/types'
+import type {
+  Answers, AuditEntry, Campaign, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackDraft, FeedbackForm, GradeId, GradeSubject, Modules,
+  Participation, Scale, SelfAssessment, StaffMember, StageId, Student, StudentResponse, Subject, TeachingAssignment, TemplateVersion,
+} from '../domain/types'
 
 export interface DemoState {
   version: number
@@ -17,9 +22,18 @@ export interface DemoState {
   campaigns: Campaign[]
   responses: StudentResponse[]
   audit: AuditEntry[]
+  modules: Modules
+  assignments: TeachingAssignment[]
+  feedbackForms: FeedbackForm[]
+  feedbackCampaigns: FeedbackCampaign[]
+  feedbackDrafts: FeedbackDraft[]
+  participation: Participation[]
+  feedbackAnswers: FeedbackAnswer[]
+  feedbackComments: FeedbackComment[]
+  selfAssessments: SelfAssessment[]
 }
 
-export const DEMO_VERSION = 3
+export const DEMO_VERSION = 5
 
 const FIRST = ['Pau', 'Laia', 'Marc', 'Júlia', 'Arnau', 'Aina', 'Pol', 'Martina', 'Biel', 'Ona', 'Jan', 'Clàudia', 'Nil', 'Èlia', 'Roc', 'Mariona', 'Iu', 'Abril', 'Quim', 'Noa', 'Àlex', 'Txell', 'Oriol', 'Fatima', 'Yusuf', 'Ainhoa', 'Lucas', 'Mei', 'Hugo', 'Zoe']
 const LAST = ['Serra', 'Puig', 'Vidal', 'Soler', 'Ferrer', 'Roca', 'Font', 'Casals', 'Pujol', 'Riera', 'Camps', 'Bosch', 'Mas', 'Sala', 'Prat', 'Valls', 'Coll', 'Duran', 'Badia', 'Costa', 'El Amrani', 'Lin', 'Pérez', 'Torrent']
@@ -93,11 +107,13 @@ export function createDemoState(): DemoState {
   const groupsByGrade: Record<GradeId, string[]> = {
     '3EP': ['A'], '4EP': ['A'], '5EP': ['A'], '6EP': ['A'], '1ESO': ['A'], '2ESO': ['A', 'B'], '3ESO': ['A'], '4ESO': ['A'],
   }
+  // 18 alumnes per grup; 2n B en té 12 per mostrar com s'amaguen els grups per sota del llindar de 15.
+  const size = (g: GradeId, group: string) => (g === '2ESO' && group === 'B' ? 12 : 18)
   let n = 0
   const used = new Set<string>()
   for (const g of GRADES) {
     for (const group of groupsByGrade[g.id]) {
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < size(g.id, group); i++) {
         let name: string, surname: string, email: string
         do {
           name = FIRST[Math.floor(r() * FIRST.length)]
@@ -181,15 +197,182 @@ export function createDemoState(): DemoState {
     }
   }
 
-  const staff: StaffMember[] = [
-    { email: 'admin.demo@ramonpont.cat', name: 'Administració (demo)', role: 'admin', groups: [] },
-    { email: 'tutoria.2eso@ramonpont.cat', name: 'Tutoria de 2n d’ESO (demo)', role: 'teacher', groups: ['2ESO-A', '2ESO-B'] },
-    { email: 'tutoria.5ep@ramonpont.cat', name: 'Tutoria de 5è (demo)', role: 'teacher', groups: ['5EP-A'] },
-  ]
+  const staff = initialStaff()
+  const assignments = initialAssignments(gradeSubjects)
+  const fb = feedbackDemo(r, students, staff, assignments, gradeSubjects)
 
   return {
-    version: DEMO_VERSION, year, subjects: SUBJECTS.map((s) => ({ ...s })), gradeSubjects, scales: INITIAL_SCALES, templates: INITIAL_TEMPLATES,
+    version: DEMO_VERSION, year, subjects: SUBJECTS.map((s) => ({ ...s })), gradeSubjects, scales: [...INITIAL_SCALES, ...FEEDBACK_SCALES], templates: INITIAL_TEMPLATES,
     students, staff, campaigns, responses,
     audit: [{ at: now, actor: 'sistema', action: 'Inicialització', detail: 'Dades fictícies de demostració carregades.' }],
+    modules: { emMiro: true, etVeig: true },
+    assignments,
+    feedbackForms: INITIAL_FEEDBACK_FORMS,
+    ...fb,
   }
+}
+
+// ---------- Professorat i assignacions (fictici) ----------
+
+const T = (user: string, name: string, groups: string[] = []): StaffMember => ({ email: `${user}@ramonpont.cat`, name, role: 'teacher', groups })
+
+function initialStaff(): StaffMember[] {
+  return [
+    { email: 'admin.demo@ramonpont.cat', name: 'Administració (demo)', role: 'admin', groups: [] },
+    { email: 'direccio.demo@ramonpont.cat', name: 'Montserrat Badia (direcció)', role: 'admin', groups: [], direction: true },
+    T('anna.vila', 'Anna Vila', ['3EP-A']),
+    T('jordi.mas', 'Jordi Mas', ['4EP-A']),
+    T('tutoria.5ep', 'Laura Ferrer', ['5EP-A']),
+    T('pere.costa', 'Pere Costa', ['6EP-A']),
+    T('emma.soler', 'Emma Soler'),
+    T('sergi.prat', 'Sergi Prat'),
+    T('rosa.bosch', 'Rosa Bosch'),
+    T('tutoria.2eso', 'Marta Riera', ['2ESO-A', '2ESO-B']),
+    T('xavier.duran', 'Xavier Duran'),
+    T('carme.sala', 'Carme Sala'),
+    T('david.coll', 'David Coll'),
+    T('helena.roca', 'Helena Roca'),
+    T('albert.pujol', 'Albert Pujol'),
+    T('nuria.casals', 'Núria Casals'),
+    T('lluis.font', 'Lluís Font'),
+    T('jaume.valls', 'Jaume Valls'),
+  ]
+}
+
+const TUTOR: Partial<Record<GradeId, string>> = { '3EP': 'anna.vila', '4EP': 'jordi.mas', '5EP': 'tutoria.5ep', '6EP': 'pere.costa' }
+const PRIMARY_SPECIALIST: Record<string, string> = { ANG: 'emma.soler', EF: 'sergi.prat', REL: 'rosa.bosch' }
+const ESO_BY_SUBJECT: Record<string, string> = {
+  MAT: 'tutoria.2eso', CAT: 'xavier.duran', CAST: 'carme.sala', ANG: 'david.coll', SOC: 'helena.roca', ECO: 'helena.roca', REC: 'helena.roca',
+  BIO: 'albert.pujol', FQ: 'albert.pujol', TEC: 'nuria.casals', EPVA: 'nuria.casals', MUS: 'nuria.casals',
+  FRA: 'lluis.font', VAL: 'lluis.font', CLA: 'lluis.font', LLA: 'jaume.valls', EF: 'sergi.prat', REL: 'rosa.bosch',
+}
+export const DEMO_GROUPS: Record<GradeId, string[]> = { '3EP': ['A'], '4EP': ['A'], '5EP': ['A'], '6EP': ['A'], '1ESO': ['A'], '2ESO': ['A', 'B'], '3ESO': ['A'], '4ESO': ['A'] }
+
+/** Qui fa cada matèria: tutors a primària amb especialistes d'anglès, educació física i religió. */
+function initialAssignments(gradeSubjects: GradeSubject[]): TeachingAssignment[] {
+  const out: TeachingAssignment[] = []
+  for (const gs of gradeSubjects) {
+    const user = stageOfGrade(gs.gradeId) === 'ESO' ? ESO_BY_SUBJECT[gs.subjectId] : PRIMARY_SPECIALIST[gs.subjectId] ?? TUTOR[gs.gradeId]
+    if (!user) continue
+    for (const group of DEMO_GROUPS[gs.gradeId]) out.push({ teacherEmail: `${user}@ramonpont.cat`, gradeId: gs.gradeId, group, subjectId: gs.subjectId })
+  }
+  return out
+}
+
+// ---------- Et veig: dues recollides de mostra ----------
+
+const KEEP: Record<StageId, string[]> = {
+  CM: ['Els jocs per aprendre', 'Que ens explica contes', 'Que riu amb nosaltres', 'Quan fem experiments', 'Que m’ajuda quan no ho sé fer'],
+  CS: ['Explica amb exemples de la vida real', 'Ens deixa treballar en grup', 'És molt pacient quan no ho entenem', 'Les sortides i els projectes', 'Que ens escolta'],
+  ESO: [
+    'Els exemples de la vida real fan que tot s’entengui millor.', 'Que corregeixi les feines amb comentaris i no només amb una nota.', 'El bon ambient que hi ha a classe.',
+    'Que ens deixi preguntar sense fer-nos sentir malament.', 'Els esquemes que fa a la pissarra.', 'Els projectes en grup.', 'Que expliqui què entrarà a l’examen amb temps.',
+  ],
+}
+const IMPROVE: Record<StageId, string[]> = {
+  CM: [],
+  CS: ['Més temps per acabar les feines', 'Més jocs', 'Que no parli tan ràpid', 'Més activitats a l’ordinador'],
+  ESO: [
+    'Que expliqui una mica més a poc a poc quan hi ha temari nou.', 'Que ens retorni els exàmens corregits abans.', 'Fer més exercicis a classe abans dels exàmens.',
+    'Que hi hagi més ordre quan treballem en grup.', 'Que ens digui amb més temps quan hem de lliurar les feines.', 'Més exemples resolts pas a pas.',
+  ],
+}
+// Comentaris que la moderació ha de marcar (insult, nom propi o dades que identifiquen qui escriu).
+const FLAGGED = ['És un pesat quan repeteix les coses.', 'El Biel sempre parla i no deixa sentir l’explicació.', 'Jo sóc la que seu a primera fila i no veig la pissarra.', 'Les classes són horribles alguns dies.']
+
+const stableRng = (seed: string) => {
+  let h = 2166136261
+  for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619)
+  return rng(h >>> 0)
+}
+
+function feedbackDemo(r: () => number, students: Student[], staff: StaffMember[], assignments: TeachingAssignment[], gradeSubjects: GradeSubject[]) {
+  const forms = INITIAL_FEEDBACK_FORMS
+  const formIds = { CM: 'fb-cm-v1', CS: 'fb-cs-v1', ESO: 'fb-eso-v1' }
+  const teachers = [...new Set(assignments.map((a) => a.teacherEmail))]
+  const prev: FeedbackCampaign = { id: 'FV-2526-MAIG', year: '2025-2026', label: 'Recollida de maig', stages: ['CM', 'CS', 'ESO'], start: '2026-05-11', end: '2026-05-22', status: 'PUBLICADA', formIds, assignments, teachers }
+  const cur: FeedbackCampaign = { id: 'FV-2627-TARDOR', year: '2026-2027', label: 'Recollida de tardor', stages: ['CM', 'CS', 'ESO'], start: '2026-10-26', end: '2026-11-20', status: 'OBERTA', formIds, assignments, teachers }
+
+  // Perfil de cada docent per dimensió (0-1): fa que els informes de mostra siguin variats.
+  const profile = (email: string, dim: string, campaignId: string) => {
+    let base = 0.5 + stableRng(email + dim)() * 0.4
+    if (email.startsWith('tutoria.2eso') && dim === 'aval') base = 0.42 // punt cec per a la demostració
+    if (email.startsWith('tutoria.2eso') && dim === 'sup') base = 0.8 // fortalesa oculta
+    return Math.min(0.95, base + (campaignId === cur.id ? 0.03 : 0))
+  }
+  const names = [...new Set([...students.map((s) => s.name), ...staff.map((s) => s.name.split(' ')[0])])]
+  const named = new Set(['pau.serra@ramonpont.cat', 'laia.puig@ramonpont.cat', 'marc.vidal@ramonpont.cat'])
+
+  const participation: Participation[] = []
+  const answers: FeedbackAnswer[] = []
+  const comments: FeedbackComment[] = []
+  const drafts: FeedbackDraft[] = []
+  let aid = 0
+  let flaggedLeft = FLAGGED.length
+
+  for (const c of [prev, cur]) {
+    for (const s of students) {
+      if (c === cur && named.has(s.email)) continue // els comptes de prova comencen en blanc
+      const roll = r()
+      const share = c === prev ? (roll < 0.92 ? 1 : 0) : roll < 0.45 ? 1 : roll < 0.62 ? 0.5 : 0
+      if (!share) continue
+      const stage = stageOfGrade(s.gradeId)
+      const form = forms.find((f) => f.id === c.formIds[stage])!
+      const nOpt = stage === 'CM' ? 3 : 4
+      const targets = teachersForStudent(s, c.assignments, gradeSubjects, SUBJECTS, staff)
+      const half = Math.ceil(targets.length / 2)
+      targets.forEach((t, i) => {
+        const groupBias = (stableRng(t.email + s.gradeId + s.group)() - 0.5) * 0.16
+        const out: Answers = {}
+        for (const q of form.items) {
+          if (r() < 0.03) out[q.id] = 'NA'
+          else out[q.id] = String(Math.min(nOpt, Math.max(1, Math.round((profile(t.email, q.dimensionId, c.id) + groupBias + (r() - 0.5) * 0.7) * (nOpt - 1)) + 1)))
+        }
+        if (share < 1 && i >= half) {
+          if (i === half) drafts.push({ campaignId: c.id, studentId: s.id, teacherEmail: t.email, answers: Object.fromEntries(Object.entries(out).slice(0, 5)), updatedAt: '2026-10-29T10:00:00Z' })
+          return
+        }
+        const day = c === prev ? '2026-05-14' : '2026-10-28'
+        participation.push({ campaignId: c.id, studentId: s.id, teacherEmail: t.email, day })
+        answers.push({ id: `fa${(++aid).toString(36)}`, campaignId: c.id, formId: form.id, teacherEmail: t.email, stage, gradeId: s.gradeId, group: s.group, day, v: form.items.map((x) => (out[x.id] === 'NA' ? '0' : out[x.id])).join('') })
+        for (const q of form.open) {
+          const pool = q.id === 'mantenir' ? KEEP[stage] : IMPROVE[stage]
+          if (!pool.length || r() > (q.id === 'mantenir' ? 0.3 : 0.25)) continue
+          let text = pool[Math.floor(r() * pool.length)]
+          if (c === cur && stage === 'ESO' && flaggedLeft > 0 && r() < 0.1) text = FLAGGED[--flaggedLeft]
+          const flags = flagComment(text, names)
+          comments.push({
+            id: `fc${(++aid).toString(36)}`, campaignId: c.id, teacherEmail: t.email, stage, questionId: q.id, original: text, flags,
+            status: c === prev ? (flags.length ? 'descartat' : 'acceptat') : 'pendent',
+            published: c === prev && !flags.length ? text : undefined,
+          })
+        }
+      })
+    }
+  }
+
+  // Autoavaluacions: al maig les van fer tots menys un docent (l'informe ha de funcionar igual).
+  const selfAssessments: SelfAssessment[] = []
+  for (const c of [prev, cur]) {
+    for (const t of teachers) {
+      if (c === prev && t.startsWith('jordi.mas')) continue
+      if (c === cur && !['xavier.duran', 'helena.roca', 'sergi.prat'].some((x) => t.startsWith(x))) continue
+      for (const stage of c.stages.filter((st) => c.assignments.some((a) => a.teacherEmail === t && stageOfGrade(a.gradeId) === st))) {
+        const form = forms.find((f) => f.id === c.formIds[stage])!
+        const nOpt = stage === 'CM' ? 3 : 4
+        const rr = stableRng(t + stage + c.id)
+        const out: Answers = {}
+        for (const q of form.items) {
+          let p = profile(t, q.dimensionId, c.id) + (rr() - 0.55) * 0.34
+          if (t.startsWith('tutoria.2eso') && q.dimensionId === 'aval') p = 0.9
+          if (t.startsWith('tutoria.2eso') && q.dimensionId === 'sup') p = 0.45
+          out[q.id] = String(Math.min(nOpt, Math.max(1, Math.round(p * (nOpt - 1)) + 1)))
+        }
+        const context: Record<string, string[]> = t.startsWith('tutoria.2eso') && stage === 'ESO' ? { '2ESO-B': ['gestio'], '4ESO-A': ['nova'] } : {}
+        selfAssessments.push({ campaignId: c.id, teacherEmail: t, stage, answers: out, context, updatedAt: c.start + 'T16:00:00Z', submittedAt: c.start + 'T16:00:00Z' })
+      }
+    }
+  }
+
+  return { feedbackCampaigns: [prev, cur], participation, feedbackAnswers: answers, feedbackComments: comments, feedbackDrafts: drafts, selfAssessments }
 }

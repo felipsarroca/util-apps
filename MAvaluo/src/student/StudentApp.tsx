@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { logAudit, saveDraft, studentHome, submitResponse, useDemoState } from '../data/api'
+import { feedbackHome, logAudit, saveDraft, studentHome, submitResponse, useDemoState, type FeedbackHome } from '../data/api'
 import { gradeById, STAGES } from '../domain/catalog'
 import { buildSteps, findMissing, progress, requiredKeys, stepComplete, type Step } from '../domain/engine'
 import type { Answers, Session } from '../domain/types'
 import { fmtDate, Icon, Modal, useToast } from '../ui/common'
+import { EtVeigStudent } from './EtVeig'
 import { StepBody } from './Questions'
 
-type View = 'home' | 'form' | 'done'
+type View = 'home' | 'form' | 'done' | 'etveig'
 
 const ESTIMATE: Record<string, string> = { CM: '5 minuts', CS: '8 minuts', ESO: '12 minuts' }
 
 export function StudentApp({ session }: { session: Session }) {
   const s = useDemoState()
   const home = studentHome(s, session)
+  const fb = feedbackHome(s, session)
   const [view, setView] = useState<View>('home')
   const [toast, showToast] = useToast()
 
@@ -22,7 +24,8 @@ export function StudentApp({ session }: { session: Session }) {
 
   return (
     <div className={`stu stage-${stage}`}>
-      {view === 'home' && <StudentHome home={home} session={session} onStart={() => setView('form')} toast={showToast} />}
+      {view === 'home' && <StudentHome home={home} fb={fb} session={session} onStart={() => setView('form')} onEtVeig={() => setView('etveig')} toast={showToast} />}
+      {view === 'etveig' && <EtVeigStudent session={session} stage={stage} onExit={() => setView('home')} />}
       {view === 'form' && home.campaign && home.template && (
         <Questionnaire
           key={home.campaign.id}
@@ -53,7 +56,7 @@ export function StudentApp({ session }: { session: Session }) {
   )
 }
 
-function StudentHome({ home, session, onStart, toast }: { home: NonNullable<ReturnType<typeof studentHome>>; session: Session; onStart: () => void; toast: (m: string) => void }) {
+function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: NonNullable<ReturnType<typeof studentHome>>; fb: FeedbackHome | null; session: Session; onStart: () => void; onEtVeig: () => void; toast: (m: string) => void }) {
   const { student, campaign, response, template } = home
   const grade = gradeById(student.gradeId)
   const [wrong, setWrong] = useState(false)
@@ -86,19 +89,23 @@ function StudentHome({ home, session, onStart, toast }: { home: NonNullable<Retu
           </button>
         </div>
 
-        {!campaign && (
+        {!campaign && !fb && (
           <div className="notice">
             <Icon name="info" />
             <div>
-              <b>Ara no tens cap autoavaluació oberta.</b>
+              <b>Ara no tens res pendent.</b>
               <br />
-              Quan el teu tutor o tutora n’obri una, la trobaràs aquí.
+              Quan s’obri una autoavaluació o una valoració del professorat, la trobaràs aquí.
             </div>
           </div>
         )}
 
         {campaign && (
-          <div className="campaign-box">
+          <div className="campaign-box mod em">
+            <div className="mod-kicker em">
+              <span aria-hidden="true">💭</span> Em miro
+              <span className="mod-desc">Penso en com aprenc, què faig bé i què puc millorar</span>
+            </div>
             <div className="row">
               <h2>
                 {campaign.label} <span className="muted" style={{ fontWeight: 700, fontSize: '.85em' }}>· {campaign.year}</span>
@@ -133,6 +140,8 @@ function StudentHome({ home, session, onStart, toast }: { home: NonNullable<Retu
             </div>
           </div>
         )}
+
+        {fb && <EtVeigCard fb={fb} onOpen={onEtVeig} />}
 
         {campaign && !delivered && (
           <div className="tips">
@@ -179,6 +188,34 @@ function StudentHome({ home, session, onStart, toast }: { home: NonNullable<Retu
       )}
       <p className="muted" style={{ textAlign: 'center', fontSize: '.85rem' }}>{STAGES[grade.stage].name}</p>
     </main>
+  )
+}
+
+function EtVeigCard({ fb, onOpen }: { fb: FeedbackHome; onOpen: () => void }) {
+  const done = fb.targets.filter((t) => t.status === 'lliurat').length
+  const total = fb.targets.length
+  const started = fb.targets.some((t) => t.status !== 'pendent')
+  return (
+    <div className="campaign-box mod ev">
+      <div className="mod-kicker ev">
+        <span aria-hidden="true">👀</span> Et veig
+        <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>
+      </div>
+      <div className="row">
+        <h2>{fb.campaign.label}</h2>
+        <span className="spacer" />
+        {done === total ? <span className="badge ok">Fet</span> : started ? <span className="badge warn">{done} de {total}</span> : <span className="badge info">Per començar</span>}
+      </div>
+      <p className="muted" style={{ fontWeight: 700 }}>
+        Oberta fins al {fmtDate(fb.campaign.end)} · {total} {total === 1 ? 'docent' : 'docents'} per valorar
+      </p>
+      <div className="row">
+        <button className={`btn large ${done === total ? '' : 'primary ev'}`} onClick={onOpen}>
+          {done === total ? 'Mira el que has fet' : started ? 'Continua' : 'Comença'}
+          <Icon name="arrowR" />
+        </button>
+      </div>
+    </div>
   )
 }
 
