@@ -4,7 +4,7 @@ Document per reprendre el projecte des de qualsevol ordinador. Última actualitz
 
 ## On ho hem deixat
 
-L'app funciona sencera en mode de demostració i té el servidor fet, però sense desplegar. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. El següent pas que depèn de l'escola és la revisió amb l'Equip Directiu i la DPD; el següent pas tècnic, l'enviament real de correus (punt 4 de *Pendent*).
+L'app està desplegada: servidor a Neon Functions (Frankfurt), base de dades de producció buida amb l'administrador, i entrada amb Google a l'adreça principal; la demostració és a `/demo/`. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. El següent pas que depèn de l'escola és la revisió amb l'Equip Directiu i la DPD; el següent pas tècnic, l'enviament real de correus (punt 4 de *Pendent*).
 
 ## On és cada cosa
 
@@ -14,7 +14,10 @@ L'app funciona sencera en mode de demostració i té el servidor fet, però sens
 | App publicada | <https://felipsarroca.github.io/util-apps/LaTevaVeu/> · enllaç curt <https://ja.cat/tensveu> |
 | Presentació del projecte | <https://felipsarroca.github.io/util-apps/LaTevaVeu/#/projecte> |
 | Guia del personal | Dins de l'app, botó «Guia» (tot el personal), o `#/guia` |
-| Base de dades de proves | Neon, projecte «La teva veu» (`sparkling-field-60524633`), base de dades `latevaveu`; branques `proves` i `integracio` |
+| App real (Google) | <https://felipsarroca.github.io/util-apps/LaTevaVeu/> · demostració a <https://felipsarroca.github.io/util-apps/LaTevaVeu/demo/> |
+| Base de dades | Neon, projecte «La teva veu» (`sparkling-field-60524633`, Frankfurt), base de dades `latevaveu`. Producció: branca `produccio`. Proves: `proves` i `integracio` |
+| Servidor | Neon Functions, funció `latevaveu` a la branca `produccio`: <https://br-dawn-sun-b92zk4tc-latevaveu.compute.c-7.eu-central-1.aws.neon.tech> |
+| Client de Google | Projecte «La teva veu» a la consola de Google Cloud de ramonpont.cat, tipus Intern. ID de client (públic): `194568959977-76uptoa0untgofou0eiqlbbjivet8tmn.apps.googleusercontent.com` |
 | Publicació | GitHub Pages es publica sol a cada `git push` a `main` (acció «Publica util-apps a GitHub Pages») |
 
 ## Com continuar des d'un altre ordinador
@@ -49,6 +52,14 @@ Proves contra Neon (cal haver iniciat sessió a `neonctl`; la cadena de connexi�
 npx neonctl branches reset integracio --parent --project-id sparkling-field-60524633
 TEST_DATABASE_URL="$(npx neonctl connection-string integracio --project-id sparkling-field-60524633 --database-name latevaveu --role-name latevaveu_owner)" npx vitest run server --testTimeout=120000
 ```
+
+## Producció
+
+- **Publicació**: l'acció de GitHub Pages compila dues versions. La de `LaTevaVeu/` es connecta al servidor si hi ha les variables del repositori `LATEVAVEU_API_URL` i `LATEVAVEU_GOOGLE_CLIENT_ID` (`gh variable list`); la de `LaTevaVeu/demo/` és sempre la demostració.
+- **Servidor**: `server/neon.ts` (punt d'entrada) i `server/fetch.ts` (adaptador fetch). Es connecta amb la connexió directa que injecta Neon i fa `SET ROLE latevaveu_app`: només té els permisos de `db/permisos.sql`.
+- **Tornar a desplegar** després de canviar el servidor (des d'una còpia amb `npm ci`; cal la variable d'usuari `NEON_API_KEY`, que es desa amb un script que la demana sense mostrar-la): `bash scripts/desplega-servidor.sh`. No facis servir `--clau-nova`: canviaria la clau dels esborranys.
+- **Base de dades nova** (només si mai calgués refer-la, buida): `scripts/inicia-produccio.ts` aplica l'esquema, els permisos, la configuració inicial i el primer administrador.
+- **Registres del servidor**: Neon Console › projecte › branca `produccio` › Functions › `latevaveu` › Logs.
 
 ## Captures del README
 
@@ -85,11 +96,10 @@ Torna-les a fer quan canviï alguna de les pantalles que surten al README.
 ## Pendent
 
 1. Revisió amb l'Equip Directiu i la persona delegada de protecció de dades.
-2. Triar l'allotjament del servidor (a la UE) i desplegar-lo. Abans, crear el rol `latevaveu_app` a Neon i aplicar `db/permisos.sql` (ordres dins del fitxer).
-3. Client OAuth de Google aprovat a la consola de Google Workspace de l'escola.
-4. **Decidir el compte que envia els correus** (recomanat: un compte dedicat, com `latevaveu@ramonpont.cat`) i autoritzar el servidor a enviar en nom seu (Gmail API amb delegació de domini o SMTP de Google Workspace). Després, implementar l'enviament real: cua idempotent, «Envia'm una prova», «Aprova i envia» i registre de cada missatge, fent servir `renderMail` de `src/domain/mail.ts`.
-5. Inventari real de les matèries d'ESO per curs i prova pilot amb alumnat de cada etapa.
-6. PFI: caldria un curs i un qüestionari propis (no es pot tractar com un grup).
+2. Primera entrada real amb Google (administrador: felip.sarroca@ramonpont.cat) i càrrega del cens: personal, alumnat, grups i famílies. Només després de la revisió del punt 1.
+3. **Decidir el compte que envia els correus** (recomanat: un compte dedicat, com `latevaveu@ramonpont.cat`) i autoritzar el servidor a enviar en nom seu (Gmail API amb delegació de domini o SMTP de Google Workspace). Després, implementar l'enviament real: cua idempotent, «Envia'm una prova», «Aprova i envia» i registre de cada missatge, fent servir `renderMail` de `src/domain/mail.ts`.
+4. Inventari real de les matèries d'ESO per curs i prova pilot amb alumnat de cada etapa.
+5. PFI: caldria un curs i un qüestionari propis (no es pot tractar com un grup).
 
 ## Precaucions
 
