@@ -7,6 +7,7 @@ import { gradeById } from './domain/catalog'
 import type { Session, StageId } from './domain/types'
 import { Login } from './Login'
 import { GuideScreen } from './staff/Guide'
+import { AboutPage } from './About'
 import { StaffApp } from './staff/StaffApp'
 import { StudentApp } from './student/StudentApp'
 import { APP_ICON, Footer, Icon, initials, useFitScale } from './ui/common'
@@ -45,8 +46,13 @@ export default function App() {
   const [toast, showToast] = useToast()
   // La guia d'administració s'obre a …/#/guia.
   const [guide, setGuide] = useState(() => location.hash === '#/guia')
+  // La presentació del projecte s'obre a …/#/projecte, sense haver d'entrar.
+  const [about, setAbout] = useState(() => location.hash === '#/projecte')
   useEffect(() => {
-    const on = () => setGuide(location.hash === '#/guia')
+    const on = () => {
+      setGuide(location.hash === '#/guia')
+      setAbout(location.hash === '#/projecte')
+    }
     window.addEventListener('hashchange', on)
     return () => window.removeEventListener('hashchange', on)
   }, [])
@@ -177,7 +183,8 @@ export default function App() {
         </header>
       )}
 
-      {!session && <Login onLogin={login} />}
+      {!session && about && <AboutPage onClose={() => (location.hash = '')} onDemo={!API_URL || DEV_AUTH ? () => (location.hash = '#/demo') : undefined} />}
+      {!session && !about && <Login key={location.hash} onLogin={login} />}
       {session?.pending && <Pending session={session} onLogout={logout} />}
       {session && !session.pending && !ready && <p className="stu-main muted">Carregant…</p>}
       {session && !session.pending && ready && session.role === 'student' && <StudentApp session={session} />}

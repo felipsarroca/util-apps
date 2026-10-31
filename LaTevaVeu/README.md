@@ -7,7 +7,9 @@
 
 Implementa les fases 1 i 2 del [pla mestre v2](La_teva_veu_pla_mestre_v2.md). Publicada a <https://felipsarroca.github.io/util-apps/LaTevaVeu/> (l'adreça antiga `MAvaluo/` hi redirigeix).
 
-**Estat (31 d'octubre de 2026):** la versió publicada funciona en **mode de demostració**: el botó «Prova la demostració» de la pantalla d'entrada obre una finestra per triar el perfil (alumnat, professorat, Equip Directiu, administració) amb dades fictícies desades només al navegador, que es poden restaurar. «Et veig…» ja té servidor i base de dades de proves (vegeu *Mode connectat*); encara no hi ha allotjament definitiu ni enviament de correus.
+Enllaç curt: <https://ja.cat/tensveu>. La presentació del projecte (sentit, marc normatiu, funcionament i beneficis) és a [`#/projecte`](https://felipsarroca.github.io/util-apps/LaTevaVeu/#/projecte) i s'obre amb el botó «Per què La teva veu?» de la pantalla d'entrada.
+
+**Estat (31 d'octubre de 2026):** la versió publicada funciona en **mode de demostració**: el botó «Prova la demostració» de la pantalla d'entrada obre una finestra per triar el perfil (alumnat, professorat, Equip Directiu, administració) amb dades fictícies desades només al navegador, que es poden restaurar. Tota l'app («Em miro», «Et veig…» i la gestió del centre) ja té servidor i base de dades de proves (vegeu *Mode connectat*); encara no hi ha allotjament definitiu ni enviament de correus. L'estat de la feina i com continuar-la des d'un altre ordinador són a [SEGUIMENT.md](SEGUIMENT.md).
 
 ## Dos espais ben separats
 

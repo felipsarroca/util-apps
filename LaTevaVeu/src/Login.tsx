@@ -34,7 +34,12 @@ const DEMO_AVAILABLE = !API_URL || DEV_AUTH
 
 export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
   const [error, setError] = useState<string | null>(null)
-  const [demo, setDemo] = useState(false)
+  // …/#/demo obre directament la tria de perfil (des de la pàgina del projecte).
+  const [demo, setDemoState] = useState(() => DEMO_AVAILABLE && location.hash === '#/demo')
+  const setDemo = (on: boolean) => {
+    setDemoState(on)
+    if (!on && location.hash === '#/demo') history.replaceState(null, '', location.pathname + location.search)
+  }
   const gRef = useRef<HTMLDivElement>(null)
 
   const tryLogin = (raw: string, profile?: { name?: string; picture?: string }, token?: string): string | null => {
@@ -79,67 +84,80 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
   }, [])
 
   return (
-    <main className="login">
-      <div className="login-card">
-        <section className="login-brand">
-          <div className="login-logo">
-            <img src={asset('logo-escola-ramon-pont.png')} alt="" />
-            {SCHOOL.name}
-          </div>
-          <div>
-            <h1 className="login-title">
-              <img src={APP_ICON} alt="" className="login-app-icon" />
-              <span className="login-title-text">
-                La teva <span>veu</span>
-              </span>
-            </h1>
-            <p className="login-sub">La teva mirada ens ajuda a millorar</p>
-          </div>
-          <ul className="login-steps">
-            <li><span aria-hidden="true">💭</span><p><b>Em miro</b> · m’autoavaluo: penso en com aprenc i què puc millorar</p></li>
-            <li><span aria-hidden="true">👀</span><p><b>Et veig…</b> · valoro el professorat: explico com visc les classes</p></li>
-            <li><span aria-hidden="true">🔐</span><p>Només amb el compte de l’escola</p></li>
-          </ul>
-        </section>
-
-        <section className="login-form">
-          <h2>Hola! Identifica’t</h2>
-          <span className="domain-pill">
-            <Icon name="shield" /> Només comptes @{SCHOOL.domain}
-          </span>
-
-          {GOOGLE_CLIENT_ID ? (
-            <div ref={gRef} style={{ minHeight: 44 }} />
-          ) : (
-            <>
-              <button className="google-btn" disabled aria-describedby="g-note">
-                <GoogleLogo /> Continua amb Google
-              </button>
-              <p id="g-note" className="muted" style={{ fontSize: '.85rem' }}>
-                L’inici de sessió amb Google s’activarà quan l’escola autoritzi l’aplicació.
-              </p>
-            </>
-          )}
-
-          {error && (
-            <div className="notice bad" role="alert">
-              <Icon name="alert" />
-              <div>{error}</div>
+    <>
+      <header className="topbar login-school">
+        <img src={asset('logo-escola-ramon-pont.png')} alt="" />
+        <span>
+          <b>{SCHOOL.name}</b>
+          <small>Terrassa</small>
+        </span>
+      </header>
+      <main className="login">
+        <div className="login-card">
+          <section className="login-brand">
+            <div>
+              <h1 className="login-title">
+                <img src={APP_ICON} alt="" className="login-app-icon" />
+                <span className="login-title-text">
+                  La teva <span>veu</span>
+                </span>
+              </h1>
+              <p className="login-sub">La teva mirada ens ajuda a millorar</p>
             </div>
-          )}
+            <ul className="login-steps">
+              <li><span aria-hidden="true">💭</span><p><b>Em miro</b> · m’autoavaluo: penso en com aprenc i què puc millorar</p></li>
+              <li><span aria-hidden="true">👀</span><p><b>Et veig…</b> · valoro el professorat: explico com visc les classes</p></li>
+              <li><span aria-hidden="true">🔐</span><p>Només amb el compte de l’escola</p></li>
+            </ul>
+          </section>
 
-          {DEMO_AVAILABLE && (
-            <div className="demo-cta">
-              <button className="btn large" onClick={() => setDemo(true)}>
-                <span aria-hidden="true">🧪</span> Prova la demostració
-              </button>
-              <small>Amb dades fictícies, sense compte</small>
+          <section className="login-form">
+            <h2>Hola! Identifica’t</h2>
+            <span className="domain-note">
+              <Icon name="shield" /> Només comptes @{SCHOOL.domain}
+            </span>
+
+            {GOOGLE_CLIENT_ID ? (
+              <div ref={gRef} style={{ minHeight: 44 }} />
+            ) : (
+              <>
+                <button className="google-btn" disabled aria-describedby="g-note">
+                  <GoogleLogo /> Continua amb Google
+                </button>
+                <p id="g-note" className="muted" style={{ fontSize: '.85rem' }}>
+                  L’inici de sessió amb Google s’activarà quan l’escola autoritzi l’aplicació.
+                </p>
+              </>
+            )}
+
+            {error && (
+              <div className="notice bad" role="alert">
+                <Icon name="alert" />
+                <div>{error}</div>
+              </div>
+            )}
+
+            <div className="login-extra">
+              {DEMO_AVAILABLE && (
+                <div className="demo-cta">
+                  <button className="btn small" onClick={() => setDemo(true)}>
+                    <span aria-hidden="true">🧪</span> Prova la demostració
+                  </button>
+                  <small>Amb dades fictícies, sense compte</small>
+                </div>
+              )}
+              <div className="demo-cta">
+                <a className="btn small about-btn" href="#/projecte">
+                  <span aria-hidden="true">💡</span> Per què La teva veu?
+                </a>
+                <small>El sentit del projecte</small>
+              </div>
             </div>
-          )}
-        </section>
-      </div>
-      {demo && <DemoDialog onClose={() => setDemo(false)} tryLogin={tryLogin} />}
-    </main>
+          </section>
+        </div>
+        {demo && <DemoDialog onClose={() => setDemo(false)} tryLogin={tryLogin} />}
+      </main>
+    </>
   )
 }
 
