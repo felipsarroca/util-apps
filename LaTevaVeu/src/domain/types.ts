@@ -195,6 +195,25 @@ export interface Modules {
   etVeig: boolean
 }
 
+/** Text editable d'un correu: assumpte i cos amb marcadors com {alumne}. */
+export interface MailTemplate {
+  subject: string
+  body: string
+}
+
+/** Des d'on i amb quin text s'envien els correus de l'aplicació. */
+export interface MailSettings {
+  /** Compte de Google de l'escola que envia els missatges (buit: encara no s'ha decidit). */
+  sender: string
+  /** Nom que veu qui rep el correu. */
+  senderName: string
+  /** On van les respostes: al tutor o tutora del grup, o a una adreça fixa. */
+  replyTo: 'tutor' | 'fixed'
+  replyToEmail: string
+  families: MailTemplate
+  teachers: MailTemplate
+}
+
 /** Qui imparteix cada matèria a cada grup. És la base d'«Et veig…». */
 export interface TeachingAssignment {
   teacherEmail: string

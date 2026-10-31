@@ -3,8 +3,9 @@
 // retallat segons qui el demana. «Et veig» no hi és: té el seu model confidencial a server/etveig.ts.
 import { GRADES } from '../src/domain/catalog'
 import type { ClassGroups } from '../src/domain/groups'
+import { cleanMail } from '../src/domain/mail'
 import type {
-  AuditEntry, Campaign, CampaignStatus, FeedbackCampaign, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, Guardian, Modules, Scale, Section, Session,
+  AuditEntry, Campaign, CampaignStatus, FeedbackCampaign, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, Guardian, MailSettings, Modules, Scale, Section, Session,
   StaffMember, StageId, Student, StudentResponse, Subject, TeachingAssignment, TemplateVersion,
 } from '../src/domain/types'
 import type { DemoState } from '../src/data/seed'
@@ -61,7 +62,7 @@ export async function loadState(q: Queryable, yearId: string): Promise<{ state: 
         'select g.grade_id, g.label, a.subject_id, a.teacher_id from teaching_assignments a join class_groups g on g.id = a.group_id and g.year_id = $1',
         [yearId],
       ),
-      q.query<{ key: string; value: unknown }>("select key, value from app_settings where key = 'modules'"),
+      q.query<{ key: string; value: unknown }>("select key, value from app_settings where key in ('modules', 'mail')"),
       q.query<{ at: Date; email: string | null; action: string; detail: { text?: string } | null }>(
         'select a.at, lower(u.email) as email, a.action, a.detail from audit_log a left join users u on u.id = a.actor_id order by a.id desc limit 500',
       ),
@@ -102,7 +103,8 @@ export async function loadState(q: Queryable, yearId: string): Promise<{ state: 
         ...(rs.includes('direction') ? { direction: true } : {}),
       }
     })
-  const modules = settings.rows[0]?.value as Modules | undefined
+  const modules = settings.rows.find((r) => r.key === 'modules')?.value as Modules | undefined
+  const mail = settings.rows.find((r) => r.key === 'mail')?.value as Partial<MailSettings> | undefined
 
   const state: DemoState = {
     version: DEMO_VERSION,
@@ -129,6 +131,7 @@ export async function loadState(q: Queryable, yearId: string): Promise<{ state: 
       })),
     audit: audit.rows.map((r): AuditEntry => ({ at: iso(r.at)!, actor: r.email ?? 'sistema', action: r.action, detail: r.detail?.text ?? '' })),
     modules: { ...DEFAULT_MODULES, ...modules },
+    mail: cleanMail(mail),
     assignments: assignments.rows.map((r): TeachingAssignment => ({ gradeId: r.grade_id, group: r.label, subjectId: r.subject_id, teacherEmail: emailById.get(r.teacher_id) ?? '' })),
     feedbackForms: forms.rows.map((r): FeedbackForm => ({
       id: r.id, templateId: r.template_id, stage: r.stage, version: r.version, status: r.status, scaleId: r.scale_id,

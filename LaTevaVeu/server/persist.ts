@@ -197,6 +197,8 @@ export async function persist(q: Queryable, yearId: string, ids: Ids, prev: Demo
   // 9. Apartats actius.
   if (!same(prev.modules, next.modules))
     await q.query("insert into app_settings values ('modules', $1) on conflict (key) do update set value = excluded.value", [JSON.stringify(next.modules)])
+  if (!same(prev.mail, next.mail))
+    await q.query("insert into app_settings values ('mail', $1) on conflict (key) do update set value = excluded.value", [JSON.stringify(next.mail)])
 
   // 10. Preguntes d'«Et veig» (versionades com els qüestionaris).
   const forms = diff(prev.feedbackForms, next.feedbackForms, (f) => f.id)

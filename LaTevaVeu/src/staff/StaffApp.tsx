@@ -15,12 +15,13 @@ import { AssignmentsScreen, FeedbackFormsScreen, ModulesScreen } from './Setting
 import { SubjectsScreen } from './Subjects'
 import { FamiliesScreen } from './Families'
 import { GroupsScreen } from './Groups'
+import { MailScreen } from './Mail'
 import { RemoteEtVeig } from './Remote'
 
 type Screen =
   | 'dashboard' | 'tracking' | 'reports' | 'campaigns'
   | 'self' | 'myreports' | 'center' | 'fbcampaigns' | 'fbforms' | 'evlist' | 'evself'
-  | 'templates' | 'subjects' | 'assign' | 'people' | 'groups' | 'families' | 'teachers' | 'modules' | 'audit'
+  | 'templates' | 'subjects' | 'assign' | 'people' | 'groups' | 'families' | 'teachers' | 'modules' | 'mail' | 'audit'
 
 /** Qui veu cada entrada: administració, Equip Directiu, tutoria (grups d'«Em miro»), qui fa classe o qui pot veure resultats. */
 type Need = 'admin' | 'dir' | 'manage' | 'tutor' | 'teaches' | 'results' | 'dirDemo' | 'manageDemo' | 'remote' | 'remoteSelf'
@@ -52,6 +53,7 @@ const NAV: { id: Screen; label: string; icon: string; need: Need; space: Section
   { id: 'families', label: 'Famílies', icon: 'mail', need: 'manage', space: 'centre', kind: 'config' },
   { id: 'subjects', label: 'Matèries', icon: 'book', need: 'admin', space: 'centre', kind: 'config' },
   { id: 'modules', label: 'Apartats', icon: 'settings', need: 'admin', space: 'centre', kind: 'config' },
+  { id: 'mail', label: 'Correu', icon: 'mail', need: 'admin', space: 'centre', kind: 'config' },
   { id: 'audit', label: 'Registre', icon: 'history', need: 'admin', space: 'centre', kind: 'config' },
 ]
 
@@ -155,6 +157,7 @@ export function StaffApp({ session }: { session: Session }) {
         {screen === 'assign' && isAdmin && <AssignmentsScreen session={session} />}
         {screen === 'people' && isAdmin && <PeopleScreen session={session} />}
         {screen === 'modules' && isAdmin && <ModulesScreen session={session} />}
+        {screen === 'mail' && isAdmin && <MailScreen session={session} />}
         {screen === 'audit' && isAdmin && <Audit />}
       </main>
     </div>
@@ -164,7 +167,7 @@ export function StaffApp({ session }: { session: Session }) {
 const SPACE_TEXT: Record<Section, string> = {
   'em-miro': 'L’alumnat pensa en com aprèn. La tutoria en fa el seguiment i en treu l’informe «Així em veig» per a les famílies.',
   'et-veig': 'L’alumnat explica com viu les classes de cada docent. Cada docent rep el seu informe «Així et veiem»; ningú no veu respostes individuals.',
-  centre: 'Cens de l’alumnat, accessos del personal, grups, matèries, famílies, apartats actius i registre d’operacions.',
+  centre: 'Cens de l’alumnat, accessos del personal, grups, matèries, famílies, apartats actius, correu i registre d’operacions.',
 }
 
 /** Pantalla d'inici del personal: cada espai, amb el que hi pot fer aquesta persona. */

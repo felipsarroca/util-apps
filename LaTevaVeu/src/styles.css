@@ -802,6 +802,23 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .login-tile.about:hover { border-color: #9fcfd4; }
 .google-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
 .demo-group { display: grid; gap: .45rem; }
+/* Correu: remitent, text i previsualització. */
+.mail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem 1.4rem; align-items: start; }
+.mail-reply { display: grid; gap: .5rem; margin: 0; padding: 0; border: 0; }
+.mail-reply legend { font-weight: 700; font-size: .9rem; color: var(--ink-2); margin-bottom: .35rem; padding: 0; }
+.mail-reply .input { max-width: 420px; }
+.radio { display: flex; align-items: center; gap: .55rem; cursor: pointer; }
+.radio input { width: 18px; height: 18px; margin: 0; accent-color: var(--brand); flex: none; }
+.mail-edit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.mail-body { font-size: .92rem; min-height: 340px; }
+.mail-fields { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.mail-fields .btn.small { min-height: 30px; padding: .2em .7em; font-size: .8rem; }
+.mail-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .25rem .8rem; margin: 0; font-size: .9rem; }
+.mail-head dt { color: var(--ink-3); font-weight: 700; }
+.mail-head dd { margin: 0; overflow-wrap: anywhere; display: flex; align-items: center; gap: .3rem; }
+.mail-head svg { width: 15px; height: 15px; }
+.mail-frame { width: 100%; height: 640px; border: 1px solid var(--line); border-radius: var(--r-m); background: #f5f2ed; }
+@media (max-width: 1100px) { .mail-edit { grid-template-columns: 1fr; } }
 .demo-group h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); }
 .modal .demo-accounts { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 .demo-reset { justify-content: flex-end; font-size: .88rem; }

@@ -12,11 +12,12 @@ import {
 import { validateFeedbackForm } from '../domain/feedbackForms'
 import { checkGroupLabel, setGroupConfig } from '../domain/groups'
 import type {
-  Answers, Campaign, CampaignStatus, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, Guardian, ModerationStatus, Modules,
+  Answers, Campaign, CampaignStatus, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, Guardian, MailSettings, ModerationStatus, Modules,
   Section, SelfAssessment, Session, StageId, Student, StudentResponse, Subject, TemplateVersion,
 } from '../domain/types'
 import type { AssignmentRow, GuardianRow } from '../domain/csv'
 import { checkSchoolEmail } from '../domain/email'
+import { cleanMail, validateMail } from '../domain/mail'
 import { createDemoState, DEMO_VERSION, type DemoState } from './seed'
 
 const KEY = 'mavaluo:demo'
@@ -28,7 +29,8 @@ function load(): DemoState {
     const raw = localStorage.getItem(KEY)
     if (raw) {
       const s = JSON.parse(raw) as DemoState
-      if (s.version === DEMO_VERSION) return s
+      // Les dades desades abans que hi hagués la configuració del correu la prenen per defecte.
+      if (s.version === DEMO_VERSION) return { ...s, mail: cleanMail(s.mail) }
     }
   } catch {
     /* sense emmagatzematge: es treballa en memòria */
@@ -500,6 +502,15 @@ function setModules$(session: Session, patch: Partial<Modules>) {
   commit(audit({ ...state, modules }, session.email, 'Apartats', `Em miro: ${modules.emMiro ? 'actiu' : 'inactiu'} · Et veig…: ${modules.etVeig ? 'actiu' : 'inactiu'}`))
 }
 
+function setMail$(session: Session, patch: Partial<MailSettings>) {
+  requireAdmin(session)
+  const mail = cleanMail({ ...state.mail, ...patch })
+  const problem = validateMail(mail)
+  if (problem) throw new Error(problem)
+  const from = mail.sender || 'pendent'
+  commit(audit({ ...state, mail }, session.email, 'Correu', `Remitent: ${mail.senderName} <${from}> · respostes: ${mail.replyTo === 'tutor' ? 'tutoria' : mail.replyToEmail}`))
+}
+
 function setAssignment$(session: Session, gradeId: GradeId, group: string, subjectId: string, teacherEmail: string | null) {
   requireAdmin(session)
   if (teacherEmail && !state.staff.some((x) => x.email === teacherEmail)) throw new Error(`${teacherEmail} no té accés a l’aplicació.`)
@@ -768,6 +779,7 @@ export const setStudentGroup = op('setStudentGroup', setStudentGroup$)
 export const setElective = op('setElective', setElective$)
 export const logAudit = op('logAudit', logAudit$)
 export const setModules = op('setModules', setModules$)
+export const setMail = op('setMail', setMail$)
 export const setAssignment = op('setAssignment', setAssignment$)
 export const importAssignments = op('importAssignments', importAssignments$)
 export const createFeedbackCampaign = op('createFeedbackCampaign', createFeedbackCampaign$)
@@ -804,6 +816,7 @@ export const SERVER_OPS = {
   setElective: setElective$,
   logAudit: logAudit$,
   setModules: setModules$,
+  setMail: setMail$,
   setAssignment: setAssignment$,
   importAssignments: importAssignments$,
   createFeedbackCampaign: createFeedbackCampaign$,

@@ -125,7 +125,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <div className="guide-card ce">
               <b>🏫 Centre</b>
               <span>Dades comunes</span>
-              <p>Cens de l’alumnat, accessos del personal, matèries de cada curs, apartats actius i registre d’operacions. Ho fan servir tots dos espais.</p>
+              <p>Cens de l’alumnat, accessos del personal, matèries de cada curs, apartats actius, correu i registre d’operacions. Ho fan servir tots dos espais.</p>
             </div>
           </div>
           <p>Tres principis guien tot el funcionament:</p>
@@ -181,6 +181,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li><b>Indica qui fa classe a qui.</b> <Where>Et veig… › Qui fa classe a qui</Where> Una per una o amb el CSV de plantilla. Sense això, l’alumnat no sabrà quins docents ha de valorar.</li>
             <li><b>Revisa els qüestionaris.</b> <Where>Em miro › Qüestionaris</Where> i <Where>Et veig… › Preguntes</Where> Comprova que hi ha una versió publicada per a cada etapa.</li>
             <li><b>Comprova que els apartats estan actius.</b> <Where>Centre › Apartats</Where></li>
+            <li><b>Decideix des d’on s’envien els correus.</b> <Where>Centre › Correu</Where> Compte remitent, on arriben les respostes i text dels missatges.</li>
           </ol>
           <div className="guide-check">
             <b>Llista de comprovació</b>
@@ -236,6 +237,14 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           </ul>
           <h3>Apartats</h3>
           <p>Activa o desactiva temporalment Em miro o Et veig… Desactivar-lo l’amaga a l’alumnat sense esborrar cap dada; és útil, per exemple, si cal aturar una recollida per un problema.</p>
+          <h3>Correu</h3>
+          <p><Where>Centre › Correu</Where> Només per a l’administració. Hi ha tres decisions:</p>
+          <ul>
+            <li><b>Compte que envia.</b> Un compte de l’escola (@ramonpont.cat). És millor un compte dedicat a l’app que el d’una persona: no depèn de qui ocupa el càrrec i tots els enviaments queden junts.</li>
+            <li><b>On arriben les respostes.</b> Per defecte, al tutor o tutora del grup, que és qui coneix l’alumne. També es pot posar una adreça fixa, com la de secretaria.</li>
+            <li><b>Text dels missatges.</b> Un per a les famílies, amb l’informe «Així em veig» adjunt, i un per al professorat, que només avisa que l’informe «Així et veiem» és disponible (no s’adjunta perquè és confidencial). Els marcadors entre claus, com {'{alumne}'}, es canvien per les dades de cada destinatari. A la dreta es veu com quedarà.</li>
+          </ul>
+          <Tip>Si es toca el text i no convenç, <b>Recupera el text original</b> el torna a deixar com era.</Tip>
           <h3>Registre d’operacions</h3>
           <p>Hi consten les accions rellevants amb data, persona i detall: permisos, canvis de configuració, canvis d’estat, impressions d’informes, consultes d’informes d’altres docents i incidències. No es pot modificar.</p>
         </Sec>

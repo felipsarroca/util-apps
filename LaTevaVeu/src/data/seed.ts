@@ -5,9 +5,10 @@ import { buildSteps, keyOf, requiredKeys, subjectsForStudent } from '../domain/e
 import { flagComment, stageOfGrade, teachersForStudent } from '../domain/feedback'
 import { FEEDBACK_SCALES, INITIAL_FEEDBACK_FORMS } from '../domain/feedbackForms'
 import type { ClassGroups } from '../domain/groups'
+import { DEFAULT_MAIL } from '../domain/mail'
 import { INITIAL_SCALES, INITIAL_TEMPLATES } from '../domain/templates'
 import type {
-  Answers, AuditEntry, Campaign, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackDraft, FeedbackForm, GradeId, GradeSubject, Modules,
+  Answers, AuditEntry, Campaign, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackDraft, FeedbackForm, GradeId, GradeSubject, MailSettings, Modules,
   Participation, Scale, SelfAssessment, StaffMember, StageId, Student, StudentResponse, Subject, TeachingAssignment, TemplateVersion,
 } from '../domain/types'
 
@@ -24,6 +25,8 @@ export interface DemoState {
   responses: StudentResponse[]
   audit: AuditEntry[]
   modules: Modules
+  /** Remitent i text dels correus a famílies i professorat. */
+  mail: MailSettings
   assignments: TeachingAssignment[]
   feedbackForms: FeedbackForm[]
   feedbackCampaigns: FeedbackCampaign[]
@@ -207,6 +210,7 @@ export function createDemoState(): DemoState {
     students, staff, campaigns, responses,
     audit: [{ at: now, actor: 'sistema', action: 'Inicialització', detail: 'Dades fictícies de demostració carregades.' }],
     modules: { emMiro: true, etVeig: true },
+    mail: structuredClone(DEFAULT_MAIL),
     assignments,
     feedbackForms: INITIAL_FEEDBACK_FORMS,
     ...fb,

@@ -277,6 +277,7 @@ create trigger audit_log_no_truncate before truncate on audit_log
 -- =====================================================================
 
 -- Apartats activables: app_settings ('modules', '{"emMiro":true,"etVeig":true}').
+-- Correu (remitent, respostes i text dels missatges): app_settings ('mail', {...}); sense fila, el text per defecte.
 
 create table teaching_assignments (                    -- qui fa cada matèria a cada grup
   group_id   uuid not null references class_groups(id),

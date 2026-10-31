@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { logAudit, useDemoState, visibleGrades } from '../data/api'
 import { gradeById, GRADES } from '../domain/catalog'
-import { groupName } from '../domain/groups'
+import { gradeAndGroup, groupName } from '../domain/groups'
+import { renderMail } from '../domain/mail'
 import type { Session } from '../domain/types'
 import { buildReportModel, ReportPages, SheetViewer } from '../report/Report'
 import { Icon, Modal, useToast } from '../ui/common'
@@ -175,6 +176,28 @@ export function ReportsScreen({ session }: { session: Session }) {
       {prepare && campaign && (
         <Modal title="Preparació de l’enviament" onClose={() => setPrepare(false)} wide>
           <p>Comprova exactament qui rebrà cada informe. Res no s’envia fins a l’aprovació final.</p>
+          {selected[0] && (() => {
+            const st = selected[0].student
+            const mail = renderMail('families', s.mail, {
+              alumne: st.name, alumne_complet: fullName(st), curs: gradeAndGroup(st.gradeId, st.group), recollida: campaign.label, curs_escolar: campaign.year,
+            })
+            return (
+              <dl className="mail-head">
+                <dt>De</dt>
+                <dd>{s.mail.senderName} &lt;{s.mail.sender || 'compte pendent'}&gt;</dd>
+                <dt>Respon a</dt>
+                <dd>{s.mail.replyTo === 'tutor' ? 'el tutor o tutora del grup' : s.mail.replyToEmail}</dd>
+                <dt>Assumpte</dt>
+                <dd>{mail.subject}{selected.length > 1 ? ' (exemple del primer alumne)' : ''}</dd>
+              </dl>
+            )
+          })()}
+          {!s.mail.sender && (
+            <div className="notice warn">
+              <Icon name="alert" />
+              <div>Encara no s’ha indicat el compte que envia. L’administració ho fa a <b>Centre › Correu</b>, on també es pot revisar el text del missatge.</div>
+            </div>
+          )}
           <div className="table-wrap" style={{ maxHeight: 360, overflow: 'auto' }}>
             <table className="t">
               <thead><tr><th>Alumne</th><th>Destinataris</th><th>Informe</th></tr></thead>
