@@ -83,26 +83,23 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
   const emMiroOn = modules.emMiro
   const etVeigOn = modules.etVeig
   const delivered = response?.status === 'LLIURADA' || response?.status === 'VALIDADA'
+  // A primària, només el que l'infant necessita per començar: sense descripcions ni dates.
+  const young = grade.stage !== 'ESO'
 
   return (
-    <main className="stu-main">
+    <main className="stu-main stu-home">
       <section className="card hello">
-        <h1>
-          Hola, {student.name}! <span aria-hidden="true">👋</span>
-        </h1>
-        <div className="identity">
-          <span style={{ fontSize: '2rem' }} aria-hidden="true">🎒</span>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <b>
-              {student.name} {student.surname}
-            </b>
-            <div className="muted" style={{ fontWeight: 700 }}>
-              {gradeAndGroup(student.gradeId, student.group)}
-            </div>
-          </div>
-          <button className="link-btn" onClick={() => setWrong(true)}>
-            Aquestes dades no són correctes
-          </button>
+        <div className="hello-top">
+          <h1>
+            Hola, {student.name}! <span aria-hidden="true">👋</span>
+          </h1>
+          {/* Discret: serveix sobretot perquè el docent de l'aula comprovi que és el compte bo. */}
+          <span className="hello-grade">{gradeAndGroup(student.gradeId, student.group)}</span>
+          {!young && (
+            <button className="link-btn hello-wrong" onClick={() => setWrong(true)}>
+              Les meves dades no són correctes
+            </button>
+          )}
         </div>
 
         <div className="stu-spaces">
@@ -110,17 +107,17 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
           <div className="campaign-box mod em">
             <div className="mod-kicker em">
               <span aria-hidden="true">💭</span> Em miro · M’autoavaluo
-              <span className="mod-desc">Penso en com aprenc, què faig bé i què puc millorar</span>
+              {!young && <span className="mod-desc">Penso en com aprenc, què faig bé i què puc millorar</span>}
             </div>
             <div className="row">
               <h2>
-                {campaign.label} <span className="muted" style={{ fontWeight: 700, fontSize: '.85em' }}>· {campaign.year}</span>
+                {campaign.label} {!young && <span className="muted" style={{ fontWeight: 700, fontSize: '.85em' }}>· {campaign.year}</span>}
               </h2>
               <span className="spacer" />
               {delivered ? <span className="badge ok">Lliurada</span> : response ? <span className="badge warn">A mitges</span> : <span className="badge info">Per començar</span>}
             </div>
             <p className="muted" style={{ fontWeight: 700 }}>
-              Oberta fins al {fmtDate(campaign.end)} · Uns {ESTIMATE[grade.stage]}
+              {young ? `Uns ${ESTIMATE[grade.stage]}` : `Oberta fins al ${fmtDate(campaign.end)} · Uns ${ESTIMATE[grade.stage]}`}
             </p>
             {response && !delivered && (
               <div className="progress">
@@ -151,19 +148,19 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
           <div className="campaign-box mod em idle">
             <div className="mod-kicker em">
               <span aria-hidden="true">💭</span> Em miro · M’autoavaluo
-              <span className="mod-desc">Penso en com aprenc, què faig bé i què puc millorar</span>
+              {!young && <span className="mod-desc">Penso en com aprenc, què faig bé i què puc millorar</span>}
             </div>
             <p className="muted">Ara no tens cap autoavaluació oberta. Quan n’hi hagi una, la trobaràs aquí.</p>
           </div>
         )}
         {fb ? (
-          <EtVeigCard fb={fb} onOpen={onEtVeig} />
+          <EtVeigCard fb={fb} young={young} onOpen={onEtVeig} />
         ) : (
           etVeigOn && (
             <div className="campaign-box mod ev idle">
               <div className="mod-kicker ev">
                 <span aria-hidden="true">👀</span> Et veig… · Valoro el professorat
-                <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>
+                {!young && <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>}
               </div>
               <p className="muted">Ara no hi ha cap valoració del professorat oberta.</p>
             </div>
@@ -214,12 +211,12 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
           </div>
         </Modal>
       )}
-      <p className="muted" style={{ textAlign: 'center', fontSize: '.85rem' }}>{STAGES[grade.stage].name}</p>
+      {!young && <p className="muted" style={{ textAlign: 'center', fontSize: '.85rem' }}>{STAGES[grade.stage].name}</p>}
     </main>
   )
 }
 
-function EtVeigCard({ fb, onOpen }: { fb: FeedbackHome; onOpen: () => void }) {
+function EtVeigCard({ fb, young, onOpen }: { fb: FeedbackHome; young: boolean; onOpen: () => void }) {
   const done = fb.targets.filter((t) => t.status === 'lliurat').length
   const total = fb.targets.length
   const started = fb.targets.some((t) => t.status !== 'pendent')
@@ -227,7 +224,7 @@ function EtVeigCard({ fb, onOpen }: { fb: FeedbackHome; onOpen: () => void }) {
     <div className="campaign-box mod ev">
       <div className="mod-kicker ev">
         <span aria-hidden="true">👀</span> Et veig… · Valoro el professorat
-        <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>
+        {!young && <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>}
       </div>
       <div className="row">
         <h2>{fb.campaign.label}</h2>
@@ -235,7 +232,8 @@ function EtVeigCard({ fb, onOpen }: { fb: FeedbackHome; onOpen: () => void }) {
         {done === total ? <span className="badge ok">Fet</span> : started ? <span className="badge warn">{done} de {total}</span> : <span className="badge info">Per començar</span>}
       </div>
       <p className="muted" style={{ fontWeight: 700 }}>
-        Oberta fins al {fmtDate(fb.campaign.end)} · {total} {total === 1 ? 'docent' : 'docents'} per valorar
+        {!young && <>Oberta fins al {fmtDate(fb.campaign.end)} · </>}
+        {total} {total === 1 ? 'docent' : 'docents'} per valorar
       </p>
       <div className="row">
         <button className={`btn large ${done === total ? '' : 'primary ev'}`} onClick={onOpen}>

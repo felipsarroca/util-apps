@@ -158,29 +158,50 @@ body { padding-bottom: var(--footer-h); }
     radial-gradient(900px 500px at 100% 100%, rgba(138, 34, 22, .12), transparent 60%),
     var(--bg);
 }
-.login-card { display: grid; grid-template-columns: 1.05fr 1fr; width: min(980px, 100%); overflow: hidden; border-radius: var(--r-xl); box-shadow: var(--sh-3); background: #fff; }
+/* La targeta ocupa gairebé tota l'alçada lliure (capçalera, peu i marges a part). */
+.login-card {
+  display: grid; grid-template-columns: 1.05fr 1fr; width: min(1040px, 100%);
+  min-height: clamp(0px, calc(100 * var(--dvh) - var(--footer-h) - 150px), 720px);
+  overflow: hidden; border-radius: var(--r-xl); box-shadow: var(--sh-3); background: #fff;
+}
 .login-brand {
-  position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 2rem;
-  padding: clamp(24px, calc(5 * var(--vh)), 48px) clamp(24px, 4vw, 44px);
+  position: relative; display: flex; flex-direction: column; justify-content: center; gap: clamp(1.6rem, calc(6 * var(--vh)), 3.2rem);
+  padding: clamp(28px, calc(6 * var(--vh)), 56px) clamp(24px, 4vw, 48px);
   background: linear-gradient(155deg, #8a2216 0%, #6e190f 55%, #4f120b 100%); color: #fff; overflow: hidden;
 }
+.login-brand::before { content: ''; position: absolute; right: -70px; top: -100px; width: 240px; height: 240px; border-radius: 50%; background: rgba(31, 106, 115, .4); }
 .login-brand::after { content: ''; position: absolute; right: -80px; bottom: -80px; width: 280px; height: 280px; border-radius: 50%; background: rgba(184, 134, 11, .25); }
+.login-brand > * { position: relative; z-index: 1; }
 .login-school { gap: .75rem; }
 .login-school img { width: 44px; height: 44px; object-fit: contain; }
 .login-school span { display: grid; line-height: 1.15; }
 .login-school b { color: #6e190f; font-weight: 900; font-size: 1.12rem; letter-spacing: .01em; }
 .login-school small { color: var(--ink-3); font-weight: 700; font-size: .78rem; }
-.login-title { font-size: clamp(2.4rem, min(5vw, calc(7 * var(--vh))), 3.4rem); font-weight: 900; letter-spacing: -.03em; line-height: 1; }
+.login-title { font-size: clamp(2.4rem, min(5vw, calc(7 * var(--vh))), 3.6rem); font-weight: 900; letter-spacing: -.03em; line-height: 1; }
 .login-title { display: flex; align-items: center; gap: .9rem; }
 .login-title-text span { color: #f3c64c; }
 .login-app-icon { flex: none; width: 1.25em; height: 1.25em; border-radius: 22%; box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 6px 18px rgba(0, 0, 0, .25); }
-.login-sub { font-size: 1.15rem; opacity: .92; margin-top: .6rem; font-weight: 600; }
-.login-steps { display: grid; gap: .7rem; position: relative; z-index: 1; }
-.login-steps li { display: flex; align-items: center; gap: .7rem; font-weight: 600; }
-.login-steps li span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, .14); font-size: 1.1rem; flex: none; }
-.login-steps { list-style: none; margin: 0; padding: 0; }
-.login-form { display: flex; flex-direction: column; gap: 1.1rem; padding: clamp(24px, calc(5 * var(--vh)), 48px) clamp(22px, 4vw, 44px); }
-.login-form h2 { font-size: 1.6rem; font-weight: 900; }
+.login-sub { font-size: 1.2rem; opacity: .92; margin-top: .9rem; font-weight: 600; }
+/* Els dos espais, amb el mateix color que tenen dins l'app (or per a Em miro, verd blavós per a Et veig). */
+.login-steps { display: grid; gap: .8rem; list-style: none; margin: 0; padding: 0; }
+.login-steps li {
+  display: flex; align-items: center; gap: .9rem; padding: .85rem 1rem;
+  border-radius: var(--r-l); background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14);
+}
+.login-steps li > span { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; font-size: 1.35rem; flex: none; }
+.login-steps li.em > span { background: #f3c64c; }
+.login-steps li.ev > span { background: #5fb3bb; }
+.login-steps b { display: block; font-size: 1.08rem; font-weight: 900; }
+.login-steps li.em b { color: #f8d97a; }
+.login-steps li.ev b { color: #9fdbe0; }
+.login-steps small { display: block; font-size: .9rem; font-weight: 600; opacity: .88; line-height: 1.35; }
+.login-form {
+  display: flex; flex-direction: column; justify-content: center; gap: 1.6rem;
+  padding: clamp(28px, calc(6 * var(--vh)), 56px) clamp(24px, 4.5vw, 56px);
+  background: radial-gradient(420px 260px at 100% 0%, rgba(184, 134, 11, .08), transparent 70%), #fff;
+}
+.login-hello { display: grid; gap: .5rem; }
+.login-form h2 { font-size: 1.75rem; font-weight: 900; }
 .google-btn {
   display: flex; align-items: center; justify-content: center; gap: .75rem; width: 100%; min-height: 54px;
   border: 1.5px solid #dadce0; border-radius: 999px; background: #fff; font-weight: 800; font-size: 1.05rem; color: #2a2f37;
@@ -307,10 +328,11 @@ fieldset.qrow { margin: 0; min-width: 0; }
 .stu-nav .hint { flex: 1; text-align: center; font-size: .86rem; color: var(--ink-3); font-weight: 700; }
 
 /* Benvinguda */
-.hello { padding: clamp(20px, calc(4 * var(--vh)), 40px) clamp(18px, 4vw, 44px); display: grid; gap: 1.2rem; }
+.hello { padding: clamp(22px, calc(5 * var(--vh)), 52px) clamp(18px, 4.5vw, 56px); display: grid; gap: clamp(1.2rem, calc(3.5 * var(--vh)), 2.2rem); }
 .hello h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 900; }
-.identity { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.2rem; border-radius: var(--r-m); background: var(--gold-soft); }
-.identity b { font-size: 1.2rem; }
+.hello-top { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; }
+.hello-grade { padding: .25rem .75rem; border-radius: 999px; background: var(--gold-soft); color: #6b4e00; font-weight: 800; font-size: .85rem; }
+.hello-wrong { margin-left: auto; font-size: .82rem; }
 .campaign-box { display: grid; gap: .8rem; padding: 1.2rem; border: 2px solid var(--line); border-radius: var(--r-l); }
 .campaign-box h2 { font-size: 1.3rem; font-weight: 900; }
 .tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .6rem; }
@@ -636,6 +658,10 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 
 @media (min-width: 1200px) {
   .stage-ESO .stu-main, .stage-CS .stu-main { width: min(1060px, 100%); }
+  /* A l'inici hi ha poc text: s'aprofita més l'amplada perquè els dos espais respirin. */
+  .stu .stu-main.stu-home { width: min(1200px, 100%); }
+  .stu-home .stu-spaces { gap: 1.6rem; }
+  .stu-home .campaign-box.mod { padding: 1.6rem 1.8rem; gap: 1rem; }
 }
 @container (min-width: 820px) {
   .qrow.inline { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 1.2rem; }
@@ -650,14 +676,13 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 }
 
 /* ---------- Adaptació ---------- */
-html.h-700 .login-steps { display: none; }
 
 @media (max-width: 1100px) {
   .grid-2, .editor { grid-template-columns: 1fr; }
   .preview-frame { position: static; max-height: none; }
 }
 @media (max-width: 900px) {
-  .login-card { grid-template-columns: 1fr; }
+  .login-card { grid-template-columns: 1fr; min-height: 0; }
   .login-brand { gap: 1rem; padding: 22px 22px 26px; }
   .login-steps { display: none; }
   .staff { grid-template-columns: 1fr; align-content: start; }
@@ -761,12 +786,20 @@ html.h-700 .login-steps { display: none; }
 /* Accés a la demostració */
 .domain-note { display: inline-flex; align-items: center; gap: .3rem; align-self: flex-start; color: var(--ink-3); font-weight: 600; font-size: .76rem; }
 .domain-note svg { width: 13px; height: 13px; }
-.login-extra { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; padding-top: .8rem; border-top: 1px solid var(--line); }
-.demo-cta { display: grid; justify-items: start; gap: .2rem; }
-.demo-cta .btn { font-size: .8rem; padding: .32rem .7rem; min-height: 0; gap: .3rem; }
-.demo-cta .btn span { font-size: .9em; }
-.demo-cta small { color: var(--ink-3); font-weight: 600; font-size: .7rem; }
-.about-btn { text-decoration: none; }
+.login-extra { display: grid; gap: .6rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+.login-tile {
+  display: flex; align-items: center; gap: .7rem; padding: .75rem .9rem;
+  border: 1.5px solid transparent; border-radius: var(--r-m); text-align: left; text-decoration: none; color: var(--ink);
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.login-tile:hover { box-shadow: var(--sh-2); transform: translateY(-1px); }
+.login-tile > span:first-child { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: #fff; font-size: 1.15rem; flex: none; box-shadow: var(--sh-1); }
+.login-tile b { display: block; font-size: .92rem; font-weight: 800; line-height: 1.2; }
+.login-tile small { display: block; color: var(--ink-2); font-weight: 600; font-size: .76rem; }
+.login-tile.demo { background: var(--gold-soft); }
+.login-tile.demo:hover { border-color: #e2c46f; }
+.login-tile.about { background: var(--ev-soft); }
+.login-tile.about:hover { border-color: #9fcfd4; }
 .google-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
 .demo-group { display: grid; gap: .45rem; }
 .demo-group h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); }

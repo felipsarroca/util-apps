@@ -228,7 +228,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           </ol>
           <Tip>Només s’envia als correus validats. Els comptadors de dalt indiquen quants alumnes tenen correu validat, quants el tenen pendent i quants no en tenen (el seu informe es lliurarà en paper).</Tip>
           <h3>Incidències d’identitat</h3>
-          <p>Si un alumne clica «Aquestes dades no són correctes», el seu missatge apareix a la pestanya <b>Incidències d’identitat</b>, amb un comptador al menú. Revisa-ho i corregeix el cens.</p>
+          <p>Si un alumne d’ESO clica «Les meves dades no són correctes» (a primària no surt), el seu missatge apareix a la pestanya <b>Incidències d’identitat</b>, amb un comptador al menú. Revisa-ho i corregeix el cens.</p>
           <h3>Matèries</h3>
           <ul>
             <li>Per a cada curs: ordre de presentació (fletxes), <b>Comuna / Optativa</b> i <b>Activa</b>.</li>

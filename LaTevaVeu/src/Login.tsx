@@ -105,17 +105,18 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
               <p className="login-sub">La teva mirada ens ajuda a millorar</p>
             </div>
             <ul className="login-steps">
-              <li><span aria-hidden="true">💭</span><p><b>Em miro</b> · m’autoavaluo: penso en com aprenc i què puc millorar</p></li>
-              <li><span aria-hidden="true">👀</span><p><b>Et veig…</b> · valoro el professorat: explico com visc les classes</p></li>
-              <li><span aria-hidden="true">🔐</span><p>Només amb el compte de l’escola</p></li>
+              <li className="em"><span aria-hidden="true">💭</span><p><b>Em miro</b><small>Penso en com aprenc i què puc millorar</small></p></li>
+              <li className="ev"><span aria-hidden="true">👀</span><p><b>Et veig…</b><small>Explico com visc les classes amb el professorat</small></p></li>
             </ul>
           </section>
 
           <section className="login-form">
-            <h2>Hola! Identifica’t</h2>
-            <span className="domain-note">
-              <Icon name="shield" /> Només comptes @{SCHOOL.domain}
-            </span>
+            <div className="login-hello">
+              <h2>Hola! Identifica’t</h2>
+              <span className="domain-note">
+                <Icon name="shield" /> Només comptes @{SCHOOL.domain}
+              </span>
+            </div>
 
             {GOOGLE_CLIENT_ID ? (
               <div ref={gRef} style={{ minHeight: 44 }} />
@@ -139,19 +140,21 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
 
             <div className="login-extra">
               {DEMO_AVAILABLE && (
-                <div className="demo-cta">
-                  <button className="btn small" onClick={() => setDemo(true)}>
-                    <span aria-hidden="true">🧪</span> Prova la demostració
-                  </button>
-                  <small>Amb dades fictícies, sense compte</small>
-                </div>
+                <button className="login-tile demo" onClick={() => setDemo(true)}>
+                  <span aria-hidden="true">🧪</span>
+                  <span>
+                    <b>Prova la demostració</b>
+                    <small>Amb dades fictícies, sense compte</small>
+                  </span>
+                </button>
               )}
-              <div className="demo-cta">
-                <a className="btn small about-btn" href="#/projecte">
-                  <span aria-hidden="true">💡</span> Per què La teva veu?
-                </a>
-                <small>El sentit del projecte</small>
-              </div>
+              <a className="login-tile about" href="#/projecte">
+                <span aria-hidden="true">💡</span>
+                <span>
+                  <b>Per què La teva veu?</b>
+                  <small>El sentit del projecte</small>
+                </span>
+              </a>
             </div>
           </section>
         </div>
