@@ -1,0 +1,258 @@
+# Projecte «Veu de l’alumnat»: disseny de la nova aplicació d’autoavaluacions
+
+La meva proposta és construir una plataforma d’autoavaluació escolar completa, configurable i preparada per funcionar durant molts cursos acadèmics, des de 3r de primària fins a 4t d’ESO.
+
+No la plantejaria com un formulari que desa respostes, sinó com un sistema de gestió de tot el procés d’autoavaluació: preparació, participació de l’alumnat, supervisió docent, generació dels informes i comunicació amb les famílies.
+
+Hi ha una decisió arquitectònica que considero essencial: separar completament el contingut dels qüestionaris, les dades de l'alumnat, les avaluacions i el disseny dels informes PDF. Això permetrà fer canvis importants en el futur sense haver de reprogramar l'aplicació.
+
+## 1. Estructura general de la plataforma
+
+Esquema funcional simplificat. L'accés a les dades i els processos d'enviament passarien per un servidor segur.
+
+La plataforma tindria tres grans espais, segons els permisos de l'usuari.
+
+| Perfil        | Funcions                                                                                                                                 |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Administrador | Gestionar usuaris, cursos, matèries, preguntes, avaluacions, configuració, informes i enviaments.                                        |
+| Professor     | Consultar els alumnes dels grups assignats, supervisar el progrés, revisar respostes i gestionar informes segons els permisos concedits. |
+| Alumne        | Respondre l'autoavaluació, desar-la, reprendre-la i consultar les seves respostes, segons la configuració.                               |
+
+Els administradors serien inicialment un o dos usuaris, identificats expressament. La resta d'usuaris no obtindrien permisos de professor simplement perquè declaressin que ho són: haurien de ser autoritzats per un administrador.
+
+## 2. Organització de cursos i alumnes
+
+Proposo mantenir una estructura amb vuit cursos, agrupats en tres grans etapes de presentació.
+
+| Etapa                      | Cursos                | Model inicial                                      |
+| -------------------------- | --------------------- | -------------------------------------------------- |
+| Cicle mitjà de primària    | 3r i 4t               | Autoavaluació breu, molt visual i guiada           |
+| Cicle superior de primària | 5è i 6è               | Autoavaluació amb més reflexió                     |
+| Educació secundària        | 1r, 2n, 3r i 4t d'ESO | Hàbits generals i valoració individual de matèries |
+
+Internament, cada alumne hauria de tenir una matrícula vinculada al curs acadèmic, per exemple 2026-2027, i al curs i grup corresponents. D'aquesta manera, quan passi de 3r a 4t d'ESO, es conservaran les autoavaluacions anteriors, però s'aplicaran les preguntes i matèries del nou curs.
+
+Encara que has plantejat que l'aplicació pregunti el curs a l'alumne, jo faria un petit ajust: si ja coneixem el curs perquè l'alumne consta en un registre importat o validat, li mostraríem «Ets de 3r d'ESO, oi?» en lloc de fer-lo triar cada vegada.
+
+Això evita errors, impedeix que algú accedeixi a qüestionaris d'un altre curs i redueix els passos.
+
+## 3. Els qüestionaris que ja tenim
+
+Podem utilitzar com a punt de partida real els tres PDF que havíem elaborat.
+
+3r–4t
+
+Cicle mitjà
+
+Quatre afirmacions sobre els hàbits, una valoració dels aprenentatges per àrea i dues frases de reflexió. És la versió més senzilla i curta.&#x20;
+
+Autoavaluacio_3r_4t_primaria.pdf
+
+
+
+5è–6è
+
+Cicle superior
+
+Cinc afirmacions sobre la manera d'aprendre, valoració de les àrees, exemples d'aprenentatge i un objectiu personal que es pot recuperar a l'avaluació següent.&#x20;
+
+Autoavaluacio_5e_6e_primaria.pdf
+
+
+
+ESO
+
+Educació secundària
+
+Catorze afirmacions generals, distribuïdes en tres blocs, amb les respostes «Mai», «De vegades», «Sovint», «Sempre» i «No escau». A continuació, per cada matèria: resultat previst, esforç, comprensió i observacions de millora.&#x20;
+
+Autoavaluacio_ESO_model_mostra.pdf
+
+
+
+No caldrà que totes les edats contestin el mateix. Una característica essencial de l'aplicació serà poder tenir diferents qüestionaris per curs o etapa, amb una configuració comuna.
+
+I sobretot: que modificar una pregunta no signifiqui haver de modificar manualment el codi de la pàgina web ni el generador de PDF.
+
+## 4. Què podem aprofitar de l'aplicació «VeuAlumnat» existent?
+
+He pogut inspeccionar el codi de l'aplicació que tens a [GitHub — VeuAlumnat](https://github.com/felipsarroca/util-apps/tree/main/VeuAlumnat?utm_source=chatgpt.com).
+
+És una base especialment útil perquè ja resol algunes de les operacions més delicades del nou projecte.
+
+| Funcionalitat existent                    | Proposta per a la nova aplicació                              |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| Importació de censos des de Google Sheets | Reutilitzar-ne les validacions i guardar els registres a Neon |
+| Importació de correus familiars per CSV   | Adaptar i ampliar el sistema actual                           |
+| Associació de famílies i alumnes          | Conservar la verificació de coincidències dubtoses            |
+| Gestió de recollides per curs i avaluació | Convertir-la en un calendari configurable                     |
+| Generació de PDF individuals              | Reaprofitar la lògica de maquetació i paginació               |
+| Enviaments de prova i per lots            | Mantenir els controls i millorar la traçabilitat              |
+| Impressió conjunta dels informes          | Conservar-la i afegir selecció individual                     |
+
+Una descoberta important: l'aplicació actual no té totes les assignatures de l'ESO definides en un catàleg estàtic dins del codi. Les preguntes i les matèries provenen dels Google Forms que es vinculen a cada recollida.
+
+Per tant, per recuperar la configuració exacta de les quatre etapes d'ESO haurem d'inspeccionar aquests formularis, no només el repositori. La nova aplicació ja tindria el catàleg propi a Neon.
+
+També he comprovat que el generador PDF actual està programat directament a `Pdf.gs`, sense dependències externes, i que ja disposa de mecanismes per paginar textos llargs. Podem reaprofitar-ne les idees, però convindrà modernitzar-lo per garantir la compatibilitat amb tots els caràcters Unicode.
+
+## 5. El centre de control dels administradors
+
+Proposo una interfície d'administració organitzada en vuit pantalles principals.
+
+Resum general
+
+Participació i incidències
+
+Usuaris i grups
+
+Alumnes, docents i permisos
+
+Matèries
+
+Assignatures per curs
+
+Qüestionaris
+
+Preguntes, escales i versions
+
+Avaluacions
+
+Dates d'inici i de tancament
+
+Seguiment
+
+Respostes i pendents
+
+Informes
+
+PDF i impressió
+
+Comunicacions
+
+Famílies i enviaments
+
+L'editor de qüestionaris hauria de ser especialment potent, però molt senzill de fer servir. Un administrador podria duplicar una pregunta, modificar-ne el text, seleccionar-ne l'escala, canviar-la de posició, decidir si és obligatòria i comprovar immediatament com la veuria l'alumnat.
+
+Per a les matèries, disposaria d'una graella per curs. També caldria decidir quines matèries són comunes, quines són optatives i quines cursa efectivament cada alumne.
+
+### Les matèries de primària
+
+La base normativa és el Decret 175/2022, posteriorment modificat, que concreta el currículum català de l'educació bàsica.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://xtec.gencat.cat\&sz=32)
+
+Xarxa Telemàtica Educativa de Catalunya+1
+
+
+
+Inicialment carregaria les àrees de Llengua Catalana, Llengua Castellana, Llengua Estrangera, Matemàtiques, Coneixement del Medi Natural, Social i Cultural, Educació Artística i Educació Física.
+
+L'Educació en Valors Cívics i Ètics s'ha d'incorporar en algun dels cursos de 5è o 6è. Religió apareixeria quan l'alumne la cursés. El centre podria afegir-hi projectes, tallers o altres denominacions pròpies.
+
+## 6. Com hauria de ser l'experiència de l'alumnat?
+
+El principi és que l'alumne no ha de sentir que està emplenant un formulari administratiu.
+
+En entrar, veuria el seu nom, curs i avaluació activa, amb un botó principal per començar o continuar. Després avançaria per pantalles curtes, amb instruccions senzilles i indicació del progrés.
+
+A 3r i 4t de primària prioritzaria targetes grans, textos breus i respostes fàcils de distingir. A 5è i 6è afegiria més espai de reflexió i recuperaria els objectius personals de l'avaluació anterior.
+
+A ESO dividiria les catorze afirmacions generals en tres blocs, per evitar una graella interminable. Posteriorment l'alumne valoraria les seves assignatures mitjançant targetes amb tres controls: resultat previst, esforç i comprensió. El camp d'observacions apareixeria just a sota.
+
+No faria obligatori escriure llargament en totes les assignatures. Proposaria un compromís o objectiu de millora final, mantenint la possibilitat d'afegir observacions específiques per matèria.
+
+L'aplicació desaria automàticament els esborranys. Funcionaria en ordinador, tauleta i mòbil, sense desplaçaments horitzontals ni botons excessivament petits.
+
+## 7. Com funcionaria Neon?
+
+Recomano Neon com a base de dades PostgreSQL, amb les taules relacionades següents com a estructura inicial:
+
+| Àmbit        | Dades principals                             |
+| ------------ | -------------------------------------------- |
+| Identitats   | Usuaris de Google i rols                     |
+| Organització | Cursos acadèmics, cursos, grups i matrícules |
+| Currículum   | Catàleg de matèries i assignacions           |
+| Qüestionaris | Preguntes, opcions i versions                |
+| Avaluacions  | Terminis, estats i qüestionaris publicats    |
+| Respostes    | Autoavaluacions i revisions                  |
+| Informes     | PDFs generats i versions                     |
+| Famílies     | Responsables, correus i vinculacions         |
+| Enviaments   | Lots, destinataris, resultats i errors       |
+| Auditoria    | Historial de canvis i operacions             |
+
+Neon disposa actualment de solucions d'autenticació integrades que poden facilitar la connexió amb Google. Caldrà comprovar-ne l'encaix exacte amb les polítiques del centre.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://neon.com\&sz=32)
+
+Neon
+
+
+
+Per a la part tècnica, proposo React i TypeScript al frontend, un backend Node.js, Neon com a base de dades i un servei segur per generar PDF i enviar els correus.
+
+Podrem continuar utilitzant GitHub i GitHub Actions, però GitHub Pages no pot assumir tot sol les funcions de servidor, la gestió de credencials ni els enviaments.
+
+## 8. Els informes PDF i l'enviament a les famílies
+
+Aquesta hauria de ser una de les parts més ben resoltes de l'aplicació.
+
+Després de tancar una avaluació, la plataforma generaria els informes i els presentaria en una pantalla de revisió. L'administrador o professor autoritzat podria filtrar alumnes, seleccionar-ne uns quants o tot un curs i decidir què en vol fer.
+
+Les accions principals serien previsualitzar, descarregar, imprimir, preparar l'enviament i enviar una prova. Les comunicacions reals requeririen una validació final dels destinataris.
+
+El PDF es construiria a partir de components automàtics, de manera que una pregunta nova no trenqués el disseny. També conservaria la possibilitat de generar un sol fitxer per imprimir diversos alumnes, començant cada informe en una cara nova.
+
+Per als correus, mantindria el sistema de lot i de registre d'estats de l'aplicació actual, reforçat amb comprovacions que impedeixin enviaments duplicats.
+
+Un aspecte fonamental és que el directori de famílies pot contenir diversos responsables per alumne. Les adreces s'haurien d'associar a un identificador estable i validar abans de l'enviament.
+
+## 9. Protecció de dades i seguretat
+
+Aquesta aplicació tractarà dades personals de menors i les seves valoracions acadèmiques. Per tant, haurà de passar una revisió amb direcció i la persona delegada de protecció de dades abans d'utilitzar dades reals.
+
+Caldrà controlar els permisos per grup, la confidencialitat dels PDF, els destinataris autoritzats, els contractes amb proveïdors externs, les còpies de seguretat i la conservació de les dades. L'APDCAT estableix la necessitat de regular adequadament els serveis externs que tracten dades de l'alumnat.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://apdcat.gencat.cat\&sz=32)
+
+Preguntes freqüents
+
+
+
+També s'haurà de configurar l'accés amb Google Workspace for Education: els comptes de menors poden tenir bloquejades les aplicacions de tercers que no hagin estat autoritzades pel centre.&#x20;
+
+[image](https://www.google.com/s2/favicons?domain=https://knowledge.workspace.google.com\&sz=32)
+
+knowledge.workspace.google.com
+
+
+
+## 10. Ordre recomanat de desenvolupament
+
+No començaria programant totes les pantalles alhora. Proposo avançar en fases amb resultats verificables.
+
+1. Fonaments: autenticació amb Google, rols, Neon, cursos, grups i censos.
+2. Primer circuit complet d'ESO: contestar una autoavaluació, desar-la a Neon i generar-ne el PDF.
+3. Generalització a primària: pantalles, preguntes i escales diferenciades per etapa.
+4. Editor d'administració: matèries, preguntes, versions i calendaris d'avaluació.
+5. Gestió d'informes: previsualització, impressió i selecció massiva.
+6. Famílies i comunicació: CSV, verificacions, proves, enviaments i registres.
+7. Proves reals controlades: detecció d'errors, millores d'usabilitat, accessibilitat i seguretat abans de posar-la en producció.
+
+## 11. Document de planificació
+
+He recollit la proposta en un document Markdown pensat perquè també pugui servir de base a Codex o a qualsevol entorn de desenvolupament. Inclou l'estructura de la base de dades, les funcionalitats, l'arquitectura, les regles de negoci, els requisits de seguretat, les fases i les proves que haurà de superar l'aplicació.
+
+Pla mestre de Veu de l'alumnat — v1
+
+Document Markdown · 270 línies · Preparat per utilitzar com a especificació inicial
+
+Descarregar el pla mestre (.md)
+
+### La decisió més important abans de programar
+
+Jo prioritzaria construir un motor general de qüestionaris, amb versions immutables, i un sistema de generació d'informes independent de les preguntes concretes.
+
+Això és el que convertirà una bona aplicació escolar en una plataforma que podrà evolucionar durant anys: canviar preguntes, assignatures, cursos, escales i informes sense haver de refer-ne les parts fonamentals.
+
+A partir d'aquest plantejament ja tenim una primera especificació força completa. El pas de disseny que considero més valuós a continuació és definir detalladament els fluxos de les pantalles d'alumnat i d'administració, perquè són els que determinaran si tota aquesta potència es tradueix en una aplicació realment fàcil d'utilitzar.

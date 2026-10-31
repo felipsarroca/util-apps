@@ -26,7 +26,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: AvaluApp/package-lock.json
+          cache-dependency-path: |
+            AvaluApp/package-lock.json
+            MAvaluo/package-lock.json
 
       - name: Instal·la les dependències d'AvaluApp
         working-directory: AvaluApp
@@ -36,6 +38,16 @@ jobs:
         working-directory: AvaluApp
         run: npm run build
 
+      - name: Instal·la les dependències de MAvaluo
+        working-directory: MAvaluo
+        run: npm ci
+
+      - name: Prova i compila MAvaluo
+        working-directory: MAvaluo
+        run: |
+          npm test
+          npm run build
+
       - name: Prepara el portal complet
         run: |
           mkdir _site
@@ -43,9 +55,11 @@ jobs:
             --exclude .git \
             --exclude .github \
             --exclude _site \
-            --exclude AvaluApp
-          mkdir _site/AvaluApp
+            --exclude AvaluApp \
+            --exclude MAvaluo
+          mkdir _site/AvaluApp _site/MAvaluo
           cp -R AvaluApp/dist/. _site/AvaluApp/
+          cp -R MAvaluo/dist/. _site/MAvaluo/
 
       - name: Configura GitHub Pages
         uses: actions/configure-pages@v5
