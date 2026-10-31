@@ -129,7 +129,16 @@ export async function persist(q: Queryable, yearId: string, ids: Ids, prev: Demo
   }
   for (const s of students.removed) await q.query('update students set active = false where school_ref = $1', [s.id])
 
-  // 4. Matèries de cada curs.
+  // 4. Matèries (noves i canvis de nom) i matèries de cada curs.
+  const subs = diff(prev.subjects, next.subjects, (x) => x.id)
+  for (const x of [...subs.added, ...subs.changed.map((c) => c.after)]) {
+    if (!/^[A-Z0-9_]{1,12}$/.test(x.id)) throw invalid('Identificador de matèria no vàlid.')
+    await q.query(
+      `insert into subjects (id, short_name, long_name, hue, active) values ($1, $2, $3, $4, $5)
+         on conflict (id) do update set short_name = excluded.short_name, long_name = excluded.long_name, active = excluded.active`,
+      [x.id, x.short, x.long, x.hue, x.active],
+    )
+  }
   const gs = diff(prev.gradeSubjects, next.gradeSubjects, (x) => `${x.gradeId}|${x.subjectId}`)
   for (const x of [...gs.added, ...gs.changed.map((c) => c.after)])
     await q.query(

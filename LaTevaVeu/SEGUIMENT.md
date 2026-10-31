@@ -93,6 +93,7 @@ Torna-les a fer quan canviï alguna de les pantalles que surten al README.
 - **Barra inferior sense requadre**: «Enrere», l'avís del mig i «Següent / Lliura» van sols sota la targeta, a totes les etapes. A l'entrada, «Em miro» i «Et veig…» ja no van dins de requadres i la columna esquerra té més aire.
 - **Botons amb color**: els secundaris tenen un fons granat suau (verd blavós a «Et veig»), «Escolta» és daurat i les opcions de resposta i les targetes dels docents tenen fons càlid i ombra, perquè es distingeixin del fons.
 - **Cens en bloc**: caselles per triar alumnes i barra amb «Canvia de curs o grup» i «Dona de baixa» (operacions `moveStudents` i `removeStudents`). **Curs nou** amb confirmació escrita. **Correus de les famílies**: un sol CSV per a tots els cursos, amb una fila per responsable o una fila per alumne amb diverses columnes de correu.
+- **Matèries**: *Centre › Matèries* permet crear matèries noves (operació `saveSubject`; identificador derivat del nom, p. ex. `ROBOTICA`) i canviar-ne el nom curt i el complet. Els àudios de les matèries noves no existeixen fins que es torni a executar `npm run audios` amb els noms nous; mentrestant, veu del navegador.
 - **Presentació del projecte** (`#/projecte`): sentit, marc normatiu citat de fonts oficials (Convenció sobre els Drets de l'Infant art. 12; LOE-LOMLOE art. 1 i 91; Decret 175/2022 art. 22, 23 i 24), què fa l'app, com funciona, beneficis i privacitat.
 
 ## Pendent

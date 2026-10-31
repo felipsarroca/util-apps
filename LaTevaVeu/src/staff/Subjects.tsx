@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { moveGradeSubject, setGradeSubject, useDemoState } from '../data/api'
-import { GRADES } from '../domain/catalog'
-import type { GradeId, Session } from '../domain/types'
-import { Icon } from '../ui/common'
+import { moveGradeSubject, saveSubject, setGradeSubject, useDemoState } from '../data/api'
+import { gradeShort, GRADES } from '../domain/catalog'
+import type { GradeId, Session, Subject } from '../domain/types'
+import { Icon, Modal, useToast } from '../ui/common'
 import { PageHead } from './StaffApp'
 
 export function SubjectsScreen({ session }: { session: Session }) {
@@ -15,6 +15,8 @@ export function SubjectsScreen({ session }: { session: Session }) {
     return optional ? st.filter((x) => x.electives.includes(subjectId)).length : st.length
   }
   const stage = GRADES.find((g) => g.id === grade)!.stage
+  const [editing, setEditing] = useState<Subject | 'new' | null>(null)
+  const [toast, showToast] = useToast()
 
   return (
     <>
@@ -25,16 +27,19 @@ export function SubjectsScreen({ session }: { session: Session }) {
             {GRADES.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         </label>
+        <button className="btn primary" onClick={() => setEditing('new')}>
+          <Icon name="plus" /> Matèria nova
+        </button>
       </PageHead>
       {stage !== 'ESO' ? (
         <div className="notice"><Icon name="info" /><div>Àrees de primària segons el Decret 175/2022. Religió és optativa: només apareix a l’alumnat que la cursa.</div></div>
       ) : (
-        <div className="notice warn"><Icon name="alert" /><div>Catàleg d’ESO provisional: cal contrastar-lo amb les matèries reals que imparteix l’escola a cada curs.</div></div>
+        <div className="notice warn"><Icon name="alert" /><div>Catàleg d’ESO provisional: contrasta’l amb les matèries reals de cada curs. Pots canviar-ne el nom amb el llapis i afegir les que faltin amb <b>Matèria nova</b>.</div></div>
       )}
       <div className="table-wrap">
         <table className="t">
           <thead>
-            <tr><th>Ordre</th><th>Matèria</th><th>Nom a l’informe</th><th>Tipus</th><th className="num">Alumnat</th><th>Activa</th></tr>
+            <tr><th>Ordre</th><th>Matèria</th><th>Nom a l’informe</th><th /><th>Tipus</th><th className="num">Alumnat</th><th>Activa</th></tr>
           </thead>
           <tbody>
             {list.map((gs, i) => {
@@ -50,6 +55,11 @@ export function SubjectsScreen({ session }: { session: Session }) {
                     <b>{sub.short}</b>
                   </td>
                   <td className="muted">{sub.long}</td>
+                  <td>
+                    <button className="btn icon small ghost" onClick={() => setEditing(sub)} aria-label={`Canvia el nom de ${sub.short}`} title="Canvia el nom">
+                      <Icon name="edit" />
+                    </button>
+                  </td>
                   <td>
                     <label className="toggle" style={{ fontSize: '.88rem' }}>
                       <input type="checkbox" checked={gs.optional} onChange={(e) => setGradeSubject(session, { ...gs, optional: e.target.checked })} />
@@ -79,6 +89,59 @@ export function SubjectsScreen({ session }: { session: Session }) {
           <p className="muted" style={{ fontSize: '.85rem' }}>Les matèries no s’esborren mai si tenen respostes: es desactiven, i així els informes antics es continuen generant igual.</p>
         </div>
       )}
+      {editing && (
+        <SubjectDialog
+          subject={editing === 'new' ? undefined : editing}
+          grade={grade}
+          onClose={() => setEditing(null)}
+          onSave={(input) => {
+            try {
+              saveSubject(session, input)
+              setEditing(null)
+              showToast(editing === 'new' ? `Matèria «${input.short}» creada.` : 'Nom canviat.')
+            } catch (e) {
+              showToast((e as Error).message)
+            }
+          }}
+        />
+      )}
+      {toast}
     </>
+  )
+}
+
+type SubjectInput = Parameters<typeof saveSubject>[1]
+
+function SubjectDialog({ subject, grade, onClose, onSave }: { subject?: Subject; grade: GradeId; onClose: () => void; onSave: (input: SubjectInput) => void }) {
+  const [short, setShort] = useState(subject?.short ?? '')
+  const [long, setLong] = useState(subject?.long ?? '')
+  const [add, setAdd] = useState(true)
+  const [optional, setOptional] = useState(true)
+  return (
+    <Modal title={subject ? `Nom de ${subject.short}` : 'Matèria nova'} onClose={onClose}>
+      <label className="field">
+        <span>Nom curt (pantalles i taules)</span>
+        <input className="input" value={short} maxLength={40} onChange={(e) => setShort(e.target.value)} placeholder="p. ex. Robòtica" autoFocus />
+      </label>
+      <label className="field">
+        <span>Nom complet (informe i lectura en veu alta)</span>
+        <input className="input" value={long} maxLength={120} onChange={(e) => setLong(e.target.value)} placeholder="Si el deixes buit, s’usa el nom curt" />
+      </label>
+      {subject ? (
+        <p className="muted">El nom nou surt a tot arreu, també a les recollides i als informes ja fets.</p>
+      ) : (
+        <>
+          <label className="toggle"><input type="checkbox" checked={add} onChange={(e) => setAdd(e.target.checked)} /> Afegeix-la ara a {gradeShort(grade)}</label>
+          {add && <label className="toggle"><input type="checkbox" checked={optional} onChange={(e) => setOptional(e.target.checked)} /> És optativa (només la veu l’alumnat que la cursa)</label>}
+          <p className="muted">Després la pots afegir a altres cursos des d’«Afegeix una matèria del catàleg».</p>
+        </>
+      )}
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn" onClick={onClose}>Cancel·la</button>
+        <button className="btn primary" disabled={!short.trim()} onClick={() => onSave({ id: subject?.id, short, long, gradeId: !subject && add ? grade : undefined, optional })}>
+          Desa
+        </button>
+      </div>
+    </Modal>
   )
 }

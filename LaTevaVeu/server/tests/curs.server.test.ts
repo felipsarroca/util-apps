@@ -61,6 +61,19 @@ describe('alumnat en bloc', () => {
   })
 })
 
+describe('matèries', () => {
+  it('una matèria nova i un canvi de nom es desen a la base de dades', async () => {
+    const r = await op('admin', 'saveSubject', { short: 'Robòtica', long: 'Robòtica i programació', gradeId: '2ESO', optional: true })
+    expect(r.status).toBe(200)
+    expect(r.body.result).toBe('ROBOTICA')
+    expect((await op('admin', 'saveSubject', { id: 'MAT', short: 'Mates', long: 'Matemàtiques' })).status).toBe(200)
+    expect((await op('marta', 'saveSubject', { short: 'Res', long: 'Res' })).status).toBe(403)
+    const rows = (await db.query<{ id: string; short_name: string }>("select id, short_name from subjects where id in ('ROBOTICA', 'MAT') order by id")).rows
+    expect(rows).toEqual([{ id: 'MAT', short_name: 'Mates' }, { id: 'ROBOTICA', short_name: 'Robòtica' }])
+    expect((await db.query("select 1 from grade_subjects where subject_id = 'ROBOTICA' and grade_id = '2ESO' and optional")).rows.length).toBe(1)
+  })
+})
+
 describe('curs nou', () => {
   it('només l’administració, i només el curs següent', async () => {
     expect((await call('marta', 'POST', '/api/centre/curs-nou', { year: '2027-2028' })).status).toBe(403)

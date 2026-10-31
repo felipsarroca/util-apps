@@ -245,9 +245,54 @@ function createCampaign$(session: Session, gradeId: GradeId, label: string, star
 
 function setGradeSubject$(session: Session, gs: GradeSubject) {
   requireAdmin(session)
+  if (!state.subjects.some((x) => x.id === gs?.subjectId) || !GRADES.some((g) => g.id === gs.gradeId)) throw new Error('Aquesta matèria no existeix.')
   const exists = state.gradeSubjects.some((x) => x.gradeId === gs.gradeId && x.subjectId === gs.subjectId)
   const list = exists ? state.gradeSubjects.map((x) => (x.gradeId === gs.gradeId && x.subjectId === gs.subjectId ? gs : x)) : [...state.gradeSubjects, gs]
   commit(audit({ ...state, gradeSubjects: list }, session.email, 'Matèries', `${gs.gradeId} · ${gs.subjectId}: ${gs.active ? 'activa' : 'desactivada'}${gs.optional ? ', optativa' : ''}`))
+}
+
+/** Identificador estable d'una matèria nova a partir del nom: «Robòtica» → «ROBOTICA». */
+function subjectIdFor(name: string, taken: Set<string>) {
+  const base = name.normalize('NFD').replace(/[^\w]/g, '').toUpperCase().slice(0, 12) || 'MAT'
+  let id = base
+  for (let n = 2; taken.has(id); n++) id = `${base.slice(0, 10)}${n}`
+  return id
+}
+
+/**
+ * Crea una matèria nova o en canvia el nom. El nom curt surt a les pantalles i el llarg, a l'informe i a la lectura
+ * en veu alta. Si és nova i s'indica un curs, s'hi afegeix al final (optativa o comuna).
+ */
+function saveSubject$(session: Session, input: { id?: string; short: string; long: string; gradeId?: GradeId; optional?: boolean }): string {
+  requireAdmin(session)
+  const short = String(input?.short ?? '').trim().replace(/\s+/g, ' ')
+  const long = String(input?.long ?? '').trim().replace(/\s+/g, ' ') || short
+  if (!short || short.length > 40 || long.length > 120) throw new Error('El nom curt ha de tenir entre 1 i 40 caràcters i el llarg, fins a 120.')
+  const prev = input.id ? state.subjects.find((x) => x.id === input.id) : undefined
+  if (input.id && !prev) throw new Error('Aquesta matèria no existeix.')
+  if (state.subjects.some((x) => x.id !== input.id && x.short.toLowerCase() === short.toLowerCase())) throw new Error(`Ja hi ha una matèria que es diu «${short}».`)
+  if (prev) {
+    commit(audit({ ...state, subjects: state.subjects.map((x) => (x.id === prev.id ? { ...x, short, long } : x)) }, session.email, 'Matèries', `${prev.id}: «${prev.short}» → «${short}» (${long})`))
+    return prev.id
+  }
+  if (input.gradeId && !GRADES.some((g) => g.id === input.gradeId)) throw new Error('Aquest curs no existeix.')
+  const id = subjectIdFor(short, new Set(state.subjects.map((x) => x.id)))
+  // Color repartit pel cercle cromàtic perquè no coincideixi amb el de les matèries properes.
+  const hue = (state.subjects.length * 47 + 15) % 360
+  const order = Math.max(0, ...state.gradeSubjects.filter((g) => g.gradeId === input.gradeId).map((g) => g.order)) + 1
+  commit(
+    audit(
+      {
+        ...state,
+        subjects: [...state.subjects, { id, short, long, hue, active: true }],
+        gradeSubjects: input.gradeId ? [...state.gradeSubjects, { gradeId: input.gradeId, subjectId: id, order, optional: !!input.optional, active: true }] : state.gradeSubjects,
+      },
+      session.email,
+      'Matèries',
+      `Nova matèria ${id}: «${short}» (${long})${input.gradeId ? `, a ${gradeShort(input.gradeId)}` : ''}`,
+    ),
+  )
+  return id
 }
 
 function moveGradeSubject$(session: Session, gradeId: GradeId, subjectId: string, dir: -1 | 1) {
@@ -817,6 +862,7 @@ export const updateCampaign = op('updateCampaign', updateCampaign$)
 export const createCampaign = op('createCampaign', createCampaign$)
 export const setGradeSubject = op('setGradeSubject', setGradeSubject$)
 export const moveGradeSubject = op('moveGradeSubject', moveGradeSubject$)
+export const saveSubject = op('saveSubject', saveSubject$)
 export const saveTemplateDraft = op('saveTemplateDraft', saveTemplateDraft$)
 export const newDraftFrom = op('newDraftFrom', newDraftFrom$)
 export const discardDraft = op('discardDraft', discardDraft$)
@@ -856,6 +902,7 @@ export const SERVER_OPS = {
   createCampaign: createCampaign$,
   setGradeSubject: setGradeSubject$,
   moveGradeSubject: moveGradeSubject$,
+  saveSubject: saveSubject$,
   saveTemplateDraft: saveTemplateDraft$,
   newDraftFrom: newDraftFrom$,
   discardDraft: discardDraft$,

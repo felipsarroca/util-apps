@@ -329,7 +329,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li><b>Configura els grups de cada curs.</b> <Where>Centre › Grups</Where> Per defecte, cada curs té un grup únic. Si un curs té més d’una línia, afegeix-hi els grups (A, B…).</li>
             <li><b>Importa el cens de l’alumnat.</b> <Where>Centre › Alumnat i accessos › Cens de l’alumnat</Where> Un CSV amb identificador, nom, cognoms, correu, curs i, si el curs té més d’un grup, el grup.</li>
             <li><b>Importa els correus de les famílies.</b> <Where>Centre › Famílies</Where> Un CSV amb l’alumne i el nom i el correu de cada responsable.</li>
-            <li><b>Revisa les matèries de cada curs.</b> <Where>Centre › Matèries</Where> Ordre, optatives i matèries actives.</li>
+            <li><b>Revisa les matèries de cada curs.</b> <Where>Centre › Matèries</Where> Ordre, optatives i matèries actives. Afegeix les que no hi siguin amb <b>Matèria nova</b>.</li>
             <li><b>Marca les optatives de cada alumne.</b> <Where>Centre › Alumnat i accessos › Cens</Where> A cada alumne només li apareixen les optatives que cursa.</li>
             <li><b>Indica qui fa classe a qui.</b> <Where>Et veig… › Qui fa classe a qui</Where> Una per una o amb el CSV de plantilla. Sense això, l’alumnat no sabrà quins docents ha de valorar.</li>
             <li><b>Revisa els qüestionaris.</b> <Where>Em miro › Qüestionaris</Where> i <Where>Et veig… › Preguntes</Where> Comprova que hi ha una versió publicada per a cada etapa.</li>
@@ -402,6 +402,9 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           <ul>
             <li>Per a cada curs: ordre de presentació (fletxes), <b>Comuna / Optativa</b> i <b>Activa</b>.</li>
             <li>Els canvis s’apliquen a les recollides noves. Les ja creades conserven la llista de matèries que tenien.</li>
+            <li><b>Matèria nova</b>: nom curt (pantalles), nom complet (informe i lectura en veu alta) i, si vols, s’afegeix al curs que tens triat com a comuna o optativa. Per posar-la en altres cursos, tria el curs i fes servir «Afegeix una matèria del catàleg».</li>
+            <li><b>Canviar el nom</b>: el llapis de cada fila. El nom nou surt a tot arreu, també als informes ja fets. Les matèries no s’esborren: si ja no es fa, desactiva-la.</li>
+            <li>La lectura en veu alta del nom d’una matèria nova fa servir la veu del navegador fins que es tornin a generar els àudios.</li>
           </ul>
           <h3>Apartats</h3>
           <p>Activa o desactiva temporalment Em miro o Et veig… Desactivar-lo l’amaga a l’alumnat sense esborrar cap dada; és útil, per exemple, si cal aturar una recollida per un problema.</p>

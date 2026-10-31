@@ -83,3 +83,20 @@ describe('correus de les famílies en un sol fitxer', () => {
     expect(api.importGuardians(login(ADMIN), r.rows)).toBe(2)
   })
 })
+
+describe('matèries', () => {
+  it('crea una matèria nova, l’afegeix al curs i en canvia el nom', () => {
+    api.resetDemo()
+    expect(() => api.saveSubject(login('tutoria.2eso@ramonpont.cat'), { short: 'Robòtica', long: 'Robòtica' })).toThrow()
+    const id = api.saveSubject(login(ADMIN), { short: 'Robòtica', long: 'Robòtica i programació', gradeId: '3ESO', optional: true })
+    expect(id).toBe('ROBOTICA')
+    const s = api.snapshot()
+    expect(s.subjects.find((x) => x.id === id)).toMatchObject({ short: 'Robòtica', long: 'Robòtica i programació', active: true })
+    expect(s.gradeSubjects.find((x) => x.subjectId === id)).toMatchObject({ gradeId: '3ESO', optional: true, active: true })
+    // Sense repetir noms, i el nom es pot canviar.
+    expect(() => api.saveSubject(login(ADMIN), { short: 'robòtica', long: '' })).toThrow()
+    expect(api.saveSubject(login(ADMIN), { id: 'MAT', short: 'Mates', long: 'Matemàtiques' })).toBe('MAT')
+    expect(api.snapshot().subjects.find((x) => x.id === 'MAT')!.short).toBe('Mates')
+    expect(() => api.setGradeSubject(login(ADMIN), { gradeId: '3ESO', subjectId: 'NOEXISTEIX', order: 1, optional: false, active: true })).toThrow()
+  })
+})
