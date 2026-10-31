@@ -281,9 +281,10 @@ body { padding-bottom: var(--footer-h); }
 
 /* Llista d'afirmacions amb opcions segmentades */
 .qlist { display: grid; gap: .8rem; }
-.qrow { display: grid; gap: .6rem; padding: .95rem 1rem; border: 1.5px solid var(--line); border-radius: var(--r-m); background: #fff; transition: border-color .15s, background .15s; }
-.qrow.done { border-color: #cfe3d6; background: #fbfdfb; }
-.qrow.missing { border-color: #f0b4ad; background: #fff8f7; }
+.qlist:has(> .qrow) { gap: .15rem; }
+.qrow { display: grid; gap: .6rem; padding: .9rem .25rem; margin: 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; transition: background .15s; }
+.qrow:last-child { border-bottom: 0; }
+.qrow.missing { background: #fff6f5; border-radius: var(--r-s); box-shadow: inset 3px 0 0 #e58f86; padding-left: .8rem; }
 .qrow legend, .qrow .qtext { font-weight: 800; font-size: 1.04rem; padding: 0; display: flex; gap: .6rem; align-items: flex-start; }
 .qrow .qnum { display: grid; place-items: center; min-width: 26px; height: 26px; border-radius: 50%; background: var(--gold-soft); color: #6b4e00; font-size: .8rem; flex: none; margin-top: .05em; }
 .qrow.done .qnum { background: var(--ok); color: #fff; }
@@ -335,14 +336,19 @@ fieldset.qrow { margin: 0; min-width: 0; }
 .hello-wrong { margin-left: auto; font-size: .82rem; }
 .campaign-box { display: grid; gap: .8rem; padding: 1.2rem; border: 2px solid var(--line); border-radius: var(--r-l); }
 .campaign-box h2 { font-size: 1.3rem; font-weight: 900; }
-.tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .6rem; }
-.tip { display: flex; gap: .55rem; align-items: flex-start; padding: .7rem .8rem; border-radius: var(--r-m); background: #faf8f4; font-size: .92rem; color: var(--ink-2); font-weight: 600; }
-.tip .em { font-size: 1.3rem; line-height: 1.1; }
+.tips { display: flex; flex-wrap: wrap; gap: .4rem 1.6rem; margin: 0; padding: 0; list-style: none; color: var(--ink-2); font-weight: 700; font-size: .95rem; }
+.tips span { margin-right: .3rem; }
+/* Inici de l'alumnat sense targeta que ho embolcalli tot: només els apartats fan de requadre. */
+.hello.plain { padding: clamp(8px, calc(2 * var(--vh)), 24px) 0 0; }
+.hello.plain .campaign-box.mod { box-shadow: var(--sh-1); }
+.quiet-note { display: flex; align-items: center; gap: .45rem; color: var(--ink-2); font-weight: 600; }
+.quiet-note svg { width: 18px; height: 18px; color: var(--ev); flex: none; }
 
 /* Revisió final */
-.review-list { display: grid; gap: .5rem; }
-.review-item { display: flex; align-items: center; gap: .8rem; padding: .7rem .9rem; border: 1.5px solid var(--line); border-radius: var(--r-m); background: #fff; text-align: left; width: 100%; }
-.review-item:hover { border-color: var(--gold); }
+.review-list { display: grid; }
+.review-item { display: flex; align-items: center; gap: .8rem; padding: .85rem .3rem; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; width: 100%; }
+.review-item:last-child { border-bottom: 0; }
+.review-item:hover { background: var(--gold-soft); }
 .review-item .em { font-size: 1.3rem; }
 .review-item b { flex: 1; }
 .done-hero { text-align: center; display: grid; justify-items: center; gap: 1rem; padding: clamp(28px, calc(6 * var(--vh)), 60px) 20px; }
@@ -525,7 +531,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .t-info b { font-weight: 900; font-size: 1.02rem; }
 .t-info small { color: var(--ink-3); font-weight: 700; font-size: .82rem; overflow-wrap: anywhere; }
 .t-go { margin-left: auto; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--ev-soft); color: var(--ev); flex: none; }
-.t-banner { display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem; border-radius: var(--r-l); background: var(--ev-soft); border: 1.5px solid #c5e0e3; }
+.t-banner { display: flex; align-items: center; gap: .8rem; padding: .2rem .25rem; }
 .t-banner .t-info small:first-child { text-transform: uppercase; letter-spacing: .06em; font-size: .72rem; color: var(--ev); }
 
 /* Professorat: autoavaluació, informes i visió de centre */

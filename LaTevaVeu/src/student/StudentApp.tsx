@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { feedbackHome, logAudit, saveDraft, studentHome, submitResponse, useDemoState, type FeedbackHome } from '../data/api'
-import { gradeById, STAGES } from '../domain/catalog'
+import { gradeById } from '../domain/catalog'
 import { gradeAndGroup } from '../domain/groups'
 import { buildSteps, findMissing, progress, requiredKeys, stepComplete, type Step } from '../domain/engine'
 import type { Answers, Session } from '../domain/types'
@@ -55,7 +55,9 @@ export function StudentApp({ session }: { session: Session }) {
             <div className="big" aria-hidden="true">🎉</div>
             <h1>Ja està! Gràcies, {home.student.name}.</h1>
             <p className="step-intro" style={{ maxWidth: 520 }}>
-              La teva autoavaluació s’ha lliurat correctament. El teu tutor o tutora la podrà llegir. Fins al {fmtDate(home.campaign!.end)} encara la pots revisar si cal.
+              {stage === 'ESO'
+                ? `El teu tutor o tutora la podrà llegir. Fins al ${fmtDate(home.campaign!.end)} encara la pots revisar.`
+                : 'El teu tutor o tutora la llegirà.'}
             </p>
             <div className="row" style={{ justifyContent: 'center' }}>
               <button className="btn" onClick={() => setView('home')}>Torna a l’inici</button>
@@ -88,7 +90,7 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
 
   return (
     <main className="stu-main stu-home">
-      <section className="card hello">
+      <section className="hello plain">
         <div className="hello-top">
           <h1>
             Hola, {student.name}! <span aria-hidden="true">👋</span>
@@ -169,11 +171,11 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
         </div>
 
         {campaign && !delivered && (
-          <div className="tips">
-            <div className="tip"><span className="em" aria-hidden="true">💾</span>Es desa tot sol. Pots parar i continuar un altre dia.</div>
-            <div className="tip"><span className="em" aria-hidden="true">🤔</span>No és un examen: no hi ha respostes bones ni dolentes.</div>
-            <div className="tip"><span className="em" aria-hidden="true">{grade.stage === 'ESO' ? '🎯' : '🔊'}</span>{grade.stage === 'ESO' ? 'Sigues sincer: t’ajudarà a millorar.' : 'Prem «Escolta» si vols que et llegeixi la pregunta.'}</div>
-          </div>
+          <ul className="tips">
+            <li><span aria-hidden="true">💾</span> Es desa sol</li>
+            <li><span aria-hidden="true">🤔</span> No és un examen</li>
+            {grade.stage !== 'ESO' && <li><span aria-hidden="true">🔊</span> «Escolta» et llegeix la pregunta</li>}
+          </ul>
         )}
 
         {home.history.length > 0 && (
@@ -211,7 +213,6 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
           </div>
         </Modal>
       )}
-      {!young && <p className="muted" style={{ textAlign: 'center', fontSize: '.85rem' }}>{STAGES[grade.stage].name}</p>}
     </main>
   )
 }
@@ -399,17 +400,11 @@ function Questionnaire({ session, stage, home, onExit, onDone }: { session: Sess
           <StepBody step={step} ctx={{ stage, scales: s.scales, answers, set, flagged, previousGoal: home.previousGoal }} />
         ) : (
           <>
-            <div className="step-kicker">
-              <span className="em" aria-hidden="true">🔎</span> Abans d’enviar
-            </div>
-            <h2 className="step-title">{missing.length ? 'Gairebé ho tens!' : 'Ho tens tot! Revisa-ho i envia-ho.'}</h2>
+            <h2 className="step-title">{missing.length ? 'Gairebé ho tens!' : 'Ho tens tot! Ja ho pots enviar.'}</h2>
             {missing.length > 0 && (
-              <div className="notice warn">
-                <Icon name="alert" />
-                <div>
-                  Et {missing.length === 1 ? 'falta 1 resposta' : `falten ${missing.length} respostes`}. Toca un apartat per completar-lo.
-                </div>
-              </div>
+              <p className="step-intro">
+                Et {missing.length === 1 ? 'falta 1 resposta' : `falten ${missing.length} respostes`}. Toca un apartat per acabar-lo.
+              </p>
             )}
             <div className="review-list">
               {reviewSections.map((r) => (

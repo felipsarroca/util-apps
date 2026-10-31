@@ -160,13 +160,9 @@ export function StepBody({ step, ctx }: { step: Step; ctx: Ctx }) {
     let n = 0
     return (
       <>
-        <div>
-          <div className="step-kicker">
-            <span className="em" aria-hidden="true">{section.emoji}</span>
-            {ctx.stage === 'ESO' ? 'Bloc' : 'Apartat'}
-          </div>
-          <h2 className="step-title">{section.title}</h2>
-        </div>
+        <h2 className="step-title">
+          <span aria-hidden="true">{section.emoji}</span> {section.title}
+        </h2>
         {section.intro && <p className="step-intro">{section.intro}</p>}
         <div className="qlist">
           {step.questions.map((q) =>
@@ -227,7 +223,7 @@ export function StepBody({ step, ctx }: { step: Step; ctx: Ctx }) {
           })}
           {q.subjectComment && (
             <TextAnswer
-              q={{ id: `${q.id}|${subject.id}|obs`, type: 'shortText', text: q.subjectComment.prompt, required: q.subjectComment.required, maxLength: q.subjectComment.maxLength, active: true, help: 'Pots escriure-hi una idea concreta. No cal que sigui llarg.' }}
+              q={{ id: `${q.id}|${subject.id}|obs`, type: 'shortText', text: q.subjectComment.prompt, required: q.subjectComment.required, maxLength: q.subjectComment.maxLength, active: true }}
               ctx={ctx}
             />
           )}

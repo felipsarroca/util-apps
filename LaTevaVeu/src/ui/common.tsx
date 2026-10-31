@@ -208,18 +208,56 @@ export function canSpeak() {
   return typeof window !== 'undefined' && 'speechSynthesis' in window
 }
 
+// Les veus «naturals» (Edge, Android) sonen molt millor que les clàssiques del sistema.
+const NATURAL = /natural|neural|online|enhanced|premium|wavenet/i
+
+let voices: SpeechSynthesisVoice[] = []
+function loadVoices() {
+  voices = window.speechSynthesis.getVoices()
+}
+if (canSpeak()) {
+  loadVoices()
+  window.speechSynthesis.addEventListener?.('voiceschanged', loadVoices)
+}
+
+/** La millor veu catalana disponible: primer les naturals, després les del núvol i les locals. */
+export function bestCatalanVoice(): SpeechSynthesisVoice | null {
+  const ca = voices.filter((v) => /^ca([-_]|$)/i.test(v.lang))
+  const score = (v: SpeechSynthesisVoice) => (NATURAL.test(v.name) ? 4 : 0) + (v.localService ? 0 : 1)
+  return ca.sort((a, b) => score(b) - score(a))[0] ?? null
+}
+
+/** Frases curtes, sense emojis: sonen més naturals i Chrome no talla les lectures llargues. */
+function sentences(text: string) {
+  return text
+    .replace(/\p{Extended_Pictographic}|️|‍/gu, '')
+    .replace(/[«»"]/g, '')
+    .replace(/…/g, '.')
+    .split(/(?<=[.!?:;])\s+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+}
+
 export function speak(text: string, onEnd?: () => void) {
   if (!canSpeak()) return
   const s = window.speechSynthesis
   s.cancel()
-  const u = new SpeechSynthesisUtterance(text)
-  u.lang = 'ca-ES'
-  const voice = s.getVoices().find((v) => v.lang.toLowerCase().startsWith('ca'))
-  if (voice) u.voice = voice
-  u.rate = 0.92
-  u.onend = () => onEnd?.()
-  u.onerror = () => onEnd?.()
-  s.speak(u)
+  if (!voices.length) loadVoices()
+  const voice = bestCatalanVoice()
+  const parts = sentences(text)
+  if (!parts.length) return onEnd?.()
+  parts.forEach((part, i) => {
+    const u = new SpeechSynthesisUtterance(part)
+    u.lang = voice?.lang ?? 'ca-ES'
+    if (voice) u.voice = voice
+    // Les veus naturals ja tenen bon ritme; les clàssiques s'entenen millor una mica més lentes.
+    u.rate = voice && NATURAL.test(voice.name) ? 1 : 0.88
+    if (i === parts.length - 1) {
+      u.onend = () => onEnd?.()
+      u.onerror = () => onEnd?.()
+    }
+    s.speak(u)
+  })
 }
 
 export function SpeakButton({ text, label = 'Escolta' }: { text: string; label?: string }) {

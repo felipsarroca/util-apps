@@ -75,6 +75,8 @@ Torna-les a fer quan canviï alguna de les pantalles que surten al README.
 - **Correu** (`Centre › Correu`, administració): compte de l'escola que envia, on arriben les respostes (tutoria o adreça fixa) i text editable dels dos missatges amb previsualització. Famílies: «Així em veig» adjunt, text basat en el de VeuAlumnat. Professorat: avís que «Així et veiem» és disponible, sense adjunt. Es desa a `app_settings ('mail')`. «Prepara l'enviament» ja mostra el remitent i l'assumpte real.
 - **Guia del personal**: oberta a tot el personal, amb dos recorreguts pas a pas (tutoria i professorat; administració) abans del detall de cada pantalla, i dubtes freqüents de la tutoria.
 - **README** reorganitzat, amb 13 captures de la demostració.
+- **Pantalles de l'alumnat més netes**: sense targetes dins de targetes (inici, llista de docents, preguntes en files amb línia divisòria, resum final); fora textos sobrers (frase de la llista de docents, avís blau de confidencialitat reduït a una línia, rètols «Bloc» i «Abans d'enviar», ajudes repetides); a primària, sense dates.
+- **Lectura en veu alta**: tria la millor veu catalana disponible (les «naturals» d'Edge o les de Google a Android), llegeix frase a frase i salta els emojis. La qualitat final depèn del navegador: amb Microsoft Edge sona molt millor que amb Chrome a Windows.
 - **Presentació del projecte** (`#/projecte`): sentit, marc normatiu citat de fonts oficials (Convenció sobre els Drets de l'Infant art. 12; LOE-LOMLOE art. 1 i 91; Decret 175/2022 art. 22, 23 i 24), què fa l'app, com funciona, beneficis i privacitat.
 
 ## Pendent
@@ -83,8 +85,9 @@ Torna-les a fer quan canviï alguna de les pantalles que surten al README.
 2. Triar l'allotjament del servidor (a la UE) i desplegar-lo. Abans, crear el rol `latevaveu_app` a Neon i aplicar `db/permisos.sql` (ordres dins del fitxer).
 3. Client OAuth de Google aprovat a la consola de Google Workspace de l'escola.
 4. **Decidir el compte que envia els correus** (recomanat: un compte dedicat, com `latevaveu@ramonpont.cat`) i autoritzar el servidor a enviar en nom seu (Gmail API amb delegació de domini o SMTP de Google Workspace). Després, implementar l'enviament real: cua idempotent, «Envia'm una prova», «Aprova i envia» i registre de cada missatge, fent servir `renderMail` de `src/domain/mail.ts`.
-5. Inventari real de les matèries d'ESO per curs i prova pilot amb alumnat de cada etapa.
-6. PFI: caldria un curs i un qüestionari propis (no es pot tractar com un grup).
+5. **Àudios de qualitat garantida** (opcional): generar els MP3 de les preguntes de primària amb una veu catalana professional (per exemple, ElevenLabs) i fer-los servir quan existeixin, amb la veu del navegador com a reserva per als textos editats.
+6. Inventari real de les matèries d'ESO per curs i prova pilot amb alumnat de cada etapa.
+7. PFI: caldria un curs i un qüestionari propis (no es pot tractar com un grup).
 
 ## Precaucions
 

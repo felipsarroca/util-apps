@@ -110,28 +110,20 @@ function TeacherList({ home, stage, onPick, onExit }: { home: FeedbackHome; stag
   const all = done === total
   return (
     <main className="stu-main etveig">
-      <section className="card hello">
+      <section className="hello plain">
         <div className="mod-kicker ev">
           <span aria-hidden="true">👀</span> Et veig…
         </div>
         <h1>{all ? 'Ho has fet tot! Gràcies.' : 'La meva mirada al professorat'}</h1>
-        <p className="step-intro">
-          {stage === 'CM'
-            ? 'Explica com et sents a les classes de cada mestre. No hi ha respostes bones ni dolentes.'
-            : 'Explica com vius les classes de cada docent i què t’ajuda a aprendre. Serveix perquè l’escola millori com ensenya.'}
+        <p className="quiet-note">
+          <Icon name="shield" /> {stage === 'CM' ? 'El mestre no veurà mai les teves respostes.' : 'El docent no veurà mai les teves respostes, només les del grup.'}
         </p>
-        <div className="notice">
-          <Icon name="shield" />
-          <div>
-            Les teves respostes s’ajunten amb les dels companys. El docent veu els resultats del grup, <b>mai les teves respostes</b>. Un cop lliurada la valoració d’un docent, ja no es pot canviar.
-          </div>
-        </div>
         <div className="progress">
           <div className="progress-top">
             <span>
               {done} de {total} {stage === 'CM' ? 'mestres' : 'docents'} fets
             </span>
-            <span>Oberta fins al {fmtDate(home.campaign.end)}</span>
+            {stage === 'ESO' && <span>Oberta fins al {fmtDate(home.campaign.end)}</span>}
           </div>
           <div className="progress-bar ev" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done}>
             <div style={{ width: `${(done / total) * 100}%` }} />
@@ -142,7 +134,6 @@ function TeacherList({ home, stage, onPick, onExit }: { home: FeedbackHome; stag
             <TeacherCard key={t.email} t={t} onPick={() => onPick(t.email)} />
           ))}
         </div>
-        {!all && <p className="muted" style={{ fontSize: '.9rem' }}>Pots fer-ne uns quants avui i continuar un altre dia: el que comencis es desa sol.</p>}
         {onExit && (
           <div className="row">
             <button className="btn" onClick={onExit}>
@@ -346,20 +337,17 @@ function TeacherForm({ source, scale, stage, home, target, onBack, onDone }: { s
               </div>
               <h2 className="step-title">Vols afegir-hi alguna cosa?</h2>
             </div>
-            <p className="step-intro">És opcional. Escriu sobre les classes, no sobre companys. No posis noms ni detalls que permetin saber qui ets.</p>
+            <p className="step-intro">Parla de les classes i no posis noms.</p>
             {form.open.map((q) => (
               <TextAnswer key={q.id} q={{ id: q.id, type: 'shortText', text: q.text, required: false, maxLength: q.maxLength, active: true }} ctx={{ stage, scales: [scale], answers, set }} />
             ))}
             {missing.length > 0 && (
-              <div className="notice warn">
-                <Icon name="alert" />
-                <div>
-                  Et {missing.length === 1 ? 'falta 1 afirmació' : `falten ${missing.length} afirmacions`} per respondre.{' '}
-                  <button className="link-btn" onClick={() => go(steps.findIndex((st) => (st.kind === 'item' ? st.item.id === missing[0].id : st.kind === 'dim' && st.dimId === missing[0].dimensionId)))}>
-                    Vés-hi
-                  </button>
-                </div>
-              </div>
+              <p className="step-intro">
+                Et {missing.length === 1 ? 'falta 1 afirmació' : `falten ${missing.length} afirmacions`} per respondre.{' '}
+                <button className="link-btn" onClick={() => go(steps.findIndex((st) => (st.kind === 'item' ? st.item.id === missing[0].id : st.kind === 'dim' && st.dimId === missing[0].dimensionId)))}>
+                  Vés-hi
+                </button>
+              </p>
             )}
           </>
         )}
@@ -383,7 +371,7 @@ function TeacherForm({ source, scale, stage, home, target, onBack, onDone }: { s
 
       {confirm && (
         <Modal title={`Lliures la valoració de ${target.name}?`} onClose={() => setConfirm(false)}>
-          <p>Un cop lliurada, s’ajuntarà amb la dels companys i ja no la podràs canviar.</p>
+          <p>Després ja no la podràs canviar.</p>
           <div className="row" style={{ justifyContent: 'flex-end' }}>
             <button className="btn" onClick={() => setConfirm(false)}>Encara no</button>
             <button className="btn primary ev" onClick={submit} disabled={busy}>
