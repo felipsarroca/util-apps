@@ -57,11 +57,13 @@ function Access({ session }: { session: Session }) {
   }
   return (
     <>
-      <div className="row">
-        <p className="muted" style={{ flex: 1 }}>
-          El professorat només veu els grups que té assignats. L’administració ho veu tot i cada acció queda registrada. Els resultats d’«Et veig…» només els veu l’<b>Equip Directiu</b>
-          {dir ? '.' : ': només l’administració o l’Equip Directiu poden afegir-hi o treure’n persones.'}
-        </p>
+      <div className="row" style={{ alignItems: 'flex-start' }}>
+        <ul className="role-help">
+          <li><b>Rol.</b> Decideix què pot gestionar cada persona. <b>Professorat</b>: només veu els seus grups de tutoria. <b>Administració</b>: gestiona l’app (accessos, cens, recollides, informes) i veu totes les autoavaluacions d’«Em miro».</li>
+          <li><b>Ser avaluat.</b> No depèn del rol: tothom qui surt a <b>Et veig… › Qui fa classe a qui</b> és valorat pel seu alumnat i veu el seu propi informe, també si és d’administració.</li>
+          <li><b>Equip Directiu.</b> Veu els resultats d’«Et veig…» de tot el professorat. {dir ? 'Ningú no pot canviar la seva pròpia pertinença.' : 'Només l’administració o l’Equip Directiu poden canviar qui en forma part.'}</li>
+          <li><b>Recomanació.</b> Administració només per a les 2 o 3 persones que gestionen l’app; la resta, Professorat amb els seus grups.</li>
+        </ul>
         <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" /> Dona accés</button>
       </div>
       <div className="table-wrap">

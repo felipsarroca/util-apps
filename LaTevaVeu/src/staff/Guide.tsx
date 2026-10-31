@@ -166,12 +166,30 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
                 <tr><td><b>Alumnat</b></td><td>Respon la seva autoavaluació mentre la recollida és oberta</td><td>Valora cada docent que li fa classe, una sola vegada</td><td>Pot avisar si el seu nom, curs o grup no són correctes</td></tr>
                 <tr><td><b>Professorat</b></td><td>—</td><td>Fa la seva autoavaluació i veu el seu informe quan es publica</td><td>—</td></tr>
                 <tr><td><b>Tutoria</b> (docent amb grups)</td><td>Tauler, respostes i informes dels seus grups</td><td>Com la resta del professorat</td><td>—</td></tr>
-                <tr><td><b>Equip Directiu</b></td><td>Veu el seguiment i els informes de tot l’alumnat</td><td>Gestiona les recollides, <b>modera els comentaris</b>, fa el seguiment del professorat, veu tots els informes i la visió de centre</td><td>Correus de les famílies; decideix qui forma part de l’Equip Directiu</td></tr>
-                <tr><td><b>Administració</b></td><td>Ho veu tot, crea les recollides i edita els qüestionaris</td><td>Gestiona les recollides, les preguntes i les assignacions; <b>no veu cap resultat</b></td><td>Accessos, cens, grups, famílies, matèries, apartats i registre</td></tr>
+                <tr><td><b>Equip Directiu</b></td><td>Veu el seguiment i els informes de tot l’alumnat</td><td>Gestiona les recollides, <b>modera els comentaris</b>, fa el seguiment del professorat, veu tots els informes i la visió de centre</td><td>Correus de les famílies; pot canviar qui forma part de l’Equip Directiu</td></tr>
+                <tr><td><b>Administració</b></td><td>Ho veu tot, crea les recollides i edita els qüestionaris</td><td>Gestiona les recollides, les preguntes i les assignacions; <b>no veu cap resultat</b></td><td>Accessos (també qui és de l’Equip Directiu), cens, grups, famílies, matèries, apartats i registre</td></tr>
               </tbody>
             </table>
           </div>
-          <Tip>Si una persona d’administració també forma part de l’Equip Directiu, té tots dos permisos. L’administració i l’Equip Directiu poden afegir-hi o treure’n persones, però ningú no pot canviar la seva pròpia pertinença.</Tip>
+          <h3>Rol, ser avaluat i Equip Directiu són tres coses diferents</h3>
+          <div className="table-wrap">
+            <table className="t guide-t">
+              <thead>
+                <tr><th>Què</th><th>On es decideix</th><th>Què comporta</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><b>Rol</b>: Administració o Professorat</td><td>Centre › Alumnat i accessos</td><td>Què pot <b>gestionar</b> la persona. L’administració gestiona l’app i veu totes les autoavaluacions d’«Em miro»; el professorat només veu els seus grups de tutoria.</td></tr>
+                <tr><td><b>Ser avaluat</b> a «Et veig…»</td><td>Et veig… › Qui fa classe a qui</td><td>L’alumnat dels grups on fa classe el valora, i veu el seu propi informe a «Així et veiem». <b>No depèn del rol</b>: una persona d’administració que fa classe també és avaluada.</td></tr>
+                <tr><td><b>Equip Directiu</b></td><td>Centre › Alumnat i accessos, columna «Equip Directiu»</td><td>Veu els resultats d’«Et veig…» de tot el professorat i la visió de centre.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul>
+            <li>Una persona d’administració que fa classe <b>no veu els resultats dels companys</b>, tret que també sigui de l’Equip Directiu. Si ho és, té tots dos permisos.</li>
+            <li>Ningú, ni l’administració ni l’Equip Directiu, no veu mai les respostes individuals de l’alumnat d’«Et veig…»: només resultats agregats, amb un mínim de 15 respostes.</li>
+            <li>L’administració i l’Equip Directiu poden afegir i treure persones de l’Equip Directiu, però ningú no pot canviar la seva pròpia pertinença ni retirar-se el seu propi accés.</li>
+          </ul>
+          <Tip>Dona el rol d’Administració només a les 2 o 3 persones que gestionen l’app (accessos, cens, recollides i informes). A la resta del personal, dona-li el rol de Professorat amb els seus grups de tutoria: així cadascú veu només el seu alumnat.</Tip>
         </Sec>
 
         <Sec id="pantalla">

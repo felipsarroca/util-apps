@@ -345,6 +345,8 @@ fieldset.qrow { margin: 0; min-width: 0; }
 /* Inici de l'alumnat sense targeta que ho embolcalli tot: només els apartats fan de requadre. */
 .hello.plain { padding: clamp(8px, calc(2 * var(--vh)), 24px) 0 0; }
 .hello.plain .campaign-box.mod { box-shadow: var(--sh-1); }
+.role-help { flex: 1; display: grid; gap: .35rem; margin: 0; padding-left: 1.1rem; color: var(--ink-2); font-size: .92rem; line-height: 1.45; }
+.role-help b { color: var(--ink); }
 .quiet-note { display: flex; align-items: center; gap: .45rem; color: var(--ink-2); font-weight: 600; }
 .quiet-note svg { width: 18px; height: 18px; color: var(--ev); flex: none; }
 
