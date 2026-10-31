@@ -126,6 +126,16 @@ export const putSelf = (campaignId: string, stage: StageId, answers: Answers, co
 export const fetchReport = (campaignId: string, teacherEmail: string) => call<TeacherReport>('GET', `/api/et-veig/${campaignId}/reports/${enc(teacherEmail)}`)
 export const fetchCenter = (campaignId: string) => call<CenterStage[]>('GET', `/api/et-veig/${campaignId}/center`)
 
+export interface RemoteTeacherStatus {
+  email: string
+  name: string
+  stages: StageId[]
+  n: number
+  eligible: number
+  selfDone: number
+}
+export const fetchTeacherStatus = (campaignId: string) => call<RemoteTeacherStatus[]>('GET', `/api/et-veig/${campaignId}/teachers`)
+
 /** Carrega dades del servidor i permet tornar-les a demanar. `key` identifica què es carrega. */
 export function useRemote<T>(load: () => Promise<T>, key = '') {
   const [state, setState] = useState<{ data?: T; error?: string; loading: boolean }>({ loading: true })
@@ -146,3 +156,24 @@ export function useRemote<T>(load: () => Promise<T>, key = '') {
   }, [key, tick])
   return { ...state, reload: () => setTick((t) => t + 1) }
 }
+
+// ---------- Centre: correus de les famílies ----------
+
+export interface RemoteFamily {
+  ref: string
+  name: string
+  surname: string
+  email: string
+  gradeId: GradeId
+  group: string
+  guardians: { name: string; email: string; validated: boolean }[]
+}
+export interface RemoteFamilyImport {
+  students: number
+  emails: number
+  issues: { line: number; msg: string }[]
+}
+export const fetchFamilies = () => call<RemoteFamily[]>('GET', '/api/centre/families')
+export const postFamiliesImport = (csv: string, filename?: string) => call<RemoteFamilyImport>('POST', '/api/centre/families/import', { csv, filename })
+export const postGuardianValidated = (ref: string, email: string, validated: boolean) => call<void>('POST', '/api/centre/families/validate', { ref, email, validated })
+export const postGuardianRemove = (ref: string, email: string) => call<void>('POST', '/api/centre/families/remove', { ref, email })

@@ -137,7 +137,7 @@ La carpeta `server` conté el backend d'«Et veig». Encara no està desplegat a
 
 ### Mode connectat
 
-Amb `VITE_API_URL`, l'app parla amb el servidor: l'alumnat valora el professorat i el personal gestiona les recollides, fa la seva autoavaluació docent, modera els comentaris i consulta els informes. Cada petició carrega només la recollida i l'alumne que necessita, amb les consultes en paral·lel. «Em miro» i la configuració (cens, assignacions, preguntes) encara funcionen només en demostració.
+Amb `VITE_API_URL`, l'app parla amb el servidor: l'alumnat valora el professorat i el personal gestiona les recollides, fa la seva autoavaluació docent, modera els comentaris i consulta els informes. L'administració i l'Equip Directiu fan el seguiment del professorat (autoavaluacions pendents i recomptes de valoracions; l'Equip Directiu també en treu tots els informes en un PDF) i gestionen els correus de les famílies (importació CSV revalidada al servidor, amb registre de cada importació i de les files amb errors). Cada petició carrega només la recollida i l'alumne que necessita, amb les consultes en paral·lel. «Em miro» i la resta de la configuració (cens, grups, assignacions, preguntes) encara funcionen només en demostració.
 
 Per provar-ho tot en local amb dades fictícies:
 
@@ -162,6 +162,6 @@ npm run server:build     # genera dist-server/main.js
 Pendent:
 
 1. Triar l'allotjament del servidor (UE) i desplegar-lo: cal l'aprovació de direcció i de la persona delegada de protecció de dades.
-2. API d'«Em miro», de l'autoavaluació docent a la interfície connectada i de la gestió (cens, personal, assignacions, càrrega de CSV).
+2. API d'«Em miro» i de la resta de la gestió (cens, grups, personal, assignacions).
 3. Rols i permisos de la base de dades (usuari de l'aplicació sense permisos d'esborrat sobre l'auditoria).
-4. Rendiment: cada petició carrega totes les dades de la recollida; caldrà consultes específiques abans d'usar-ho amb tot el centre.
+4. Enviament real dels informes per correu a les famílies (servei institucional, cua idempotent i prova prèvia).

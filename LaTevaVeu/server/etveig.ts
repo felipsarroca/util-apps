@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import {
   buildCenterView,
   buildTeacherReport,
+  eligibleStudents,
   encodeAnswers,
   flagComment,
   groupKey,
@@ -302,6 +303,36 @@ export async function centerView(ctx: Ctx, actor: Actor, campaignId: string) {
 }
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + Number(b), 0)
+
+/**
+ * Seguiment del professorat d'una recollida: valoracions rebudes (només el recompte) i autoavaluació lliurada.
+ * Per a l'administració i l'Equip Directiu. No diu mai qui ha valorat ni què ha respost.
+ */
+export async function teacherStatus(ctx: Ctx, actor: Actor, campaignId: string) {
+  if (!actor.roles.has('admin') && !isDirection(actor)) throw forbidden()
+  const [l, answers, selfs] = await Promise.all([
+    load(ctx.db, ctx.yearId, { campaignId, results: false }),
+    ctx.db.query<{ teacher_id: string; n: string }>('select teacher_id, count(*) as n from feedback_answers where campaign_id = $1 group by teacher_id', [campaignId]),
+    ctx.db.query<{ teacher_id: string; stage: StageId }>('select teacher_id, stage from teacher_self_assessments where campaign_id = $1 and submitted_at is not null', [campaignId]),
+  ])
+  const c = l.data.feedbackCampaigns.find((x) => x.id === campaignId)
+  if (!c) throw notFound()
+  const nById = new Map(answers.rows.map((r) => [r.teacher_id, Number(r.n)]))
+  return c.teachers
+    .map((email) => {
+      const id = l.idByEmail.get(email)
+      const stages = stagesOfTeacher(c, email)
+      return {
+        email,
+        name: l.data.staff.find((x) => x.email === email)?.name ?? email,
+        stages,
+        n: (id && nById.get(id)) || 0,
+        eligible: stages.reduce((a, st) => a + eligibleStudents(l.data, c, email, st).length, 0),
+        selfDone: selfs.rows.filter((r) => r.teacher_id === id && stages.includes(r.stage)).length,
+      }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'ca'))
+}
 
 // ---------- Gestió de les recollides ----------
 

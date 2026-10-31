@@ -1,13 +1,15 @@
 // Personal en mode connectat: recollides d'«Et veig», autoavaluació docent, moderació i informes,
 // servits pel servidor. La resta de la gestió (cens, assignacions, preguntes) encara es fa a la demostració.
 import { useState } from 'react'
-import { fetchCampaigns, fetchCenter, fetchComments, fetchReport, fetchSelfTasks, postModeration, postStatus, putSelf, useRemote, type RemoteCampaign, type RemoteComment } from '../data/remote'
+import { fetchCampaigns, fetchCenter, fetchComments, fetchReport, fetchSelfTasks, fetchTeacherStatus, postModeration, postStatus, putSelf, useRemote, type RemoteCampaign, type RemoteComment } from '../data/remote'
+import { THRESHOLD, type TeacherReport } from '../domain/feedback'
 import { STAGES } from '../domain/catalog'
 import type { FeedbackStatus, Session } from '../domain/types'
 import { CenterReportPages, FeedbackReportPages } from '../report/FeedbackReport'
 import { SheetViewer } from '../report/Report'
 import { fmtDate, Icon, Modal, useToast } from '../ui/common'
 import { FB_LABEL, FB_TONE, NEXT, SelfAssessView } from './EtVeig'
+import { RemoteFamilies } from './RemoteFamilies'
 import { PrintPortal } from './shared'
 import { PageHead, SPACES } from './StaffApp'
 
@@ -15,13 +17,14 @@ const RESULTS_DIRECTION: FeedbackStatus[] = ['INFORMES_GENERATS', 'PUBLICADA', '
 const RESULTS_TEACHER: FeedbackStatus[] = ['PUBLICADA', 'ARXIVADA']
 const FLOW = Object.keys(FB_LABEL) as FeedbackStatus[]
 
-type Screen = { kind: 'list' } | { kind: 'self' } | { kind: 'moderate'; c: RemoteCampaign } | { kind: 'report'; c: RemoteCampaign; teacher: string } | { kind: 'center'; c: RemoteCampaign }
+type Screen = { kind: 'list' } | { kind: 'self' } | { kind: 'families' } | { kind: 'moderate'; c: RemoteCampaign } | { kind: 'report'; c: RemoteCampaign; teacher: string } | { kind: 'center'; c: RemoteCampaign } | { kind: 'teachers'; c: RemoteCampaign }
 
 export function RemoteStaff({ session }: { session: Session }) {
   const [screen, setScreen] = useState<Screen>({ kind: 'list' })
   const back = () => setScreen({ kind: 'list' })
   // L'Equip Directiu i l'administració no s'autoavaluen si no fan classe: el servidor els torna una llista buida.
   const teaches = session.role !== 'admin' || !!session.direction
+  const manage = session.role === 'admin' || !!session.direction
   const sp = SPACES['et-veig']
   return (
     <div className="staff space-ev">
@@ -33,7 +36,7 @@ export function RemoteStaff({ session }: { session: Session }) {
           <small>{sp.tagline}</small>
         </div>
         <div className="side-label">Seguiment</div>
-        <button className={`nav-btn${screen.kind !== 'self' ? ' cur' : ''}`} onClick={back}>
+        <button className={`nav-btn${screen.kind !== 'self' && screen.kind !== 'families' ? ' cur' : ''}`} onClick={back}>
           <Icon name="calendar" /> Recollides
         </button>
         {teaches && (
@@ -41,13 +44,23 @@ export function RemoteStaff({ session }: { session: Session }) {
             <Icon name="edit" /> La meva autoavaluació
           </button>
         )}
+        {manage && (
+          <>
+            <div className="side-label">Centre</div>
+            <button className={`nav-btn${screen.kind === 'families' ? ' cur' : ''}`} onClick={() => setScreen({ kind: 'families' })}>
+              <Icon name="mail" /> Famílies
+            </button>
+          </>
+        )}
       </nav>
       <main className="staff-main">
         {screen.kind === 'list' && <Campaigns session={session} go={setScreen} />}
         {screen.kind === 'self' && <SelfRemote />}
+        {screen.kind === 'families' && <RemoteFamilies />}
         {screen.kind === 'moderate' && <Moderation c={screen.c} onBack={back} />}
         {screen.kind === 'report' && <Report c={screen.c} teacher={screen.teacher} onBack={back} />}
         {screen.kind === 'center' && <Center c={screen.c} onBack={back} go={setScreen} />}
+        {screen.kind === 'teachers' && <Teachers session={session} c={screen.c} onBack={back} go={setScreen} />}
       </main>
     </div>
   )
@@ -125,6 +138,11 @@ function Campaigns({ session, go }: { session: Session; go: (s: Screen) => void 
                   {manage && next && (
                     <button className="btn primary small ev" onClick={() => setAsk({ c, ...next })}>
                       {next.label}
+                    </button>
+                  )}
+                  {manage && !['ESBORRANY', 'PROGRAMADA'].includes(c.status) && (
+                    <button className="btn small" onClick={() => go({ kind: 'teachers', c })}>
+                      <Icon name="users" /> Professorat
                     </button>
                   )}
                   {session.direction && c.status === 'MODERACIO' && (
@@ -302,6 +320,112 @@ function Center({ c, onBack, go }: { c: RemoteCampaign; onBack: () => void; go: 
           <CenterReportPages view={r.data} campaign={c} />
         </PrintPortal>
       )}
+    </>
+  )
+}
+
+function Teachers({ session, c, onBack, go }: { session: Session; c: RemoteCampaign; onBack: () => void; go: (s: Screen) => void }) {
+  const r = useRemote(() => fetchTeacherStatus(c.id), c.id)
+  const [onlyPending, setOnlyPending] = useState(false)
+  const [batch, setBatch] = useState<TeacherReport[] | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [toast, showToast] = useToast()
+  const reports = !!session.direction && RESULTS_DIRECTION.includes(c.status)
+  const rows = r.data ?? []
+  const pending = rows.filter((t) => t.selfDone < t.stages.length)
+  const shown = onlyPending ? pending : rows
+  const printAll = async () => {
+    setBusy(true)
+    try {
+      setBatch(await Promise.all(rows.filter((t) => t.stages.length).map((t) => fetchReport(c.id, t.email))))
+    } catch (e) {
+      showToast((e as Error).message)
+    }
+    setBusy(false)
+  }
+  const copyPending = async () => {
+    try {
+      await navigator.clipboard.writeText(pending.map((t) => t.email).join(', '))
+      showToast(`${pending.length} adreces copiades: enganxa-les al correu de recordatori.`)
+    } catch {
+      showToast('No s’han pogut copiar les adreces.')
+    }
+  }
+  return (
+    <>
+      <PageHead title="Professorat" sub={`${c.label} · Qui ha fet l’autoavaluació i quantes valoracions ha rebut cada docent. Mai es mostra qui ha valorat ni què ha respost.`}>
+        <button className="btn" onClick={onBack}><Icon name="arrowL" /> Recollides</button>
+        {reports && (
+          <button className="btn primary ev" disabled={busy || !rows.length} onClick={printAll}>
+            <Icon name="print" /> {busy ? 'Preparant…' : 'Tots els informes en PDF'}
+          </button>
+        )}
+      </PageHead>
+      {!r.data ? (
+        <Loading error={r.error} reload={r.reload} />
+      ) : (
+        <>
+          <div className="kpis">
+            <div className="card kpi accent ev">
+              <span className="l">Autoavaluacions fetes</span>
+              <span className="v">{rows.length - pending.length}/{rows.length}</span>
+              <span className="s">{pending.length ? `${pending.length} docents pendents` : 'Tothom l’ha feta'}</span>
+            </div>
+            <div className="card kpi">
+              <span className="l">Llindar assolit</span>
+              <span className="v">{rows.filter((t) => t.n >= THRESHOLD).length}/{rows.length}</span>
+              <span className="s">Docents amb {THRESHOLD} valoracions o més</span>
+            </div>
+          </div>
+          {pending.length > 0 && (
+            <div className="notice warn">
+              <Icon name="alert" />
+              <div>
+                <b>Autoavaluació pendent:</b> {pending.map((t) => t.name).join(', ')}.
+                <div className="row" style={{ marginTop: '.4rem' }}>
+                  <button className="btn small" style={{ whiteSpace: 'normal', textAlign: 'left' }} onClick={copyPending}><Icon name="mail" /> Copia les adreces per enviar un recordatori</button>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="toolbar">
+            <label className="check">
+              <input type="checkbox" checked={onlyPending} onChange={(e) => setOnlyPending(e.target.checked)} /> Només autoavaluació pendent
+            </label>
+          </div>
+          <div className="table-wrap">
+            <table className="t">
+              <thead>
+                <tr><th>Docent</th><th>Etapes</th><th className="num">Valoracions</th><th>Llindar ({THRESHOLD})</th><th>Autoavaluació</th>{reports && <th />}</tr>
+              </thead>
+              <tbody>
+                {shown.map((t) => (
+                  <tr key={t.email}>
+                    <td><b>{t.name}</b><br /><small className="muted">{t.email}</small></td>
+                    <td>{t.stages.map((st) => STAGES[st].short).join(' · ')}</td>
+                    <td className="num">{t.n} / {t.eligible}</td>
+                    <td>{t.n >= THRESHOLD ? <span className="badge ok">Assolit</span> : <span className="badge warn">Encara no</span>}</td>
+                    <td>{t.selfDone === t.stages.length ? <span className="badge ok">Feta</span> : <span className="badge bad">Pendent{t.stages.length > 1 ? ` (${t.selfDone}/${t.stages.length})` : ''}</span>}</td>
+                    {reports && (
+                      <td className="actions">
+                        <button className="btn small" disabled={!t.stages.length} onClick={() => go({ kind: 'report', c, teacher: t.email })}>
+                          <Icon name="eye" /> Informe
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+      {batch && (
+        <PrintPortal onDone={() => setBatch(null)}>
+          {batch.map((x) => <FeedbackReportPages key={x.teacher.email} report={x} />)}
+        </PrintPortal>
+      )}
+      {toast}
     </>
   )
 }

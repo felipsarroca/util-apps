@@ -6,6 +6,7 @@ import { resolveActor, type Actor, type Verifier } from './auth'
 import type { Db } from './db'
 import { HttpError, unauthorized } from './errors'
 import * as etVeig from './etveig'
+import * as families from './families'
 
 export interface AppOptions {
   db: Db
@@ -83,6 +84,8 @@ export function buildApp(o: AppOptions) {
 
   app.get<{ Params: P }>('/api/et-veig/:campaignId/center', async (req) => etVeig.centerView(ctx, await actorOf(req), req.params.campaignId))
 
+  app.get<{ Params: P }>('/api/et-veig/:campaignId/teachers', async (req) => etVeig.teacherStatus(ctx, await actorOf(req), req.params.campaignId))
+
   app.post<{ Params: P; Body: { status: FeedbackStatus } }>('/api/et-veig/:campaignId/status', async (req, reply) => {
     await etVeig.setFeedbackStatus(ctx, await actorOf(req), req.params.campaignId, req.body?.status)
     return reply.code(204).send()
@@ -91,6 +94,31 @@ export function buildApp(o: AppOptions) {
   app.post<{ Params: P; Body: { status: Exclude<ModerationStatus, 'pendent'>; text?: string } }>('/api/et-veig/comments/:id/moderation', async (req, reply) => {
     if (!['acceptat', 'editat', 'descartat'].includes(req.body?.status)) throw new HttpError(400, 'Estat de moderació no vàlid.')
     await etVeig.moderateComment(ctx, await actorOf(req), req.params.id, req.body.status, req.body.text)
+    return reply.code(204).send()
+  })
+
+  // ---------- Centre: correus de les famílies ----------
+  type F = { ref?: unknown; email?: unknown; validated?: unknown }
+  const ref = (b: F | undefined) => {
+    if (typeof b?.ref !== 'string' || typeof b.email !== 'string' || b.ref.length > 64 || b.email.length > 200) throw new HttpError(400, 'Petició no vàlida.')
+    return { ref: b.ref, email: b.email }
+  }
+
+  app.get('/api/centre/families', async (req) => families.listFamilies(ctx, await actorOf(req)))
+
+  app.post<{ Body: { csv: string; filename?: string } }>('/api/centre/families/import', { bodyLimit: 1024 * 1024 }, async (req) =>
+    families.importFamilies(ctx, await actorOf(req), req.body?.csv, typeof req.body?.filename === 'string' ? req.body.filename : undefined),
+  )
+
+  app.post<{ Body: F }>('/api/centre/families/validate', async (req, reply) => {
+    const r = ref(req.body)
+    await families.setGuardianValidated(ctx, await actorOf(req), r.ref, r.email, req.body?.validated === true)
+    return reply.code(204).send()
+  })
+
+  app.post<{ Body: F }>('/api/centre/families/remove', async (req, reply) => {
+    const r = ref(req.body)
+    await families.removeGuardian(ctx, await actorOf(req), r.ref, r.email)
     return reply.code(204).send()
   })
 

@@ -163,6 +163,40 @@ describe('servidor d’«Et veig»', () => {
     expect(t.find((r) => r.email === mail('marta'))!.fav).toEqual({})
     expect(Object.keys(t.find((r) => r.email === mail('xavier'))!.fav).length).toBeGreaterThan(0)
   })
+
+  it('seguiment del professorat: recomptes i autoavaluació, només per a administració i direcció', async () => {
+    type Row = { email: string; n: number; eligible: number; stages: string[]; selfDone: number }
+    const rows = (await call('dir', 'GET', `/api/et-veig/${CID}/teachers`)).body as unknown as Row[]
+    expect(rows.find((r) => r.email === mail('marta'))).toMatchObject({ n: 14, stages: ['ESO'], selfDone: 1 })
+    expect(rows.find((r) => r.email === mail('xavier'))).toMatchObject({ n: 16, selfDone: 0 })
+    expect(rows.every((r) => !('students' in r))).toBe(true)
+    expect((await call('admin', 'GET', `/api/et-veig/${CID}/teachers`)).status).toBe(200)
+    expect((await call('marta', 'GET', `/api/et-veig/${CID}/teachers`)).status).toBe(403)
+    expect((await call('e01', 'GET', `/api/et-veig/${CID}/teachers`)).status).toBe(403)
+  })
+
+  it('correus de les famílies: el servidor revalida el CSV i només els gestiona administració o direcció', async () => {
+    const csv = ['id_alumne;nom_responsable;correu_responsable', 'e01;Maria Serra;maria@exemple.cat', 'e01;Joan Font;joan@exemple.cat', 'e02;Maria Serra;MARIA@exemple.cat', 'e03;Rosa;rosa@exemple', 'zzz;Pere;pere@exemple.cat'].join('\n')
+    expect((await call('marta', 'POST', '/api/centre/families/import', { csv })).status).toBe(403)
+    expect((await call('e01', 'GET', '/api/centre/families')).status).toBe(403)
+    const r = (await call('dir', 'POST', '/api/centre/families/import', { csv, filename: 'families.csv' })).body as { students: number; emails: number; issues: unknown[] }
+    expect(r).toMatchObject({ students: 2, emails: 3 })
+    expect(r.issues).toHaveLength(2)
+    // La Maria és responsable de dos germans: un sol registre.
+    expect((await one<{ n: number }>("select count(*)::int as n from guardians where lower(email) = 'maria@exemple.cat'"))!.n).toBe(1)
+    expect((await one<{ n: number }>('select count(*)::int as n from import_issues'))!.n).toBe(2)
+    type Fam = { ref: string; guardians: { email: string; validated: boolean }[] }
+    let list = (await call('admin', 'GET', '/api/centre/families')).body as unknown as Fam[]
+    expect(list.find((x) => x.ref === 'e01')!.guardians.map((g) => g.email)).toEqual(['joan@exemple.cat', 'maria@exemple.cat'])
+    expect(list.find((x) => x.ref === 'e01')!.guardians.every((g) => g.validated)).toBe(true)
+    expect((await call('admin', 'POST', '/api/centre/families/validate', { ref: 'e01', email: 'joan@exemple.cat', validated: false })).status).toBe(204)
+    expect((await call('admin', 'POST', '/api/centre/families/remove', { ref: 'e02', email: 'maria@exemple.cat' })).status).toBe(204)
+    expect((await call('admin', 'POST', '/api/centre/families/remove', { ref: 'e02', email: 'maria@exemple.cat' })).status).toBe(404)
+    list = (await call('admin', 'GET', '/api/centre/families')).body as unknown as Fam[]
+    expect(list.find((x) => x.ref === 'e01')!.guardians.find((g) => g.email === 'joan@exemple.cat')!.validated).toBe(false)
+    expect(list.find((x) => x.ref === 'e02')!.guardians).toEqual([])
+    expect((await one<{ n: number }>("select count(*)::int as n from audit_log where action = 'Correus de les famílies'"))!.n).toBe(3)
+  })
 })
 
 describe('dades de prova', () => {
