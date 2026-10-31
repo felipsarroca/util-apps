@@ -980,3 +980,43 @@ button.guide-card:hover { box-shadow: var(--sh-2); transform: translateY(-1px); 
 .ab-cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem; margin: 1.1rem 0 1.4rem; }
 .ab-school { display: inline-flex; align-items: center; gap: .6rem; font-weight: 800; opacity: .95; }
 .ab-school img { width: 40px; background: #fff; border-radius: 10px; padding: 3px; }
+
+/* ---------- Famílies: propostes de Clickedu i ajuda ---------- */
+.fam-proposals { display: grid; gap: .35rem; }
+.fam-proposals .check { display: flex; gap: .5rem; align-items: flex-start; font-weight: 500; }
+.fam-proposals .check input { margin-top: .25rem; flex: none; }
+.ck-help { display: grid; gap: .9rem; line-height: 1.5; }
+.ck-help h3 { margin: .4rem 0 0; font-size: 1.08rem; font-weight: 900; color: var(--brand-ink); }
+.ck-help figure { margin: 0; }
+.ck-help figcaption { margin-top: .4rem; font-size: .85rem; color: var(--ink-3); }
+.ck-help ul { margin: 0; padding-left: 1.2rem; }
+.ck-path { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; padding: .7rem .9rem; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--bg); font-size: .92rem; }
+.ck-path b { padding: .2rem .55rem; border-radius: 6px; background: var(--card); border: 1px solid var(--line-2); font-weight: 700; }
+.ck-path i { font-style: normal; color: var(--ink-3); }
+.ck-steps { counter-reset: ck; list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+.ck-steps li { counter-increment: ck; position: relative; padding-left: 2.4rem; min-height: 1.8rem; }
+.ck-steps li::before { content: counter(ck); position: absolute; left: 0; top: 0; width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: #fff; font-weight: 800; font-size: .9rem; }
+.ck-ui { display: inline-block; padding: 0 .4rem; border-radius: 5px; background: var(--brand-soft); color: var(--brand-ink); font-weight: 700; white-space: nowrap; }
+.ck-file { font-family: ui-monospace, monospace; font-size: .85em; overflow-wrap: anywhere; }
+.ck-screen { border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; background: var(--card); box-shadow: var(--sh-1); }
+.ck-bar { display: flex; align-items: center; gap: .7rem; padding: .5rem .8rem; background: var(--bg); border-bottom: 1px solid var(--line); }
+.ck-dots { display: flex; gap: 5px; }
+.ck-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-2); }
+.ck-url { flex: 1; min-width: 0; padding: .2rem .7rem; border-radius: 99px; background: var(--card); border: 1px solid var(--line); font-size: .8rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ck-body { display: grid; gap: .6rem; padding: .9rem 1rem; font-size: .9rem; }
+.ck-label { font-weight: 800; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); }
+.ck-checks { display: grid; gap: .35rem .9rem; }
+.ck-checks label { display: flex; align-items: center; gap: .45rem; }
+.ck-box { width: 15px; height: 15px; flex: none; display: grid; place-items: center; border: 1.5px solid var(--line-2); border-radius: 3px; font-size: 11px; line-height: 1; color: #fff; }
+.ck-box.on { background: var(--brand); border-color: var(--brand); }
+.ck-row { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.ck-btn { padding: .3rem .8rem; border-radius: 6px; border: 1px solid var(--line-2); background: var(--bg); font-weight: 700; }
+.ck-btn.hl { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 0 0 3px var(--gold-soft); }
+.ck-stat { color: var(--ink-2); }
+.ck-pill { padding: .15rem .6rem; border-radius: 99px; font-weight: 700; font-size: .82rem; }
+.ck-pill.ok { background: var(--ok-soft); color: var(--ok); }
+.ck-pill.bad { background: var(--bad-soft); color: var(--bad); }
+.ck-sheet { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-m); }
+.ck-sheet table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+.ck-sheet td { padding: .35rem .6rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); white-space: nowrap; }
+.ck-sheet td.hd { background: var(--bg); font-weight: 800; }

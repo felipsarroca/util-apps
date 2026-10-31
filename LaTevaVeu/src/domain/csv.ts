@@ -1,5 +1,6 @@
 // Importació de cens en CSV, amb detecció flexible de capçaleres i de cursos.
 
+import { gradeShort } from './catalog'
 import type { ClassGroups } from './groups'
 import type { GradeId, GradeSubject, Guardian, Student, Subject } from './types'
 
@@ -123,7 +124,8 @@ export function parseAssignmentsCsv(
 // ---------- Correus de les famílies ----------
 
 export interface GuardianRow { line: number; studentId: string; studentName: string; guardian: Guardian }
-export interface GuardianImport { rows: GuardianRow[]; issues: { line: number; msg: string }[] }
+/** Una incidència pot portar una proposta (un nom de Clickedu semblant al d'un alumne del cens) que es pot acceptar. */
+export interface GuardianImport { rows: GuardianRow[]; issues: { line: number; msg: string; proposal?: GuardianRow }[] }
 
 const EMAIL = /^[^\s@;,]+@[^\s@;,]+\.[a-z]{2,}$/i
 
@@ -135,6 +137,9 @@ const EMAIL = /^[^\s@;,]+@[^\s@;,]+\.[a-z]{2,}$/i
 export function parseGuardiansCsv(text: string, students: Student[]): GuardianImport {
   const [header = [], ...data] = parseCsv(text)
   const h = header.map(norm)
+  // Llistat de Clickedu: sense capçalera (la primera fila ja porta correus) o amb la columna «Nom alumne».
+  const clickedu = header.some((x) => x.includes('@')) || (h.some((x) => x.includes('alumn') && !x.includes('correu') && !x.includes('mail')) && !h.some((x) => /^(id|id alumne|identificador|ralc)$/.test(x)))
+  if (clickedu) return parseClickeduCsv(parseCsv(text), students)
   const isStudent = (x: string) => x.includes('alumn')
   const all = (test: (x: string) => boolean) => h.flatMap((x, i) => (test(x) ? [i] : []))
   const c = {
@@ -177,6 +182,134 @@ export function parseGuardiansCsv(text: string, students: Student[]): GuardianIm
       seen.add(key)
       out.rows.push({ line, studentId: st.id, studentName: `${st.name} ${st.surname}`, guardian: { name, email, validated: true } })
     }
+  })
+  return out
+}
+
+// ---------- Llistat de pares i mares de Clickedu ----------
+
+/** Nom com a conjunt de paraules sense accents: «Ben Hamed, Tasnim» i «Tasnim Ben Hamed» són el mateix. */
+const nameKey = (s: string) => norm(s).split(' ').filter(Boolean).sort().join(' ')
+
+function distance(a: string, b: string) {
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0]
+    prev[0] = i
+    for (let j = 1; j <= b.length; j++) {
+      const old = prev[j]
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1))
+      diag = old
+    }
+  }
+  return prev[b.length]
+}
+
+/** «Ben Hamed, Adil» → «Adil Ben Hamed». */
+const naturalName = (s: string) => {
+  const [last, first] = s.split(',').map((x) => x.trim())
+  return first ? `${first} ${last}` : s.trim()
+}
+
+/**
+ * Alumne del cens que correspon a un nom escrit a Clickedu, dins del seu curs. Primer, el mateix nom (en qualsevol
+ * ordre i sense accents); després, un nom que conté l'altre (un cognom de més o de menys); i, finalment, el més
+ * semblant si la diferència és petita (una lletra) i no n'hi ha cap altre d'igual de proper.
+ */
+export function matchStudent(written: string, candidates: Student[]): { student?: Student; suggestion?: Student } {
+  const key = nameKey(written)
+  if (!key) return {}
+  const keys = candidates.map((st) => ({ st, key: nameKey(`${st.name} ${st.surname}`) }))
+  const exact = keys.filter((x) => x.key === key)
+  if (exact.length === 1) return { student: exact[0].st }
+  if (exact.length > 1) return {}
+  const words = key.split(' ')
+  // Cada paraula d'un nom és a l'altre, o n'és la inicial («Rita A.» i «Rita Amina»).
+  const fits = (short: string[], long: string[]) => {
+    const rest = [...long]
+    return short.every((t) => {
+      const i = rest.indexOf(t) >= 0 ? rest.indexOf(t) : t.length === 1 ? rest.findIndex((x) => x.startsWith(t)) : -1
+      return i >= 0 && !!rest.splice(i, 1).length
+    })
+  }
+  const contains = keys.filter((x) => {
+    const w = x.key.split(' ')
+    return fits(w, words) || fits(words, w)
+  })
+  if (contains.length === 1) return { student: contains[0].st }
+  const ranked = keys.map((x) => ({ ...x, d: distance(x.key, key) })).sort((a, b) => a.d - b.d)
+  const [best, next] = ranked
+  if (best && best.d <= Math.max(2, Math.floor(key.length / 12)) && (!next || next.d > best.d)) return { student: best.st }
+  // Proposta només si comparteixen almenys dues paraules (normalment, els cognoms).
+  // Sense partícules («el», «de», «la»): no identifiquen ningú.
+  const shared = (k: string) => new Set(k.split(' ').filter((t) => t.length > 2 && words.includes(t))).size
+  const proposal = keys.filter((x) => shared(x.key) >= 2).sort((a, b) => shared(b.key) - shared(a.key))
+  return { suggestion: proposal.length && (proposal.length === 1 || shared(proposal[0].key) > shared(proposal[1].key)) ? proposal[0].st : undefined }
+}
+
+/**
+ * Llistat de pares i mares exportat de Clickedu (Administració › Gestió d'usuaris › Llistats). Columnes habituals:
+ * número, curs («Tercer de Primària»), nom de l'alumne, nom i cognoms del responsable i correu, amb capçalera o
+ * sense. No porta el correu ni l'identificador de l'alumne: es busca pel nom dins del seu curs.
+ */
+function parseClickeduCsv(rows: string[][], students: Student[]): GuardianImport {
+  const out: GuardianImport = { rows: [], issues: [] }
+  const hasHeader = !rows[0]?.some((x) => x.includes('@'))
+  const data = hasHeader ? rows.slice(1) : rows
+  const width = Math.max(0, ...data.map((r) => r.length))
+  const share = (col: number, test: (v: string) => boolean) => {
+    const vals = data.map((r) => r[col] ?? '').filter(Boolean)
+    return vals.length ? vals.filter(test).length / vals.length : 0
+  }
+  let course = -1, student = -1, guardian = -1, email = -1
+  if (hasHeader) {
+    const h = rows[0].map(norm)
+    course = h.findIndex((x) => /^(curs|classe|nivell|grup)( alumne)?$/.test(x))
+    student = h.findIndex((x) => x.includes('alumn'))
+    guardian = h.findIndex((x, i) => i !== student && (x === 'nom i cognoms' || /respons|pare|mare|tutor|famil/.test(x)))
+    email = h.findIndex((x) => x.includes('correu') || x.includes('mail'))
+  }
+  const cols = [...Array(width).keys()]
+  if (email < 0) email = cols.find((c) => share(c, (v) => v.includes('@')) > 0.5) ?? -1
+  if (course < 0) course = cols.find((c) => c !== email && share(c, (v) => !!normalizeGrade(v)) > 0.8) ?? -1
+  if (student < 0 || guardian < 0) {
+    // Les dues columnes de noms: la de l'alumne és la que coincideix més amb el cens.
+    const names = cols.filter((c) => c !== email && c !== course && share(c, (v) => /[a-z]{2}/i.test(v) && !/^\d{4}-\d{4}$/.test(v)) > 0.8)
+    const census = new Set(students.map((x) => nameKey(`${x.name} ${x.surname}`)))
+    const hits = (c: number) => share(c, (v) => census.has(nameKey(v)))
+    if (student < 0) student = [...names].sort((a, b) => hits(b) - hits(a))[0] ?? -1
+    if (guardian < 0) guardian = names.find((c) => c !== student) ?? -1
+  }
+  if (student < 0 || email < 0) {
+    out.issues.push({ line: 1, msg: 'No es troben les columnes del nom de l’alumne i del correu. A Clickedu, marca Nom alumne, Nom i cognoms i Correu electrònic.' })
+    return out
+  }
+  const seen = new Set<string>()
+  data.forEach((r, i) => {
+    const line = i + (hasHeader ? 2 : 1)
+    const written = r[student] ?? ''
+    if (!written.trim()) return
+    const grade = course >= 0 ? normalizeGrade(r[course] ?? '') : null
+    const pool = grade ? students.filter((x) => x.gradeId === grade) : students
+    const { student: found, suggestion } = matchStudent(written, pool)
+    const mail = (r[email] ?? '').trim().toLowerCase()
+    const name = (guardian >= 0 ? naturalName(r[guardian] ?? '') : '') || 'Família'
+    if (!found) {
+      const where = grade ? ` a ${gradeShort(grade)}` : ''
+      const k = suggestion ? `${suggestion.id}|${mail}` : ''
+      // El mateix responsable repetit en una altra fila: ja surt a la primera.
+      if (k && seen.has(k)) return
+      const proposal = suggestion && EMAIL.test(mail) ? { line, studentId: suggestion.id, studentName: `${suggestion.name} ${suggestion.surname}`, guardian: { name, email: mail, validated: true } } : undefined
+      if (proposal) seen.add(k)
+      return void out.issues.push({ line, msg: `No es troba «${written}»${where} al cens${suggestion ? `: potser és ${suggestion.name} ${suggestion.surname}` : ''}.`, proposal })
+    }
+    const st = found
+    if (!mail) return void out.issues.push({ line, msg: `${st.name} ${st.surname}: la família no té correu a Clickedu.` })
+    if (!EMAIL.test(mail)) return void out.issues.push({ line, msg: `Correu no vàlid: «${mail}».` })
+    const k = `${st.id}|${mail}`
+    if (seen.has(k)) return
+    seen.add(k)
+    out.rows.push({ line, studentId: st.id, studentName: `${st.name} ${st.surname}`, guardian: { name, email: mail, validated: true } })
   })
   return out
 }

@@ -137,3 +137,54 @@ describe('tutoria', () => {
     expect(api.snapshot().assignments.some((a) => a.subjectId === TUTORIA && a.teacherEmail === before)).toBe(false)
   })
 })
+
+describe('llistat de pares i mares de Clickedu', () => {
+  const plain = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '')
+
+  it('sense capçalera: troba l’alumne pel nom dins del curs, amb els noms girats, sense accents o amb inicials', () => {
+    api.resetDemo()
+    const st = api.snapshot().students
+    const [a, a2] = st.filter((x) => x.gradeId === '3EP')
+    const b = st.find((x) => x.gradeId === '4ESO')!
+    const csv = [
+      `1;Tercer de Primària;${a.name} ${a.surname};Exemple Riu, Jordi;Jordi.Exemple@Correu.cat`,
+      `2;Tercer de Primària;${plain(`${a.surname} ${a.name}`)};Mostra Pla, Marta;marta.mostra@correu.cat`,
+      `3;Tercer de Primària;${a.name} ${a.surname};Exemple Riu, Jordi;jordi.exemple@correu.cat`,
+      `4;Tercer de Primària;${a2.name} ${a2.surname.split(' ')[0]} ${a2.surname.split(' ')[1]?.[0] ?? ''}.;Prova, Pau;pau.prova@correu.cat`,
+      `5;Quart d'ESO;${b.name} ${b.surname};Model, Rosa;`,
+      `6;Quart d'ESO;Laia Assaig Ficció;Ficció, Anna;anna@correu.cat`,
+      `7;Quart d'ESO;${b.name} ${b.surname};Model, Rosa;rosa@correu`,
+    ].join('\r\n')
+    const r = parseGuardiansCsv(csv, st)
+    expect(r.rows.map((x) => [x.line, x.studentId, x.guardian.name, x.guardian.email])).toEqual([
+      [1, a.id, 'Jordi Exemple Riu', 'jordi.exemple@correu.cat'],
+      [2, a.id, 'Marta Mostra Pla', 'marta.mostra@correu.cat'],
+      [4, a2.id, 'Pau Prova', 'pau.prova@correu.cat'],
+    ])
+    expect(r.issues.map((x) => x.line)).toEqual([5, 6, 7])
+    expect(r.issues[0].msg).toContain('no té correu')
+    expect(r.issues[1].msg).toContain('No es troba «Laia Assaig Ficció» a 4t ESO')
+    expect(r.issues.every((x) => !x.proposal)).toBe(true)
+  })
+
+  it('amb capçalera i columnes en un altre ordre; un nom semblant surt com a proposta', () => {
+    api.resetDemo()
+    const st = api.snapshot().students
+    const c = st.find((x) => x.gradeId === '2ESO' && x.surname.split(' ').filter((w) => w.length > 2).length >= 2)!
+    const csv = [
+      'Correu electrònic,Nom alumne,Curs,Nom i cognoms',
+      `familia.c@correu.cat,${c.name} ${c.surname},Segon d'ESO,"Exemple, Joan"`,
+      `altra.c@correu.cat,Zacaries ${c.surname},Segon d'ESO,"Mostra, Marta"`,
+      `altra.c@correu.cat,Zacaries ${c.surname},Segon d'ESO,"Mostra, Marta"`,
+      `familia.c@correu.cat,Zacaries ${c.surname},Segon d'ESO,"Exemple, Joan"`,
+    ].join('\n')
+    const r = parseGuardiansCsv(csv, st)
+    expect(r.rows.map((x) => [x.studentId, x.guardian.email])).toEqual([[c.id, 'familia.c@correu.cat']])
+    // Les files repetides (el mateix alumne i el mateix correu) només surten una vegada.
+    expect(r.issues.map((x) => [x.line, x.proposal?.studentId, x.proposal?.guardian.email])).toEqual([[3, c.id, 'altra.c@correu.cat']])
+    expect(r.issues[0].msg).toContain(`potser és ${c.name} ${c.surname}`)
+    // Una proposta acceptada s'importa com qualsevol altra fila.
+    expect(api.importGuardians(login(ADMIN), [...r.rows, r.issues[0].proposal!])).toBe(1)
+    expect(api.snapshot().students.find((x) => x.id === c.id)!.guardians.map((g) => [g.name, g.email])).toEqual([['Joan Exemple', 'familia.c@correu.cat'], ['Marta Mostra', 'altra.c@correu.cat']])
+  })
+})

@@ -7,6 +7,7 @@ import { parseGuardiansCsv, type GuardianImport } from '../domain/csv'
 import { groupName } from '../domain/groups'
 import type { GradeId, Session } from '../domain/types'
 import { Icon, Modal, useToast } from '../ui/common'
+import { ClickeduHelp } from './ClickeduHelp'
 import { fullName } from './shared'
 import { PageHead } from './StaffApp'
 
@@ -18,10 +19,21 @@ const SAMPLE = [
   'ALU9999;Pere Roca;pere.roca@exemple.cat',
 ].join('\n')
 
+/** Clickedu exporta en ISO-8859-1 (Windows-1252); si el fitxer no és UTF-8 vàlid, es llegeix així perquè els accents surtin bé. */
+async function readCsv(f: File): Promise<string> {
+  const buf = await f.arrayBuffer()
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buf)
+  } catch {
+    return new TextDecoder('windows-1252').decode(buf)
+  }
+}
+
 export function FamiliesScreen({ session }: { session: Session }) {
   const s = useDemoState()
   const [grade, setGrade] = useState<GradeId | ''>('')
   const [importing, setImporting] = useState(false)
+  const [help, setHelp] = useState(false)
   const [toast, showToast] = useToast()
   const students = s.students
     .filter((x) => !grade || x.gradeId === grade)
@@ -40,6 +52,9 @@ export function FamiliesScreen({ session }: { session: Session }) {
   return (
     <>
       <PageHead title="Famílies" sub="Correus dels responsables de cada alumne, per enviar-los l’informe «Així em veig». Ho gestiona l’administració o l’Equip Directiu.">
+        <button className="btn" onClick={() => setHelp(true)}>
+          <Icon name="info" /> Com s’obté de Clickedu
+        </button>
         <button className="btn primary" onClick={() => setImporting(true)}>
           <Icon name="upload" /> Importa des de CSV
         </button>
@@ -92,24 +107,46 @@ export function FamiliesScreen({ session }: { session: Session }) {
           </tbody>
         </table>
       </div>
-      {importing && <ImportFamilies session={session} onClose={() => setImporting(false)} onDone={(n) => { setImporting(false); showToast(`Correus actualitzats per a ${n} alumnes.`) }} />}
+      {importing && <ImportFamilies session={session} onClose={() => setImporting(false)} onHelp={() => setHelp(true)} onDone={(n) => { setImporting(false); showToast(`Correus actualitzats per a ${n} alumnes.`) }} />}
+      {help && <ClickeduHelp onClose={() => setHelp(false)} />}
       {toast}
     </>
   )
 }
 
-function ImportFamilies({ session, onClose, onDone }: { session: Session; onClose: () => void; onDone: (n: number) => void }) {
+function ImportFamilies({ session, onClose, onDone, onHelp }: { session: Session; onClose: () => void; onDone: (n: number) => void; onHelp: () => void }) {
   const s = useDemoState()
   const [text, setText] = useState('')
   const [result, setResult] = useState<GuardianImport | null>(null)
-  const analyse = (t: string) => setResult(parseGuardiansCsv(t, s.students))
-  const students = result ? new Set(result.rows.map((r) => r.studentId)).size : 0
+  // Propostes acceptades (per número de fila): noms de Clickedu semblants al d'un alumne del cens.
+  const [accepted, setAccepted] = useState<Set<number>>(new Set())
+  const analyse = (t: string) => {
+    setResult(parseGuardiansCsv(t, s.students))
+    setAccepted(new Set())
+  }
+  const proposals = result ? result.issues.filter((x) => x.proposal) : []
+  const others = result ? result.issues.filter((x) => !x.proposal) : []
+  const rows = result ? [...result.rows, ...proposals.filter((x) => accepted.has(x.line)).map((x) => x.proposal!)].sort((a, b) => a.line - b.line) : []
+  const students = new Set(rows.map((r) => r.studentId)).size
+  const toggle = (line: number, on: boolean) => setAccepted((prev) => {
+    const next = new Set(prev)
+    if (on) next.add(line)
+    else next.delete(line)
+    return next
+  })
   return (
     <Modal title="Importa els correus de les famílies" onClose={onClose} wide>
       {!result ? (
         <>
+          <div className="notice">
+            <Icon name="info" />
+            <div>
+              El més senzill és carregar directament el <b>llistat de pares i mares de Clickedu</b> (<span className="muted">llistat_responsables_….csv</span>), tal com surt de Clickedu: l’app troba cada alumne pel nom i el curs.{' '}
+              <button className="btn small ghost" onClick={onHelp}>Com s’obté?</button>
+            </div>
+          </div>
           <p>
-            Un sol fitxer per a tots els cursos, de 3r de primària a 4t d’ESO. Cal la columna <b>id_alumne</b> (o <b>correu_alumne</b>) i els correus de la família en un d’aquests formats:
+            També s’accepta un fitxer propi. Un sol fitxer per a tots els cursos, de 3r de primària a 4t d’ESO. Cal la columna <b>id_alumne</b> (o <b>correu_alumne</b>) i els correus de la família en un d’aquests formats:
           </p>
           <ul>
             <li>Una fila per responsable: <b>nom_responsable</b> i <b>correu_responsable</b>. Un alumne pot tenir diverses files.</li>
@@ -121,7 +158,7 @@ function ImportFamilies({ session, onClose, onDone }: { session: Session; onClos
           <div className="row">
             <label className="btn">
               <Icon name="upload" /> Tria un fitxer
-              <input type="file" accept=".csv,text/csv" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const t = await f.text(); setText(t); analyse(t) } }} />
+              <input type="file" accept=".csv,text/csv" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const t = await readCsv(f); setText(t); analyse(t) } }} />
             </label>
             <button className="btn ghost" onClick={() => setText(SAMPLE)}>Carrega un exemple</button>
           </div>
@@ -133,17 +170,34 @@ function ImportFamilies({ session, onClose, onDone }: { session: Session; onClos
       ) : (
         <>
           <div className="row">
-            <span className="badge ok">{result.rows.length} correus correctes ({students} {students === 1 ? 'alumne' : 'alumnes'})</span>
-            <span className="badge bad">{result.issues.length} amb errors</span>
+            <span className="badge ok">{rows.length} correus correctes ({students} {students === 1 ? 'alumne' : 'alumnes'})</span>
+            {proposals.length > 0 && <span className="badge warn">{proposals.length} {proposals.length === 1 ? 'proposta' : 'propostes'} per revisar</span>}
+            <span className="badge bad">{others.length} {others.length === 1 ? 'incidència' : 'incidències'}</span>
           </div>
-          {result.issues.length > 0 && (
+          {proposals.length > 0 && (
+            <div className="notice">
+              <Icon name="info" />
+              <div>
+                <p style={{ marginTop: 0 }}>Aquests noms no coincideixen del tot amb el cens. Marca els que siguin el mateix alumne:</p>
+                <div className="fam-proposals">
+                  {proposals.map((x) => (
+                    <label key={x.line} className="check">
+                      <input type="checkbox" checked={accepted.has(x.line)} onChange={(e) => toggle(x.line, e.target.checked)} />
+                      <span>Fila {x.line}: {x.msg} <span className="muted">({x.proposal!.guardian.email})</span></span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          {others.length > 0 && (
             <div className="notice warn">
               <Icon name="alert" />
               <div>
-                <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
-                  {result.issues.slice(0, 12).map((x, i) => <li key={i}>Fila {x.line}: {x.msg}</li>)}
+                <p style={{ marginTop: 0 }}>No s’importen. Revisa-les a Clickedu o al cens:</p>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem', maxHeight: 160, overflow: 'auto' }}>
+                  {others.map((x, i) => <li key={i}>Fila {x.line}: {x.msg}</li>)}
                 </ul>
-                {result.issues.length > 12 && <p>I {result.issues.length - 12} errors més.</p>}
               </div>
             </div>
           )}
@@ -151,7 +205,7 @@ function ImportFamilies({ session, onClose, onDone }: { session: Session; onClos
             <table className="t">
               <thead><tr><th>Fila</th><th>Alumne</th><th>Responsable</th><th>Correu</th></tr></thead>
               <tbody>
-                {result.rows.map((r) => (
+                {rows.map((r) => (
                   <tr key={r.line}><td>{r.line}</td><td>{r.studentName}</td><td>{r.guardian.name}</td><td>{r.guardian.email}</td></tr>
                 ))}
               </tbody>
@@ -160,8 +214,8 @@ function ImportFamilies({ session, onClose, onDone }: { session: Session; onClos
           <p className="muted">Per a cada alumne del fitxer, els correus importats <b>substitueixen</b> els que tenia i es marquen com a validats, perquè provenen de les dades oficials de l’escola. Els alumnes que no surten al fitxer no canvien.</p>
           <div className="row" style={{ justifyContent: 'flex-end' }}>
             <button className="btn" onClick={() => setResult(null)}>Torna</button>
-            <button className="btn primary" disabled={!result.rows.length} onClick={() => onDone(importGuardians(session, result.rows))}>
-              Importa {result.rows.length} correus
+            <button className="btn primary" disabled={!rows.length} onClick={() => onDone(importGuardians(session, rows))}>
+              Importa {rows.length} correus
             </button>
           </div>
         </>
