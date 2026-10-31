@@ -78,7 +78,8 @@ Torna-les a fer quan canviï alguna de les pantalles que surten al README.
 - **README** reorganitzat, amb 13 captures de la demostració.
 - **Pantalles de l'alumnat més netes**: sense targetes dins de targetes (inici, llista de docents, preguntes en files amb línia divisòria, resum final); fora textos sobrers (frase de la llista de docents, avís blau de confidencialitat reduït a una línia, rètols «Bloc» i «Abans d'enviar», ajudes repetides); a primària, sense dates.
 - **Lectura en veu alta**: àudios MP3 pregenerats amb la veu neuronal catalana `ca-ES-JoanaNeural` (edge-tts), com a VoltaMon: `public/audio/<clau>.mp3`, un per fragment (pregunta, ajuda, matèria, opcions d'una escala), i `index.json` amb la llista. La clau és un resum del text (`src/domain/speech.ts`): si l'escola edita una pregunta, aquell fragment es llegeix amb la millor veu catalana del navegador fins que es regenerin els àudios amb `npm run audios`. Una prova falla si algun text dels qüestionaris inicials no té àudio.
-- **Barra inferior i entrada sense caixes de més**: a la barra «Enrere / Següent / Lliura» només destaca el botó principal; a l'entrada, «Em miro» i «Et veig…» ja no van dins de requadres.
+- **Barra inferior sense requadre**: «Enrere», l'avís del mig i «Següent / Lliura» van sols sota la targeta, a totes les etapes. A l'entrada, «Em miro» i «Et veig…» ja no van dins de requadres i la columna esquerra té més aire.
+- **Botons amb color**: els secundaris tenen un fons granat suau (verd blavós a «Et veig»), «Escolta» és daurat i les opcions de resposta i les targetes dels docents tenen fons càlid i ombra, perquè es distingeixin del fons.
 - **Presentació del projecte** (`#/projecte`): sentit, marc normatiu citat de fonts oficials (Convenció sobre els Drets de l'Infant art. 12; LOE-LOMLOE art. 1 i 91; Decret 175/2022 art. 22, 23 i 24), què fa l'app, com funciona, beneficis i privacitat.
 
 ## Pendent

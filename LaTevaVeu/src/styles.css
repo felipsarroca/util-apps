@@ -74,24 +74,24 @@ p { margin: 0; }
 
 /* ---------- Botons ---------- */
 .btn {
-  --b: var(--card);
+  --b: #fbefea;
   display: inline-flex; align-items: center; justify-content: center; gap: .5em;
   min-height: 44px; padding: .55em 1.1em;
-  border: 1.5px solid var(--line-2); border-radius: 999px;
-  background: var(--b); color: var(--ink);
+  border: 1.5px solid #e9cfc6; border-radius: 999px;
+  background: var(--b); color: var(--brand-ink);
   font-weight: 700; font-size: .98rem; line-height: 1.15; text-decoration: none; white-space: nowrap;
   transition: background .15s, border-color .15s, transform .08s, box-shadow .15s;
 }
-.btn:hover { border-color: var(--ink-3); }
+.btn:hover { border-color: var(--brand); background: #f6e2db; }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .btn svg { width: 1.15em; height: 1.15em; flex: none; }
 .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 3px 10px rgba(138, 34, 22, .25); }
 .btn.primary:hover:not(:disabled) { background: var(--brand-ink); border-color: var(--brand-ink); }
 .btn.gold { background: var(--gold); border-color: var(--gold); color: #fff; }
-.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--ink); }
 .btn.ghost:hover { background: rgba(0, 0, 0, .05); }
-.btn.danger { color: var(--bad); border-color: #efb8b3; }
+.btn.danger { color: var(--bad); border-color: #efb8b3; background: var(--bad-soft); }
 .btn.small { min-height: 34px; padding: .3em .8em; font-size: .88rem; }
 .btn.large { min-height: 56px; padding: .7em 1.6em; font-size: 1.1rem; }
 .btn.icon { width: 44px; padding: 0; }
@@ -165,7 +165,7 @@ body { padding-bottom: var(--footer-h); }
   overflow: hidden; border-radius: var(--r-xl); box-shadow: var(--sh-3); background: #fff;
 }
 .login-brand {
-  position: relative; display: flex; flex-direction: column; justify-content: center; gap: clamp(1.6rem, calc(6 * var(--vh)), 3.2rem);
+  position: relative; display: flex; flex-direction: column; justify-content: center; gap: clamp(2rem, calc(9 * var(--vh)), 4.6rem);
   padding: clamp(28px, calc(6 * var(--vh)), 56px) clamp(24px, 4vw, 48px);
   background: linear-gradient(155deg, #8a2216 0%, #6e190f 55%, #4f120b 100%); color: #fff; overflow: hidden;
 }
@@ -181,17 +181,18 @@ body { padding-bottom: var(--footer-h); }
 .login-title { display: flex; align-items: center; gap: .9rem; }
 .login-title-text span { color: #f3c64c; }
 .login-app-icon { flex: none; width: 1.25em; height: 1.25em; border-radius: 22%; box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 6px 18px rgba(0, 0, 0, .25); }
-.login-sub { font-size: 1.2rem; opacity: .92; margin-top: .9rem; font-weight: 600; }
+.login-sub { font-size: 1.22rem; opacity: .92; margin-top: 1.3rem; font-weight: 600; }
+.login-sub::after { content: ''; display: block; width: 56px; height: 3px; margin-top: clamp(1.4rem, calc(4 * var(--vh)), 2.2rem); border-radius: 3px; background: #f3c64c; }
 /* Els dos espais, amb el mateix color que tenen dins l'app (or per a Em miro, verd blavós per a Et veig). */
-.login-steps { display: grid; gap: .8rem; list-style: none; margin: 0; padding: 0; }
-.login-steps li { display: flex; align-items: center; gap: .9rem; }
-.login-steps li > span { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; font-size: 1.35rem; flex: none; }
+.login-steps { display: grid; gap: clamp(1.3rem, calc(4.5 * var(--vh)), 2.2rem); list-style: none; margin: 0; padding: 0; }
+.login-steps li { display: flex; align-items: center; gap: 1.1rem; }
+.login-steps li > span { display: grid; place-items: center; width: 50px; height: 50px; border-radius: 15px; font-size: 1.5rem; flex: none; }
 .login-steps li.em > span { background: #f3c64c; }
 .login-steps li.ev > span { background: #5fb3bb; }
-.login-steps b { display: block; font-size: 1.08rem; font-weight: 900; }
+.login-steps b { display: block; font-size: 1.12rem; font-weight: 900; margin-bottom: .25rem; }
 .login-steps li.em b { color: #f8d97a; }
 .login-steps li.ev b { color: #9fdbe0; }
-.login-steps small { display: block; font-size: .9rem; font-weight: 600; opacity: .88; line-height: 1.35; }
+.login-steps small { display: block; font-size: .92rem; font-weight: 600; opacity: .88; line-height: 1.45; }
 .login-form {
   display: flex; flex-direction: column; justify-content: center; gap: 1.6rem;
   padding: clamp(28px, calc(6 * var(--vh)), 56px) clamp(24px, 4.5vw, 56px);
@@ -257,7 +258,9 @@ body { padding-bottom: var(--footer-h); }
 .step-intro { color: var(--ink-2); font-size: 1.02rem; }
 .stage-CM .statement { font-size: clamp(1.5rem, min(4vw, calc(5 * var(--vh))), 2.2rem); font-weight: 900; line-height: 1.25; text-align: center; padding: .5rem 0; }
 .speak { flex: none; }
-.speak.on { background: var(--gold-soft); border-color: var(--gold); }
+.speak { background: var(--gold-soft); border-color: #e6cf8f; color: #6b4e00; }
+.speak:hover { background: #f6e6b8; border-color: var(--gold); }
+.speak.on { background: #f6e6b8; border-color: var(--gold); }
 
 /* Opcions grans (cicle mitjà i objectiu) */
 .big-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: clamp(10px, 2vw, 18px); }
@@ -266,7 +269,7 @@ body { padding-bottom: var(--footer-h); }
 .big-opt label {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; height: 100%;
   min-height: clamp(120px, calc(20 * var(--vh)), 180px); padding: 1rem;
-  border: 3px solid var(--line); border-radius: var(--r-l); background: #fff; cursor: pointer; text-align: center;
+  border: 3px solid #e8dccb; border-radius: var(--r-l); background: #fffaf2; box-shadow: var(--sh-1); cursor: pointer; text-align: center;
   font-weight: 800; font-size: 1.12rem; transition: transform .12s, border-color .12s, background .12s, box-shadow .12s;
 }
 .big-opt .em { font-size: clamp(2.6rem, calc(7 * var(--vh)), 3.6rem); line-height: 1; transition: transform .2s; }
@@ -291,7 +294,7 @@ fieldset.qrow { margin: 0; min-width: 0; }
 .seg-opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .seg-opt label {
   display: flex; align-items: center; justify-content: center; gap: .35rem; height: 100%; min-height: 46px; padding: .4rem .5rem;
-  border: 2px solid var(--line); border-radius: var(--r-s); background: #fff; cursor: pointer; text-align: center;
+  border: 2px solid #e8dccb; border-radius: var(--r-s); background: #fffaf2; cursor: pointer; text-align: center;
   font-weight: 700; font-size: .93rem; line-height: 1.15; transition: border-color .12s, background .12s, color .12s;
 }
 .seg-opt label:hover { border-color: var(--gold); }
@@ -322,10 +325,11 @@ fieldset.qrow { margin: 0; min-width: 0; }
 .goal-quote { padding: 1rem 1.2rem; border-left: 5px solid var(--gold); border-radius: var(--r-s); background: var(--gold-soft); font-size: 1.1rem; font-weight: 700; font-style: italic; }
 
 /* Navegació inferior */
-.stu-nav { position: sticky; bottom: calc(var(--footer-h) + 8px); z-index: 15; display: flex; align-items: center; gap: .75rem; padding: .5rem; border-radius: 999px; background: rgba(255, 255, 255, .96); backdrop-filter: blur(8px); box-shadow: var(--sh-2); }
-/* Dins de la barra, el botó secundari no fa caixa: només el principal destaca. */
-.stu-nav .btn:not(.primary) { border-color: transparent; background: transparent; }
-.stu-nav .btn:not(.primary):hover { background: rgba(0, 0, 0, .05); }
+.stu-nav { display: flex; align-items: center; gap: .75rem; }
+.stu-nav .btn { min-height: 50px; padding-inline: 1.4em; }
+/* A «Et veig», els botons secundaris prenen el verd blavós de l'apartat. */
+.etveig .btn:not(.primary):not(.speak):not(.ghost):not(.danger) { --b: var(--ev-soft); border-color: #b9d9dc; color: var(--ev-ink); }
+.etveig .btn:not(.primary):not(.speak):not(.ghost):not(.danger):hover { border-color: var(--ev); background: #d3e8ea; }
 .stu-nav .hint { flex: 1; text-align: center; font-size: .86rem; color: var(--ink-3); font-weight: 700; }
 
 /* Benvinguda */
@@ -521,7 +525,7 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 
 /* Llista de docents de l'alumne */
 .t-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .7rem; }
-.t-card { display: flex; align-items: center; gap: .8rem; width: 100%; padding: .8rem .9rem; border: 2px solid var(--line); border-radius: var(--r-l); background: var(--card); text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.t-card { display: flex; align-items: center; gap: .8rem; width: 100%; padding: .8rem .9rem; border: 2px solid #cfe3e5; border-radius: var(--r-l); background: var(--card); box-shadow: var(--sh-1); text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
 .t-card:hover:not(:disabled) { border-color: var(--ev); transform: translateY(-2px); box-shadow: var(--sh-2); }
 .t-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .t-card.done { cursor: default; background: #f6faf8; border-color: #cfe7da; }
@@ -707,7 +711,6 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
   .brandmark b { font-size: 1.1rem; }
   .seg-opt { min-width: calc(50% - .2rem); flex-basis: calc(50% - .2rem); }
   .seg-opt.na { flex-basis: 100%; }
-  .stu-nav { border-radius: var(--r-l); }
   .stu-nav .hint { display: none; }
   .stu-nav .btn { flex: 1; }
   .big-options { grid-template-columns: 1fr; }
