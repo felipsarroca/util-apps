@@ -509,6 +509,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
         <Sec id="questionaris">
           <h3>Versions: la regla d’or</h3>
           <p>Una versió publicada <b>no canvia mai</b>. Per modificar un qüestionari, crea’n una versió nova, edita-la i publica-la. Les recollides ja creades conserven la seva versió; les noves fan servir la darrera publicada.</p>
+          <p>El botó «Escolta» llegeix les preguntes originals amb una veu catalana gravada. Una pregunta editada o nova es llegeix amb la veu del navegador fins que qui manté l’app en regeneri els àudios.</p>
           <h3>Em miro › Qüestionaris</h3>
           <ol className="guide-steps">
             <li>Tria l’etapa i clica <b>Crea la versió N</b>.</li>

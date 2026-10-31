@@ -7,6 +7,7 @@ import { missingItems } from '../domain/feedback'
 import { fetchHome, postSubmit, putDraft, useRemote } from '../data/remote'
 import type { Answers, FeedbackItem, Scale, Session, StageId } from '../domain/types'
 import { fmtDate, Icon, initials, Modal, SpeakButton, useToast } from '../ui/common'
+import { optionsText } from '../domain/speech'
 import { BigScale, SegScale, TextAnswer } from './Questions'
 
 const hueOf = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7)
@@ -294,7 +295,7 @@ function TeacherForm({ source, scale, stage, home, target, onBack, onDone }: { s
               <span className="em" aria-hidden="true">{dim?.emoji}</span> {step.index + 1} de {form.items.length}
             </div>
             <div className="row" style={{ justifyContent: 'center' }}>
-              <SpeakButton text={`${step.item.student} ${scale.options.map((o) => o.label).join(', ')}`} label="Escolta" />
+              <SpeakButton parts={[step.item.student, optionsText(scale)]} label="Escolta" />
             </div>
             <p className="statement">{step.item.student}</p>
             <BigScale name={step.item.id} scale={scale} value={answers[step.item.id]} label={step.item.student} onChange={(v) => set(step.item.id, v)} />
@@ -320,7 +321,7 @@ function TeacherForm({ source, scale, stage, home, target, onBack, onDone }: { s
                       <div className="qtext" aria-hidden="true">
                         <span className="qnum">{v ? '✓' : ++n}</span>
                         <span style={{ flex: 1 }}>{item.student}</span>
-                        {stage === 'CS' && <SpeakButton text={item.student} label="" />}
+                        {stage === 'CS' && <SpeakButton parts={[item.student]} label="" />}
                       </div>
                       <SegScale name={item.id} scale={scale} value={v} label={item.student} onChange={(x) => set(item.id, x)} />
                     </fieldset>

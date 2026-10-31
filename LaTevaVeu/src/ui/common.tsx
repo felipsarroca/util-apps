@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { audioKey, speechText } from '../domain/speech'
 
 const base = (import.meta.env.BASE_URL || './').replace(/\/?$/, '/')
 export const asset = (p: string) => `${base}assets/${p}`
@@ -203,10 +204,19 @@ export function Modal({ title, children, onClose, wide }: { title: string; child
   )
 }
 
-// ---------- Lectura en veu alta (síntesi del navegador, sense serveis externs) ----------
-export function canSpeak() {
-  return typeof window !== 'undefined' && 'speechSynthesis' in window
-}
+// ---------- Lectura en veu alta ----------
+// Primer, àudios pregenerats amb una veu neuronal catalana (npm run audios). Si algun
+// fragment no en té (per exemple, una pregunta editada), la veu del navegador.
+const hasAudio = typeof window !== 'undefined' && typeof Audio !== 'undefined'
+const hasSynth = typeof window !== 'undefined' && 'speechSynthesis' in window
+export const canSpeak = () => hasAudio || hasSynth
+
+let recorded: Set<string> | null = null
+if (hasAudio)
+  fetch(`${base}audio/index.json`)
+    .then((r) => (r.ok ? r.json() : []))
+    .then((keys: string[]) => (recorded = new Set(keys)))
+    .catch(() => (recorded = new Set()))
 
 // Les veus «naturals» (Edge, Android) sonen molt millor que les clàssiques del sistema.
 const NATURAL = /natural|neural|online|enhanced|premium|wavenet/i
@@ -215,7 +225,7 @@ let voices: SpeechSynthesisVoice[] = []
 function loadVoices() {
   voices = window.speechSynthesis.getVoices()
 }
-if (canSpeak()) {
+if (hasSynth) {
   loadVoices()
   window.speechSynthesis.addEventListener?.('voiceschanged', loadVoices)
 }
@@ -227,57 +237,86 @@ export function bestCatalanVoice(): SpeechSynthesisVoice | null {
   return ca.sort((a, b) => score(b) - score(a))[0] ?? null
 }
 
-/** Frases curtes, sense emojis: sonen més naturals i Chrome no talla les lectures llargues. */
-function sentences(text: string) {
-  return text
-    .replace(/\p{Extended_Pictographic}|️|‍/gu, '')
-    .replace(/[«»"]/g, '')
+const player = hasAudio ? new Audio() : null
+let queue: string[] = []
+// Lectura en curs: cada crida a speak() en crea una de nova.
+let current: { done: () => void } | null = null
+
+/** Atura el que soni i avisa el botó que l'havia engegat. Amb `done`, només si és la seva lectura. */
+export function stopSpeaking(done?: () => void) {
+  if (done && current?.done !== done) return
+  const c = current
+  current = null
+  queue = []
+  player?.pause()
+  if (hasSynth) window.speechSynthesis.cancel()
+  c?.done()
+}
+
+function playNext() {
+  const key = queue.shift()
+  if (!key || !player) return stopSpeaking()
+  player.src = `${base}audio/${key}.mp3`
+  player.play().catch(() => stopSpeaking())
+}
+player?.addEventListener('ended', playNext)
+player?.addEventListener('error', () => stopSpeaking())
+
+/** Frases curtes: sonen més naturals i Chrome no talla les lectures llargues. */
+const sentences = (text: string) =>
+  text
     .replace(/…/g, '.')
     .split(/(?<=[.!?:;])\s+/)
     .map((x) => x.trim())
     .filter(Boolean)
-}
 
-export function speak(text: string, onEnd?: () => void) {
-  if (!canSpeak()) return
-  const s = window.speechSynthesis
-  s.cancel()
-  if (!voices.length) loadVoices()
+function synth(parts: string[]) {
+  const mine = current
   const voice = bestCatalanVoice()
-  const parts = sentences(text)
-  if (!parts.length) return onEnd?.()
-  parts.forEach((part, i) => {
+  const all = parts.flatMap((p) => sentences(/[.!?:;…]$/.test(p) ? p : `${p}.`))
+  all.forEach((part, i) => {
     const u = new SpeechSynthesisUtterance(part)
     u.lang = voice?.lang ?? 'ca-ES'
     if (voice) u.voice = voice
     // Les veus naturals ja tenen bon ritme; les clàssiques s'entenen millor una mica més lentes.
     u.rate = voice && NATURAL.test(voice.name) ? 1 : 0.88
-    if (i === parts.length - 1) {
-      u.onend = () => onEnd?.()
-      u.onerror = () => onEnd?.()
-    }
-    s.speak(u)
+    // Una lectura cancel·lada avisa tard: només s'atura si encara és la que sona.
+    if (i === all.length - 1) u.onend = u.onerror = () => current === mine && stopSpeaking()
+    window.speechSynthesis.speak(u)
   })
 }
 
-export function SpeakButton({ text, label = 'Escolta' }: { text: string; label?: string }) {
+/** Llegeix els fragments en ordre; `onEnd` s'executa en acabar o en aturar-se. */
+export function speak(parts: (string | undefined)[], onEnd?: () => void) {
+  stopSpeaking()
+  const clean = parts.map((p) => speechText(p ?? '')).filter(Boolean)
+  if (!clean.length) return onEnd?.()
+  current = { done: onEnd ?? (() => {}) }
+  const keys = clean.map(audioKey)
+  if (player && recorded && keys.every((k) => recorded!.has(k))) {
+    queue = keys
+    playNext()
+  } else if (hasSynth) {
+    if (!voices.length) loadVoices()
+    synth(clean)
+  } else stopSpeaking()
+}
+
+export function SpeakButton({ parts, label = 'Escolta' }: { parts: (string | undefined)[]; label?: string }) {
   const [on, setOn] = useState(false)
-  useEffect(() => () => {
-    if (canSpeak()) window.speechSynthesis.cancel()
-  }, [text])
+  const [done] = useState(() => () => setOn(false))
+  const id = parts.join('|')
+  // Si canvia la pregunta o el botó desapareix, la seva lectura s'atura.
+  useEffect(() => () => stopSpeaking(done), [id, done])
   if (!canSpeak()) return null
   return (
     <button
       type="button"
       className={`btn small speak${on ? ' on' : ''}`}
       onClick={() => {
-        if (on) {
-          window.speechSynthesis.cancel()
-          setOn(false)
-        } else {
-          setOn(true)
-          speak(text, () => setOn(false))
-        }
+        if (on) return stopSpeaking()
+        setOn(true)
+        speak(parts, done)
       }}
       aria-pressed={on}
       aria-label={label ? undefined : on ? 'Atura la lectura' : 'Escolta la frase'}

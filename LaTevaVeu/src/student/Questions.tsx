@@ -4,6 +4,7 @@ import { useId } from 'react'
 import { keyOf, NA, type Step } from '../domain/engine'
 import type { Answers, Question, Scale, StageId } from '../domain/types'
 import { SpeakButton } from '../ui/common'
+import { optionsText } from '../domain/speech'
 
 interface Ctx {
   stage: StageId
@@ -81,7 +82,7 @@ export function TextAnswer({ q, ctx }: { q: Question; ctx: Ctx }) {
           {q.text}
           {!q.required && <span className="muted" style={{ fontWeight: 600, fontSize: '.85em' }}> (opcional)</span>}
         </label>
-        {ctx.stage !== 'ESO' && <SpeakButton text={`${q.text}. ${q.help ?? ''}`} />}
+        {ctx.stage !== 'ESO' && <SpeakButton parts={[q.text, q.help]} />}
       </div>
       {q.help && <p className="help" id={`${id}-h`}>{q.help}</p>}
       <textarea
@@ -115,7 +116,7 @@ function ScaleRow({ q, n, ctx }: { q: Question; n: number; ctx: Ctx }) {
       <div className="qtext" aria-hidden="true">
         <span className="qnum">{v ? '✓' : n}</span>
         <span style={{ flex: 1 }}>{q.text}</span>
-        {ctx.stage === 'CS' && <SpeakButton text={q.text} label="" />}
+        {ctx.stage === 'CS' && <SpeakButton parts={[q.text]} label="" />}
       </div>
       {q.help && <p className="muted" style={{ fontSize: '.9rem' }}>{q.help}</p>}
       <SegScale name={k} scale={scale} value={v} label={q.text} onChange={(x) => ctx.set(k, x)} />
@@ -136,7 +137,7 @@ export function StepBody({ step, ctx }: { step: Step; ctx: Ctx }) {
             {step.section.title} · {step.indexInSection + 1} de {step.section.questions.filter((x) => x.active).length}
           </div>
           <div className="row" style={{ justifyContent: 'center' }}>
-            <SpeakButton text={`${q.text} ${scale.options.map((o) => o.label).join(', ')}`} label="Escolta la pregunta" />
+            <SpeakButton parts={[q.text, optionsText(scale)]} label="Escolta la pregunta" />
           </div>
           <p className="statement" id={`st-${q.id}`}>{q.text}</p>
           <BigScale name={k} scale={scale} value={ctx.answers[k]} label={q.text} onChange={(v) => ctx.set(k, v)} />
@@ -206,7 +207,7 @@ export function StepBody({ step, ctx }: { step: Step; ctx: Ctx }) {
               <div key={c.id} className="qlist">
                 <div className="row" style={{ justifyContent: 'space-between' }}>
                   <p className="step-title" style={{ fontSize: '1.3rem' }}>{c.prompt}</p>
-                  <SpeakButton text={`${subject.long}. ${c.prompt} ${scale.options.map((o) => o.label).join(', ')}`} />
+                  <SpeakButton parts={[subject.long, c.prompt, optionsText(scale)]} />
                 </div>
                 <BigScale name={k} scale={scale} value={v} label={`${subject.short}: ${c.prompt}`} onChange={(x) => ctx.set(k, x)} />
               </div>

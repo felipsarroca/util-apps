@@ -10,7 +10,7 @@ import { GuideScreen } from './staff/Guide'
 import { AboutPage } from './About'
 import { StaffApp } from './staff/StaffApp'
 import { StudentApp } from './student/StudentApp'
-import { APP_ICON, Footer, Icon, initials, useFitScale } from './ui/common'
+import { APP_ICON, Footer, Icon, initials, stopSpeaking, useFitScale } from './ui/common'
 import { useDemoState } from './data/api'
 import { API_URL, DEV_AUTH, loadRemoteState, OP_FAILED, SESSION_EXPIRED, setToken } from './data/remote'
 import { useToast } from './ui/common'
@@ -89,7 +89,7 @@ export default function App() {
     }
     setToken(null)
     connectOps(null)
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    stopSpeaking()
     setSession(null)
   }
 

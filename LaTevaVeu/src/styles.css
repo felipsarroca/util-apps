@@ -184,10 +184,7 @@ body { padding-bottom: var(--footer-h); }
 .login-sub { font-size: 1.2rem; opacity: .92; margin-top: .9rem; font-weight: 600; }
 /* Els dos espais, amb el mateix color que tenen dins l'app (or per a Em miro, verd blavós per a Et veig). */
 .login-steps { display: grid; gap: .8rem; list-style: none; margin: 0; padding: 0; }
-.login-steps li {
-  display: flex; align-items: center; gap: .9rem; padding: .85rem 1rem;
-  border-radius: var(--r-l); background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14);
-}
+.login-steps li { display: flex; align-items: center; gap: .9rem; }
 .login-steps li > span { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; font-size: 1.35rem; flex: none; }
 .login-steps li.em > span { background: #f3c64c; }
 .login-steps li.ev > span { background: #5fb3bb; }
@@ -325,7 +322,10 @@ fieldset.qrow { margin: 0; min-width: 0; }
 .goal-quote { padding: 1rem 1.2rem; border-left: 5px solid var(--gold); border-radius: var(--r-s); background: var(--gold-soft); font-size: 1.1rem; font-weight: 700; font-style: italic; }
 
 /* Navegació inferior */
-.stu-nav { position: sticky; bottom: calc(var(--footer-h) + 8px); z-index: 15; display: flex; align-items: center; gap: .75rem; padding: .65rem; border-radius: 999px; background: rgba(255, 255, 255, .96); backdrop-filter: blur(8px); box-shadow: var(--sh-2); border: 1px solid var(--line); }
+.stu-nav { position: sticky; bottom: calc(var(--footer-h) + 8px); z-index: 15; display: flex; align-items: center; gap: .75rem; padding: .5rem; border-radius: 999px; background: rgba(255, 255, 255, .96); backdrop-filter: blur(8px); box-shadow: var(--sh-2); }
+/* Dins de la barra, el botó secundari no fa caixa: només el principal destaca. */
+.stu-nav .btn:not(.primary) { border-color: transparent; background: transparent; }
+.stu-nav .btn:not(.primary):hover { background: rgba(0, 0, 0, .05); }
 .stu-nav .hint { flex: 1; text-align: center; font-size: .86rem; color: var(--ink-3); font-weight: 700; }
 
 /* Benvinguda */

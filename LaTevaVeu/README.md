@@ -97,7 +97,7 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`). El 
 - **Pantalla d'inici adaptada a l'edat.** Salutació amb el curs com a etiqueta discreta, perquè el docent de l'aula comprovi que és el compte bo. A primària no hi ha descripcions, dates ni avisos que no entendria; a l'ESO hi ha les dates i un enllaç per avisar si les dades són incorrectes.
 - **Tres experiències.** 3r-4t: una pregunta per pantalla, targetes grans, avanç automàtic i lectura en veu alta. 5è-6è: blocs curts i l'objectiu de l'avaluació anterior. ESO: blocs de 4-5 afirmacions i una pantalla per matèria.
 - **Sense pressa.** Es desa sol, es pot continuar un altre dia i es pot modificar fins al tancament.
-- **Accessibilitat.** Lectura en veu alta amb la millor veu catalana del navegador (sona millor amb Microsoft Edge), lletra gran, lletra de lectura fàcil (Atkinson Hyperlegible), navegació amb teclat i tancament de sessió després de 20 minuts d'inactivitat.
+- **Accessibilitat.** Lectura en veu alta amb una veu neuronal catalana (àudios pregenerats; si un text s'ha editat, la millor veu del navegador), lletra gran, lletra de lectura fàcil (Atkinson Hyperlegible), navegació amb teclat i tancament de sessió després de 20 minuts d'inactivitat.
 - **Et veig….** Cada docent es valora una sola vegada (no per matèria), en ordre aleatori estable. Preguntes per etapa (6 a cicle mitjà, 12 a cicle superior, 20 a l'ESO), sempre amb «No ho sé». Comentaris opcionals; un cop lliurat no es pot canviar.
 
 ### Tutoria (Em miro)
@@ -162,6 +162,7 @@ npm test               # proves del prototip i del servidor (vitest, PGlite)
 npx tsc -b && npm run lint
 npm run build          # genera dist/
 npm run docs           # regenera db/dades-prova.sql i els documents de revisió
+npm run audios         # genera els àudios de les preguntes (cal edge-tts)
 ```
 
 Per activar Google real: copia `.env.example` a `.env.local` i posa-hi `VITE_GOOGLE_CLIENT_ID` (client OAuth «Aplicació web» del Google Cloud de l'escola, amb l'origen autoritzat de l'URL publicada).
@@ -178,7 +179,7 @@ Per activar Google real: copia `.env.example` a `.env.local` i posa-hi `VITE_GOO
 | `server` | Servidor (Fastify): verificació de Google, permisos i API de tota l'app |
 | `db` | Esquema de PostgreSQL, permisos del rol de l'app i dades de prova fictícies |
 | `docs` | Dossier de privacitat, textos informatius, kit del claustre i de la prova pilot, i [captures](docs/captures) |
-| `scripts` | Generació dels documents de revisió (`npm run docs`) |
+| `scripts` | Generació dels documents de revisió (`npm run docs`) i dels àudios (`npm run audios`) |
 | `tests`, `server/tests` | Proves dels criteris d'acceptació (prototip i servidor) |
 
 ## Servidor (sense desplegar)
