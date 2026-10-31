@@ -4,7 +4,7 @@ Document per reprendre el projecte des de qualsevol ordinador. Última actualitz
 
 ## On ho hem deixat
 
-L'app està desplegada: servidor a Neon Functions (Frankfurt), base de dades de producció buida amb l'administrador, i entrada amb Google a l'adreça principal; la demostració és a `/demo/`. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. L'escola ja ha autoritzat l'ús de l'app; el següent pas és la càrrega del cens real, i el següent pas tècnic, l’enviament real de correus (punt 2 de *Pendent*).
+L'app està desplegada: servidor a Neon Functions (Frankfurt), base de dades de producció buida amb l'administrador, i entrada amb Google a l'adreça principal; la demostració és a `/demo/`. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. L'escola ja ha autoritzat l'ús de l'app i ja hi ha l'alumnat de 3r EP (grup A, 21 alumnes; identificador = part del correu abans de l'@). Ara hi ha accions en bloc al cens (canviar de curs o grup, donar de baixa), el pas al curs nou i la importació dels correus de família de tots els cursos en un sol fitxer. Falta carregar la resta del cens real, i el següent pas tècnic, l’enviament real de correus (punt 2 de *Pendent*).
 
 ## On és cada cosa
 
@@ -59,6 +59,7 @@ TEST_DATABASE_URL="$(npx neonctl connection-string integracio --project-id spark
 - **Servidor**: `server/neon.ts` (punt d'entrada) i `server/fetch.ts` (adaptador fetch). Es connecta amb la connexió directa que injecta Neon i fa `SET ROLE latevaveu_app`: només té els permisos de `db/permisos.sql`.
 - **Tornar a desplegar** després de canviar el servidor (des d'una còpia amb `npm ci`; cal la variable d'usuari `NEON_API_KEY`, que es desa amb un script que la demana sense mostrar-la): `bash scripts/desplega-servidor.sh`. No facis servir `--clau-nova`: canviaria la clau dels esborranys.
 - **Base de dades nova** (només si mai calgués refer-la, buida): `scripts/inicia-produccio.ts` aplica l'esquema, els permisos, la configuració inicial i el primer administrador.
+- **Curs escolar**: el curs actual és el que marca `academic_years.current`; `ACADEMIC_YEAR` només s'usa si no n'hi ha cap. *Centre › Grups › Curs nou* (`POST /api/centre/curs-nou`, `server/curs.ts`) crea el curs següent, hi copia grups, matèries i assignacions, passa l'alumnat al curs següent amb el mateix grup i dona de baixa el de 4t d'ESO. No cal tornar a desplegar.
 - **Registres del servidor**: Neon Console › projecte › branca `produccio` › Functions › `latevaveu` › Logs.
 
 ## Captures del README
@@ -91,6 +92,7 @@ Torna-les a fer quan canviï alguna de les pantalles que surten al README.
 - **Lectura en veu alta**: àudios MP3 pregenerats amb la veu neuronal catalana `ca-ES-JoanaNeural` (edge-tts), com a VoltaMon: `public/audio/<clau>.mp3`, un per fragment (pregunta, ajuda, matèria, opcions d'una escala), i `index.json` amb la llista. La clau és un resum del text (`src/domain/speech.ts`): si l'escola edita una pregunta, aquell fragment es llegeix amb la millor veu catalana del navegador fins que es regenerin els àudios amb `npm run audios`. Una prova falla si algun text dels qüestionaris inicials no té àudio.
 - **Barra inferior sense requadre**: «Enrere», l'avís del mig i «Següent / Lliura» van sols sota la targeta, a totes les etapes. A l'entrada, «Em miro» i «Et veig…» ja no van dins de requadres i la columna esquerra té més aire.
 - **Botons amb color**: els secundaris tenen un fons granat suau (verd blavós a «Et veig»), «Escolta» és daurat i les opcions de resposta i les targetes dels docents tenen fons càlid i ombra, perquè es distingeixin del fons.
+- **Cens en bloc**: caselles per triar alumnes i barra amb «Canvia de curs o grup» i «Dona de baixa» (operacions `moveStudents` i `removeStudents`). **Curs nou** amb confirmació escrita. **Correus de les famílies**: un sol CSV per a tots els cursos, amb una fila per responsable o una fila per alumne amb diverses columnes de correu.
 - **Presentació del projecte** (`#/projecte`): sentit, marc normatiu citat de fonts oficials (Convenció sobre els Drets de l'Infant art. 12; LOE-LOMLOE art. 1 i 91; Decret 175/2022 art. 22, 23 i 24), què fa l'app, com funciona, beneficis i privacitat.
 
 ## Pendent

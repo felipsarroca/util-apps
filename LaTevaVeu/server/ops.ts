@@ -14,7 +14,7 @@ export type OpName = keyof typeof SERVER_OPS
 const STUDENT_OPS: OpName[] = ['saveDraft', 'submitResponse', 'logAudit']
 
 /** Un sol escriptor alhora: cada operació llegeix i escriu un estat coherent. */
-const LOCK = 7_040_601
+export const LOCK = 7_040_601
 
 export async function stateFor(ctx: Ctx, actor: Actor) {
   const { state } = await loadState(ctx.db, ctx.yearId)

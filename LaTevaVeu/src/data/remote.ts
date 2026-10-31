@@ -222,3 +222,13 @@ export const fetchFamilies = () => call<RemoteFamily[]>('GET', '/api/centre/fami
 export const postFamiliesImport = (csv: string, filename?: string) => call<RemoteFamilyImport>('POST', '/api/centre/families/import', { csv, filename })
 export const postGuardianValidated = (ref: string, email: string, validated: boolean) => call<void>('POST', '/api/centre/families/validate', { ref, email, validated })
 export const postGuardianRemove = (ref: string, email: string) => call<void>('POST', '/api/centre/families/remove', { ref, email })
+
+// ---------- Curs escolar nou ----------
+
+/** Comença el curs indicat al servidor i torna a carregar les dades, ja del curs nou. */
+export async function postNewYear(year: string) {
+  await whenSynced()
+  const r = await call<{ year: string; promoted: number; graduated: number }>('POST', '/api/centre/curs-nou', { year })
+  await loadRemoteState()
+  return r
+}

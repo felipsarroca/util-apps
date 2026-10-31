@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { addStaff, importCensus, isDirection, removeStaff, setDirection, setElective, setStudentGroup, useDemoState, type CensusRow } from '../data/api'
+import { addStaff, importCensus, isDirection, moveStudents, removeStaff, removeStudents, setDirection, setElective, setStudentGroup, useDemoState, type CensusRow } from '../data/api'
 import { gradeShort, GRADES, SCHOOL } from '../domain/catalog'
 import { groupName, groupNameOfKey } from '../domain/groups'
 import { detectColumns, normalizeGrade, parseCsv } from '../domain/csv'
@@ -143,8 +143,28 @@ function Census({ session }: { session: Session }) {
   const [csv, setCsv] = useState<string | null>(null)
   const [rows, setRows] = useState<CensusRow[] | null>(null)
   const [toast, showToast] = useToast()
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [bulk, setBulk] = useState<'move' | 'remove' | null>(null)
   const students = s.students.filter((x) => x.gradeId === grade).sort((a, b) => a.group.localeCompare(b.group) || a.surname.localeCompare(b.surname))
   const electives = s.gradeSubjects.filter((g) => g.gradeId === grade && g.optional && g.active)
+  const chosen = students.filter((x) => picked.has(x.id))
+  const all = students.length > 0 && chosen.length === students.length
+  const toggle = (id: string, on: boolean) =>
+    setPicked((p) => {
+      const n = new Set(p)
+      if (on) n.add(id)
+      else n.delete(id)
+      return n
+    })
+  const runBulk = (fn: () => number, msg: (n: number) => string) => {
+    try {
+      showToast(msg(fn()))
+      setPicked(new Set())
+      setBulk(null)
+    } catch (e) {
+      showToast((e as Error).message)
+    }
+  }
 
   const analyse = (text: string) => {
     const data = parseCsv(text)
@@ -181,24 +201,35 @@ function Census({ session }: { session: Session }) {
       <div className="toolbar">
         <label className="field">
           <span>Curs</span>
-          <select className="select" value={grade} onChange={(e) => setGrade(e.target.value as GradeId)}>
+          <select className="select" value={grade} onChange={(e) => { setGrade(e.target.value as GradeId); setPicked(new Set()) }}>
             {GRADES.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         </label>
         <span className="spacer" />
         <button className="btn" onClick={() => setCsv('')}><Icon name="upload" /> Importa un CSV</button>
       </div>
+      {chosen.length > 0 && (
+        <div className="bulk-bar" role="region" aria-label="Accions amb els alumnes triats">
+          <b>{chosen.length} {chosen.length === 1 ? 'alumne triat' : 'alumnes triats'}</b>
+          <span className="spacer" />
+          <button className="btn" onClick={() => setBulk('move')}><Icon name="users" /> Canvia de curs o grup</button>
+          <button className="btn danger" onClick={() => setBulk('remove')}><Icon name="trash" /> Dona de baixa</button>
+          <button className="btn ghost" onClick={() => setPicked(new Set())}>Desfés la tria</button>
+        </div>
+      )}
       <div className="table-wrap">
         <table className="t">
           <thead>
             <tr>
+              <th className="pick"><input type="checkbox" checked={all} onChange={(e) => setPicked(e.target.checked ? new Set(students.map((x) => x.id)) : new Set())} aria-label="Tria tots els alumnes del curs" /></th>
               <th>Alumne</th><th>Grup</th><th>Correu</th>
               {electives.map((e) => <th key={e.subjectId}>{s.subjects.find((x) => x.id === e.subjectId)?.short}</th>)}
             </tr>
           </thead>
           <tbody>
             {students.map((st) => (
-              <tr key={st.id}>
+              <tr key={st.id} className={picked.has(st.id) ? 'picked' : undefined}>
+                <td className="pick"><input type="checkbox" checked={picked.has(st.id)} onChange={(e) => toggle(st.id, e.target.checked)} aria-label={`Tria ${fullName(st)}`} /></td>
                 <td className="student-cell"><b>{fullName(st)}</b><small>{st.id}</small></td>
                 <td>
                   {(s.classGroups[grade] ?? []).length > 1 ? (
@@ -220,7 +251,23 @@ function Census({ session }: { session: Session }) {
           </tbody>
         </table>
       </div>
+      {!students.length && <div className="empty"><span className="em" aria-hidden="true">🗂️</span>Aquest curs encara no té alumnes. Importa el cens amb un CSV.</div>}
       {electives.length > 0 && <p className="muted" style={{ fontSize: '.85rem' }}>Marca les optatives que cursa cada alumne: només li apareixeran aquestes.</p>}
+      <p className="muted" style={{ fontSize: '.85rem' }}>Marca la casella de cada alumne (o la de la capçalera, per triar-los tots) per canviar-los de curs o de grup o donar-los de baixa alhora. Per passar tota l’escola al curs següent, ves a Centre › Grups › Curs nou.</p>
+
+      {bulk === 'move' && (
+        <MoveStudents count={chosen.length} from={grade} onClose={() => setBulk(null)} onOk={(g, grp) => runBulk(() => moveStudents(session, chosen.map((x) => x.id), g, grp), (n) => `${n} alumnes ara són a ${groupName(g, grp)}.`)} />
+      )}
+      {bulk === 'remove' && (
+        <Modal title={`Dona de baixa ${chosen.length} ${chosen.length === 1 ? 'alumne' : 'alumnes'}`} onClose={() => setBulk(null)}>
+          <p>Deixaran d’aparèixer al cens i ja no podran entrar a l’app. Les respostes que ja han lliurat es conserven. Si algú torna, n’hi ha prou d’importar-lo de nou amb el mateix identificador.</p>
+          <ul className="bulk-list">{chosen.map((x) => <li key={x.id}>{fullName(x)}</li>)}</ul>
+          <div className="row" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={() => setBulk(null)}>Cancel·la</button>
+            <button className="btn danger" onClick={() => runBulk(() => removeStudents(session, chosen.map((x) => x.id)), (n) => `${n} alumnes donats de baixa.`)}>Dona’ls de baixa</button>
+          </div>
+        </Modal>
+      )}
 
       {csv !== null && (
         <Modal title="Importació del cens" onClose={() => { setCsv(null); setRows(null) }} wide>
@@ -271,5 +318,40 @@ function Census({ session }: { session: Session }) {
       )}
       {toast}
     </>
+  )
+}
+
+function MoveStudents({ count, from, onClose, onOk }: { count: number; from: GradeId; onClose: () => void; onOk: (grade: GradeId, group: string) => void }) {
+  const s = useDemoState()
+  const [grade, setGrade] = useState<GradeId>(from)
+  const groups = s.classGroups[grade] ?? []
+  const [group, setGroup] = useState(groups[0] ?? '')
+  const pickGrade = (g: GradeId) => {
+    setGrade(g)
+    setGroup((s.classGroups[g] ?? [])[0] ?? '')
+  }
+  return (
+    <Modal title={`Canvia ${count} ${count === 1 ? 'alumne' : 'alumnes'} de curs o grup`} onClose={onClose}>
+      <div className="row">
+        <label className="field">
+          <span>Curs</span>
+          <select className="select" value={grade} onChange={(e) => pickGrade(e.target.value as GradeId)}>
+            {GRADES.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+        </label>
+        <label className="field">
+          <span>Grup</span>
+          <select className="select" value={group} onChange={(e) => setGroup(e.target.value)} disabled={groups.length < 2}>
+            {groups.map((g) => <option key={g} value={g}>{groups.length > 1 ? g : 'Grup únic'}</option>)}
+          </select>
+        </label>
+      </div>
+      {!groups.length && <div className="notice warn"><Icon name="alert" /><div>{gradeShort(grade)} encara no té cap grup. Crea’l a Centre › Grups.</div></div>}
+      {grade !== from && <p className="muted">En canviar de curs, se’ls treuen les optatives: marca les del curs nou després.</p>}
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn" onClick={onClose}>Cancel·la</button>
+        <button className="btn primary" disabled={!group} onClick={() => onOk(grade, group)}>Mou-los</button>
+      </div>
+    </Modal>
   )
 }

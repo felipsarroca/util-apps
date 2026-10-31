@@ -316,7 +316,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
 
           <h3>4. Durant tot el curs</h3>
           <ul>
-            <li><b>Altes i baixes</b>: torna a importar el cens o retoca’l a <Where>Centre › Alumnat i accessos</Where>.</li>
+            <li><b>Altes</b>: importa un CSV amb els alumnes nous. <b>Baixes i canvis de curs</b>: marca els alumnes a <Where>Centre › Alumnat i accessos › Cens</Where> i tria <b>Dona de baixa</b> o <b>Canvia de curs o grup</b>.</li>
             <li><b>Incidències d’identitat</b>: quan un alumne d’ESO avisa que les seves dades no són correctes, surt un comptador al menú.</li>
             <li><b>Dubtes</b>: consulta <b>Problemes freqüents</b>. Cada acció queda al <Where>Centre › Registre</Where>.</li>
           </ul>
@@ -364,6 +364,21 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>Res no es desa fins que confirmes amb <b>Importa N alumnes</b>. Les files amb incidències no s’importen: corregeix-les al fitxer i torna-ho a provar.</li>
           </ol>
           <p>Si un curs té més d’un grup, la taula del cens mostra un desplegable per canviar un alumne de grup.</p>
+          <h3>Accions en bloc: canvis de curs i baixes</h3>
+          <ol className="guide-steps">
+            <li>Al cens, marca la casella dels alumnes (la de la capçalera els tria tots). Apareix una barra amb les accions.</li>
+            <li><b>Canvia de curs o grup</b>: tria el curs i el grup de destinació. Si canvien de curs, se’ls treuen les optatives (marca les noves).</li>
+            <li><b>Dona de baixa</b>: deixen d’aparèixer al cens i no poden entrar a l’app. Les respostes ja lliurades es conserven. Per tornar-los a donar d’alta, importa’ls de nou amb el mateix identificador.</li>
+          </ol>
+          <h3>Curs nou (cada estiu)</h3>
+          <p><Where>Centre › Grups › Curs nou</Where> Només per a l’administració, una vegada l’any, abans de preparar les campanyes de setembre.</p>
+          <ol className="guide-steps">
+            <li>Tot l’alumnat passa al curs següent amb el mateix grup (3r EP → 4t EP… 3r ESO → 4t ESO). L’alumnat de 4t d’ESO acaba l’escola i es dona de baixa.</li>
+            <li>Els grups, les matèries de cada curs i les assignacions del professorat es copien al curs nou. Les optatives es buiden.</li>
+            <li>El curs anterior es conserva sencer (respostes, informes i registre), però l’app passa a treballar amb el nou.</li>
+            <li><b>Després</b>: importa el cens de 3r de primària, dona de baixa qui marxa, mou els repetidors (selecciona’ls i <b>Canvia de curs o grup</b>) i revisa les assignacions i les optatives.</li>
+          </ol>
+          <Tip>Per confirmar el curs nou cal escriure’l («2027-2028»): així no es pot fer per error.</Tip>
           <h3>Grups</h3>
           <p><Where>Centre › Grups</Where> Només per a l’administració. Cada curs comença amb un <b>grup únic</b>: a tot arreu s’hi mostra només el nom del curs («2n ESO»), sense lletra.</p>
           <ul>
@@ -375,7 +390,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           <h3>Famílies</h3>
           <p><Where>Centre › Famílies</Where> Per a l’administració i l’Equip Directiu. Guarda el correu dels responsables de cada alumne, que és on s’enviarà l’informe «Així em veig».</p>
           <ol className="guide-steps">
-            <li>Clica <b>Importa des de CSV</b>. Una fila per responsable amb les columnes <b>id_alumne</b> (o <b>correu_alumne</b>), <b>nom_responsable</b> i <b>correu_responsable</b>. Un alumne pot tenir diverses files.</li>
+            <li>Clica <b>Importa des de CSV</b>. Un sol fitxer per a tots els cursos (de 3r de primària a 4t d’ESO) amb la columna <b>id_alumne</b> (o <b>correu_alumne</b>) i els correus de la família: una fila per responsable (<b>nom_responsable</b>, <b>correu_responsable</b>) o una fila per alumne amb diverses columnes (<b>correu_familia_1</b>, <b>correu_familia_2</b>…).</li>
             <li>Clica <b>Analitza</b>. L’app detecta alumnes que no són al cens, correus mal escrits, correus repetits i el correu del mateix alumne en lloc del de la família.</li>
             <li>Confirma amb <b>Importa N correus</b>. Per a cada alumne del fitxer, els correus nous <b>substitueixen</b> els anteriors i queden validats. Els alumnes que no surten al fitxer no canvien.</li>
             <li>A la taula pots filtrar per curs, marcar un correu com a <b>Validat</b> o <b>Pendent</b> i treure’l.</li>
@@ -570,7 +585,8 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <table className="t guide-t">
               <thead><tr><th>Quan</th><th>Què</th><th>Qui</th></tr></thead>
               <tbody>
-                <tr><td>Setembre</td><td>Accessos, cens, matèries, optatives i assignacions docents</td><td>Administració</td></tr>
+                <tr><td>Juliol</td><td>Curs nou: tot l’alumnat passa de curs i el de 4t d’ESO es dona de baixa</td><td>Administració</td></tr>
+                <tr><td>Setembre</td><td>Accessos, alumnat nou, baixes i repetidors, matèries, optatives i assignacions docents</td><td>Administració</td></tr>
                 <tr><td>Abans de cada avaluació</td><td>Crear i obrir la recollida d’Em miro (unes dues setmanes)</td><td>Administració</td></tr>
                 <tr><td>Durant la recollida</td><td>Seguiment de la participació i recordatoris a l’aula</td><td>Tutoria</td></tr>
                 <tr><td>Després de tancar</td><td>Revisió, informes «Així em veig» i lliurament a les famílies</td><td>Tutoria i administració</td></tr>

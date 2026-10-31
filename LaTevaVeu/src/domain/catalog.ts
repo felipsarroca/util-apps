@@ -25,6 +25,16 @@ export const GRADES: Grade[] = [
 
 export const gradeById = (id: GradeId): Grade => GRADES.find((g) => g.id === id)!
 
+/** Curs al qual passa l'alumnat en començar un curs escolar nou; després de 4t d'ESO, cap (surt de l'escola). */
+export const nextGrade = (id: GradeId): GradeId | null => GRADES[GRADES.findIndex((g) => g.id === id) + 1]?.id ?? null
+
+/** Curs escolar següent: «2026-2027» → «2027-2028». */
+export const nextYear = (year: string): string => {
+  const m = /^(\d{4})-(\d{4})$/.exec(year)
+  if (!m) throw new Error(`Curs escolar no vàlid: «${year}».`)
+  return `${Number(m[1]) + 1}-${Number(m[2]) + 1}`
+}
+
 /** Nom compacte per a taules i xips: «3r EP», «2n ESO». */
 export const gradeShort = (id: GradeId): string => id.replace(/^(\d)(EP|ESO)$/, (_, n: string, s: string) => `${n}${({ 1: 'r', 2: 'n', 3: 'r', 4: 't', 5: 'è', 6: 'è' } as Record<string, string>)[n]} ${s}`)
 

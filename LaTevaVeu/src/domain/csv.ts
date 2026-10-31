@@ -128,39 +128,55 @@ export interface GuardianImport { rows: GuardianRow[]; issues: { line: number; m
 const EMAIL = /^[^\s@;,]+@[^\s@;,]+\.[a-z]{2,}$/i
 
 /**
- * Una fila per responsable: identificador (o correu) de l'alumne, nom del responsable i correu.
- * Un alumne pot tenir diverses files. Les files amb errors no s'apliquen.
+ * Identificador (o correu) de l'alumne i els correus de la família. Serveixen els dos formats habituals:
+ * una fila per responsable (nom_responsable;correu_responsable) o una fila per alumne amb diverses columnes
+ * de correu (correu_familia_1;correu_familia_2…), i una cel·la pot portar més d'un correu. Els errors no s'apliquen.
  */
 export function parseGuardiansCsv(text: string, students: Student[]): GuardianImport {
   const [header = [], ...data] = parseCsv(text)
   const h = header.map(norm)
-  const col = (...keys: string[]) => h.findIndex((x) => keys.some((k) => x === k || x.includes(k)))
+  const isStudent = (x: string) => x.includes('alumn')
+  const all = (test: (x: string) => boolean) => h.flatMap((x, i) => (test(x) ? [i] : []))
   const c = {
-    id: col('id alumne', 'identificador', 'ralc', 'id'),
-    studentEmail: h.findIndex((x) => x.includes('correu') && x.includes('alumne')),
-    name: h.findIndex((x) => x.includes('nom') && (x.includes('respons') || x.includes('famil') || x.includes('tutor'))),
-    email: h.findIndex((x) => (x.includes('correu') || x.includes('email') || x.includes('mail')) && !x.includes('alumne')),
+    id: h.findIndex((x) => ['id alumne', 'identificador', 'ralc', 'id'].some((k) => x === k || x.includes(k))),
+    studentEmail: h.findIndex((x) => (x.includes('correu') || x.includes('mail')) && isStudent(x)),
+    names: all((x) => x.includes('nom') && /respons|famil|tutor|pare|mare/.test(x)),
+    emails: all((x) => (x.includes('correu') || x.includes('mail')) && !isStudent(x)),
   }
   const out: GuardianImport = { rows: [], issues: [] }
-  if ((c.id < 0 && c.studentEmail < 0) || c.email < 0) {
-    out.issues.push({ line: 1, msg: 'Falten columnes: calen id_alumne (o correu_alumne), nom_responsable i correu_responsable.' })
+  if ((c.id < 0 && c.studentEmail < 0) || !c.emails.length) {
+    out.issues.push({ line: 1, msg: 'Falten columnes: calen id_alumne (o correu_alumne) i almenys una columna de correu de la família.' })
     return out
   }
   const seen = new Set<string>()
   data.forEach((r, i) => {
     const line = i + 2
+    if (r.every((x) => !x.trim())) return
     const id = c.id >= 0 ? (r[c.id] ?? '').trim() : ''
     const se = c.studentEmail >= 0 ? (r[c.studentEmail] ?? '').trim().toLowerCase() : ''
     const st = students.find((x) => (id && x.id === id) || (se && x.email === se))
     if (!st) return void out.issues.push({ line, msg: `No hi ha cap alumne al cens amb ${id ? `l’identificador ${id}` : `el correu ${se || '(buit)'}`}.` })
-    const email = (r[c.email] ?? '').trim().toLowerCase()
-    if (!EMAIL.test(email)) return void out.issues.push({ line, msg: `Correu no vàlid: «${email}».` })
-    if (email.endsWith('@ramonpont.cat') && email === st.email) return void out.issues.push({ line, msg: 'És el correu de l’alumne, no el de la família.' })
-    const key = `${st.id}|${email}`
-    if (seen.has(key)) return void out.issues.push({ line, msg: `${email} surt repetit per al mateix alumne.` })
-    seen.add(key)
-    const name = (c.name >= 0 ? r[c.name] ?? '' : '').trim() || 'Família'
-    out.rows.push({ line, studentId: st.id, studentName: `${st.name} ${st.surname}`, guardian: { name, email, validated: true } })
+    const found = c.emails.flatMap((col, k) =>
+      (r[col] ?? '').split(/[\s;,/]+/).filter(Boolean).map((email) => ({ email: email.toLowerCase(), name: (r[c.names[k] ?? c.names[0]] ?? '').trim() || 'Família' })),
+    )
+    if (!found.length) return void out.issues.push({ line, msg: `${st.name} ${st.surname}: no hi ha cap correu de la família.` })
+    for (const { email, name } of found) {
+      if (!EMAIL.test(email)) {
+        out.issues.push({ line, msg: `Correu no vàlid: «${email}».` })
+        continue
+      }
+      if (email === st.email) {
+        out.issues.push({ line, msg: 'És el correu de l’alumne, no el de la família.' })
+        continue
+      }
+      const key = `${st.id}|${email}`
+      if (seen.has(key)) {
+        out.issues.push({ line, msg: `${email} surt repetit per al mateix alumne.` })
+        continue
+      }
+      seen.add(key)
+      out.rows.push({ line, studentId: st.id, studentName: `${st.name} ${st.surname}`, guardian: { name, email, validated: true } })
+    }
   })
   return out
 }

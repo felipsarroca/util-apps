@@ -7,12 +7,14 @@ import type { Db } from './db'
 import { HttpError, unauthorized } from './errors'
 import * as etVeig from './etveig'
 import * as families from './families'
+import * as curs from './curs'
 import * as ops from './ops'
 
 export interface AppOptions {
   db: Db
   verify: Verifier
   draftKey: Buffer
+  /** Curs escolar si la base de dades no en té cap de marcat com a actual. */
   yearId: string
   /** Origen autoritzat del frontend (p. ex. https://felipsarroca.github.io). */
   allowedOrigin?: string
@@ -35,6 +37,8 @@ export function buildApp(o: AppOptions) {
     }
     reply.header('cache-control', 'no-store')
     if (req.method === 'OPTIONS') return reply.code(204).send()
+    // El curs actual és el que marca la base de dades: en començar-ne un de nou no cal tornar a desplegar.
+    if (req.url !== '/api/health') ctx.yearId = (await o.db.query<{ id: string }>('select id from academic_years where current')).rows[0]?.id ?? o.yearId
   })
 
   app.setErrorHandler((err, _req, reply) => {
@@ -49,7 +53,7 @@ export function buildApp(o: AppOptions) {
   const actorOf = async (req: FastifyRequest): Promise<Actor> => {
     const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? '')
     if (!m) throw unauthorized()
-    return resolveActor(o.db, await o.verify(m[1]), o.yearId)
+    return resolveActor(o.db, await o.verify(m[1]), ctx.yearId)
   }
 
   type P = { campaignId: string; teacherEmail: string; stage: StageId; id: string }
@@ -108,6 +112,9 @@ export function buildApp(o: AppOptions) {
   app.post<{ Body: { name?: unknown; args?: unknown } }>('/api/ops', { bodyLimit: 2 * 1024 * 1024 }, async (req) =>
     ops.runOp(ctx, await actorOf(req), typeof req.body?.name === 'string' ? req.body.name : '', req.body?.args),
   )
+
+  // ---------- Centre: curs escolar nou ----------
+  app.post<{ Body: { year?: unknown } }>('/api/centre/curs-nou', async (req) => curs.startNewYear(ctx, await actorOf(req), req.body?.year))
 
   // ---------- Centre: correus de les famílies ----------
   type F = { ref?: unknown; email?: unknown; validated?: unknown }

@@ -3,7 +3,7 @@
 // Per connectar-hi Neon, cal implementar la mateixa interfície amb crides HTTP.
 
 import { useSyncExternalStore } from 'react'
-import { GRADES } from '../domain/catalog'
+import { GRADES, gradeShort, nextGrade, nextYear } from '../domain/catalog'
 import { buildSteps, findMissing, subjectsForStudent } from '../domain/engine'
 import {
   buildCenterView, buildTeacherReport, encodeAnswers, flagComment, missingItems, stableShuffle, stageOfGrade, stagesOfTeacher, teachersForStudent,
@@ -477,6 +477,64 @@ function setStudentGroup$(session: Session, studentId: string, group: string) {
   commit(audit({ ...state, students: state.students.map((x) => (x.id === studentId ? { ...x, group } : x)) }, session.email, 'Grups', `${studentId}: grup ${st.group} → ${group}`))
 }
 
+/** Canvia de curs i de grup diversos alumnes alhora. Si canvien de curs, se'ls treuen les optatives. */
+function moveStudents$(session: Session, studentIds: string[], gradeId: GradeId, group: string): number {
+  requireAdmin(session)
+  if (!Array.isArray(studentIds) || !studentIds.length) throw new Error('No has triat cap alumne.')
+  if (!GRADES.some((g) => g.id === gradeId) || !(state.classGroups[gradeId] ?? []).includes(group)) throw new Error('Aquest grup no existeix en aquest curs.')
+  const ids = new Set(studentIds)
+  const moved = state.students.filter((x) => ids.has(x.id))
+  if (moved.length !== ids.size) throw new Error('Algun dels alumnes triats ja no és al cens.')
+  commit(
+    audit(
+      { ...state, students: state.students.map((x) => (ids.has(x.id) ? { ...x, gradeId, group, electives: x.gradeId === gradeId ? x.electives : [] } : x)) },
+      session.email,
+      'Grups',
+      `${moved.length} alumnes mouen a ${gradeShort(gradeId)} ${group}: ${moved.map((x) => x.id).join(', ')}`,
+    ),
+  )
+  return moved.length
+}
+
+/** Dona de baixa diversos alumnes alhora: deixen de tenir accés. Les respostes ja lliurades es conserven. */
+function removeStudents$(session: Session, studentIds: string[]): number {
+  requireAdmin(session)
+  if (!Array.isArray(studentIds) || !studentIds.length) throw new Error('No has triat cap alumne.')
+  const ids = new Set(studentIds)
+  const gone = state.students.filter((x) => ids.has(x.id))
+  commit(audit({ ...state, students: state.students.filter((x) => !ids.has(x.id)) }, session.email, 'Baixes', `${gone.length} alumnes donats de baixa: ${gone.map((x) => x.id).join(', ')}`))
+  return gone.length
+}
+
+/**
+ * Curs escolar nou (demostració): cada alumne passa al curs següent amb el mateix grup, el de 4t d'ESO surt
+ * de l'escola i es comença sense campanyes ni respostes. Al servidor ho fa server/curs.ts amb la base de dades.
+ */
+export function startNewYearLocal(session: Session): { year: string; promoted: number; graduated: number } {
+  requireAdmin(session)
+  const year = nextYear(state.year)
+  const classGroups = { ...state.classGroups }
+  const students: Student[] = []
+  for (const st of state.students) {
+    const g = nextGrade(st.gradeId)
+    if (!g) continue
+    if (!(classGroups[g] ?? []).includes(st.group)) classGroups[g] = [...(classGroups[g] ?? []), st.group]
+    students.push({ ...st, gradeId: g, electives: [] })
+  }
+  const graduated = state.students.length - students.length
+  commit(
+    audit(
+      {
+        ...state, year, students, classGroups, campaigns: [], responses: [], feedbackCampaigns: [], feedbackDrafts: [], participation: [], feedbackAnswers: [], feedbackComments: [], selfAssessments: [],
+      },
+      session.email,
+      'Curs nou',
+      `${state.year} → ${year}: ${students.length} alumnes passen de curs, ${graduated} surten de l’escola`,
+    ),
+  )
+  return { year, promoted: students.length, graduated }
+}
+
 function setElective$(session: Session, studentId: string, subjectId: string, on: boolean) {
   requireAdmin(session)
   if (!state.subjects.some((x) => x.id === subjectId)) throw new Error('Aquesta matèria no existeix.')
@@ -775,6 +833,8 @@ export const addClassGroup = op('addClassGroup', addClassGroup$)
 export const renameClassGroup = op('renameClassGroup', renameClassGroup$)
 export const removeClassGroup = op('removeClassGroup', removeClassGroup$)
 export const setStudentGroup = op('setStudentGroup', setStudentGroup$)
+export const moveStudents = op('moveStudents', moveStudents$)
+export const removeStudents = op('removeStudents', removeStudents$)
 export const setElective = op('setElective', setElective$)
 export const logAudit = op('logAudit', logAudit$)
 export const setModules = op('setModules', setModules$)
@@ -812,6 +872,8 @@ export const SERVER_OPS = {
   renameClassGroup: renameClassGroup$,
   removeClassGroup: removeClassGroup$,
   setStudentGroup: setStudentGroup$,
+  moveStudents: moveStudents$,
+  removeStudents: removeStudents$,
   setElective: setElective$,
   logAudit: logAudit$,
   setModules: setModules$,

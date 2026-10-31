@@ -109,7 +109,14 @@ function ImportFamilies({ session, onClose, onDone }: { session: Session; onClos
       {!result ? (
         <>
           <p>
-            Una fila per responsable, amb les columnes <b>id_alumne</b> (o <b>correu_alumne</b>), <b>nom_responsable</b> i <b>correu_responsable</b>. Un alumne pot tenir diverses files. Separador «;» o «,». Res no es desa fins que confirmis.
+            Un sol fitxer per a tots els cursos, de 3r de primària a 4t d’ESO. Cal la columna <b>id_alumne</b> (o <b>correu_alumne</b>) i els correus de la família en un d’aquests formats:
+          </p>
+          <ul>
+            <li>Una fila per responsable: <b>nom_responsable</b> i <b>correu_responsable</b>. Un alumne pot tenir diverses files.</li>
+            <li>Una fila per alumne amb diverses columnes: <b>correu_familia_1</b>, <b>correu_familia_2</b>… (o <b>correu_pare</b>, <b>correu_mare</b>). Una cel·la pot portar dos correus separats per un espai.</li>
+          </ul>
+          <p>
+            Separador «;» o «,». Res no es desa fins que confirmis.
           </p>
           <div className="row">
             <label className="btn">
