@@ -408,8 +408,8 @@ Es mantenen els 15 criteris de l'especificació v2.0 (§15) per a «Em miro». �
 | Fase | Resultat | Estat |
 | --- | --- | --- |
 | 0. Prototip «Em miro» | Recorregut complet en mode de demostració | **Fet** |
-| 1. Marca i estructura | Canvi a «La teva veu», dos apartats activables, rutes `/em-miro` i `/et-veig`, informe «Així em veig» | Pendent |
-| 2. Prototip «Et veig» | Assignacions docents, recorregut de l'alumne, autoavaluació docent, llindars, «Així et veiem» i visió de centre amb dades fictícies | Pendent |
+| 1. Marca i estructura | Canvi a «La teva veu», dos apartats activables, rutes `/em-miro` i `/et-veig`, informe «Així em veig» | **Fet**, excepte les rutes pròpies |
+| 2. Prototip «Et veig» | Assignacions docents, recorregut de l'alumne, autoavaluació docent, llindars, «Així et veiem» i visió de centre amb dades fictícies | **Fet** |
 | 3. Validació pedagògica | Preguntes d'«Et veig» provades amb alumnat i revisades al claustre; inventari real de matèries d'ESO | Pendent |
 | 4. Validació de privacitat | Revisió amb direcció i la persona delegada de protecció de dades; OAuth aprovat a Google Workspace | Pendent |
 | 5. Backend i Neon | API, sessions, esquema, model de confidencialitat i proves de permisos | Pendent |
