@@ -114,7 +114,11 @@ export function buildApp(o: AppOptions) {
   )
 
   // ---------- Centre: curs escolar nou ----------
-  app.post<{ Body: { year?: unknown } }>('/api/centre/curs-nou', async (req) => curs.startNewYear(ctx, await actorOf(req), req.body?.year))
+  app.post<{ Body: { year?: unknown; repeaters?: unknown } }>('/api/centre/curs-nou', async (req) => {
+    const r = req.body?.repeaters ?? []
+    if (!Array.isArray(r) || r.length > 3000 || r.some((x) => typeof x !== 'string' || x.length > 64)) throw new HttpError(400, 'Llista de repetidors no vàlida.')
+    return curs.startNewYear(ctx, await actorOf(req), req.body?.year, r as string[])
+  })
 
   // ---------- Centre: correus de les famílies ----------
   type F = { ref?: unknown; email?: unknown; validated?: unknown }

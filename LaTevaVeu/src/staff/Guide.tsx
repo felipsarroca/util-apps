@@ -373,10 +373,11 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           <h3>Curs nou (cada estiu)</h3>
           <p><Where>Centre › Grups › Curs nou</Where> Només per a l’administració, una vegada l’any, abans de preparar les campanyes de setembre.</p>
           <ol className="guide-steps">
-            <li>Tot l’alumnat passa al curs següent amb el mateix grup (3r EP → 4t EP… 3r ESO → 4t ESO). L’alumnat de 4t d’ESO acaba l’escola i es dona de baixa.</li>
+            <li>Es conserva tota la informació del centre: personal i rols, cens, famílies, grups, matèries, tutories, qui fa classe a qui, qüestionaris i configuració. Les valoracions i els informes es queden al curs anterior.</li>
+            <li>Abans de confirmar, marca els <b>repetidors</b> de cada curs (botó «Marca’ls»): es queden al seu curs. La resta passa al curs següent amb el mateix grup (3r EP → 4t EP… 3r ESO → 4t ESO). Qui acaba 4t d’ESO sense repetir es dona de baixa.</li>
             <li>Els grups, les matèries de cada curs i les assignacions del professorat es copien al curs nou. Les optatives es buiden.</li>
             <li>El curs anterior es conserva sencer (respostes, informes i registre), però l’app passa a treballar amb el nou.</li>
-            <li><b>Després</b>: importa el cens de 3r de primària, dona de baixa qui marxa, mou els repetidors (selecciona’ls i <b>Canvia de curs o grup</b>) i revisa les assignacions i les optatives.</li>
+            <li><b>Després</b>: importa el cens de 3r de primària, dona de baixa qui marxa de l’escola i revisa les tutories, les assignacions i les optatives. Si t’has descuidat un repetidor, el pots moure amb <b>Canvia de curs o grup</b>.</li>
           </ol>
           <Tip>Per confirmar el curs nou cal escriure’l («2027-2028»): així no es pot fer per error.</Tip>
           <h3>Grups</h3>

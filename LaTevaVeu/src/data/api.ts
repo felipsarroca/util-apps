@@ -554,21 +554,28 @@ function removeStudents$(session: Session, studentIds: string[]): number {
 }
 
 /**
- * Curs escolar nou (demostració): cada alumne passa al curs següent amb el mateix grup, el de 4t d'ESO surt
- * de l'escola i es comença sense campanyes ni respostes. Al servidor ho fa server/curs.ts amb la base de dades.
+ * Curs escolar nou (demostració): cada alumne passa al curs següent amb el mateix grup, menys els repetidors,
+ * que es queden al seu curs; el de 4t d'ESO que no repeteix surt de l'escola. Es comença sense campanyes ni
+ * respostes. Al servidor ho fa server/curs.ts amb la base de dades.
  */
-export function startNewYearLocal(session: Session): { year: string; promoted: number; graduated: number } {
+export function startNewYearLocal(session: Session, repeaters: string[] = []): NewYearResult {
   requireAdmin(session)
   const year = nextYear(state.year)
+  const repeat = new Set(repeaters)
   const classGroups = { ...state.classGroups }
   const students: Student[] = []
   for (const st of state.students) {
+    if (repeat.has(st.id)) {
+      students.push(st)
+      continue
+    }
     const g = nextGrade(st.gradeId)
     if (!g) continue
     if (!(classGroups[g] ?? []).includes(st.group)) classGroups[g] = [...(classGroups[g] ?? []), st.group]
     students.push({ ...st, gradeId: g, electives: [] })
   }
   const graduated = state.students.length - students.length
+  const repeated = state.students.filter((x) => repeat.has(x.id)).length
   commit(
     audit(
       {
@@ -576,10 +583,17 @@ export function startNewYearLocal(session: Session): { year: string; promoted: n
       },
       session.email,
       'Curs nou',
-      `${state.year} → ${year}: ${students.length} alumnes passen de curs, ${graduated} surten de l’escola`,
+      `${state.year} → ${year}: ${students.length - repeated} alumnes passen de curs, ${repeated} repeteixen, ${graduated} surten de l’escola`,
     ),
   )
-  return { year, promoted: students.length, graduated }
+  return { year, promoted: students.length - repeated, repeated, graduated }
+}
+
+export interface NewYearResult {
+  year: string
+  promoted: number
+  repeated: number
+  graduated: number
 }
 
 function setElective$(session: Session, studentId: string, subjectId: string, on: boolean) {

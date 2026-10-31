@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CenterStage, TeacherReport } from '../domain/feedback'
 import type { Answers, FeedbackStatus, GradeId, ModerationStatus, Scale, SelfTask, Session, StageId } from '../domain/types'
-import { connectOps, hydrate, type FeedbackHome } from './api'
+import { connectOps, hydrate, type FeedbackHome, type NewYearResult } from './api'
 import type { DemoState } from './seed'
 
 export const API_URL: string | undefined = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || undefined
@@ -226,9 +226,9 @@ export const postGuardianRemove = (ref: string, email: string) => call<void>('PO
 // ---------- Curs escolar nou ----------
 
 /** Comença el curs indicat al servidor i torna a carregar les dades, ja del curs nou. */
-export async function postNewYear(year: string) {
+export async function postNewYear(year: string, repeaters: string[]) {
   await whenSynced()
-  const r = await call<{ year: string; promoted: number; graduated: number }>('POST', '/api/centre/curs-nou', { year })
+  const r = await call<NewYearResult>('POST', '/api/centre/curs-nou', { year, repeaters })
   await loadRemoteState()
   return r
 }

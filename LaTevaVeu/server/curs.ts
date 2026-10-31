@@ -1,19 +1,15 @@
 // Curs escolar nou: es crea el curs següent amb la mateixa configuració, l'alumnat passa al curs
-// següent amb el mateix grup i el de 4t d'ESO surt de l'escola. El curs anterior es conserva sencer.
+// següent amb el mateix grup (els repetidors es queden al seu) i el de 4t d'ESO que no repeteix surt
+// de l'escola. El curs anterior es conserva sencer.
 import { nextGrade, nextYear } from '../src/domain/catalog'
 import type { GradeId } from '../src/domain/types'
 import type { Actor } from './auth'
 import { conflict, forbidden } from './errors'
 import type { Ctx } from './etveig'
 import { LOCK } from './ops'
+import type { NewYearResult } from '../src/data/api'
 
-export interface NewYearResult {
-  year: string
-  promoted: number
-  graduated: number
-}
-
-export async function startNewYear(ctx: Ctx, actor: Actor, year: unknown): Promise<NewYearResult> {
+export async function startNewYear(ctx: Ctx, actor: Actor, year: unknown, repeaters: string[] = []): Promise<NewYearResult> {
   if (!actor.roles.has('admin')) throw forbidden('El curs nou només el pot començar l’administració.')
   const out = await ctx.db.tx(async (q) => {
     await q.query('select pg_advisory_xact_lock($1)', [LOCK])
@@ -32,16 +28,19 @@ export async function startNewYear(ctx: Ctx, actor: Actor, year: unknown): Promi
     await q.query(`insert into teaching_assignments (group_id, subject_id, teacher_id) select ng.id, x.subject_id, x.teacher_id from teaching_assignments x ${same}`, [old, next])
 
     const enrolled = (
-      await q.query<{ student_id: string; grade_id: GradeId; label: string }>(
-        `select e.student_id, g.grade_id, g.label from enrollments e join class_groups g on g.id = e.group_id and g.year_id = $1
+      await q.query<{ student_id: string; ref: string; grade_id: GradeId; label: string }>(
+        `select e.student_id, s.school_ref as ref, g.grade_id, g.label from enrollments e join class_groups g on g.id = e.group_id and g.year_id = $1
           join students s on s.id = e.student_id and s.active where e.active`,
         [old],
       )
     ).rows
+    const repeat = new Set(repeaters)
     let promoted = 0
+    let repeated = 0
     let graduated = 0
     for (const r of enrolled) {
-      const g = nextGrade(r.grade_id)
+      const stays = repeat.has(r.ref)
+      const g = stays ? r.grade_id : nextGrade(r.grade_id)
       if (!g) {
         await q.query('update students set active = false where id = $1', [r.student_id])
         graduated++
@@ -54,13 +53,14 @@ export async function startNewYear(ctx: Ctx, actor: Actor, year: unknown): Promi
         )
       ).rows[0].id
       await q.query('insert into enrollments (student_id, group_id) values ($1, $2)', [r.student_id, gid])
-      promoted++
+      if (stays) repeated++
+      else promoted++
     }
     // Primer es desmarca el curs actual: només n'hi pot haver un.
     await q.query('update academic_years set current = false where current')
     await q.query('update academic_years set current = true where id = $1', [next])
-    await q.query('insert into audit_log (actor_id, action, detail) values ($1, $2, $3)', [actor.userId, 'Curs nou', JSON.stringify({ from: old, to: next, promoted, graduated })])
-    return { year: next, promoted, graduated }
+    await q.query('insert into audit_log (actor_id, action, detail) values ($1, $2, $3)', [actor.userId, 'Curs nou', JSON.stringify({ from: old, to: next, promoted, repeated, graduated })])
+    return { year: next, promoted, repeated, graduated }
   })
   ctx.yearId = out.year
   return out

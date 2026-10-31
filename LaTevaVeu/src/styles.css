@@ -909,6 +909,8 @@ button.guide-card:hover { box-shadow: var(--sh-2); transform: translateY(-1px); 
 .group-chip { display: inline-flex; align-items: center; gap: .45rem; padding: .2rem .3rem .2rem .7rem; border: 1px solid var(--line); border-radius: 99px; background: #fff; }
 .group-chip small { color: var(--ink-3); font-weight: 700; }
 .tutor-line + .tutor-line { margin-top: .25rem; }
+.repeat-list { columns: 3 13rem; column-gap: 1.2rem; padding: .3rem 0; }
+.repeat-list .check { display: flex; gap: .45rem; align-items: center; break-inside: avoid; padding: .15rem 0; }
 .fam-list { display: grid; gap: .3rem; }
 .fam-row { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .7rem; }
 .fam-row > span:first-child { flex: 1; min-width: 200px; overflow-wrap: anywhere; }

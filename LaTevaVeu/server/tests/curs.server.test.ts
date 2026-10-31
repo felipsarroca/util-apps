@@ -93,13 +93,17 @@ describe('curs nou', () => {
 
   it('l’alumnat passa de curs amb el mateix grup, el de 4t d’ESO surt i l’app treballa amb el curs nou', async () => {
     const before = (await state('admin')).state
-    const r = await call('admin', 'POST', '/api/centre/curs-nou', { year: '2027-2028' })
+    // Un repetidor: es queda al seu curs.
+    const rep = before.students[1]
+    expect((await call('admin', 'POST', '/api/centre/curs-nou', { year: '2027-2028', repeaters: 'tots' })).status).toBe(400)
+    const r = await call('admin', 'POST', '/api/centre/curs-nou', { year: '2027-2028', repeaters: [rep.id] })
     expect(r.status).toBe(200)
-    const grads = before.students.filter((x) => !nextGrade(x.gradeId))
-    expect(r.body).toEqual({ year: '2027-2028', promoted: before.students.length - grads.length, graduated: grads.length })
+    const grads = before.students.filter((x) => !nextGrade(x.gradeId) && x.id !== rep.id)
+    expect(r.body).toEqual({ year: '2027-2028', promoted: before.students.length - grads.length - 1, repeated: 1, graduated: grads.length })
     const after = (await state('admin')).state
     expect(after.year).toBe('2027-2028')
-    for (const st of before.students) {
+    expect(after.students.find((x) => x.id === rep.id)).toMatchObject({ gradeId: rep.gradeId, group: rep.group })
+    for (const st of before.students.filter((x) => x.id !== rep.id)) {
       const now = after.students.find((x) => x.id === st.id)
       if (!nextGrade(st.gradeId)) expect(now).toBeUndefined()
       else expect([now?.gradeId, now?.group]).toEqual([nextGrade(st.gradeId), st.group])

@@ -47,11 +47,14 @@ describe('curs nou (demostració)', () => {
   it('passa tothom al curs següent i el de 4t d’ESO surt', () => {
     api.resetDemo()
     const before = api.snapshot()
-    const r = api.startNewYearLocal(login(ADMIN))
+    const rep = before.students.find((x) => x.gradeId === '4ESO')!
+    const r = api.startNewYearLocal(login(ADMIN), [rep.id])
     const after = api.snapshot()
     expect(r.year).toBe(nextYear(before.year))
     expect(after.year).toBe(r.year)
-    expect(r.graduated).toBe(before.students.filter((x) => x.gradeId === '4ESO').length)
+    expect(r.repeated).toBe(1)
+    expect(r.graduated).toBe(before.students.filter((x) => x.gradeId === '4ESO').length - 1)
+    expect(after.students.find((x) => x.id === rep.id)).toMatchObject({ gradeId: '4ESO', group: rep.group })
     expect(after.students.some((x) => x.gradeId === '3EP')).toBe(false)
     expect(after.campaigns).toEqual([])
     const one = before.students.find((x) => x.gradeId === '2ESO')!

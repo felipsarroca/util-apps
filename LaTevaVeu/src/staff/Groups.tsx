@@ -1,7 +1,7 @@
 // Grups de cada curs: per defecte un per curs (una sola línia), sense lletra.
 
-import { useState } from 'react'
-import { addClassGroup, removeClassGroup, renameClassGroup, startNewYearLocal, useDemoState } from '../data/api'
+import { Fragment, useState } from 'react'
+import { addClassGroup, removeClassGroup, renameClassGroup, startNewYearLocal, useDemoState, type NewYearResult } from '../data/api'
 import { postNewYear } from '../data/remote'
 import { gradeShort, GRADES, nextGrade, nextYear, STAGES, TUTORIA } from '../domain/catalog'
 import { groupName } from '../domain/groups'
@@ -125,7 +125,7 @@ export function GroupsScreen({ session }: { session: Session }) {
           onClose={() => setNewYear(false)}
           onDone={(r) => {
             setNewYear(false)
-            showToast(`Curs ${r.year} començat: ${r.promoted} alumnes han passat de curs i ${r.graduated} han acabat 4t d’ESO.`)
+            showToast(`Curs ${r.year} començat: ${r.promoted} alumnes han passat de curs, ${r.repeated} ${r.repeated === 1 ? 'repeteix' : 'repeteixen'} i ${r.graduated} han acabat 4t d’ESO.`)
           }}
           onError={(m) => showToast(m)}
         />
@@ -136,16 +136,26 @@ export function GroupsScreen({ session }: { session: Session }) {
 }
 
 /** Pas al curs escolar següent: resum del que passarà i confirmació escrita. */
-function NewYear({ session, onClose, onDone, onError }: { session: Session; onClose: () => void; onDone: (r: { year: string; promoted: number; graduated: number }) => void; onError: (m: string) => void }) {
+function NewYear({ session, onClose, onDone, onError }: { session: Session; onClose: () => void; onDone: (r: NewYearResult) => void; onError: (m: string) => void }) {
   const s = useDemoState()
   const year = nextYear(s.year)
   const [typed, setTyped] = useState('')
   const [busy, setBusy] = useState(false)
-  const count = (g: GradeId) => s.students.filter((x) => x.gradeId === g).length
+  const [repeat, setRepeat] = useState<Set<string>>(new Set())
+  const [open, setOpen] = useState<GradeId | null>(null)
+  const of = (g: GradeId) => s.students.filter((x) => x.gradeId === g).sort((a, b) => a.surname.localeCompare(b.surname, 'ca'))
+  const reps = (g: GradeId) => of(g).filter((x) => repeat.has(x.id)).length
+  const toggle = (id: string, on: boolean) =>
+    setRepeat((p) => {
+      const n = new Set(p)
+      if (on) n.add(id)
+      else n.delete(id)
+      return n
+    })
   const go = async () => {
     setBusy(true)
     try {
-      onDone(session.remote ? await postNewYear(year) : startNewYearLocal(session))
+      onDone(session.remote ? await postNewYear(year, [...repeat]) : startNewYearLocal(session, [...repeat]))
     } catch (e) {
       onError((e as Error).message)
       setBusy(false)
@@ -153,28 +163,52 @@ function NewYear({ session, onClose, onDone, onError }: { session: Session; onCl
   }
   return (
     <Modal title={`Comença el curs ${year}`} onClose={onClose} wide>
-      <p>Es fa una sola vegada, a l’estiu, abans de preparar les campanyes del curs nou. El curs {s.year} es conserva sencer (respostes i informes), però l’app passa a treballar amb el {year}.</p>
+      <p>
+        Es fa una sola vegada, a l’estiu. Es conserva tota la informació del centre (personal, cens, famílies, grups, matèries, tutories, qui fa classe a qui, qüestionaris i configuració);
+        les valoracions i els informes es queden al curs {s.year}. Marca abans els <b>repetidors</b>: es queden al seu curs.
+      </p>
       <div className="table-wrap">
         <table className="t">
-          <thead><tr><th>Ara a</th><th>Alumnes</th><th>Passaran a</th></tr></thead>
+          <thead><tr><th>Ara a</th><th>Alumnes</th><th>Repetidors</th><th>La resta passa a</th></tr></thead>
           <tbody>
             {GRADES.map((g) => {
               const to = nextGrade(g.id)
+              const list = of(g.id)
               return (
-                <tr key={g.id}>
-                  <td>{g.name}</td>
-                  <td>{count(g.id)}</td>
-                  <td>{to ? gradeShort(to) : <b>Acaben l’escola: es donen de baixa</b>}</td>
-                </tr>
+                <Fragment key={g.id}>
+                  <tr>
+                    <td>{g.name}</td>
+                    <td>{list.length}</td>
+                    <td>
+                      <button className="btn small" disabled={!list.length} onClick={() => setOpen(open === g.id ? null : g.id)} aria-expanded={open === g.id}>
+                        {reps(g.id) ? `${reps(g.id)} ${reps(g.id) === 1 ? 'repeteix' : 'repeteixen'}` : 'Marca’ls'}
+                      </button>
+                    </td>
+                    <td>{to ? gradeShort(to) : <b>Acaben l’escola: es donen de baixa</b>}</td>
+                  </tr>
+                  {open === g.id && (
+                    <tr>
+                      <td colSpan={4}>
+                        <div className="repeat-list">
+                          {list.map((x) => (
+                            <label key={x.id} className="check">
+                              <input type="checkbox" checked={repeat.has(x.id)} onChange={(e) => toggle(x.id, e.target.checked)} /> {x.surname}, {x.name}
+                            </label>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               )
             })}
           </tbody>
         </table>
       </div>
       <ul className="role-help">
-        <li>Cada alumne conserva el grup (A, B…) en el curs següent. Els grups, les matèries de cada curs i les assignacions del professorat es copien al curs nou.</li>
+        <li>Cada alumne conserva el grup (A, B…). Els repetidors es queden al seu curs; els de 4t d’ESO que no repeteixen es donen de baixa (no s’esborra res).</li>
         <li>Les optatives es buiden: cal marcar les del curs nou a Alumnat i accessos › Cens.</li>
-        <li><b>Després:</b> importa el cens de 3r de primària (l’alumnat que entra), dona de baixa qui marxa i mou els repetidors amb la selecció del cens.</li>
+        <li><b>Després:</b> importa el cens de 3r de primària (l’alumnat que entra), dona de baixa qui marxa de l’escola i revisa les tutories i qui fa classe a qui.</li>
       </ul>
       <label className="field">
         <span>Per confirmar-ho, escriu <b>{year}</b></span>
