@@ -1,4 +1,4 @@
-// Qüestionaris inicials d'«Et veig» (esborrany per validar amb alumnat i claustre: pla mestre v2, §5.3).
+// Qüestionaris inicials d'«Et veig…» (esborrany per validar amb alumnat i claustre: pla mestre v2, §5.3).
 // Les afirmacions descriuen experiències observables, no trets personals del docent.
 
 import type { FeedbackDimension, FeedbackForm, FeedbackItem, Scale } from './types'
@@ -121,7 +121,7 @@ export const INITIAL_FEEDBACK_FORMS: FeedbackForm[] = [
   },
 ]
 
-/** Comprovacions abans de publicar una versió d'un qüestionari d'«Et veig». */
+/** Comprovacions abans de publicar una versió d'un qüestionari d'«Et veig…». */
 export function validateFeedbackForm(f: FeedbackForm): string[] {
   const issues: string[] = []
   const ids = new Set<string>()

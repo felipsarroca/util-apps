@@ -337,7 +337,7 @@ export function FeedbackReportPages({ report, duplex = false }: { report: Teache
       <div className="rp-head fb-head">
         <img src={asset('logo-escola-ramon-pont.png')} alt="" />
         <div>
-          <div className="school">{SCHOOL.name} · La teva veu · Et veig</div>
+          <div className="school">{SCHOOL.name} · La teva veu · Et veig…</div>
           <h1>Així et veiem</h1>
           <div className="rp-sub">La mirada conjunta de l’alumnat sobre les classes de {r.teacher.name}</div>
         </div>
@@ -404,7 +404,7 @@ export function CenterReportPages({ view, campaign }: { view: CenterStage[]; cam
           <div className="rp-head fb-head">
             <img src={asset('logo-escola-ramon-pont.png')} alt="" />
             <div>
-              <div className="school">{SCHOOL.name} · La teva veu · Et veig</div>
+              <div className="school">{SCHOOL.name} · La teva veu · Et veig…</div>
               <h1>Visió de centre</h1>
               <div className="rp-sub">Mirada agregada de l’alumnat sobre la docència</div>
             </div>

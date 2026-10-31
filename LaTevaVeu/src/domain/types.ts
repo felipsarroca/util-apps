@@ -1,4 +1,4 @@
-// Model de domini de La teva veu (apartats «Em miro» i «Et veig»). Les mateixes entitats es reflecteixen a db/schema.sql.
+// Model de domini de La teva veu (apartats «Em miro» i «Et veig…»). Les mateixes entitats es reflecteixen a db/schema.sql.
 
 export type StageId = 'CM' | 'CS' | 'ESO'
 export type GradeId = '3EP' | '4EP' | '5EP' | '6EP' | '1ESO' | '2ESO' | '3ESO' | '4ESO'
@@ -58,7 +58,7 @@ export interface StaffMember {
   role: 'admin' | 'teacher'
   /** Grups assignats en format `GRADE-GRUP` (p. ex. `2ESO-A`). */
   groups: string[]
-  /** Equip Directiu: pot veure tots els resultats d'«Et veig» (permís `et_veig_direccio`). */
+  /** Equip Directiu: pot veure tots els resultats d'«Et veig…» (permís `et_veig_direccio`). */
   direction?: boolean
 }
 
@@ -195,7 +195,7 @@ export interface Modules {
   etVeig: boolean
 }
 
-/** Qui imparteix cada matèria a cada grup. És la base d'«Et veig». */
+/** Qui imparteix cada matèria a cada grup. És la base d'«Et veig…». */
 export interface TeachingAssignment {
   teacherEmail: string
   gradeId: GradeId
@@ -203,7 +203,7 @@ export interface TeachingAssignment {
   subjectId: string
 }
 
-// ---------- Et veig ----------
+// ---------- Et veig… ----------
 
 export interface FeedbackDimension {
   id: string
@@ -226,7 +226,7 @@ export interface FeedbackOpenQuestion {
   maxLength: number
 }
 
-/** Qüestionari d'«Et veig» d'una etapa. Una versió publicada és immutable. */
+/** Qüestionari d'«Et veig…» d'una etapa. Una versió publicada és immutable. */
 export interface FeedbackForm {
   id: string
   templateId: string

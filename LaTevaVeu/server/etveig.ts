@@ -396,7 +396,7 @@ export async function setFeedbackStatus(ctx: Ctx, actor: Actor, campaignId: stri
 }
 
 const audit = (q: Queryable, actor: Actor, campaignId: string, status: FeedbackStatus) =>
-  q.query('insert into audit_log (actor_id, action, detail) values ($1, $2, $3)', [actor.userId, 'Estat de recollida d’Et veig', JSON.stringify({ campaignId, status })])
+  q.query('insert into audit_log (actor_id, action, detail) values ($1, $2, $3)', [actor.userId, 'Estat de recollida d’Et veig…', JSON.stringify({ campaignId, status })])
 
 /**
  * Tancament: es desen els recomptes de participació per grup i es tornen a escriure les respostes

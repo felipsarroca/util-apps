@@ -12,9 +12,9 @@ const TOC: { id: string; title: string; emoji: string }[] = [
   { id: 'centre', title: 'Centre: persones, grups i famílies', emoji: '🏫' },
   { id: 'em-miro', title: 'Em miro pas a pas', emoji: '💭' },
   { id: 'informes-em', title: 'Informes i famílies', emoji: '📄' },
-  { id: 'et-veig', title: 'Et veig pas a pas', emoji: '👀' },
+  { id: 'et-veig', title: 'Et veig… pas a pas', emoji: '👀' },
   { id: 'moderacio', title: 'Moderació dels comentaris', emoji: '🛡️' },
-  { id: 'resultats', title: 'Resultats d’Et veig', emoji: '📊' },
+  { id: 'resultats', title: 'Resultats d’Et veig…', emoji: '📊' },
   { id: 'questionaris', title: 'Qüestionaris i preguntes', emoji: '✏️' },
   { id: 'confidencialitat', title: 'Confidencialitat i seguretat', emoji: '🔒' },
   { id: 'calendari', title: 'Calendari orientatiu', emoji: '🗓️' },
@@ -118,7 +118,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
               <p>Cada alumne pensa en com aprèn a cada matèria. La tutoria en fa el seguiment i en treu l’informe individual <b>«Així em veig»</b> per a l’alumne i la família.</p>
             </div>
             <div className="guide-card ev">
-              <b>👀 Et veig</b>
+              <b>👀 Et veig…</b>
               <span>L’alumnat valora el professorat</span>
               <p>Cada alumne valora una vegada cada docent que li fa classe. Cada docent rep l’informe agregat <b>«Així et veiem»</b>; ningú no veu respostes individuals.</p>
             </div>
@@ -132,7 +132,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           <ul>
             <li><b>Només hi entren comptes @ramonpont.cat</b>, i tenir-ne un no dona accés a res: cal constar al cens o tenir un permís.</li>
             <li><b>Cadascú veu només el que li pertoca</b>: l’alumne, el seu; el tutor, els seus grups; el docent, el seu informe.</li>
-            <li><b>A «Et veig», la confidencialitat va per davant</b>: llindar de {THRESHOLD} respostes, comentaris moderats i cap manera de saber qui ha dit què.</li>
+            <li><b>A «Et veig…», la confidencialitat va per davant</b>: llindar de {THRESHOLD} respostes, comentaris moderats i cap manera de saber qui ha dit què.</li>
           </ul>
           <Warn>
             <b>Estat actual:</b> la versió publicada funciona en mode de demostració, amb dades fictícies desades en el navegador. L’entrada amb Google, el servidor de l’escola i l’enviament de correus a les famílies s’activaran quan l’escola ho autoritzi. Aquesta guia ja descriu el funcionament definitiu.
@@ -144,7 +144,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           <div className="table-wrap">
             <table className="t guide-t">
               <thead>
-                <tr><th>Rol</th><th>💭 Em miro</th><th>👀 Et veig</th><th>🏫 Centre</th></tr>
+                <tr><th>Rol</th><th>💭 Em miro</th><th>👀 Et veig…</th><th>🏫 Centre</th></tr>
               </thead>
               <tbody>
                 <tr><td><b>Alumnat</b></td><td>Respon la seva autoavaluació mentre la recollida és oberta</td><td>Valora cada docent que li fa classe, una sola vegada</td><td>Pot avisar si el seu nom, curs o grup no són correctes</td></tr>
@@ -160,9 +160,9 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
 
         <Sec id="pantalla">
           <ol className="guide-steps">
-            <li><b>Pantalla d’inici.</b> En entrar, el personal veu un requadre per a cada espai al qual té accés (Em miro, Et veig i Centre), amb el que hi pot fer. Clica <b>Entra</b> per obrir-lo.</li>
+            <li><b>Pantalla d’inici.</b> En entrar, el personal veu un requadre per a cada espai al qual té accés (Em miro, Et veig… i Centre), amb el que hi pot fer. Clica <b>Entra</b> per obrir-lo.</li>
             <li><b>Menú lateral.</b> A dalt hi ha unes pestanyes per canviar d’espai. A sota, les pantalles de l’espai, separades en <b>Seguiment</b> (el dia a dia) i <b>Configuració</b> (el que es prepara abans). A baix de tot, <b>Inici</b> torna a la pantalla d’inici.</li>
-            <li><b>Colors.</b> Em miro és granat, Et veig és verd blavós i Centre és gris pissarra: el color indica en quin espai ets.</li>
+            <li><b>Colors.</b> Em miro és granat, Et veig… és verd blavós i Centre és gris pissarra: el color indica en quin espai ets.</li>
             <li><b>Capçalera.</b> A la dreta hi ha el botó <b>Guia</b> (aquesta pàgina), qui ha entrat i <b>Surt</b>.</li>
             <li><b>Adreces directes.</b> …/#/em-miro, …/#/et-veig i …/#/centre obren cada espai; …/#/guia obre aquesta guia.</li>
           </ol>
@@ -178,8 +178,8 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li><b>Importa els correus de les famílies.</b> <Where>Centre › Famílies</Where> Un CSV amb l’alumne i el nom i el correu de cada responsable.</li>
             <li><b>Revisa les matèries de cada curs.</b> <Where>Centre › Matèries</Where> Ordre, optatives i matèries actives.</li>
             <li><b>Marca les optatives de cada alumne.</b> <Where>Centre › Alumnat i accessos › Cens</Where> A cada alumne només li apareixen les optatives que cursa.</li>
-            <li><b>Indica qui fa classe a qui.</b> <Where>Et veig › Qui fa classe a qui</Where> Una per una o amb el CSV de plantilla. Sense això, l’alumnat no sabrà quins docents ha de valorar.</li>
-            <li><b>Revisa els qüestionaris.</b> <Where>Em miro › Qüestionaris</Where> i <Where>Et veig › Preguntes</Where> Comprova que hi ha una versió publicada per a cada etapa.</li>
+            <li><b>Indica qui fa classe a qui.</b> <Where>Et veig… › Qui fa classe a qui</Where> Una per una o amb el CSV de plantilla. Sense això, l’alumnat no sabrà quins docents ha de valorar.</li>
+            <li><b>Revisa els qüestionaris.</b> <Where>Em miro › Qüestionaris</Where> i <Where>Et veig… › Preguntes</Where> Comprova que hi ha una versió publicada per a cada etapa.</li>
             <li><b>Comprova que els apartats estan actius.</b> <Where>Centre › Apartats</Where></li>
           </ol>
           <div className="guide-check">
@@ -235,7 +235,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>Els canvis s’apliquen a les recollides noves. Les ja creades conserven la llista de matèries que tenien.</li>
           </ul>
           <h3>Apartats</h3>
-          <p>Activa o desactiva temporalment Em miro o Et veig. Desactivar-lo l’amaga a l’alumnat sense esborrar cap dada; és útil, per exemple, si cal aturar una recollida per un problema.</p>
+          <p>Activa o desactiva temporalment Em miro o Et veig… Desactivar-lo l’amaga a l’alumnat sense esborrar cap dada; és útil, per exemple, si cal aturar una recollida per un problema.</p>
           <h3>Registre d’operacions</h3>
           <p>Hi consten les accions rellevants amb data, persona i detall: permisos, canvis de configuració, canvis d’estat, impressions d’informes, consultes d’informes d’altres docents i incidències. No es pot modificar.</p>
         </Sec>
@@ -295,7 +295,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>Hi ha d’haver unes <b>Preguntes</b> publicades per a cada etapa de la recollida.</li>
           </ul>
           <h3>1. Crear la recollida</h3>
-          <p><Where>Et veig › Recollides i moderació › Nova recollida</Where> Nom (per exemple, «Recollida de maig»), etapes (cicle mitjà, cicle superior, ESO) i dates. Es crea ja programada. Les recollides d’Et veig són independents de les avaluacions d’Em miro.</p>
+          <p><Where>Et veig… › Recollides i moderació › Nova recollida</Where> Nom (per exemple, «Recollida de maig»), etapes (cicle mitjà, cicle superior, ESO) i dates. Es crea ja programada. Les recollides d’Et veig… són independents de les avaluacions d’Em miro.</p>
           <h3>2. Cicle d’una recollida</h3>
           <div className="table-wrap">
             <table className="t guide-t">
@@ -319,7 +319,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li><b>Moderació</b>: vegeu l’apartat següent.</li>
           </ul>
           <h3>Seguiment del professorat (Equip Directiu)</h3>
-          <p><Where>Et veig › Professorat</Where> Tria la recollida i veuràs, per a cada docent, les valoracions rebudes sobre les possibles, si arriba al llindar i si ha fet l’autoavaluació. A dalt surt la llista de qui la té <b>pendent</b>, amb un botó per copiar-ne les adreces i enviar-los un recordatori. La casella <b>Només autoavaluació pendent</b> filtra la taula.</p>
+          <p><Where>Et veig… › Professorat</Where> Tria la recollida i veuràs, per a cada docent, les valoracions rebudes sobre les possibles, si arriba al llindar i si ha fet l’autoavaluació. A dalt surt la llista de qui la té <b>pendent</b>, amb un botó per copiar-ne les adreces i enviar-los un recordatori. La casella <b>Només autoavaluació pendent</b> filtra la taula.</p>
           <Tip>Si un docent no arriba a {THRESHOLD} respostes en una etapa, el seu informe d’aquella etapa dirà «Mostra insuficient» i no mostrarà ni resultats ni comentaris. És una protecció de l’alumnat, no un error: anima els grups a participar abans de tancar.</Tip>
           <h3>4. Autoavaluació docent</h3>
           <p>Cada docent respon les mateixes afirmacions en primera persona, una vegada per etapa on fa classe, i pot marcar etiquetes de context per grup. Pot desar-la com a esborrany i lliurar-la mentre la recollida és oberta o tancada; un cop lliurada no es pot canviar. L’informe la contrasta amb la mirada de l’alumnat.</p>
@@ -353,7 +353,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           </ul>
           <h3>Qui ho veu i quan</h3>
           <ul>
-            <li><b>Equip Directiu</b>: tots els informes a partir de «Informes generats». <Where>Et veig › Professorat</Where> té el botó <b>Informe</b> de cada docent (per llegir-lo, imprimir-lo o desar-lo en PDF i parlar-ne amb ell) i <b>Tots els informes en PDF</b>, que en genera un sol document. També es poden obrir des de la visió de centre i des d’Així et veiem. Cada consulta o descàrrega de l’informe d’un altre docent queda registrada.</li>
+            <li><b>Equip Directiu</b>: tots els informes a partir de «Informes generats». <Where>Et veig… › Professorat</Where> té el botó <b>Informe</b> de cada docent (per llegir-lo, imprimir-lo o desar-lo en PDF i parlar-ne amb ell) i <b>Tots els informes en PDF</b>, que en genera un sol document. També es poden obrir des de la visió de centre i des d’Així et veiem. Cada consulta o descàrrega de l’informe d’un altre docent queda registrada.</li>
             <li><b>Cada docent</b>: només el seu, a partir de «Publicada».</li>
             <li><b>Administració</b>: cap resultat, si no forma part de l’Equip Directiu.</li>
           </ul>
@@ -372,7 +372,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>Comprova-ho amb <b>Com ho veurà l’alumne</b> i amb la <b>Prova de l’informe</b> (respostes curtes o llargues) per veure que res no es talla.</li>
             <li>Resol els avisos que surtin i clica <b>Publica</b>, amb un resum dels canvis (queda registrat). Si t’hi repenses, <b>Descarta l’esborrany</b>.</li>
           </ol>
-          <h3>Et veig › Preguntes</h3>
+          <h3>Et veig… › Preguntes</h3>
           <ul>
             <li>Un qüestionari per etapa, agrupat en blocs. Cada afirmació té una versió per a l’alumnat i una en primera persona per a l’autoavaluació del docent.</li>
             <li>Les preguntes obertes són sempre opcionals i moderades; en pots fixar el màxim de caràcters.</li>
@@ -398,7 +398,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
               </tbody>
             </table>
           </div>
-          <Tip>Si algú demana veure les respostes d’un alumne concret a «Et veig», la resposta és que l’app no ho permet: no hi ha cap pantalla ni cap dada que ho relacioni.</Tip>
+          <Tip>Si algú demana veure les respostes d’un alumne concret a «Et veig…», la resposta és que l’app no ho permet: no hi ha cap pantalla ni cap dada que ho relacioni.</Tip>
         </Sec>
 
         <Sec id="calendari">
@@ -411,8 +411,8 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
                 <tr><td>Abans de cada avaluació</td><td>Crear i obrir la recollida d’Em miro (unes dues setmanes)</td><td>Administració</td></tr>
                 <tr><td>Durant la recollida</td><td>Seguiment de la participació i recordatoris a l’aula</td><td>Tutoria</td></tr>
                 <tr><td>Després de tancar</td><td>Revisió, informes «Així em veig» i lliurament a les famílies</td><td>Tutoria i administració</td></tr>
-                <tr><td>Tardor i maig</td><td>Recollida d’Et veig (unes dues o tres setmanes)</td><td>Administració o Equip Directiu</td></tr>
-                <tr><td>Una setmana després de tancar Et veig</td><td>Moderació, generació i publicació dels informes</td><td>Equip Directiu</td></tr>
+                <tr><td>Tardor i maig</td><td>Recollida d’Et veig… (unes dues o tres setmanes)</td><td>Administració o Equip Directiu</td></tr>
+                <tr><td>Una setmana després de tancar Et veig…</td><td>Moderació, generació i publicació dels informes</td><td>Equip Directiu</td></tr>
               </tbody>
             </table>
           </div>
@@ -424,15 +424,15 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <dd>Comprova que entra amb el compte @ramonpont.cat i que consta al cens. Si veu «Encara no tens accés», no és al cens: afegeix-lo.</dd>
             <dt>Un alumne no troba la seva autoavaluació.</dt>
             <dd>La recollida del seu curs ha d’estar <b>Oberta</b> i l’apartat Em miro, actiu.</dd>
-            <dt>A un alumne no li surt un docent a Et veig, o li en surt un que no toca.</dt>
+            <dt>A un alumne no li surt un docent a Et veig…, o li en surt un que no toca.</dt>
             <dd>Revisa Qui fa classe a qui i les optatives de l’alumne. Recorda que les assignacions es congelen en obrir: els canvis s’apliquen a la recollida següent.</dd>
-            <dt>No puc obrir una recollida d’Et veig.</dt>
+            <dt>No puc obrir una recollida d’Et veig…</dt>
             <dd>Ja n’hi ha una altra d’oberta per a alguna de les mateixes etapes. Tanca-la primer.</dd>
-            <dt>No puc generar els informes d’Et veig.</dt>
+            <dt>No puc generar els informes d’Et veig…</dt>
             <dd>Encara hi ha comentaris pendents de moderar.</dd>
             <dt>L’informe d’un docent diu «Mostra insuficient».</dt>
             <dd>Té menys de {THRESHOLD} respostes en aquella etapa. És intencionat i no es pot saltar.</dd>
-            <dt>Com a administració no veig cap resultat d’Et veig.</dt>
+            <dt>Com a administració no veig cap resultat d’Et veig…</dt>
             <dd>És el comportament previst: els resultats només els veu l’Equip Directiu i cada docent el seu.</dd>
             <dt>He d’esmenar un qüestionari amb una recollida oberta.</dt>
             <dd>La recollida oberta conserva la seva versió. Crea’n una de nova per a les recollides següents.</dd>
@@ -449,9 +449,9 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
 
         <Sec id="glossari">
           <dl className="guide-gloss">
-            <dt>Recollida</dt><dd>Període en què l’alumnat respon. A Em miro n’hi ha una per curs i avaluació; a Et veig, una per a diverses etapes.</dd>
+            <dt>Recollida</dt><dd>Període en què l’alumnat respon. A Em miro n’hi ha una per curs i avaluació; a Et veig…, una per a diverses etapes.</dd>
             <dt>Etapa</dt><dd>Cicle mitjà (3r-4t), cicle superior (5è-6è) o ESO.</dd>
-            <dt>Bloc o dimensió</dt><dd>Grup d’afirmacions d’Et veig sobre un mateix aspecte (per exemple, «Explicacions i domini»).</dd>
+            <dt>Bloc o dimensió</dt><dd>Grup d’afirmacions d’Et veig… sobre un mateix aspecte (per exemple, «Explicacions i domini»).</dd>
             <dt>Favorable</dt><dd>Percentatge de respostes «Sovint» o «Sempre» (a cicle mitjà, «Sí!»).</dd>
             <dt>Llindar</dt><dd>Mínim de {THRESHOLD} respostes per mostrar resultats.</dd>
             <dt>Moderació</dt><dd>Revisió dels comentaris per part de l’Equip Directiu abans que arribin al docent.</dd>

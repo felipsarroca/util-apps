@@ -58,7 +58,7 @@ function Access({ session }: { session: Session }) {
     <>
       <div className="row">
         <p className="muted" style={{ flex: 1 }}>
-          El professorat només veu els grups que té assignats. L’administració ho veu tot i cada acció queda registrada. Els resultats d’«Et veig» només els veu l’<b>Equip Directiu</b>
+          El professorat només veu els grups que té assignats. L’administració ho veu tot i cada acció queda registrada. Els resultats d’«Et veig…» només els veu l’<b>Equip Directiu</b>
           {dir ? '.' : ': només un membre de l’Equip Directiu pot afegir-hi o treure’n persones.'}
         </p>
         <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" /> Dona accés</button>

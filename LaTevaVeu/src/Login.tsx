@@ -21,9 +21,9 @@ const DEMO: Profile[] = [
 
 // Comptes del servidor local de proves (server/seed.ts): només amb VITE_DEV_AUTH=1.
 const DEV: Profile[] = [
-  { email: 'e01@ramonpont.cat', em: '🧑', label: 'Alumne de 2n d’ESO', hint: 'Valora la Marta i el Xavier', group: 'Alumnat' },
+  { email: 'e01@ramonpont.cat', em: '🧑', label: 'Alumne de 2n d’ESO', hint: 'S’autoavalua i valora la Marta i el Xavier', group: 'Alumnat' },
   { email: 'p1@ramonpont.cat', em: '🧒', label: 'Alumne de 3r', hint: 'Cicle mitjà', group: 'Alumnat' },
-  { email: 'marta@ramonpont.cat', em: '📋', label: 'Marta Riera', hint: 'Docent d’ESO', group: 'Professorat' },
+  { email: 'marta@ramonpont.cat', em: '📋', label: 'Marta Riera', hint: 'Tutora de 2n d’ESO A', group: 'Professorat' },
   { email: 'xavier@ramonpont.cat', em: '📘', label: 'Xavier Duran', hint: 'Docent d’ESO', group: 'Professorat' },
   { email: 'dir@ramonpont.cat', em: '🧭', label: 'Equip Directiu', hint: 'Moderació i resultats', group: 'Direcció i administració' },
   { email: 'admin@ramonpont.cat', em: '🛡️', label: 'Administració', hint: 'Obre i tanca recollides', group: 'Direcció i administració' },
@@ -97,7 +97,7 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
           </div>
           <ul className="login-steps">
             <li><span aria-hidden="true">💭</span><p><b>Em miro</b> · m’autoavaluo: penso en com aprenc i què puc millorar</p></li>
-            <li><span aria-hidden="true">👀</span><p><b>Et veig</b> · valoro el professorat: explico com visc les classes</p></li>
+            <li><span aria-hidden="true">👀</span><p><b>Et veig…</b> · valoro el professorat: explico com visc les classes</p></li>
             <li><span aria-hidden="true">🔐</span><p>Només amb el compte de l’escola</p></li>
           </ul>
         </section>

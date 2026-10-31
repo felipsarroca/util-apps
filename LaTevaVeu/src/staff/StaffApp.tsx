@@ -15,19 +15,20 @@ import { AssignmentsScreen, FeedbackFormsScreen, ModulesScreen } from './Setting
 import { SubjectsScreen } from './Subjects'
 import { FamiliesScreen } from './Families'
 import { GroupsScreen } from './Groups'
+import { RemoteEtVeig } from './Remote'
 
 type Screen =
   | 'dashboard' | 'tracking' | 'reports' | 'campaigns'
-  | 'self' | 'myreports' | 'center' | 'fbcampaigns' | 'fbforms'
+  | 'self' | 'myreports' | 'center' | 'fbcampaigns' | 'fbforms' | 'evlist' | 'evself'
   | 'templates' | 'subjects' | 'assign' | 'people' | 'groups' | 'families' | 'teachers' | 'modules' | 'audit'
 
 /** Qui veu cada entrada: administració, Equip Directiu, tutoria (grups d'«Em miro»), qui fa classe o qui pot veure resultats. */
-type Need = 'admin' | 'dir' | 'manage' | 'tutor' | 'teaches' | 'results'
+type Need = 'admin' | 'dir' | 'manage' | 'tutor' | 'teaches' | 'results' | 'dirDemo' | 'manageDemo' | 'remote' | 'remoteSelf'
 type Kind = 'use' | 'config'
 
 /**
  * Tres espais ben separats: l'autoavaluació de l'alumnat (Em miro), la valoració del professorat
- * (Et veig) i les dades comunes del centre. Cada espai té el seu color, les seves pantalles d'ús i la
+ * (Et veig…) i les dades comunes del centre. Cada espai té el seu color, les seves pantalles d'ús i la
  * seva configuració.
  */
 const NAV: { id: Screen; label: string; icon: string; need: Need; space: Section; kind: Kind }[] = [
@@ -38,9 +39,12 @@ const NAV: { id: Screen; label: string; icon: string; need: Need; space: Section
   { id: 'templates', label: 'Qüestionaris', icon: 'edit', need: 'admin', space: 'em-miro', kind: 'config' },
   { id: 'self', label: 'La meva autoavaluació', icon: 'edit', need: 'teaches', space: 'et-veig', kind: 'use' },
   { id: 'myreports', label: 'Així et veiem', icon: 'eye', need: 'results', space: 'et-veig', kind: 'use' },
-  { id: 'center', label: 'Visió de centre', icon: 'chart', need: 'dir', space: 'et-veig', kind: 'use' },
-  { id: 'teachers', label: 'Professorat', icon: 'users', need: 'dir', space: 'et-veig', kind: 'use' },
-  { id: 'fbcampaigns', label: 'Recollides i moderació', icon: 'calendar', need: 'manage', space: 'et-veig', kind: 'use' },
+  { id: 'center', label: 'Visió de centre', icon: 'chart', need: 'dirDemo', space: 'et-veig', kind: 'use' },
+  { id: 'teachers', label: 'Professorat', icon: 'users', need: 'dirDemo', space: 'et-veig', kind: 'use' },
+  { id: 'fbcampaigns', label: 'Recollides i moderació', icon: 'calendar', need: 'manageDemo', space: 'et-veig', kind: 'use' },
+  // Mode connectat: les dades d'«Et veig…» són confidencials i les serveix el servidor a part.
+  { id: 'evlist', label: 'Recollides i informes', icon: 'calendar', need: 'remote', space: 'et-veig', kind: 'use' },
+  { id: 'evself', label: 'La meva autoavaluació', icon: 'edit', need: 'remoteSelf', space: 'et-veig', kind: 'use' },
   { id: 'fbforms', label: 'Preguntes', icon: 'list', need: 'admin', space: 'et-veig', kind: 'config' },
   { id: 'assign', label: 'Qui fa classe a qui', icon: 'users', need: 'admin', space: 'et-veig', kind: 'config' },
   { id: 'people', label: 'Alumnat i accessos', icon: 'users', need: 'admin', space: 'centre', kind: 'config' },
@@ -53,7 +57,7 @@ const NAV: { id: Screen; label: string; icon: string; need: Need; space: Section
 
 export const SPACES: Record<Section, { name: string; emoji: string; tagline: string; cls: string }> = {
   'em-miro': { name: 'Em miro', emoji: '💭', tagline: 'Autoavaluació de l’alumnat', cls: 'space-em' },
-  'et-veig': { name: 'Et veig', emoji: '👀', tagline: 'L’alumnat valora el professorat', cls: 'space-ev' },
+  'et-veig': { name: 'Et veig…', emoji: '👀', tagline: 'L’alumnat valora el professorat', cls: 'space-ev' },
   centre: { name: 'Centre', emoji: '🏫', tagline: 'Dades comunes: alumnat, grups, famílies i accessos', cls: 'space-ce' },
 }
 
@@ -63,7 +67,21 @@ export function StaffApp({ session }: { session: Session }) {
   const dir = isDirection(session)
   const teaches = s.assignments.some((a) => a.teacherEmail === session.email) || s.feedbackCampaigns.some((c) => c.teachers.includes(session.email))
   const tutor = isAdmin || dir || (session.groups?.length ?? 0) > 0
-  const allowed: Record<Need, boolean> = { admin: isAdmin, dir, manage: isAdmin || dir, tutor, teaches, results: teaches || dir }
+  const remote = !!session.remote
+  const allowed: Record<Need, boolean> = {
+    admin: isAdmin,
+    dir,
+    manage: isAdmin || dir,
+    tutor,
+    teaches: teaches && !remote,
+    results: (teaches || dir) && !remote,
+    remote,
+    remoteSelf: remote && (session.role !== 'admin' || dir),
+    // En mode connectat, les pantalles d'«Et veig…» de la demostració se substitueixen per les del servidor.
+    dirDemo: dir && !remote,
+    manageDemo: (isAdmin || dir) && !remote,
+  }
+
   const nav = NAV.filter((n) => allowed[n.need])
   const spaces = (Object.keys(SPACES) as Section[]).filter((sp) => nav.some((n) => n.space === sp))
   // L'adreça …/#/em-miro, …/#/et-veig o …/#/centre obre l'espai; sense apartat, la pantalla d'inici.
@@ -117,16 +135,18 @@ export function StaffApp({ session }: { session: Session }) {
       </nav>
       <main className="staff-main">
         {!s.modules.emMiro && space === 'em-miro' && <ModuleOff name="Em miro" />}
-        {!s.modules.etVeig && space === 'et-veig' && <ModuleOff name="Et veig" />}
+        {!s.modules.etVeig && space === 'et-veig' && <ModuleOff name="Et veig…" />}
         {screen === 'dashboard' && tutor && <Dashboard session={session} go={setScreen} />}
         {screen === 'tracking' && tutor && <Tracking session={session} />}
         {screen === 'reports' && tutor && <ReportsScreen session={session} />}
         {screen === 'campaigns' && tutor && <CampaignsScreen session={session} />}
-        {screen === 'self' && teaches && <SelfAssessScreen session={session} />}
-        {screen === 'myreports' && (teaches || dir) && <MyReportsScreen session={session} />}
-        {screen === 'center' && dir && <CenterScreen session={session} />}
-        {screen === 'teachers' && dir && <TeachersScreen session={session} />}
-        {screen === 'fbcampaigns' && (isAdmin || dir) && <FeedbackCampaignsScreen session={session} />}
+        {screen === 'evlist' && remote && <RemoteEtVeig session={session} view="list" />}
+        {screen === 'evself' && remote && <RemoteEtVeig session={session} view="self" />}
+        {screen === 'self' && allowed.teaches && <SelfAssessScreen session={session} />}
+        {screen === 'myreports' && allowed.results && <MyReportsScreen session={session} />}
+        {screen === 'center' && allowed.dirDemo && <CenterScreen session={session} />}
+        {screen === 'teachers' && allowed.dirDemo && <TeachersScreen session={session} />}
+        {screen === 'fbcampaigns' && allowed.manageDemo && <FeedbackCampaignsScreen session={session} />}
         {screen === 'fbforms' && isAdmin && <FeedbackFormsScreen session={session} />}
         {screen === 'templates' && isAdmin && <EditorScreen session={session} />}
         {screen === 'subjects' && isAdmin && <SubjectsScreen session={session} />}

@@ -1,4 +1,4 @@
-// Configuració general: apartats activables, assignacions docents i qüestionaris d'«Et veig».
+// Configuració general: apartats activables, assignacions docents i qüestionaris d'«Et veig…».
 
 import { useState } from 'react'
 import { discardFeedbackDraft, importAssignments, newFeedbackDraft, publishFeedbackForm, saveFeedbackFormDraft, setAssignment, setModules, useDemoState } from '../data/api'
@@ -35,7 +35,7 @@ export function ModulesScreen({ session }: { session: Session }) {
         </section>
         <section className="card panel mod-card ev">
           <div className="mod-kicker ev">
-            <span aria-hidden="true">👀</span> Et veig
+            <span aria-hidden="true">👀</span> Et veig…
           </div>
           <p>L’alumne valora una vegada cada docent que li fa classe. Genera l’informe agregat «Així et veiem».</p>
           <label className="toggle">
@@ -68,7 +68,7 @@ export function AssignmentsScreen({ session }: { session: Session }) {
   const idle = teachers.filter((t) => !s.assignments.some((a) => a.teacherEmail === t.email))
   return (
     <>
-      <PageHead title="Assignacions docents" sub="Qui fa cada matèria a cada grup. Defineix quins docents valora cada alumne a «Et veig».">
+      <PageHead title="Assignacions docents" sub="Qui fa cada matèria a cada grup. Defineix quins docents valora cada alumne a «Et veig…».">
         <button className="btn" onClick={() => setImporting(true)}>
           <Icon name="upload" /> Importa des de CSV
         </button>
@@ -196,7 +196,7 @@ function ImportAssignments({ session, onClose, onDone }: { session: Session; onC
   )
 }
 
-// ---------- Qüestionaris d'«Et veig» ----------
+// ---------- Qüestionaris d'«Et veig…» ----------
 
 export function FeedbackFormsScreen({ session }: { session: Session }) {
   const s = useDemoState()
@@ -227,7 +227,7 @@ export function FeedbackFormsScreen({ session }: { session: Session }) {
   const pd = form.dimensions.find((d) => d.id === preview) ?? form.dimensions[0]
   return (
     <>
-      <PageHead title="Preguntes d’Et veig" sub="Un qüestionari per etapa. Cada afirmació té una versió per a l’alumnat i una en primera persona per a l’autoavaluació del docent." />
+      <PageHead title="Preguntes d’Et veig…" sub="Un qüestionari per etapa. Cada afirmació té una versió per a l’alumnat i una en primera persona per a l’autoavaluació del docent." />
       <div className="tabs" role="tablist">
         {(['CM', 'CS', 'ESO'] as StageId[]).map((st) => (
           <button key={st} role="tab" aria-selected={stage === st} className={`tab${stage === st ? ' cur' : ''}`} onClick={() => { setStage(st); setVid(null) }}>

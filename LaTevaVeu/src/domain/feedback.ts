@@ -1,4 +1,4 @@
-// Lògica d'«Et veig»: quins docents valora cada alumne, codificació anònima de les respostes,
+// Lògica d'«Et veig…»: quins docents valora cada alumne, codificació anònima de les respostes,
 // agregació amb el llindar mínim i informes «Així et veiem» i de centre. Independent de la interfície.
 
 import { GRADES, STAGES } from './catalog'

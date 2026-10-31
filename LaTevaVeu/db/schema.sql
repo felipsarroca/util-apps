@@ -262,6 +262,16 @@ create table audit_log (
   detail   jsonb not null default '{}'
 );
 
+-- El registre només creix: ningú, ni tan sols el propietari de la base de dades, no en pot canviar ni esborrar files.
+create function forbid_audit_changes() returns trigger language plpgsql as $$
+begin
+  raise exception 'El registre d''operacions no es pot modificar ni esborrar.';
+end $$;
+create trigger audit_log_append_only before update or delete on audit_log
+  for each row execute function forbid_audit_changes();
+create trigger audit_log_no_truncate before truncate on audit_log
+  for each statement execute function forbid_audit_changes();
+
 -- =====================================================================
 -- Et veig: valoració del professorat (pla mestre v2, apartats 5 i 7)
 -- =====================================================================

@@ -1,4 +1,4 @@
-// «Et veig»: l'alumne valora, una sola vegada, cada docent que li fa classe.
+// «Et veig…»: l'alumne valora, una sola vegada, cada docent que li fa classe.
 // Primària: una afirmació per pantalla (cicle mitjà) o per dimensió; ESO: una dimensió per pantalla.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -112,7 +112,7 @@ function TeacherList({ home, stage, onPick, onExit }: { home: FeedbackHome; stag
     <main className="stu-main etveig">
       <section className="card hello">
         <div className="mod-kicker ev">
-          <span aria-hidden="true">👀</span> Et veig
+          <span aria-hidden="true">👀</span> Et veig…
         </div>
         <h1>{all ? 'Ho has fet tot! Gràcies.' : 'La meva mirada al professorat'}</h1>
         <p className="step-intro">

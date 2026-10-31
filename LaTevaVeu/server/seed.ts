@@ -2,6 +2,7 @@
 // (npm run server:local) i el fitxer db/dades-prova.sql per a una base de dades de proves.
 import { initialGradeSubjects, SUBJECTS } from '../src/domain/catalog'
 import { FEEDBACK_SCALES, INITIAL_FEEDBACK_FORMS } from '../src/domain/feedbackForms'
+import { INITIAL_SCALES, INITIAL_TEMPLATES } from '../src/domain/templates'
 import type { Queryable } from './db'
 
 export type Statement = [sql: string, params: unknown[]]
@@ -9,6 +10,8 @@ export type Statement = [sql: string, params: unknown[]]
 export const PROVA = {
   year: '2026-2027',
   campaignId: '11111111-1111-4111-8111-111111111111',
+  /** Recollida oberta d'«Em miro» de 2n d'ESO. */
+  emCampaignId: '22222222-2222-4222-8222-222222222222',
   domain: 'ramonpont.cat',
 }
 
@@ -51,6 +54,22 @@ export function seedStatements(): Statement[] {
   }
   NAMES.forEach((name, i) => student(301 + i, `e${String(i + 1).padStart(2, '0')}`, name, eso))
   for (let i = 1; i <= 3; i++) student(400 + i, `p${i}`, `Primària ${i}`, cm)
+  // Marta és la tutora de 2n d'ESO A.
+  out.push(['insert into teacher_group_assignments values ($1, $2)', [staffId.get('marta'), eso]])
+  // «Em miro»: escales, qüestionaris i una recollida oberta de 2n d'ESO.
+  for (const s of INITIAL_SCALES) out.push(['insert into answer_scales values ($1, $2, $3, $4)', [s.id, s.name, s.allowNA, JSON.stringify(s.options)]])
+  for (const t of [...new Map(INITIAL_TEMPLATES.map((t) => [t.templateId, t])).values()]) out.push(['insert into questionnaire_templates values ($1, $2, $3)', [t.templateId, t.name, t.stage]])
+  for (const t of INITIAL_TEMPLATES)
+    out.push([
+      'insert into template_versions (id, template_id, version, status, definition, change_note, published_at) values ($1, $2, $3, $4, $5, $6, $7)',
+      [t.id, t.templateId, t.version, t.status, JSON.stringify({ sections: t.sections }), t.changeNote ?? null, t.publishedAt ?? null],
+    ])
+  const esoTpl = INITIAL_TEMPLATES.filter((t) => t.stage === 'ESO' && t.status === 'published').sort((a, b) => b.version - a.version)[0]
+  out.push([
+    "insert into campaigns (id, year_id, grade_id, label, template_version_id, subjects_snapshot, starts_on, ends_on, status) values ($1, $2, '2ESO', '1a avaluació', $3, $4, '2026-11-02', '2026-11-20', 'OBERTA')",
+    [PROVA.emCampaignId, year, esoTpl.id, JSON.stringify(initialGradeSubjects().filter((g) => g.gradeId === '2ESO'))],
+  ])
+  out.push(["insert into app_settings values ('modules', $1)", [JSON.stringify({ emMiro: true, etVeig: true })]])
   for (const s of FEEDBACK_SCALES) out.push(['insert into feedback_scales values ($1, $2, $3, $4)', [s.id, s.name, s.naLabel, JSON.stringify(s.options)]])
   for (const f of INITIAL_FEEDBACK_FORMS)
     out.push([

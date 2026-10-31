@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react'
-import { resetDemo } from './data/api'
+import { connectOps, resetDemo } from './data/api'
 import { GOOGLE_CLIENT_ID } from './data/auth'
 import { gradeAndGroup } from './domain/groups'
-import type { Session } from './domain/types'
+import type { DemoState } from './data/seed'
+import { gradeById } from './domain/catalog'
+import type { Session, StageId } from './domain/types'
 import { Login } from './Login'
 import { GuideScreen } from './staff/Guide'
 import { StaffApp } from './staff/StaffApp'
 import { StudentApp } from './student/StudentApp'
 import { APP_ICON, Footer, Icon, initials, useFitScale } from './ui/common'
 import { useDemoState } from './data/api'
-import { API_URL, DEV_AUTH, SESSION_EXPIRED, setToken } from './data/remote'
-import { RemoteStaff } from './staff/Remote'
-import { EtVeigRemote } from './student/EtVeig'
+import { API_URL, DEV_AUTH, loadRemoteState, OP_FAILED, SESSION_EXPIRED, setToken } from './data/remote'
+import { useToast } from './ui/common'
 
 const SESSION_KEY = 'mavaluo:session'
 const PREFS_KEY = 'mavaluo:prefs'
@@ -39,6 +40,9 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(loadSession)
   const [prefs, setPrefs] = useState(loadPrefs)
   const s = useDemoState()
+  // Mode connectat: les dades arriben del servidor cada vegada que s'obre l'app (no es guarden al navegador).
+  const [ready, setReady] = useState(() => !API_URL || !session || !!session.pending)
+  const [toast, showToast] = useToast()
   // La guia d'administració s'obre a …/#/guia.
   const [guide, setGuide] = useState(() => location.hash === '#/guia')
   useEffect(() => {
@@ -68,6 +72,7 @@ export default function App() {
       /* ignorat */
     }
     setSession(s)
+    setReady(true)
   }
   const logout = () => {
     try {
@@ -76,6 +81,7 @@ export default function App() {
       /* ignorat */
     }
     setToken(null)
+    connectOps(null)
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
     setSession(null)
   }
@@ -85,6 +91,26 @@ export default function App() {
     window.addEventListener(SESSION_EXPIRED, logout)
     return () => window.removeEventListener(SESSION_EXPIRED, logout)
   })
+
+  useEffect(() => {
+    if (ready || !session) return
+    let alive = true
+    loadRemoteState().then(
+      (fresh) => alive && login({ ...fresh, picture: session.picture }),
+      () => alive && logout(),
+    )
+    return () => {
+      alive = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready])
+
+  // Si el servidor rebutja un canvi, es diu per què (l'app ja ha tornat a l'estat real).
+  useEffect(() => {
+    const on = (e: Event) => showToast(`No s’ha desat: ${(e as CustomEvent<string>).detail}`)
+    window.addEventListener(OP_FAILED, on)
+    return () => window.removeEventListener(OP_FAILED, on)
+  }, [showToast])
 
   // Tancament automàtic per inactivitat (alumnat).
   useEffect(() => {
@@ -103,19 +129,7 @@ export default function App() {
   }, [session])
 
   const student = session?.studentId ? s.students.find((x) => x.id === session.studentId) : undefined
-  const remoteGrade = session?.remote?.gradeId
-  const subtitle = session?.pending
-    ? 'Compte pendent de verificació'
-    : student
-      ? gradeAndGroup(student.gradeId, student.group)
-      : remoteGrade
-        ? gradeAndGroup(remoteGrade, session?.remote?.group ?? '')
-      : session?.direction
-        ? 'Equip Directiu'
-        : session?.role === 'admin'
-          ? 'Administració'
-          : 'Professorat'
-
+  const subtitle = session ? userKind(session, s) : ''
   return (
     <>
       {session && (
@@ -165,12 +179,34 @@ export default function App() {
 
       {!session && <Login onLogin={login} />}
       {session?.pending && <Pending session={session} onLogout={logout} />}
-      {session && !session.pending && session.role === 'student' && (session.remote ? <EtVeigRemote /> : <StudentApp session={session} />)}
-      {showGuide && <GuideScreen onClose={() => (location.hash = '')} />}
-      {session && !session.pending && session.role !== 'student' && !showGuide && (session.remote ? <RemoteStaff session={session} /> : <StaffApp session={session} />)}
+      {session && !session.pending && !ready && <p className="stu-main muted">Carregant…</p>}
+      {session && !session.pending && ready && session.role === 'student' && <StudentApp session={session} />}
+      {showGuide && ready && <GuideScreen onClose={() => (location.hash = '')} />}
+      {session && !session.pending && ready && session.role !== 'student' && !showGuide && <StaffApp session={session} />}
+      {toast}
       <Footer />
     </>
   )
+}
+
+/** Etapa d'un docent tal com es diu a l'escola: primària (CM i CS) o secundària. */
+const STAGE_KIND: Record<StageId, 'EP' | 'ESO'> = { CM: 'EP', CS: 'EP', ESO: 'ESO' }
+
+/**
+ * Tipus d'usuari que es mostra sota el nom: «Alumnat ESO · 2n d'ESO A», «Professorat EP i ESO»,
+ * «Equip Directiu · Administració»… L'etapa del professorat surt dels grups que tutoritza i de qui fa classe a qui.
+ */
+function userKind(session: Session, s: DemoState): string {
+  if (session.pending) return 'Compte pendent de verificació'
+  if (session.role === 'student') {
+    const st = s.students.find((x) => x.id === session.studentId)
+    return st ? `Alumnat ${gradeById(st.gradeId).stage} · ${gradeAndGroup(st.gradeId, st.group)}` : 'Alumnat'
+  }
+  const grades = [...(session.groups ?? []).map((k) => k.split('-')[0]), ...s.assignments.filter((a) => a.teacherEmail === session.email).map((a) => a.gradeId)]
+  const kinds = (['EP', 'ESO'] as const).filter((k) => grades.some((g) => STAGE_KIND[gradeById(g as never)?.stage] === k))
+  const teacher = kinds.length ? `Professorat ${kinds.join(' i ')}` : session.role === 'teacher' ? 'Professorat' : ''
+  const parts = [session.direction && 'Equip Directiu', session.role === 'admin' && 'Administració', teacher].filter(Boolean)
+  return parts.join(' · ')
 }
 
 function Pending({ session, onLogout }: { session: Session; onLogout: () => void }) {

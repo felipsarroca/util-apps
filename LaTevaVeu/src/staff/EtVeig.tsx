@@ -1,4 +1,4 @@
-// Pantalles d'«Et veig» per al professorat, l'Equip Directiu i l'administració.
+// Pantalles d'«Et veig…» per al professorat, l'Equip Directiu i l'administració.
 
 import { useMemo, useState } from 'react'
 import {
@@ -63,7 +63,7 @@ export function SelfAssessView({ tasks, save }: { tasks: SelfTask[]; save: SaveS
       <PageHead title="La meva autoavaluació" sub="Una per etapa on fas classe. Fes-la abans de veure els resultats: l’informe hi contrastarà la mirada de l’alumnat." />
       {!tasks.length && (
         <div className="card empty">
-          <span className="em" aria-hidden="true">🗓️</span>Ara no hi ha cap recollida d’«Et veig» oberta en què participis.
+          <span className="em" aria-hidden="true">🗓️</span>Ara no hi ha cap recollida d’«Et veig…» oberta en què participis.
         </div>
       )}
       <div className="cards-list">
@@ -492,7 +492,7 @@ export function TeachersScreen({ session }: { session: Session }) {
   const [batch, setBatch] = useState<TeacherReport[] | null>(null)
   const [toast, showToast] = useToast()
   const c = campaigns.find((x) => x.id === cid)
-  if (!c) return <PageHead title="Professorat" sub="Encara no s’ha obert cap recollida d’Et veig." />
+  if (!c) return <PageHead title="Professorat" sub="Encara no s’ha obert cap recollida d’Et veig…" />
   const visible = RESULTS_VISIBLE_DIRECTION.includes(c.status)
   const rows = teacherRows(s, c)
   const pending = rows.filter((t) => t.selfDone < t.stages.length)
@@ -626,7 +626,7 @@ export function FeedbackCampaignsScreen({ session }: { session: Session }) {
   const sel = list.find((c) => c.id === detail)
   return (
     <>
-      <PageHead title="Recollides d’Et veig" sub="Independents de les avaluacions. Les assignacions docents es congelen en obrir cada recollida.">
+      <PageHead title="Recollides d’Et veig…" sub="Independents de les avaluacions. Les assignacions docents es congelen en obrir cada recollida.">
         <button className="btn primary" onClick={() => setCreating(true)}>
           <Icon name="plus" /> Nova recollida
         </button>
@@ -681,13 +681,13 @@ export function FeedbackCampaignsScreen({ session }: { session: Session }) {
   )
 }
 
-function NewFeedbackCampaign({ session, onClose, toast }: { session: Session; onClose: () => void; toast: (m: string) => void }) {
+export function NewFeedbackCampaign({ session, onClose, toast }: { session: Session; onClose: () => void; toast: (m: string) => void }) {
   const [label, setLabel] = useState('Recollida de maig')
   const [stages, setStages] = useState<StageId[]>(['CM', 'CS', 'ESO'])
   const [start, setStart] = useState('2027-05-10')
   const [end, setEnd] = useState('2027-05-21')
   return (
-    <Modal title="Nova recollida d’Et veig" onClose={onClose}>
+    <Modal title="Nova recollida d’Et veig…" onClose={onClose}>
       <label className="field">
         <span>Nom</span>
         <input className="input" value={label} onChange={(e) => setLabel(e.target.value)} />

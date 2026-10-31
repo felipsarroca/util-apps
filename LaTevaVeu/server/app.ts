@@ -7,6 +7,7 @@ import type { Db } from './db'
 import { HttpError, unauthorized } from './errors'
 import * as etVeig from './etveig'
 import * as families from './families'
+import * as ops from './ops'
 
 export interface AppOptions {
   db: Db
@@ -96,6 +97,14 @@ export function buildApp(o: AppOptions) {
     await etVeig.moderateComment(ctx, await actorOf(req), req.params.id, req.body.status, req.body.text)
     return reply.code(204).send()
   })
+
+  // ---------- Em miro i gestió del centre ----------
+  // L'estat té la forma de la demostració, retallat segons qui el demana; les operacions apliquen les mateixes regles.
+  app.get('/api/state', async (req) => ops.stateFor(ctx, await actorOf(req)))
+
+  app.post<{ Body: { name?: unknown; args?: unknown } }>('/api/ops', { bodyLimit: 2 * 1024 * 1024 }, async (req) =>
+    ops.runOp(ctx, await actorOf(req), typeof req.body?.name === 'string' ? req.body.name : '', req.body?.args),
+  )
 
   // ---------- Centre: correus de les famílies ----------
   type F = { ref?: unknown; email?: unknown; validated?: unknown }

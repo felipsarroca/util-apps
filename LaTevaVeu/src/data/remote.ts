@@ -1,9 +1,11 @@
 // Mode connectat: quan hi ha VITE_API_URL, l'app parla amb el servidor (server/) en lloc de
-// simular-lo al navegador. De moment cobreix «Et veig»; «Em miro» continua en mode de demostració.
+// simular-lo al navegador. «Et veig…» té rutes pròpies (confidencials); «Em miro» i la gestió del centre
+// reben l'estat del servidor i hi envien cada operació, que el servidor torna a validar.
 import { useEffect, useRef, useState } from 'react'
 import type { CenterStage, TeacherReport } from '../domain/feedback'
 import type { Answers, FeedbackStatus, GradeId, ModerationStatus, Scale, SelfTask, Session, StageId } from '../domain/types'
-import type { FeedbackHome } from './api'
+import { connectOps, hydrate, type FeedbackHome } from './api'
+import type { DemoState } from './seed'
 
 export const API_URL: string | undefined = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || undefined
 /** Només amb el servidor local de proves (npm run server:local): el testimoni és el correu. */
@@ -69,17 +71,58 @@ interface Me {
   student?: { gradeId: GradeId; group: string }
 }
 
-/** Valida el testimoni al servidor i en treu la sessió. */
+/** Valida el testimoni al servidor, en treu la sessió i carrega les dades que pot veure. */
 export async function remoteLogin(idToken: string, picture?: string): Promise<Session> {
   setToken(idToken)
   try {
     const me = await call<Me>('GET', '/api/me')
-    const role = me.student ? 'student' : me.roles.includes('admin') ? 'admin' : 'teacher'
-    return { email: me.email, name: me.name, role, picture, direction: me.roles.includes('direction'), remote: me.student ? { gradeId: me.student.gradeId, group: me.student.group } : {} }
+    try {
+      return { ...(await loadRemoteState()), picture }
+    } catch (e) {
+      // Compte de l'escola que encara no consta enlloc: no se'n mostra cap dada.
+      if (e instanceof ApiError && e.status === 403) return { email: me.email, name: me.name, role: 'student', pending: true, picture, remote: {} }
+      throw e
+    }
   } catch (e) {
     setToken(null)
     throw e
   }
+}
+
+// ---------- Em miro i gestió: estat i operacions ----------
+
+/** Avís quan el servidor rebutja una operació: la pantalla mostra el motiu. */
+export const OP_FAILED = 'latevaveu:op-failed'
+
+/** Demana l'estat al servidor, el posa a l'app i hi connecta les operacions. */
+export async function loadRemoteState(): Promise<Session> {
+  const r = await call<{ session: Session; state: DemoState }>('GET', '/api/state')
+  hydrate(r.state)
+  connectOps(enqueue)
+  const st = r.session.studentId ? r.state.students.find((x) => x.id === r.session.studentId) : undefined
+  return { ...r.session, remote: st ? { gradeId: st.gradeId, group: st.group } : {} }
+}
+
+// Les operacions s'envien una darrere l'altra, en el mateix ordre en què s'han fet.
+let queue: Promise<void> = Promise.resolve()
+/** Es resol quan el servidor ja ha rebut totes les operacions fetes fins ara. */
+export const whenSynced = () => queue
+let pending = 0
+function enqueue(name: string, args: unknown[]) {
+  pending++
+  queue = queue.then(async () => {
+    try {
+      const r = await call<{ state: DemoState }>('POST', '/api/ops', { name, args })
+      // Només es posa l'estat del servidor quan no queda res per enviar: així no es perd cap canvi fet mentrestant.
+      if (pending === 1) hydrate(r.state)
+    } catch (e) {
+      window.dispatchEvent(new CustomEvent(OP_FAILED, { detail: (e as Error).message }))
+      // L'app torna a l'estat real del servidor.
+      if (pending === 1) await call<{ state: DemoState }>('GET', '/api/state').then((r) => hydrate(r.state), () => undefined)
+    } finally {
+      pending--
+    }
+  })
 }
 
 // ---------- Alumnat ----------

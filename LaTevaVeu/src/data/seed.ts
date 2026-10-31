@@ -221,7 +221,7 @@ const T = (user: string, name: string, groups: string[] = []): StaffMember => ({
 function initialStaff(): StaffMember[] {
   return [
     { email: 'admin.demo@ramonpont.cat', name: 'Administració (demo)', role: 'admin', groups: [] },
-    { email: 'direccio.demo@ramonpont.cat', name: 'Montserrat Badia (direcció)', role: 'admin', groups: [], direction: true },
+    { email: 'direccio.demo@ramonpont.cat', name: 'Montserrat Badia', role: 'admin', groups: [], direction: true },
     T('anna.vila', 'Anna Vila', ['3EP-A']),
     T('jordi.mas', 'Jordi Mas', ['4EP-A']),
     T('tutoria.5ep', 'Laura Ferrer', ['5EP-A']),
@@ -262,7 +262,7 @@ function initialAssignments(gradeSubjects: GradeSubject[]): TeachingAssignment[]
   return out
 }
 
-// ---------- Et veig: dues recollides de mostra ----------
+// ---------- Et veig…: dues recollides de mostra ----------
 
 const KEEP: Record<StageId, string[]> = {
   CM: ['Els jocs per aprendre', 'Que ens explica contes', 'Que riu amb nosaltres', 'Quan fem experiments', 'Que m’ajuda quan no ho sé fer'],

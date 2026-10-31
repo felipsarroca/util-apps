@@ -1,68 +1,44 @@
-// Personal en mode connectat: recollides d'«Et veig», autoavaluació docent, moderació i informes,
-// servits pel servidor. La resta de la gestió (cens, assignacions, preguntes) encara es fa a la demostració.
+// Personal en mode connectat: recollides d'«Et veig…», autoavaluació docent, moderació i informes,
+// servits per les rutes confidencials del servidor (server/etveig.ts).
 import { useState } from 'react'
-import { fetchCampaigns, fetchCenter, fetchComments, fetchReport, fetchSelfTasks, fetchTeacherStatus, postModeration, postStatus, putSelf, useRemote, type RemoteCampaign, type RemoteComment } from '../data/remote'
+import { whenSynced, fetchCampaigns, fetchCenter, fetchComments, fetchReport, fetchSelfTasks, fetchTeacherStatus, postModeration, postStatus, putSelf, useRemote, type RemoteCampaign, type RemoteComment } from '../data/remote'
 import { THRESHOLD, type TeacherReport } from '../domain/feedback'
 import { STAGES } from '../domain/catalog'
 import type { FeedbackStatus, Session } from '../domain/types'
 import { CenterReportPages, FeedbackReportPages } from '../report/FeedbackReport'
 import { SheetViewer } from '../report/Report'
 import { fmtDate, Icon, Modal, useToast } from '../ui/common'
-import { FB_LABEL, FB_TONE, NEXT, SelfAssessView } from './EtVeig'
-import { RemoteFamilies } from './RemoteFamilies'
+import { FB_LABEL, FB_TONE, NewFeedbackCampaign, NEXT, SelfAssessView } from './EtVeig'
 import { PrintPortal } from './shared'
-import { PageHead, SPACES } from './StaffApp'
+import { PageHead } from './StaffApp'
 
 const RESULTS_DIRECTION: FeedbackStatus[] = ['INFORMES_GENERATS', 'PUBLICADA', 'ARXIVADA']
 const RESULTS_TEACHER: FeedbackStatus[] = ['PUBLICADA', 'ARXIVADA']
 const FLOW = Object.keys(FB_LABEL) as FeedbackStatus[]
 
-type Screen = { kind: 'list' } | { kind: 'self' } | { kind: 'families' } | { kind: 'moderate'; c: RemoteCampaign } | { kind: 'report'; c: RemoteCampaign; teacher: string } | { kind: 'center'; c: RemoteCampaign } | { kind: 'teachers'; c: RemoteCampaign }
+type Screen = { kind: 'list' } | { kind: 'self' } | { kind: 'moderate'; c: RemoteCampaign } | { kind: 'report'; c: RemoteCampaign; teacher: string } | { kind: 'center'; c: RemoteCampaign } | { kind: 'teachers'; c: RemoteCampaign }
 
-export function RemoteStaff({ session }: { session: Session }) {
-  const [screen, setScreen] = useState<Screen>({ kind: 'list' })
+/**
+ * «Et veig…» en mode connectat. Les respostes són confidencials: el servidor només en torna agregats
+ * i informes, per això aquestes pantalles no fan servir l'estat compartit de la resta de l'app.
+ */
+export function RemoteEtVeig({ session, view }: { session: Session; view: 'list' | 'self' }) {
+  const [screen, setScreen] = useState<Screen>({ kind: view })
+  const [last, setLast] = useState(view)
+  if (last !== view) {
+    setLast(view)
+    setScreen({ kind: view })
+  }
   const back = () => setScreen({ kind: 'list' })
-  // L'Equip Directiu i l'administració no s'autoavaluen si no fan classe: el servidor els torna una llista buida.
-  const teaches = session.role !== 'admin' || !!session.direction
-  const manage = session.role === 'admin' || !!session.direction
-  const sp = SPACES['et-veig']
   return (
-    <div className="staff space-ev">
-      <nav className="side no-print" aria-label="Seccions">
-        <div className="space-title">
-          <b>
-            {sp.emoji} {sp.name}
-          </b>
-          <small>{sp.tagline}</small>
-        </div>
-        <div className="side-label">Seguiment</div>
-        <button className={`nav-btn${screen.kind !== 'self' && screen.kind !== 'families' ? ' cur' : ''}`} onClick={back}>
-          <Icon name="calendar" /> Recollides
-        </button>
-        {teaches && (
-          <button className={`nav-btn${screen.kind === 'self' ? ' cur' : ''}`} onClick={() => setScreen({ kind: 'self' })}>
-            <Icon name="edit" /> La meva autoavaluació
-          </button>
-        )}
-        {manage && (
-          <>
-            <div className="side-label">Centre</div>
-            <button className={`nav-btn${screen.kind === 'families' ? ' cur' : ''}`} onClick={() => setScreen({ kind: 'families' })}>
-              <Icon name="mail" /> Famílies
-            </button>
-          </>
-        )}
-      </nav>
-      <main className="staff-main">
-        {screen.kind === 'list' && <Campaigns session={session} go={setScreen} />}
-        {screen.kind === 'self' && <SelfRemote />}
-        {screen.kind === 'families' && <RemoteFamilies />}
-        {screen.kind === 'moderate' && <Moderation c={screen.c} onBack={back} />}
-        {screen.kind === 'report' && <Report c={screen.c} teacher={screen.teacher} onBack={back} />}
-        {screen.kind === 'center' && <Center c={screen.c} onBack={back} go={setScreen} />}
-        {screen.kind === 'teachers' && <Teachers session={session} c={screen.c} onBack={back} go={setScreen} />}
-      </main>
-    </div>
+    <>
+      {screen.kind === 'list' && <Campaigns session={session} go={setScreen} />}
+      {screen.kind === 'self' && <SelfRemote />}
+      {screen.kind === 'moderate' && <Moderation c={screen.c} onBack={back} />}
+      {screen.kind === 'report' && <Report c={screen.c} teacher={screen.teacher} onBack={back} />}
+      {screen.kind === 'center' && <Center c={screen.c} onBack={back} go={setScreen} />}
+      {screen.kind === 'teachers' && <Teachers session={session} c={screen.c} onBack={back} go={setScreen} />}
+    </>
   )
 }
 
@@ -97,6 +73,7 @@ function Campaigns({ session, go }: { session: Session; go: (s: Screen) => void 
   const r = useRemote(fetchCampaigns)
   const [ask, setAsk] = useState<{ c: RemoteCampaign; to: FeedbackStatus; label: string } | null>(null)
   const [toast, showToast] = useToast()
+  const [creating, setCreating] = useState(false)
   const manage = session.role === 'admin' || !!session.direction
   const change = async () => {
     if (!ask) return
@@ -111,7 +88,23 @@ function Campaigns({ session, go }: { session: Session; go: (s: Screen) => void 
   }
   return (
     <>
-      <PageHead title="Recollides d’«Et veig»" sub="Mode connectat: les dades són al servidor de l’escola." />
+      <PageHead title="Recollides d’«Et veig…»" sub="Mode connectat: les dades són al servidor de l’escola.">
+        {manage && (
+          <button className="btn primary ev" onClick={() => setCreating(true)}>
+            <Icon name="plus" /> Nova recollida
+          </button>
+        )}
+      </PageHead>
+      {creating && (
+        <NewFeedbackCampaign
+          session={session}
+          onClose={() => {
+            setCreating(false)
+            void whenSynced().then(r.reload)
+          }}
+          toast={showToast}
+        />
+      )}
       {!r.data ? (
         <Loading error={r.error} reload={r.reload} />
       ) : !r.data.length ? (

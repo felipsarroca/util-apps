@@ -5,7 +5,8 @@ import { gradeAndGroup } from '../domain/groups'
 import { buildSteps, findMissing, progress, requiredKeys, stepComplete, type Step } from '../domain/engine'
 import type { Answers, Session } from '../domain/types'
 import { fmtDate, Icon, Modal, readSection, useSection, useToast, type Section } from '../ui/common'
-import { EtVeigStudent } from './EtVeig'
+import { EtVeigRemote, EtVeigStudent } from './EtVeig'
+import { fetchHome, useRemote } from '../data/remote'
 import { StepBody } from './Questions'
 
 type View = 'home' | 'form' | 'done' | 'etveig'
@@ -15,13 +16,17 @@ const ESTIMATE: Record<string, string> = { CM: '5 minuts', CS: '8 minuts', ESO: 
 export function StudentApp({ session }: { session: Session }) {
   const s = useDemoState()
   const home = studentHome(s, session)
-  const fb = feedbackHome(s, session)
   const [toast, showToast] = useToast()
+  // Mode connectat: «Et veig…» té dades confidencials pròpies i es demana a part al servidor.
+  const [visit, setVisit] = useState(0)
+  const remoteFb = useRemote(() => (session.remote ? fetchHome() : Promise.resolve(null)), String(visit))
+  const fb = session.remote ? (remoteFb.data ?? null) : feedbackHome(s, session)
   // L'adreça …/#/em-miro o …/#/et-veig obre directament l'apartat, si està disponible.
   const viewFor = (sec: Section | null): View => (sec === 'et-veig' && fb ? 'etveig' : sec === 'em-miro' && home?.campaign && home.template ? 'form' : 'home')
   const [view, setViewState] = useState<View>(() => viewFor(readSection()))
   const setSection = useSection((sec) => setViewState(viewFor(sec)))
   const setView = (v: View) => {
+    if (v === 'home') setVisit((x) => x + 1)
     setViewState(v)
     setSection(v === 'etveig' ? 'et-veig' : v === 'home' ? null : 'em-miro')
   }
@@ -33,7 +38,7 @@ export function StudentApp({ session }: { session: Session }) {
   return (
     <div className={`stu stage-${stage}`}>
       {view === 'home' && <StudentHome home={home} fb={fb} session={session} onStart={() => setView('form')} onEtVeig={() => setView('etveig')} toast={showToast} />}
-      {view === 'etveig' && <EtVeigStudent session={session} stage={stage} onExit={() => setView('home')} />}
+      {view === 'etveig' && (session.remote ? <EtVeigRemote onExit={() => setView('home')} /> : <EtVeigStudent session={session} stage={stage} onExit={() => setView('home')} />)}
       {view === 'form' && home.campaign && home.template && (
         <Questionnaire
           key={home.campaign.id}
@@ -157,7 +162,7 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
           etVeigOn && (
             <div className="campaign-box mod ev idle">
               <div className="mod-kicker ev">
-                <span aria-hidden="true">👀</span> Et veig · Valoro el professorat
+                <span aria-hidden="true">👀</span> Et veig… · Valoro el professorat
                 <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>
               </div>
               <p className="muted">Ara no hi ha cap valoració del professorat oberta.</p>
@@ -221,7 +226,7 @@ function EtVeigCard({ fb, onOpen }: { fb: FeedbackHome; onOpen: () => void }) {
   return (
     <div className="campaign-box mod ev">
       <div className="mod-kicker ev">
-        <span aria-hidden="true">👀</span> Et veig · Valoro el professorat
+        <span aria-hidden="true">👀</span> Et veig… · Valoro el professorat
         <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>
       </div>
       <div className="row">

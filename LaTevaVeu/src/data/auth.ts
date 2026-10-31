@@ -7,15 +7,9 @@ import { SCHOOL } from '../domain/catalog'
 
 export const GOOGLE_CLIENT_ID: string | undefined = import.meta.env.VITE_GOOGLE_CLIENT_ID || undefined
 
-export type DomainCheck = { ok: true; email: string } | { ok: false; reason: string }
+import { checkSchoolEmail, type DomainCheck } from '../domain/email'
 
-export function checkSchoolEmail(raw: string): DomainCheck {
-  const email = raw.trim().toLowerCase()
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, reason: 'Escriu una adreça de correu completa.' }
-  if (email.split('@')[1] !== SCHOOL.domain)
-    return { ok: false, reason: `Només s’hi pot entrar amb el compte de l’escola (@${SCHOOL.domain}). Tanca la sessió de l’altre compte i torna-ho a provar.` }
-  return { ok: true, email }
-}
+export { checkSchoolEmail, type DomainCheck }
 
 export interface GoogleProfile {
   email: string
