@@ -28,7 +28,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             AvaluApp/package-lock.json
-            MAvaluo/package-lock.json
+            LaTevaVeu/package-lock.json
 
       - name: Instal·la les dependències d'AvaluApp
         working-directory: AvaluApp
@@ -38,12 +38,12 @@ jobs:
         working-directory: AvaluApp
         run: npm run build
 
-      - name: Instal·la les dependències de MAvaluo
-        working-directory: MAvaluo
+      - name: Instal·la les dependències de La teva veu
+        working-directory: LaTevaVeu
         run: npm ci
 
-      - name: Prova i compila MAvaluo
-        working-directory: MAvaluo
+      - name: Prova i compila La teva veu
+        working-directory: LaTevaVeu
         run: |
           npm test
           npm run build
@@ -56,10 +56,22 @@ jobs:
             --exclude .github \
             --exclude _site \
             --exclude AvaluApp \
+            --exclude LaTevaVeu \
             --exclude MAvaluo
-          mkdir _site/AvaluApp _site/MAvaluo
+          mkdir _site/AvaluApp _site/LaTevaVeu _site/MAvaluo
           cp -R AvaluApp/dist/. _site/AvaluApp/
-          cp -R MAvaluo/dist/. _site/MAvaluo/
+          cp -R LaTevaVeu/dist/. _site/LaTevaVeu/
+          # Adreça antiga de La teva veu: redirigeix-la i conserva l'apartat (#/em-miro, #/et-veig).
+          cat > _site/MAvaluo/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ca">
+          <meta charset="utf-8">
+          <title>La teva veu</title>
+          <meta http-equiv="refresh" content="0; url=../LaTevaVeu/">
+          <script>location.replace('../LaTevaVeu/' + location.hash)</script>
+          <p>L'aplicació s'ha traslladat a <a href="../LaTevaVeu/">La teva veu</a>.</p>
+          </html>
+          HTML
 
       - name: Configura GitHub Pages
         uses: actions/configure-pages@v5

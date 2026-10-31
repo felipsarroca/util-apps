@@ -8,7 +8,7 @@ import {
 import { gradeShort, GRADES, STAGES } from '../domain/catalog'
 import { eligibleStudents, groupKey, stageOfGrade, stagesOfTeacher, teachersForStudent, THRESHOLD } from '../domain/feedback'
 import { CONTEXT_TAGS, type Answers, type FeedbackCampaign, type FeedbackStatus, type GradeId, type Session, type StageId } from '../domain/types'
-import { BarLegend, DistBar, FeedbackReportPages } from '../report/FeedbackReport'
+import { BarLegend, CenterReportPages, DistBar, FeedbackReportPages, heat } from '../report/FeedbackReport'
 import { SheetViewer } from '../report/Report'
 import { SegScale } from '../student/Questions'
 import { TeacherAvatar } from '../student/EtVeig'
@@ -297,13 +297,12 @@ export function ReportView({ session, campaignId, teacherEmail }: { session: Ses
 
 // ---------- Visió de centre (Equip Directiu) ----------
 
-const heat = (x: number) => `hsl(${Math.round(8 + x * 140)} 52% ${Math.round(93 - x * 14)}%)`
-
 export function CenterScreen({ session }: { session: Session }) {
   const s = useDemoState()
   const campaigns = s.feedbackCampaigns.filter((c) => RESULTS_VISIBLE_DIRECTION.includes(c.status)).sort((a, b) => (a.start < b.start ? 1 : -1))
   const [cid, setCid] = useState(campaigns[0]?.id ?? '')
   const [open, setOpen] = useState<string | null>(null)
+  const [printing, setPrinting] = useState(false)
   const view = useMemo(() => {
     try {
       return cid ? centerView(session, cid) : []
@@ -326,6 +325,9 @@ export function CenterScreen({ session }: { session: Session }) {
             <option key={c.id} value={c.id}>{c.label} · {c.year}</option>
           ))}
         </select>
+        <button className="btn primary ev" disabled={!view.length} onClick={() => setPrinting(true)}>
+          <Icon name="print" /> Imprimeix o desa en PDF
+        </button>
       </PageHead>
       {running.map((c) => (
         <div key={c.id} className="notice">
@@ -443,6 +445,11 @@ export function CenterScreen({ session }: { session: Session }) {
         <Modal title={`Així et veiem · ${s.staff.find((x) => x.email === open)?.name}`} onClose={() => setOpen(null)} wide>
           <ReportView session={session} campaignId={cid} teacherEmail={open} />
         </Modal>
+      )}
+      {printing && campaign && (
+        <PrintPortal onDone={() => setPrinting(false)}>
+          <CenterReportPages view={view} campaign={campaign} />
+        </PrintPortal>
       )}
     </>
   )

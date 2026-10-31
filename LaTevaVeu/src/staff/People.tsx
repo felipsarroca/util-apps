@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { addStaff, importCensus, removeStaff, setElective, useDemoState, type CensusRow } from '../data/api'
+import { addStaff, importCensus, isDirection, removeStaff, setDirection, setElective, useDemoState, type CensusRow } from '../data/api'
 import { gradeShort, GRADES, SCHOOL } from '../domain/catalog'
 import { detectColumns, normalizeGrade, parseCsv } from '../domain/csv'
 import type { GradeId, Session } from '../domain/types'
@@ -44,23 +44,42 @@ function Access({ session }: { session: Session }) {
   const s = useDemoState()
   const [adding, setAdding] = useState(false)
   const [toast, showToast] = useToast()
+  const dir = isDirection(session)
+  const toggleDir = (email: string, on: boolean) => {
+    try {
+      setDirection(session, email, on)
+      showToast(on ? 'Afegit a l’Equip Directiu' : 'Tret de l’Equip Directiu')
+    } catch (e) {
+      showToast((e as Error).message)
+    }
+  }
   return (
     <>
       <div className="row">
-        <p className="muted" style={{ flex: 1 }}>El professorat només veu els grups que té assignats. L’administració ho veu tot i cada acció queda registrada.</p>
+        <p className="muted" style={{ flex: 1 }}>
+          El professorat només veu els grups que té assignats. L’administració ho veu tot i cada acció queda registrada. Els resultats d’«Et veig» només els veu l’<b>Equip Directiu</b>
+          {dir ? '.' : ': només un membre de l’Equip Directiu pot afegir-hi o treure’n persones.'}
+        </p>
         <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" /> Dona accés</button>
       </div>
       <div className="table-wrap">
         <table className="t">
-          <thead><tr><th>Persona</th><th>Rol</th><th>Grups</th><th /></tr></thead>
+          <thead><tr><th>Persona</th><th>Rol</th><th>Grups</th><th>Equip Directiu</th><th /></tr></thead>
           <tbody>
             {s.staff.map((p) => (
               <tr key={p.email}>
                 <td className="student-cell"><b>{p.name}</b><small>{p.email}</small></td>
                 <td>{p.role === 'admin' ? <span className="badge brand">Administració</span> : <span className="badge info">Professorat</span>}</td>
                 <td>{p.role === 'admin' ? 'Tots' : p.groups.map((g) => g.replace(/^(\d(?:EP|ESO))-(.+)$/, (_, gr: string, x: string) => `${gradeShort(gr as GradeId)} ${x}`)).join(', ') || '—'}</td>
+                <td>
+                  <label className="toggle" title={!dir ? 'Només ho pot canviar l’Equip Directiu' : p.email === session.email ? 'No pots canviar la teva pròpia pertinença' : undefined}>
+                    <input type="checkbox" checked={!!p.direction} disabled={!dir || p.email === session.email} onChange={(e) => toggleDir(p.email, e.target.checked)} />
+                    <span className="sr-only">{p.name} forma part de l’Equip Directiu</span>
+                    {p.direction ? 'Sí' : 'No'}
+                  </label>
+                </td>
                 <td className="actions">
-                  <button className="btn small danger" disabled={p.email === session.email} onClick={() => { try { removeStaff(session, p.email); showToast('Accés retirat') } catch (e) { showToast((e as Error).message) } }}>Retira l’accés</button>
+                  <button className="btn small danger" disabled={p.email === session.email || (!!p.direction && !dir)} onClick={() => { try { removeStaff(session, p.email); showToast('Accés retirat') } catch (e) { showToast((e as Error).message) } }}>Retira l’accés</button>
                 </td>
               </tr>
             ))}

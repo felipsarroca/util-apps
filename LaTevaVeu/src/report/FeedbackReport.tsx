@@ -3,12 +3,15 @@
 
 import { useMemo, type ReactNode } from 'react'
 import { gradeShort, SCHOOL, STAGES } from '../domain/catalog'
-import { nearestLabel, QUADRANTS, THRESHOLD, type Dist, type Quadrant, type StageReport, type TeacherReport } from '../domain/feedback'
-import { CONTEXT_TAGS, type GradeId, type Scale } from '../domain/types'
+import { nearestLabel, QUADRANTS, THRESHOLD, type CenterStage, type Dist, type Quadrant, type StageReport, type TeacherReport } from '../domain/feedback'
+import { CONTEXT_TAGS, type FeedbackCampaign, type GradeId, type Scale } from '../domain/types'
 import { asset } from '../ui/common'
 import { PagedDoc, type Block } from './Report'
 
 const pct = (x: number) => `${Math.round(x * 100)} %`
+
+/** Color de fons d'una cel·la segons el percentatge favorable (de vermellós a verd). */
+export const heat = (x: number) => `hsl(${Math.round(8 + x * 140)} 52% ${Math.round(93 - x * 14)}%)`
 
 /** Barra apilada de la distribució. Tons de clar a fosc: es llegeix també en blanc i negre. */
 export function DistBar({ dist, scale, wide }: { dist: Dist; scale: Scale; wide?: boolean }) {
@@ -328,3 +331,188 @@ export function FeedbackReportPages({ report, duplex = false }: { report: Teache
 }
 
 export const selfLabel = (scale: Scale, v?: number) => (v === undefined ? '—' : nearestLabel(scale, v))
+
+/** Visió de centre en A4: participació, dimensions per etapa i mapa del professorat (ordre alfabètic). */
+export function CenterReportPages({ view, campaign }: { view: CenterStage[]; campaign: FeedbackCampaign }) {
+  const blocks = useMemo(() => {
+    const participants = view.reduce((a, v) => a + v.participants, 0)
+    const students = view.reduce((a, v) => a + v.students, 0)
+    const selfDone = view.flatMap((v) => v.teachers).filter((t) => t.self).length
+    const selfTotal = view.flatMap((v) => v.teachers).length
+    const out: Block[] = [
+      {
+        id: 'head',
+        node: (
+          <div className="rp-head fb-head">
+            <img src={asset('logo-escola-ramon-pont.png')} alt="" />
+            <div>
+              <div className="school">{SCHOOL.name} · La teva veu · Et veig</div>
+              <h1>Visió de centre</h1>
+              <div className="rp-sub">Mirada agregada de l’alumnat sobre la docència</div>
+            </div>
+            <div className="meta">
+              <b>{campaign.label}</b>
+              {campaign.year}
+              <br />
+              Equip Directiu
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'note',
+        node: (
+          <p className="rp-note">
+            Document <b>confidencial</b> per a l’Equip Directiu. Els docents apareixen en ordre alfabètic: no hi ha rànquings ni notes úniques. No es mostra cap resultat amb menys de {THRESHOLD} respostes i cap dada permet saber què ha respost cada alumne.
+          </p>
+        ),
+      },
+      {
+        id: 'kpis',
+        node: (
+          <div className="fb-kpis">
+            <div className="accent">
+              <span>Participació</span>
+              <b>{pct(participants / Math.max(1, students))}</b>
+              <small>
+                {participants} de {students} alumnes
+              </small>
+            </div>
+            {view.map((v) => (
+              <div key={v.stage}>
+                <span>{STAGES[v.stage].short}</span>
+                <b>{pct(v.participants / Math.max(1, v.students))}</b>
+                <small>
+                  {v.participants} de {v.students} alumnes
+                </small>
+              </div>
+            ))}
+            <div>
+              <span>Autoavaluacions</span>
+              <b>
+                {selfDone}/{selfTotal}
+              </b>
+              <small>docents per etapa</small>
+            </div>
+          </div>
+        ),
+      },
+    ]
+    for (const v of view) {
+      const sorted = [...v.dims].filter((d) => d.dist.valid).sort((a, b) => b.dist.fav - a.dist.fav)
+      out.push({
+        id: `${v.stage}-dims`,
+        node: (
+          <div style={{ display: 'grid', gap: '2.2mm' }}>
+            <div className="rp-sec-title fb">
+              {STAGES[v.stage].name}
+              <span className="fb-part">
+                {v.participants} de {v.students} alumnes ({pct(v.participants / Math.max(1, v.students))})
+              </span>
+            </div>
+            <div className="fb-note-row">
+              <BarLegend scale={v.scale} />
+            </div>
+            <table className="fb-dims">
+              <tbody>
+                {v.dims.map((d) => (
+                  <tr key={d.dim.id}>
+                    <td className="nm">
+                      <span aria-hidden="true">{d.dim.emoji}</span> {d.dim.name}
+                    </td>
+                    <td className="bar">
+                      <DistBar dist={d.dist} scale={v.scale} wide />
+                    </td>
+                    <td className="fav">
+                      <b>{d.dist.valid ? pct(d.dist.fav) : '—'}</b>
+                      <small>
+                        {d.prevFav === undefined ? 'favorable' : `${d.dist.fav - d.prevFav >= 0 ? '+' : ''}${Math.round((d.dist.fav - d.prevFav) * 100)} punts`}
+                      </small>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {sorted.length > 1 && (
+              <div className="fb-quads">
+                <div className="fb-quad q-confirmades">
+                  <b>Fortaleses de l’etapa</b>
+                  <span>{sorted.slice(0, 2).map((d) => `${d.dim.name} (${pct(d.dist.fav)})`).join(' · ')}</span>
+                </div>
+                <div className="fb-quad q-reptes">
+                  <b>Reptes de l’etapa</b>
+                  <span>{sorted.slice(-2).reverse().map((d) => `${d.dim.name} (${pct(d.dist.fav)})`).join(' · ')}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        ),
+      })
+      out.push({
+        id: `${v.stage}-heat`,
+        node: (
+          <div style={{ display: 'grid', gap: '1.6mm' }}>
+            <div className="fb-h">
+              Professorat · {STAGES[v.stage].short} <small>(% favorable per dimensió)</small>
+            </div>
+            <table className="fb-groups fb-heat">
+              <thead>
+                <tr>
+                  <th>Docent</th>
+                  <th>Resp.</th>
+                  {v.form.dimensions.map((d) => (
+                    <th key={d.id} title={d.name}>
+                      {d.name.split(' ')[0]}
+                    </th>
+                  ))}
+                  <th>Autoav.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {v.teachers.map((t) => (
+                  <tr key={t.email}>
+                    <td>{t.name}</td>
+                    <td className="num">{t.n}</td>
+                    {t.suppressed ? (
+                      <td colSpan={v.form.dimensions.length} className="muted-cell">
+                        Mostra insuficient (menys de {THRESHOLD})
+                      </td>
+                    ) : (
+                      v.form.dimensions.map((d) => (
+                        <td key={d.id} className="num" style={{ background: heat(t.fav[d.id]) }}>
+                          {pct(t.fav[d.id])}
+                        </td>
+                      ))
+                    )}
+                    <td className="num">{t.self ? 'Sí' : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ),
+      })
+    }
+    out.push({
+      id: 'foot-note',
+      node: (
+        <p className="rp-note">
+          Favorable: «Sovint» o «Sempre»; al cicle mitjà, «Sí!». La variació es compara amb la recollida anterior, en punts percentuals. Cal llegir aquestes dades al costat de l’informe de cada docent i del context de cada grup.
+        </p>
+      ),
+    })
+    return out
+  }, [view, campaign])
+  return (
+    <PagedDoc
+      blocks={blocks}
+      cont={[
+        <>
+          <b>Visió de centre</b> · {campaign.label}
+        </>,
+        'continuació',
+      ]}
+      foot={[`Visió de centre · ${campaign.label} ${campaign.year}`, 'Document confidencial · Equip Directiu']}
+    />
+  )
+}

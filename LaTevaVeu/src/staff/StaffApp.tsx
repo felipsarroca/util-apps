@@ -3,7 +3,7 @@ import { isDirection, useDemoState, visibleGrades } from '../data/api'
 import { gradeShort, GRADES } from '../domain/catalog'
 import type { GradeId, ResponseStatus, Session } from '../domain/types'
 import { buildReportModel, ReportPages, SheetViewer } from '../report/Report'
-import { fmtDate, fmtShort, Icon, Modal } from '../ui/common'
+import { fmtDate, fmtShort, Icon, Modal, readSection, useSection, type Section } from '../ui/common'
 import { CampaignsScreen } from './Campaigns'
 import { EditorScreen } from './Editor'
 import { CenterScreen, FeedbackCampaignsScreen, MyReportsScreen, SelfAssessScreen } from './EtVeig'
@@ -19,7 +19,7 @@ type Screen =
   | 'templates' | 'subjects' | 'assign' | 'people' | 'modules' | 'audit'
 
 /** Qui veu cada entrada: administració, Equip Directiu, tutoria (grups d'«Em miro»), qui fa classe o qui pot veure resultats. */
-type Need = 'admin' | 'dir' | 'tutor' | 'teaches' | 'results'
+type Need = 'admin' | 'dir' | 'manage' | 'tutor' | 'teaches' | 'results'
 const NAV: { id: Screen; label: string; icon: string; need: Need; group: string }[] = [
   { id: 'dashboard', label: 'Tauler', icon: 'home', need: 'tutor', group: 'Em miro' },
   { id: 'tracking', label: 'Respostes', icon: 'list', need: 'tutor', group: 'Em miro' },
@@ -28,7 +28,7 @@ const NAV: { id: Screen; label: string; icon: string; need: Need; group: string 
   { id: 'self', label: 'La meva autoavaluació', icon: 'edit', need: 'teaches', group: 'Et veig' },
   { id: 'myreports', label: 'Així et veiem', icon: 'eye', need: 'results', group: 'Et veig' },
   { id: 'center', label: 'Visió de centre', icon: 'chart', need: 'dir', group: 'Et veig' },
-  { id: 'fbcampaigns', label: 'Recollides i moderació', icon: 'calendar', need: 'admin', group: 'Et veig' },
+  { id: 'fbcampaigns', label: 'Recollides i moderació', icon: 'calendar', need: 'manage', group: 'Et veig' },
   { id: 'fbforms', label: 'Preguntes', icon: 'list', need: 'admin', group: 'Et veig' },
   { id: 'templates', label: 'Qüestionaris d’Em miro', icon: 'edit', need: 'admin', group: 'Configuració' },
   { id: 'subjects', label: 'Matèries', icon: 'book', need: 'admin', group: 'Configuració' },
@@ -44,9 +44,18 @@ export function StaffApp({ session }: { session: Session }) {
   const dir = isDirection(session)
   const teaches = s.assignments.some((a) => a.teacherEmail === session.email) || s.feedbackCampaigns.some((c) => c.teachers.includes(session.email))
   const tutor = isAdmin || (session.groups?.length ?? 0) > 0
-  const allowed: Record<Need, boolean> = { admin: isAdmin, dir, tutor, teaches, results: teaches || dir }
+  const allowed: Record<Need, boolean> = { admin: isAdmin, dir, manage: isAdmin || dir, tutor, teaches, results: teaches || dir }
   const nav = NAV.filter((n) => allowed[n.need])
-  const [screen, setScreen] = useState<Screen>(() => nav[0]?.id ?? 'dashboard')
+  // L'adreça …/#/em-miro o …/#/et-veig obre la primera pantalla de l'apartat.
+  const GROUP: Record<Section, string> = { 'em-miro': 'Em miro', 'et-veig': 'Et veig' }
+  const screenFor = (sec: Section | null) => (sec && nav.find((n) => n.group === GROUP[sec])?.id) || nav[0]?.id || 'dashboard'
+  const [screen, setScreenState] = useState<Screen>(() => screenFor(readSection()))
+  const setSection = useSection((sec) => setScreenState(screenFor(sec)))
+  const setScreen = (id: Screen) => {
+    setScreenState(id)
+    const g = nav.find((n) => n.id === id)?.group
+    setSection(g === 'Em miro' ? 'em-miro' : g === 'Et veig' ? 'et-veig' : null)
+  }
   const pendingIdentity = s.audit.filter((a) => a.action === 'Incidència d’identitat').length
   return (
     <div className="staff">
@@ -75,7 +84,7 @@ export function StaffApp({ session }: { session: Session }) {
         {screen === 'self' && teaches && <SelfAssessScreen session={session} />}
         {screen === 'myreports' && (teaches || dir) && <MyReportsScreen session={session} />}
         {screen === 'center' && dir && <CenterScreen session={session} />}
-        {screen === 'fbcampaigns' && isAdmin && <FeedbackCampaignsScreen session={session} />}
+        {screen === 'fbcampaigns' && (isAdmin || dir) && <FeedbackCampaignsScreen session={session} />}
         {screen === 'fbforms' && isAdmin && <FeedbackFormsScreen session={session} />}
         {screen === 'templates' && isAdmin && <EditorScreen session={session} />}
         {screen === 'subjects' && isAdmin && <SubjectsScreen session={session} />}

@@ -603,6 +603,14 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .fb-comments { display: grid; gap: 1.6mm; }
 .fb-comments ul { margin: 0; padding-left: 4.5mm; display: grid; gap: 1.2mm; font-size: 9pt; }
 .fb-comments li { overflow-wrap: anywhere; }
+.fb-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(30mm, 1fr)); gap: 2mm; }
+.fb-kpis > div { display: grid; gap: .4mm; padding: 2.2mm 3mm; border: .3mm solid #d9d3ca; border-radius: 1.6mm; }
+.fb-kpis > div.accent { border-color: #1f6a73; background: #eef6f7; }
+.fb-kpis span { font-size: 7.8pt; font-weight: 800; color: #555; }
+.fb-kpis b { font-size: 15pt; font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fb-kpis small { font-size: 7.4pt; color: #666; }
+.fb-heat { font-size: 8.4pt; }
+.fb-heat td.num { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 .fb-close { display: grid; gap: 1.8mm; border-top: .5mm dashed #999; padding-top: 3mm; font-size: 9pt; }
 .fb-close .lines { display: grid; gap: 1mm; }
 .fb-close .ln { border-bottom: .3mm solid #999; height: 7mm; }

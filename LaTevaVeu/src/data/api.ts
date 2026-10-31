@@ -91,6 +91,11 @@ function requireAdmin(session: Session) {
   if (session.role !== 'admin') throw new ForbiddenError('Aquesta acció només la pot fer l’administració.')
 }
 
+/** Recollides d'«Et veig»: les gestiona l'administració o l'Equip Directiu. */
+function requireAdminOrDirection(session: Session) {
+  if (session.role !== 'admin' && !isDirection(session)) throw new ForbiddenError('Aquesta acció només la pot fer l’administració o l’Equip Directiu.')
+}
+
 export const visibleStudents = (s: DemoState, session: Session) => s.students.filter((st) => canSeeStudent(session, st))
 
 export const visibleGrades = (s: DemoState, session: Session): GradeId[] =>
@@ -260,12 +265,33 @@ export function addStaff(session: Session, email: string, name: string, role: 'a
   const check = checkSchoolEmail(email)
   if (!check.ok) throw new Error(check.reason)
   const rest = state.staff.filter((s) => s.email !== check.email)
-  commit(audit({ ...state, staff: [...rest, { email: check.email, name, role, groups }] }, session.email, 'Permisos', `${check.email}: ${role === 'admin' ? 'administració' : `professorat (${groups.join(', ') || 'sense grups'})`}`))
+  const direction = state.staff.find((s) => s.email === check.email)?.direction
+  commit(audit({ ...state, staff: [...rest, { email: check.email, name, role, groups, ...(direction ? { direction } : {}) }] }, session.email, 'Permisos', `${check.email}: ${role === 'admin' ? 'administració' : `professorat (${groups.join(', ') || 'sense grups'})`}`))
+}
+
+/**
+ * Pertinença a l'Equip Directiu (permís per veure els resultats d'«Et veig»).
+ * Només la pot donar o treure algú que ja en forma part: l'administració sola no s'hi pot afegir.
+ */
+export function setDirection(session: Session, email: string, on: boolean) {
+  if (!isDirection(session)) throw new ForbiddenError('Només l’Equip Directiu pot canviar qui en forma part.')
+  if (email === session.email) throw new Error('No pots canviar la teva pròpia pertinença a l’Equip Directiu.')
+  const target = state.staff.find((s) => s.email === email)
+  if (!target) throw new Error('Aquesta persona no té accés a l’aplicació.')
+  commit(
+    audit(
+      { ...state, staff: state.staff.map((s) => (s.email === email ? { ...s, direction: on } : s)) },
+      session.email,
+      'Permisos',
+      `${email}: ${on ? 'afegit a' : 'tret de'} l’Equip Directiu`,
+    ),
+  )
 }
 
 export function removeStaff(session: Session, email: string) {
   requireAdmin(session)
   if (email === session.email) throw new Error('No et pots treure el teu propi accés.')
+  if (state.staff.find((s) => s.email === email)?.direction && !isDirection(session)) throw new ForbiddenError('Només l’Equip Directiu pot retirar l’accés d’un membre de l’Equip Directiu.')
   commit(audit({ ...state, staff: state.staff.filter((s) => s.email !== email) }, session.email, 'Permisos', `${email}: accés retirat`))
 }
 
@@ -451,7 +477,7 @@ export function saveSelfAssessment(session: Session, campaignId: string, stage: 
 // ---------- Et veig: administració ----------
 
 export function setFeedbackStatus(session: Session, campaignId: string, status: FeedbackStatus) {
-  requireAdmin(session)
+  requireAdminOrDirection(session)
   const c = state.feedbackCampaigns.find((x) => x.id === campaignId)!
   if (status === 'INFORMES_GENERATS' && state.feedbackComments.some((x) => x.campaignId === campaignId && x.status === 'pendent'))
     throw new Error('Encara hi ha comentaris pendents de moderar.')
@@ -463,7 +489,7 @@ export function setFeedbackStatus(session: Session, campaignId: string, status: 
 }
 
 export function createFeedbackCampaign(session: Session, label: string, stages: StageId[], start: string, end: string) {
-  requireAdmin(session)
+  requireAdminOrDirection(session)
   if (!stages.length) throw new Error('Tria com a mínim una etapa.')
   const formIds: Partial<Record<StageId, string>> = {}
   for (const st of stages) {
@@ -479,7 +505,6 @@ export function createFeedbackCampaign(session: Session, label: string, stages: 
 }
 
 export function moderateComment(session: Session, commentId: string, status: Exclude<ModerationStatus, 'pendent'>, text?: string) {
-  requireAdmin(session)
   if (!isDirection(session)) throw new ForbiddenError('La moderació dels comentaris la fa l’Equip Directiu.')
   commit({
     ...state,
@@ -490,7 +515,6 @@ export function moderateComment(session: Session, commentId: string, status: Exc
 }
 
 export function acceptUnflagged(session: Session, campaignId: string): number {
-  requireAdmin(session)
   if (!isDirection(session)) throw new ForbiddenError('La moderació dels comentaris la fa l’Equip Directiu.')
   let n = 0
   const feedbackComments = state.feedbackComments.map((x) => {

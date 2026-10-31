@@ -75,7 +75,7 @@ Quan aquest pla i l'especificació v2.0 no coincideixen, mana aquest pla. Els ca
 
 | Peça | Estat |
 | --- | --- |
-| Prototip «M'avaluo» (futur «Em miro») | Funcional en **mode de demostració** a `util-apps/MAvaluo`. Publicat a <https://felipsarroca.github.io/util-apps/MAvaluo/>. Les dades són fictícies, es desen al navegador i no hi ha servidor. |
+| Prototip «M'avaluo» (futur «Em miro») | Funcional en **mode de demostració** a `util-apps/LaTevaVeu`. Publicat a <https://felipsarroca.github.io/util-apps/LaTevaVeu/>. Les dades són fictícies, es desen al navegador i no hi ha servidor. |
 | Què fa el prototip | Entrada restringida a `@ramonpont.cat` (amb Google si hi ha un identificador de client), tres experiències per etapa, desat automàtic, seguiment docent, informe A4 paginat amb impressió per lots i doble cara, editor de qüestionaris versionat, recollides, matèries per curs, cens CSV i registre d'operacions. Té 17 proves automàtiques. |
 | «Et veig» | Només disseny (aquest document). |
 | Backend, Neon, correu | No construïts. Hi ha un esquema orientatiu a `db/schema.sql`, que no s'ha executat. |
@@ -453,5 +453,5 @@ Les fases 1 i 2 es poden fer al prototip actual sense dades reals. Les fases 3 i
 - `La_teva_veu_especificacio_i_identitat_v2.md`: especificació funcional i d'identitat v2.0.
 - `Pla_mestre_Veu_alumnat_autoavaluacions_v1.md`: pla mestre v1 (històric).
 - `Propostes_de_noms.md`: pluja d'idees de noms (els noms descartats no s'han de fer servir).
-- Prototip: <https://felipsarroca.github.io/util-apps/MAvaluo/> · codi a `util-apps/MAvaluo`.
+- Prototip: <https://felipsarroca.github.io/util-apps/LaTevaVeu/> · codi a `util-apps/LaTevaVeu`.
 - App anterior: <https://github.com/felipsarroca/util-apps/tree/main/VeuAlumnat>.

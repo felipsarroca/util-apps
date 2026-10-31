@@ -5,7 +5,7 @@
 - **Em miro**: l'alumne s'autoavalua en cada avaluació i en surt l'informe individual **Així em veig**.
 - **Et veig**: l'alumne valora una vegada cada docent que li fa classe, i en surt l'informe agregat **Així et veiem**, contrastat amb l'autoavaluació del docent.
 
-Implementa les fases 1 i 2 del [pla mestre v2](La_teva_veu_pla_mestre_v2.md). La carpeta i l'URL encara es diuen `MAvaluo`.
+Implementa les fases 1 i 2 del [pla mestre v2](La_teva_veu_pla_mestre_v2.md). Publicada a <https://felipsarroca.github.io/util-apps/LaTevaVeu/> (l'adreça antiga `MAvaluo/` hi redirigeix).
 
 **Estat (31 d'octubre de 2026):** prototip funcional en **mode de demostració**. Les dades són fictícies i es desen al navegador. Encara no hi ha servidor, base de dades real ni enviament de correus.
 
@@ -17,7 +17,7 @@ Només s'hi pot entrar amb un compte **@ramonpont.cat**. Tenir aquest compte no 
 | --- | --- |
 | Alumne al cens | Només la seva autoavaluació, el seu curs i les seves matèries |
 | Professorat | A «Em miro», només els grups que té assignats; a «Et veig», la seva autoavaluació i el seu informe quan es publica |
-| Equip Directiu | Tots els informes d'«Et veig», la visió de centre i la moderació de comentaris; mai qui ha dit què |
+| Equip Directiu | Tots els informes d'«Et veig», la visió de centre i la moderació de comentaris; mai qui ha dit què. Només un membre de l'Equip Directiu pot afegir-hi o treure'n persones (a «Alumnat i accessos») |
 | Administració | La configuració, amb registre de cada acció; no veu resultats d'«Et veig» |
 | Compte de l'escola fora del cens | Pantalla «Encara no tens accés», sense cap dada |
 | Compte d'un altre domini | Rebutjat abans d'entrar |
@@ -41,7 +41,7 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`) i es
 - Autoavaluació del docent: una per etapa, amb les mateixes afirmacions en primera persona i etiquetes opcionals de context per grup.
 - Informe «Així et veiem»: dimensions, mirall alumnat-docent amb quatre quadrants, detall per afirmació, resultats per grup, evolució i comentaris moderats. Imprimible en A4.
 - Confidencialitat: les respostes es desen sense identificar l'alumne; no es mostra cap agregat amb menys de 15 respostes.
-- Visió de centre (Equip Directiu): participació, dimensions per etapa amb la variació respecte de la recollida anterior, i mapa de calor del professorat en ordre alfabètic.
+- Visió de centre (Equip Directiu): participació, dimensions per etapa amb la variació respecte de la recollida anterior, i mapa de calor del professorat en ordre alfabètic. Es pot imprimir o desar en PDF (A4).
 - Recollides independents de les avaluacions: `Esborrany → Programada → Oberta → Tancada → Moderació → Informes generats → Publicada → Arxivada`. Les assignacions es congelen en obrir-les.
 - Moderació de comentaris amb marques automàtiques (insults, noms propis, dades de contacte, frases que identifiquen).
 - Configuració: apartats actius, assignacions docents per grup i matèria, i editor de preguntes amb versions.
@@ -55,6 +55,13 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`) i es
 - Matèries per curs: ordre, comunes i optatives, activació.
 - Alumnat i accessos: permisos per grup, cens amb optatives, importació CSV amb validació prèvia, incidències d'identitat.
 - Registre d'operacions.
+
+## Adreces dels apartats
+
+- <https://felipsarroca.github.io/util-apps/LaTevaVeu/#/em-miro> obre «Em miro».
+- <https://felipsarroca.github.io/util-apps/LaTevaVeu/#/et-veig> obre «Et veig».
+
+Si cal, primer es demana el compte de l'escola. Si l'apartat no està actiu, s'obre la pantalla d'inici.
 
 ## Comptes de prova
 

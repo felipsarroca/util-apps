@@ -3,7 +3,7 @@ import { feedbackHome, logAudit, saveDraft, studentHome, submitResponse, useDemo
 import { gradeById, STAGES } from '../domain/catalog'
 import { buildSteps, findMissing, progress, requiredKeys, stepComplete, type Step } from '../domain/engine'
 import type { Answers, Session } from '../domain/types'
-import { fmtDate, Icon, Modal, useToast } from '../ui/common'
+import { fmtDate, Icon, Modal, readSection, useSection, useToast, type Section } from '../ui/common'
 import { EtVeigStudent } from './EtVeig'
 import { StepBody } from './Questions'
 
@@ -15,8 +15,15 @@ export function StudentApp({ session }: { session: Session }) {
   const s = useDemoState()
   const home = studentHome(s, session)
   const fb = feedbackHome(s, session)
-  const [view, setView] = useState<View>('home')
   const [toast, showToast] = useToast()
+  // L'adreça …/#/em-miro o …/#/et-veig obre directament l'apartat, si està disponible.
+  const viewFor = (sec: Section | null): View => (sec === 'et-veig' && fb ? 'etveig' : sec === 'em-miro' && home?.campaign && home.template ? 'form' : 'home')
+  const [view, setViewState] = useState<View>(() => viewFor(readSection()))
+  const setSection = useSection((sec) => setViewState(viewFor(sec)))
+  const setView = (v: View) => {
+    setViewState(v)
+    setSection(v === 'etveig' ? 'et-veig' : v === 'home' ? null : 'em-miro')
+  }
 
   if (!home) return <p className="stu-main">No s’ha trobat la teva matrícula.</p>
   const grade = gradeById(home.student.gradeId)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 
 const base = (import.meta.env.BASE_URL || './').replace(/\/?$/, '/')
 export const asset = (p: string) => `${base}assets/${p}`
@@ -120,6 +120,38 @@ export function useFitScale() {
       mq?.removeEventListener('change', onDpr)
     }
   }, [])
+}
+
+// ---------- Adreces dels apartats ----------
+
+/** Apartat que indica l'adreça: …/#/em-miro o …/#/et-veig. */
+export type Section = 'em-miro' | 'et-veig'
+
+export const readSection = (): Section | null => {
+  const m = window.location.hash.match(/^#\/(em-miro|et-veig)\b/)
+  return m ? (m[1] as Section) : null
+}
+
+/**
+ * Manté l'apartat de l'adreça al dia quan es navega (l'inicial es llegeix amb `readSection`).
+ * `onExternal` s'executa si l'usuari canvia l'adreça a mà o amb un enllaç.
+ */
+export function useSection(onExternal: (s: Section | null) => void): (s: Section | null) => void {
+  const cb = useRef(onExternal)
+  useEffect(() => {
+    cb.current = onExternal
+  })
+  useEffect(() => {
+    const on = () => cb.current(readSection())
+    window.addEventListener('hashchange', on)
+    return () => window.removeEventListener('hashchange', on)
+  }, [])
+  const set = useCallback((sec: Section | null) => {
+    if (readSection() === sec) return
+    const { pathname, search } = window.location
+    window.history.replaceState(window.history.state, '', sec ? `#/${sec}` : pathname + search)
+  }, [])
+  return set
 }
 
 // ---------- Avisos i diàlegs ----------
