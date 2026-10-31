@@ -1,8 +1,9 @@
 // Configuració general: apartats activables, assignacions docents i qüestionaris d'«Et veig».
 
 import { useState } from 'react'
-import { discardFeedbackDraft, newFeedbackDraft, publishFeedbackForm, saveFeedbackFormDraft, setAssignment, setModules, useDemoState } from '../data/api'
+import { discardFeedbackDraft, importAssignments, newFeedbackDraft, publishFeedbackForm, saveFeedbackFormDraft, setAssignment, setModules, useDemoState } from '../data/api'
 import { gradeShort, GRADES, STAGES } from '../domain/catalog'
+import { parseAssignmentsCsv, type AssignmentImport } from '../domain/csv'
 import { subjectsForStudent } from '../domain/engine'
 import { validateFeedbackForm } from '../domain/feedbackForms'
 import type { FeedbackForm, Session, StageId } from '../domain/types'
@@ -56,6 +57,7 @@ export function AssignmentsScreen({ session }: { session: Session }) {
   const groups = GRADES.flatMap((g) => [...new Set(s.students.filter((x) => x.gradeId === g.id).map((x) => x.group))].sort().map((group) => ({ grade: g, group })))
   const [sel, setSel] = useState(`${groups[0].grade.id}-${groups[0].group}`)
   const cur = groups.find((x) => `${x.grade.id}-${x.group}` === sel)!
+  const [importing, setImporting] = useState(false)
   const subjects = s.gradeSubjects.filter((gs) => gs.gradeId === cur.grade.id && gs.active).sort((a, b) => a.order - b.order)
   const missing = groups.flatMap(({ grade, group }) =>
     s.gradeSubjects
@@ -65,7 +67,11 @@ export function AssignmentsScreen({ session }: { session: Session }) {
   const idle = teachers.filter((t) => !s.assignments.some((a) => a.teacherEmail === t.email))
   return (
     <>
-      <PageHead title="Assignacions docents" sub="Qui fa cada matèria a cada grup. Defineix quins docents valora cada alumne a «Et veig»." />
+      <PageHead title="Assignacions docents" sub="Qui fa cada matèria a cada grup. Defineix quins docents valora cada alumne a «Et veig».">
+        <button className="btn" onClick={() => setImporting(true)}>
+          <Icon name="upload" /> Importa des de CSV
+        </button>
+      </PageHead>
       <div className="notice">
         <Icon name="info" />
         <div>Els canvis s’apliquen a les recollides que s’obrin a partir d’ara. Les recollides obertes conserven les assignacions de quan es van obrir.</div>
@@ -129,8 +135,63 @@ export function AssignmentsScreen({ session }: { session: Session }) {
           </tbody>
         </table>
       </div>
+      {importing && <ImportAssignments session={session} onClose={() => setImporting(false)} onDone={(n) => { setImporting(false); showToast(`${n} assignacions importades.`) }} />}
       {toast}
     </>
+  )
+}
+
+function ImportAssignments({ session, onClose, onDone }: { session: Session; onClose: () => void; onDone: (n: number) => void }) {
+  const s = useDemoState()
+  const [text, setText] = useState('')
+  const [result, setResult] = useState<AssignmentImport | null>(null)
+  const analyse = (t: string) => setResult(parseAssignmentsCsv(t, { gradeSubjects: s.gradeSubjects, subjects: s.subjects, staffEmails: s.staff.map((x) => x.email) }))
+  return (
+    <Modal title="Importa assignacions des de CSV" onClose={onClose} wide>
+      {!result ? (
+        <>
+          <p>
+            Fes servir la plantilla <b>07_Plantilla_assignacions.csv</b> (carpeta <code>docs</code>): una fila per matèria i grup, amb les columnes <b>curs, grup, codi_materia</b> i <b>correu_docent</b>. Res no es desa fins que confirmis.
+          </p>
+          <div className="row">
+            <label className="btn">
+              <Icon name="upload" /> Tria un fitxer
+              <input type="file" accept=".csv,text/csv" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const t = await f.text(); setText(t); analyse(t) } }} />
+            </label>
+          </div>
+          <textarea className="textarea" rows={8} value={text} onChange={(e) => setText(e.target.value)} placeholder="També pots enganxar aquí el contingut del CSV" style={{ fontFamily: 'ui-monospace, monospace', fontSize: '.85rem' }} />
+          <div className="row" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn primary" disabled={!text.trim()} onClick={() => analyse(text)}>Analitza</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="kpis">
+            <div className="card kpi"><span className="l">Assignacions vàlides</span><span className="v">{result.rows.length}</span></div>
+            <div className="card kpi"><span className="l">Sense docent</span><span className="v">{result.empty}</span><span className="s">Es queden com estan</span></div>
+            <div className="card kpi"><span className="l">Amb errors</span><span className="v">{result.issues.length}</span><span className="s">No s’apliquen</span></div>
+          </div>
+          {result.issues.length > 0 && (
+            <div className="notice warn">
+              <Icon name="alert" />
+              <div>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                  {result.issues.slice(0, 12).map((x, i) => <li key={i}>Fila {x.line}: {x.msg}</li>)}
+                </ul>
+                {result.issues.length > 12 && <p>I {result.issues.length - 12} errors més.</p>}
+              </div>
+            </div>
+          )}
+          <p className="muted">Les assignacions importades substitueixen les que ja hi havia per a la mateixa matèria i grup. Les recollides obertes no canvien.</p>
+          <div className="row" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={() => setResult(null)}>Torna</button>
+            <button className="btn primary" disabled={!result.rows.length} onClick={() => onDone(importAssignments(session, result.rows))}>
+              Aplica {result.rows.length} {result.rows.length === 1 ? 'assignació' : 'assignacions'}
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
   )
 }
 

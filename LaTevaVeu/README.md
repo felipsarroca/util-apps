@@ -97,13 +97,42 @@ Per activar Google real: copia `.env.example` a `.env.local` i posa-hi `VITE_GOO
 | `src/staff` | Pantalles de professorat i administració |
 | `src/report` | Informes A4 «Així em veig» i «Així et veiem», amb paginació per blocs |
 | `db/schema.sql` | Esquema previst per a Neon PostgreSQL |
-| `tests` | Proves dels criteris d'acceptació del pla mestre |
+| `server` | Base del servidor (Fastify): verificació del testimoni de Google, permisos i API d'«Et veig» |
+| `docs` | Dossier de privacitat, textos informatius, kit del claustre i de la prova pilot |
+| `scripts` | Generació dels documents de revisió i de la plantilla d'assignacions (`npm run docs`) |
+| `tests`, `server/tests` | Proves dels criteris d'acceptació del pla mestre (prototip i servidor) |
 
 ## Pendent abans d'utilitzar-la amb dades reals
 
 1. Revisió amb direcció i la persona delegada de protecció de dades.
 2. Client OAuth de Google aprovat a la consola de Google Workspace (els comptes de menors poden tenir bloquejades les apps de tercers no configurades).
-3. Backend (Node/Fastify o funcions) amb verificació del testimoni, sessions i la mateixa interfície que `api.ts`, connectat a Neon a la UE.
+3. Completar el servidor (vegeu l'apartat següent) i connectar-hi el frontend.
 4. Inventari real de les matèries d'ESO per curs (el catàleg actual és provisional).
 5. Servei de correu institucional amb cua idempotent; emmagatzematge privat dels PDF.
 6. Prova amb alumnat real de cada etapa per ajustar preguntes, durada i obligatorietat.
+
+## Servidor (fase 5, sense desplegar)
+
+La carpeta `server` conté la base del backend d'«Et veig». No està desplegat ni connectat a cap base de dades real.
+
+- Cada petició porta el testimoni d'identitat de Google (`Authorization: Bearer …`). El servidor en comprova la signatura, l'emissor, l'audiència, el domini `ramonpont.cat` i el correu verificat.
+- Tenir compte de l'escola no dona accés: cal ser al cens de l'alumnat o tenir un rol (administració, docent, direcció).
+- Les respostes es desen sense cap identificador d'alumne; els esborranys, xifrats (AES-256-GCM) i esborrats en lliurar.
+- El llindar de 15 respostes i la moderació (només direcció) s'apliquen al servidor amb el mateix codi del domini que el prototip.
+
+Ordres:
+
+```bash
+npm test               # inclou les proves del servidor amb PostgreSQL en memòria (PGlite)
+npm run server:dev     # cal definir les variables de .env.example a l'entorn
+npm run server:build   # genera dist-server/main.js
+```
+
+Pendent:
+
+1. Triar l'allotjament del servidor (UE) i crear el projecte de Neon: cal l'aprovació de direcció i de la persona delegada de protecció de dades.
+2. Connectar el frontend: substituir `src/data/api.ts` per crides a l'API mantenint la mateixa interfície.
+3. Esborrar la participació individual en publicar i conservar només els recomptes (`feedback_participation_counts`).
+4. Enregistrar les respostes en lots per evitar que l'ordre d'inserció permeti relacionar-les amb la participació.
+5. Rols i permisos de la base de dades (usuari de l'aplicació sense permisos d'esborrat sobre l'auditoria).
+6. API d'«Em miro», gestió (cens, personal, assignacions) i càrrega del CSV d'alumnat.

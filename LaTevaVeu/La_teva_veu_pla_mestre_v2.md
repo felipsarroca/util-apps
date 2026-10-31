@@ -408,11 +408,11 @@ Es mantenen els 15 criteris de l'especificació v2.0 (§15) per a «Em miro». �
 | Fase | Resultat | Estat |
 | --- | --- | --- |
 | 0. Prototip «Em miro» | Recorregut complet en mode de demostració | **Fet** |
-| 1. Marca i estructura | Canvi a «La teva veu», dos apartats activables, rutes `/em-miro` i `/et-veig`, informe «Així em veig» | **Fet**, excepte les rutes pròpies |
+| 1. Marca i estructura | Canvi a «La teva veu», dos apartats activables, rutes `/em-miro` i `/et-veig`, informe «Així em veig» | **Fet** (rutes `#/em-miro` i `#/et-veig`) |
 | 2. Prototip «Et veig» | Assignacions docents, recorregut de l'alumne, autoavaluació docent, llindars, «Així et veiem» i visió de centre amb dades fictícies | **Fet** |
-| 3. Validació pedagògica | Preguntes d'«Et veig» provades amb alumnat i revisades al claustre; inventari real de matèries d'ESO | Pendent |
-| 4. Validació de privacitat | Revisió amb direcció i la persona delegada de protecció de dades; OAuth aprovat a Google Workspace | Pendent |
-| 5. Backend i Neon | API, sessions, esquema, model de confidencialitat i proves de permisos | Pendent |
+| 3. Validació pedagògica | Preguntes d'«Et veig» provades amb alumnat i revisades al claustre; inventari real de matèries d'ESO | **Material preparat** (`docs/04` a `07`, importació CSV d'assignacions); falta fer-la |
+| 4. Validació de privacitat | Revisió amb direcció i la persona delegada de protecció de dades; OAuth aprovat a Google Workspace | **Material preparat** (`docs/01` a `03`); falten les decisions |
+| 5. Backend i Neon | API, sessions, esquema, model de confidencialitat i proves de permisos | **Base feta** a `server/` (API d'«Et veig» amb proves); falta allotjament, Neon i connexió del frontend |
 | 6. Documents i correu | PDF al servidor, emmagatzematge privat, cua de correu per a «Em miro» | Pendent |
 | 7. Pilot | Una recollida real controlada de cada apartat | Pendent |
 

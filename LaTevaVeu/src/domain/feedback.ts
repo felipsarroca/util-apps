@@ -139,6 +139,28 @@ export const quadrantOf = (students: number, self: number): Quadrant =>
 /** Etiqueta de l'escala més propera a una mitjana normalitzada. */
 export const nearestLabel = (scale: Scale, mean01: number) => scale.options[Math.round(mean01 * (scale.options.length - 1))]?.label ?? ''
 
+// ---------- Llindar de confidencialitat ----------
+
+const emptyDist = (nOptions: number): Dist => ({ counts: Array(nOptions).fill(0) as number[], na: 0, valid: 0, fav: 0, mean: 0 })
+
+/**
+ * Treu de l'informe tot el que queda per sota del llindar, no només ho amaga:
+ * així el que surt del càlcul ja és segur d'enviar al navegador.
+ */
+function redactStage(r: StageReport): StageReport {
+  const nOpt = r.scale.options.length
+  const groups = r.groups.map((g) => (g.shown && !r.suppressed ? g : { ...g, fav: {} }))
+  if (!r.suppressed) return { ...r, groups }
+  return {
+    ...r,
+    dims: r.dims.map((x) => ({ ...x, dist: emptyDist(nOpt), quadrant: undefined })),
+    items: [],
+    groups,
+    previous: undefined,
+    comments: [],
+  }
+}
+
 // ---------- Informe «Així et veiem» ----------
 
 export interface DimRow {
@@ -243,6 +265,7 @@ export function buildTeacherReport(d: FeedbackData, scales: Scale[], campaignId:
   const stages = stagesOfTeacher(c, email)
     .map((st) => stageReport(d, scales, c, email, st))
     .filter((x): x is StageReport => !!x)
+    .map(redactStage)
   return { campaign: c, teacher: { email, name: d.staff.find((s) => s.email === email)?.name ?? email }, stages }
 }
 
@@ -256,6 +279,8 @@ export interface CenterStage {
   teachers: { email: string; name: string; n: number; suppressed: boolean; fav: Record<string, number>; self: boolean }[]
   students: number
   participants: number
+  /** Respostes de l'etapa (totes les valoracions de tots els docents). */
+  n: number
 }
 
 export function buildCenterView(d: FeedbackData, scales: Scale[], campaignId: string): CenterStage[] {
@@ -287,7 +312,15 @@ export function buildCenterView(d: FeedbackData, scales: Scale[], campaignId: st
       .sort((a, b) => a.name.localeCompare(b.name, 'ca'))
     const studs = d.students.filter((s) => stageOfGrade(s.gradeId) === stage)
     const participants = new Set(d.participation.filter((p) => p.campaignId === c.id && studs.some((s) => s.id === p.studentId)).map((p) => p.studentId)).size
-    return [{ stage, form, scale, dims, teachers, students: studs.length, participants }]
+    const stageSuppressed = answers.length < THRESHOLD
+    return [
+      {
+        stage, form, scale, students: studs.length, participants, n: answers.length,
+        dims: stageSuppressed ? dims.map((x) => ({ ...x, dist: emptyDist(nOpt), prevFav: undefined })) : dims,
+        // Els docents per sota del llindar no porten cap resultat.
+        teachers: teachers.map((t) => (t.suppressed ? { ...t, fav: {} } : t)),
+      },
+    ]
   })
 }
 

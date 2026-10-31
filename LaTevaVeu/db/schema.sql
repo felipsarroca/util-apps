@@ -1,14 +1,13 @@
--- M'avaluo · esquema per a Neon PostgreSQL (regió UE)
+-- La teva veu · esquema per a Neon PostgreSQL (regió UE)
 -- Reflecteix el model de src/domain/types.ts. Pensat per a un backend amb autorització pròpia;
 -- el navegador no es connecta mai directament amb aquesta base de dades.
--- No s'ha executat encara contra cap base de dades: revisar abans d'aplicar-lo.
-
-create extension if not exists pgcrypto;
+-- Les proves del servidor (server/tests) l'executen sencer contra PostgreSQL (PGlite).
+-- gen_random_uuid() és nativa des de PostgreSQL 13: no cal cap extensió.
 
 -- ---------- Identitat ----------
 create table users (
   id            uuid primary key default gen_random_uuid(),
-  google_sub    text unique not null,                  -- identificador estable de Google, no el correu
+  google_sub    text unique,                           -- identificador estable de Google; s'omple al primer inici de sessió
   email         text not null check (email ~* '^[^@\s]+@ramonpont\.cat$'),
   display_name  text not null,
   active        boolean not null default true,
@@ -19,7 +18,7 @@ create unique index users_email_lower on users (lower(email));
 
 create table user_roles (
   user_id    uuid not null references users(id),
-  role       text not null check (role in ('admin', 'teacher')),
+  role       text not null check (role in ('admin', 'teacher', 'direction')),  -- 'direction': Equip Directiu (resultats d'«Et veig»)
   granted_by uuid references users(id),
   granted_at timestamptz not null default now(),
   primary key (user_id, role)
@@ -261,6 +260,138 @@ create table audit_log (
   actor_id uuid references users(id),
   action   text not null,
   detail   jsonb not null default '{}'
+);
+
+-- =====================================================================
+-- Et veig: valoració del professorat (pla mestre v2, apartats 5 i 7)
+-- =====================================================================
+
+-- Apartats activables: app_settings ('modules', '{"emMiro":true,"etVeig":true}').
+
+create table teaching_assignments (                    -- qui fa cada matèria a cada grup
+  group_id   uuid not null references class_groups(id),
+  subject_id text not null references subjects(id),
+  teacher_id uuid not null references users(id),
+  primary key (group_id, subject_id)
+);
+
+create table feedback_scales (
+  id        text primary key,                          -- 'fb3', 'fb4'
+  name      text not null,
+  na_label  text not null,
+  options   jsonb not null                             -- [{value,label,emoji}]
+);
+
+create table feedback_forms (                          -- qüestionari d'una etapa, versionat
+  id           text primary key,                       -- 'fb-eso-v1'
+  template_id  text not null,                          -- 'fb-eso'
+  stage        text not null check (stage in ('CM', 'CS', 'ESO')),
+  version      int  not null,
+  status       text not null check (status in ('draft', 'published')),
+  scale_id     text not null references feedback_scales(id),
+  definition   jsonb not null,                         -- {dimensions, items, open} (vegeu types.ts)
+  change_note  text,
+  published_at timestamptz,
+  unique (template_id, version)
+);
+create unique index one_feedback_draft on feedback_forms (template_id) where status = 'draft';
+create trigger feedback_forms_immutable before update or delete on feedback_forms
+  for each row execute function forbid_published_changes();
+
+create table feedback_campaigns (
+  id           uuid primary key default gen_random_uuid(),
+  year_id      text not null references academic_years(id),
+  label        text not null,
+  stages       text[] not null,
+  starts_on    date not null,
+  ends_on      date not null check (ends_on >= starts_on),
+  status       text not null check (status in ('ESBORRANY','PROGRAMADA','OBERTA','TANCADA','MODERACIO','INFORMES_GENERATS','PUBLICADA','ARXIVADA')),
+  form_ids     jsonb not null,                         -- {"CM":"fb-cm-v1", ...}
+  -- Congelats en obrir la recollida: canviar les assignacions després no altera qui valora qui.
+  assignments  jsonb,                                  -- [{gradeId, group, subjectId, teacherEmail}]
+  teacher_ids  uuid[],
+  created_at   timestamptz not null default now()
+);
+
+-- Esborrany: l'únic lloc on la valoració va lligada a l'alumne. Xifrat per l'API (AES-256-GCM)
+-- amb una clau que no és a la base de dades. S'esborra en lliurar.
+create table feedback_drafts (
+  campaign_id uuid not null references feedback_campaigns(id),
+  student_id  uuid not null references students(id),
+  teacher_id  uuid not null references users(id),
+  payload     bytea not null,
+  updated_at  timestamptz not null default now(),
+  primary key (campaign_id, student_id, teacher_id)
+);
+
+-- Qui ha lliurat qui. Sense cap resposta. S'esborra quan es publiquen els informes
+-- (només en queden els recomptes per grup a feedback_participation_counts).
+create table feedback_participation (
+  campaign_id  uuid not null references feedback_campaigns(id),
+  student_id   uuid not null references students(id),
+  teacher_id   uuid not null references users(id),
+  stage        text not null,
+  grade_id     text not null,
+  group_label  text not null,
+  primary key (campaign_id, student_id, teacher_id)    -- un sol lliurament per alumne i docent
+);
+
+create table feedback_participation_counts (
+  campaign_id  uuid not null references feedback_campaigns(id),
+  grade_id     text not null,
+  group_label  text not null,
+  students     int  not null,
+  participants int  not null,
+  primary key (campaign_id, grade_id, group_label)
+);
+
+-- Respostes lliurades: CAP clau cap a students ni cap a users-alumne.
+-- Identificador aleatori (no seqüencial) i només el dia, mai l'hora.
+create table feedback_answers (
+  id          uuid primary key default gen_random_uuid(),
+  campaign_id uuid not null references feedback_campaigns(id),
+  form_id     text not null references feedback_forms(id),
+  teacher_id  uuid not null references users(id),
+  stage       text not null,
+  grade_id    text not null,
+  group_label text not null,
+  day         date not null,
+  v           text not null                            -- un caràcter per afirmació: '1'-'4', '0' = no ho sé, '-' = buit
+);
+create index feedback_answers_report on feedback_answers (campaign_id, teacher_id, stage);
+
+create table feedback_comments (
+  id          uuid primary key default gen_random_uuid(),
+  campaign_id uuid not null references feedback_campaigns(id),
+  teacher_id  uuid not null references users(id),
+  stage       text not null,
+  question_id text not null,
+  original    text not null,
+  published   text,                                    -- el que veurà el docent (acceptat o editat)
+  status      text not null default 'pendent' check (status in ('pendent','acceptat','editat','descartat')),
+  flags       text[] not null default '{}',
+  moderated_by uuid references users(id),
+  moderated_at timestamptz
+);
+
+create table teacher_self_assessments (
+  campaign_id  uuid not null references feedback_campaigns(id),
+  teacher_id   uuid not null references users(id),
+  stage        text not null,
+  answers      jsonb not null,
+  context      jsonb not null default '{}',            -- {"2ESO-A": ["nova", "diversitat"]}
+  updated_at   timestamptz not null default now(),
+  submitted_at timestamptz,
+  primary key (campaign_id, teacher_id, stage)
+);
+
+create table feedback_report_views (                   -- qui consulta o descarrega cada informe
+  id          bigint generated always as identity primary key,
+  at          timestamptz not null default now(),
+  campaign_id uuid not null references feedback_campaigns(id),
+  teacher_id  uuid not null references users(id),
+  viewer_id   uuid not null references users(id),
+  action      text not null check (action in ('Consulta', 'Descàrrega'))
 );
 
 -- Dades base

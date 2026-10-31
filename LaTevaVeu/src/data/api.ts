@@ -14,6 +14,7 @@ import type {
   Answers, Campaign, CampaignStatus, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, ModerationStatus, Modules,
   Section, SelfAssessment, Session, StageId, Student, StudentResponse, Subject, TemplateVersion,
 } from '../domain/types'
+import type { AssignmentRow } from '../domain/csv'
 import { checkSchoolEmail } from './auth'
 import { createDemoState, DEMO_VERSION, type DemoState } from './seed'
 
@@ -344,6 +345,16 @@ export function setAssignment(session: Session, gradeId: GradeId, group: string,
   const rest = state.assignments.filter((a) => !(a.gradeId === gradeId && a.group === group && a.subjectId === subjectId))
   const assignments = teacherEmail ? [...rest, { gradeId, group, subjectId, teacherEmail }] : rest
   commit(audit({ ...state, assignments }, session.email, 'Assignació docent', `${gradeId} ${group} · ${subjectId}: ${teacherEmail ?? 'sense docent'}`))
+}
+
+/** Aplica d'una vegada les assignacions validades d'una importació CSV. */
+export function importAssignments(session: Session, rows: AssignmentRow[]): number {
+  requireAdmin(session)
+  const keys = new Set(rows.map((r) => `${r.gradeId}|${r.group}|${r.subjectId}`))
+  const kept = state.assignments.filter((a) => !keys.has(`${a.gradeId}|${a.group}|${a.subjectId}`))
+  const added = rows.map(({ gradeId, group, subjectId, teacherEmail }) => ({ gradeId, group, subjectId, teacherEmail }))
+  commit(audit({ ...state, assignments: [...kept, ...added] }, session.email, 'Assignació docent', `Importació CSV: ${rows.length} assignacions`))
+  return rows.length
 }
 
 // ---------- Et veig: permisos ----------

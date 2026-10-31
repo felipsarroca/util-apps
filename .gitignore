@@ -8,6 +8,7 @@ desktop.ini
 # Dependències i compilacions
 node_modules/
 dist/
+dist-server/
 build/
 .cache/
 .parcel-cache/

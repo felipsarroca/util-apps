@@ -1,7 +1,8 @@
 // Proves d'«Et veig» (criteris d'acceptació del pla mestre v2, §10).
 import { describe, expect, it } from 'vitest'
 import { createDemoState } from '../src/data/seed'
-import { buildTeacherReport, distOf, flagComment, quadrantOf, stableShuffle, teachersForStudent, THRESHOLD } from '../src/domain/feedback'
+import { buildCenterView, buildTeacherReport, distOf, flagComment, quadrantOf, stableShuffle, teachersForStudent, THRESHOLD } from '../src/domain/feedback'
+import { parseAssignmentsCsv } from '../src/domain/csv'
 import { INITIAL_FEEDBACK_FORMS, validateFeedbackForm } from '../src/domain/feedbackForms'
 import type { Session } from '../src/domain/types'
 
@@ -123,6 +124,14 @@ describe('Et veig: informes i permisos', () => {
     expect(b.n).toBeLessThan(THRESHOLD)
     expect(b.shown).toBe(false)
     expect(eso.groups.some((g) => g.shown)).toBe(true)
+    // Per sota del llindar, les dades s'eliminen de l'informe, no només s'amaguen.
+    expect(b.fav).toEqual({})
+    expect(jaume.stages[0].items).toEqual([])
+    expect(jaume.stages[0].dims.every((d) => d.dist.valid === 0)).toBe(true)
+    const centre = buildCenterView(st, st.scales, 'FV-2526-MAIG')
+    const jv = centre.find((v) => v.stage === 'ESO')!.teachers.find((t) => t.email === 'jaume.valls@ramonpont.cat')!
+    expect(jv.suppressed).toBe(true)
+    expect(jv.fav).toEqual({})
   })
   it('l’informe es genera sense autoavaluació (criteri 6) i un docent de dues etapes té dos blocs (criteri 7)', () => {
     const st = createDemoState()
@@ -183,5 +192,29 @@ describe('Et veig: càlculs', () => {
     expect(flagComment('El Biel parla molt', ['Biel'])).not.toEqual([])
     expect(flagComment('Jo sóc la que seu davant', [])).not.toEqual([])
     expect(flagComment('Explica molt bé amb exemples', ['Biel'])).toEqual([])
+  })
+})
+
+describe('Et veig: importació d’assignacions', () => {
+  it('valida curs, matèria activa i docent amb accés, i aplica només les files correctes', () => {
+    api.resetDemo()
+    const admin = login('admin.demo@ramonpont.cat')
+    const st = createDemoState()
+    const csv = [
+      'curs,grup,codi_materia,materia,tipus,correu_docent,nom_docent',
+      '3r de primària,A,CAT,Llengua Catalana i Literatura,comuna,emma.soler@ramonpont.cat,',
+      "1r d'ESO,A,Matemàtiques,,comuna,TUTORIA.2ESO@ramonpont.cat,",
+      '3r de primària,A,LLA,Llatí,optativa,emma.soler@ramonpont.cat,',
+      '3r de primària,A,MAT,Matemàtiques,comuna,algu.nou@ramonpont.cat,',
+      '9è,A,MAT,Matemàtiques,comuna,emma.soler@ramonpont.cat,',
+      '3r de primària,A,ANG,Anglès,comuna,,',
+    ].join('\n')
+    const r = parseAssignmentsCsv(csv, { gradeSubjects: st.gradeSubjects, subjects: st.subjects, staffEmails: st.staff.map((x) => x.email) })
+    expect(r.rows.map((x) => `${x.gradeId}${x.group}:${x.subjectId}:${x.teacherEmail}`)).toEqual(['3EPA:CAT:emma.soler@ramonpont.cat', '1ESOA:MAT:tutoria.2eso@ramonpont.cat'])
+    expect(r.issues.map((x) => x.line)).toEqual([4, 5, 6])
+    expect(r.empty).toBe(1)
+    expect(api.importAssignments(admin, r.rows)).toBe(2)
+    expect(api.snapshot().assignments.filter((a) => a.gradeId === '3EP' && a.group === 'A' && a.subjectId === 'CAT')).toEqual([{ gradeId: '3EP', group: 'A', subjectId: 'CAT', teacherEmail: 'emma.soler@ramonpont.cat' }])
+    expect(() => api.importAssignments(login('tutoria.2eso@ramonpont.cat'), r.rows)).toThrow()
   })
 })
