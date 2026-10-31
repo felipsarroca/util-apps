@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { resetDemo } from './data/api'
 import { GOOGLE_CLIENT_ID } from './data/auth'
-import { gradeById } from './domain/catalog'
+import { gradeAndGroup } from './domain/groups'
 import type { Session } from './domain/types'
 import { Login } from './Login'
+import { GuideScreen } from './staff/Guide'
 import { StaffApp } from './staff/StaffApp'
 import { StudentApp } from './student/StudentApp'
 import { APP_ICON, Footer, Icon, initials, useFitScale } from './ui/common'
@@ -38,6 +39,15 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(loadSession)
   const [prefs, setPrefs] = useState(loadPrefs)
   const s = useDemoState()
+  // La guia d'administració s'obre a …/#/guia.
+  const [guide, setGuide] = useState(() => location.hash === '#/guia')
+  useEffect(() => {
+    const on = () => setGuide(location.hash === '#/guia')
+    window.addEventListener('hashchange', on)
+    return () => window.removeEventListener('hashchange', on)
+  }, [])
+  const canGuide = !!session && !session.pending && (session.role === 'admin' || !!session.direction)
+  const showGuide = guide && canGuide
 
   useEffect(() => {
     const root = document.documentElement
@@ -97,9 +107,9 @@ export default function App() {
   const subtitle = session?.pending
     ? 'Compte pendent de verificació'
     : student
-      ? `${gradeById(student.gradeId).name} · Grup ${student.group}`
+      ? gradeAndGroup(student.gradeId, student.group)
       : remoteGrade
-        ? `${gradeById(remoteGrade).name} · Grup ${session?.remote?.group}`
+        ? gradeAndGroup(remoteGrade, session?.remote?.group ?? '')
       : session?.direction
         ? 'Equip Directiu'
         : session?.role === 'admin'
@@ -135,6 +145,11 @@ export default function App() {
               <Icon name="history" /> <span className="sr-only">Restaura la demostració</span>
             </button>
           )}
+          {canGuide && (
+            <button className={`btn small${showGuide ? ' primary' : ''}`} onClick={() => (location.hash = showGuide ? '' : '#/guia')} title="Guia d’administració">
+              <Icon name="book" /> <span className="guide-btn-text">Guia</span>
+            </button>
+          )}
           <div className="who">
             <span className="avatar" aria-hidden="true">{session.picture ? <img src={session.picture} alt="" /> : initials(student ? `${student.name} ${student.surname}` : session.name)}</span>
             <span className="who-text">
@@ -151,7 +166,8 @@ export default function App() {
       {!session && <Login onLogin={login} />}
       {session?.pending && <Pending session={session} onLogout={logout} />}
       {session && !session.pending && session.role === 'student' && (session.remote ? <EtVeigRemote /> : <StudentApp session={session} />)}
-      {session && !session.pending && session.role !== 'student' && (session.remote ? <RemoteStaff session={session} /> : <StaffApp session={session} />)}
+      {showGuide && <GuideScreen onClose={() => (location.hash = '')} />}
+      {session && !session.pending && session.role !== 'student' && !showGuide && (session.remote ? <RemoteStaff session={session} /> : <StaffApp session={session} />)}
       <Footer />
     </>
   )

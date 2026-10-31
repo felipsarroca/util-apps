@@ -2,9 +2,10 @@
 // Mai no mostra respostes individuals ni cap resultat per sota del llindar de 15 respostes.
 
 import { useMemo, type ReactNode } from 'react'
-import { gradeShort, SCHOOL, STAGES } from '../domain/catalog'
+import { SCHOOL, STAGES } from '../domain/catalog'
+import { groupNameOfKey } from '../domain/groups'
 import { nearestLabel, QUADRANTS, THRESHOLD, type CenterStage, type Dist, type Quadrant, type StageReport, type TeacherReport } from '../domain/feedback'
-import { CONTEXT_TAGS, type FeedbackCampaign, type GradeId, type Scale } from '../domain/types'
+import { CONTEXT_TAGS, type FeedbackCampaign, type Scale } from '../domain/types'
 import { asset } from '../ui/common'
 import { PagedDoc, type Block } from './Report'
 
@@ -41,10 +42,7 @@ export function BarLegend({ scale }: { scale: Scale }) {
   )
 }
 
-const groupName = (key: string) => {
-  const [g, grp] = key.split('-')
-  return `${gradeShort(g as GradeId)} ${grp}`
-}
+const groupName = groupNameOfKey
 
 function stageBlocks(r: StageReport, multi: boolean): Block[] {
   const blocks: Block[] = []
@@ -186,17 +184,19 @@ function stageBlocks(r: StageReport, multi: boolean): Block[] {
     })
   })
 
-  // 4. Per grup
+  // 4. Classe per classe: resum per dimensió i, si hi ha prou grups visibles, detall de cada afirmació.
   if (r.groups.length > 1) {
+    const shown = r.groups.filter((g) => g.shown)
     blocks.push({
       id: `${r.stage}-groups`,
       node: (
         <div style={{ display: 'grid', gap: '1.8mm' }}>
-          <div className="fb-h">Per grup <small>(% favorable; només grups amb {THRESHOLD} respostes o més)</small></div>
+          <div className="fb-h">Classe per classe <small>(% favorable; només grups amb {THRESHOLD} respostes o més)</small></div>
           <table className="fb-groups">
             <thead>
               <tr>
                 <th>Grup</th>
+                <th className="num">Respostes</th>
                 {r.form.dimensions.map((d) => (
                   <th key={d.id} title={d.name}>{d.name.split(' ')[0]}</th>
                 ))}
@@ -209,14 +209,63 @@ function stageBlocks(r: StageReport, multi: boolean): Block[] {
                     <b>{groupName(g.key)}</b>
                     {g.context.length > 0 && <small className="ctx">{g.context.map((c) => CONTEXT_TAGS.find((t) => t.id === c)?.label).join(' · ')}</small>}
                   </td>
-                  {g.shown ? r.form.dimensions.map((d) => <td key={d.id} className="num">{pct(g.fav[d.id])}</td>) : <td colSpan={r.form.dimensions.length} className="muted-cell">No es mostra: menys de {THRESHOLD} respostes</td>}
+                  <td className="num">{g.n}</td>
+                  {g.shown
+                    ? r.form.dimensions.map((d) => {
+                        const diff = g.fav[d.id] - (r.dims.find((x) => x.dim.id === d.id)?.dist.fav ?? 0)
+                        return (
+                          <td key={d.id} className="num" style={{ background: heat(g.fav[d.id]) }}>
+                            {pct(g.fav[d.id])}
+                            {Math.abs(diff) >= 0.1 && <small className={diff > 0 ? 'up' : 'down'}> {diff > 0 ? '▲' : '▼'}</small>}
+                          </td>
+                        )
+                      })
+                    : <td colSpan={r.form.dimensions.length} className="muted-cell">No es mostra: menys de {THRESHOLD} respostes</td>}
                 </tr>
               ))}
+              <tr className="total">
+                <td><b>Total</b></td>
+                <td className="num">{r.n}</td>
+                {r.dims.map((d) => <td key={d.dim.id} className="num"><b>{pct(d.dist.fav)}</b></td>)}
+              </tr>
             </tbody>
           </table>
+          <small className="fb-legend-note">▲ ▼ El grup se separa 10 punts o més del total del docent.</small>
         </div>
       ),
     })
+    if (shown.length > 1)
+      r.form.dimensions.forEach((dim, i) => {
+        const rows = r.items.filter((x) => x.item.dimensionId === dim.id)
+        blocks.push({
+          id: `${r.stage}-gitems-${dim.id}`,
+          node: (
+            <div style={{ display: 'grid', gap: '1.6mm' }}>
+              {i === 0 && <div className="fb-h">Detall per afirmació i classe <small>(% favorable)</small></div>}
+              <table className="fb-groups fb-gitems">
+                <thead>
+                  <tr>
+                    <th>
+                      <span aria-hidden="true">{dim.emoji}</span> {dim.name}
+                    </th>
+                    {shown.map((g) => <th key={g.key} className="num">{groupName(g.key)}</th>)}
+                    <th className="num">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(({ item, dist }) => (
+                    <tr key={item.id}>
+                      <td>{item.student}</td>
+                      {shown.map((g) => <td key={g.key} className="num" style={{ background: heat(g.items[item.id] ?? 0) }}>{pct(g.items[item.id] ?? 0)}</td>)}
+                      <td className="num"><b>{dist.valid ? pct(dist.fav) : '—'}</b></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ),
+        })
+      })
   }
 
   // 5. Evolució

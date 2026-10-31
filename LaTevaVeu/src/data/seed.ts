@@ -4,6 +4,7 @@ import { GRADES, SUBJECTS, initialGradeSubjects } from '../domain/catalog'
 import { buildSteps, keyOf, requiredKeys, subjectsForStudent } from '../domain/engine'
 import { flagComment, stageOfGrade, teachersForStudent } from '../domain/feedback'
 import { FEEDBACK_SCALES, INITIAL_FEEDBACK_FORMS } from '../domain/feedbackForms'
+import type { ClassGroups } from '../domain/groups'
 import { INITIAL_SCALES, INITIAL_TEMPLATES } from '../domain/templates'
 import type {
   Answers, AuditEntry, Campaign, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackDraft, FeedbackForm, GradeId, GradeSubject, Modules,
@@ -31,9 +32,11 @@ export interface DemoState {
   feedbackAnswers: FeedbackAnswer[]
   feedbackComments: FeedbackComment[]
   selfAssessments: SelfAssessment[]
+  /** Grups de cada curs. A l'escola, un per curs; es poden afegir línies o grups especials. */
+  classGroups: ClassGroups
 }
 
-export const DEMO_VERSION = 6
+export const DEMO_VERSION = 7
 
 const FIRST = ['Pau', 'Laia', 'Marc', 'Júlia', 'Arnau', 'Aina', 'Pol', 'Martina', 'Biel', 'Ona', 'Jan', 'Clàudia', 'Nil', 'Èlia', 'Roc', 'Mariona', 'Iu', 'Abril', 'Quim', 'Noa', 'Àlex', 'Txell', 'Oriol', 'Fatima', 'Yusuf', 'Ainhoa', 'Lucas', 'Mei', 'Hugo', 'Zoe']
 const LAST = ['Serra', 'Puig', 'Vidal', 'Soler', 'Ferrer', 'Roca', 'Font', 'Casals', 'Pujol', 'Riera', 'Camps', 'Bosch', 'Mas', 'Sala', 'Prat', 'Valls', 'Coll', 'Duran', 'Badia', 'Costa', 'El Amrani', 'Lin', 'Pérez', 'Torrent']
@@ -104,16 +107,14 @@ export function createDemoState(): DemoState {
   const year = '2026-2027'
   const gradeSubjects = initialGradeSubjects()
   const students: Student[] = []
-  const groupsByGrade: Record<GradeId, string[]> = {
-    '3EP': ['A'], '4EP': ['A'], '5EP': ['A'], '6EP': ['A'], '1ESO': ['A'], '2ESO': ['A', 'B'], '3ESO': ['A'], '4ESO': ['A'],
-  }
-  // 18 alumnes per grup; 2n B en té 12 per mostrar com s'amaguen els grups per sota del llindar de 15.
-  const size = (g: GradeId, group: string) => (g === '2ESO' && group === 'B' ? 12 : 18)
+  const groupsByGrade = DEMO_GROUPS
+  // 18 alumnes per grup; 3r d'ESO en té 12 per mostrar com s'amaguen els grups per sota del llindar de 15.
+  const size = (g: GradeId) => (g === '3ESO' ? 12 : 18)
   let n = 0
   const used = new Set<string>()
   for (const g of GRADES) {
     for (const group of groupsByGrade[g.id]) {
-      for (let i = 0; i < size(g.id, group); i++) {
+      for (let i = 0; i < size(g.id); i++) {
         let name: string, surname: string, email: string
         do {
           name = FIRST[Math.floor(r() * FIRST.length)]
@@ -209,6 +210,7 @@ export function createDemoState(): DemoState {
     assignments,
     feedbackForms: INITIAL_FEEDBACK_FORMS,
     ...fb,
+    classGroups: structuredClone(DEMO_GROUPS),
   }
 }
 
@@ -227,7 +229,7 @@ function initialStaff(): StaffMember[] {
     T('emma.soler', 'Emma Soler'),
     T('sergi.prat', 'Sergi Prat'),
     T('rosa.bosch', 'Rosa Bosch'),
-    T('tutoria.2eso', 'Marta Riera', ['2ESO-A', '2ESO-B']),
+    T('tutoria.2eso', 'Marta Riera', ['2ESO-A']),
     T('xavier.duran', 'Xavier Duran'),
     T('carme.sala', 'Carme Sala'),
     T('david.coll', 'David Coll'),
@@ -246,7 +248,8 @@ const ESO_BY_SUBJECT: Record<string, string> = {
   BIO: 'albert.pujol', FQ: 'albert.pujol', TEC: 'nuria.casals', EPVA: 'nuria.casals', MUS: 'nuria.casals',
   FRA: 'lluis.font', VAL: 'lluis.font', CLA: 'lluis.font', LLA: 'jaume.valls', EF: 'sergi.prat', REL: 'rosa.bosch',
 }
-export const DEMO_GROUPS: Record<GradeId, string[]> = { '3EP': ['A'], '4EP': ['A'], '5EP': ['A'], '6EP': ['A'], '1ESO': ['A'], '2ESO': ['A', 'B'], '3ESO': ['A'], '4ESO': ['A'] }
+/** Una sola línia: un grup per curs, que es mostra sense lletra. */
+export const DEMO_GROUPS: ClassGroups = { '3EP': ['A'], '4EP': ['A'], '5EP': ['A'], '6EP': ['A'], '1ESO': ['A'], '2ESO': ['A'], '3ESO': ['A'], '4ESO': ['A'] }
 
 /** Qui fa cada matèria: tutors a primària amb especialistes d'anglès, educació física i religió. */
 function initialAssignments(gradeSubjects: GradeSubject[]): TeachingAssignment[] {
@@ -368,7 +371,7 @@ function feedbackDemo(r: () => number, students: Student[], staff: StaffMember[]
           if (t.startsWith('tutoria.2eso') && q.dimensionId === 'sup') p = 0.45
           out[q.id] = String(Math.min(nOpt, Math.max(1, Math.round(p * (nOpt - 1)) + 1)))
         }
-        const context: Record<string, string[]> = t.startsWith('tutoria.2eso') && stage === 'ESO' ? { '2ESO-B': ['gestio'], '4ESO-A': ['nova'] } : {}
+        const context: Record<string, string[]> = t.startsWith('tutoria.2eso') && stage === 'ESO' ? { '3ESO-A': ['gestio'], '4ESO-A': ['nova'] } : {}
         selfAssessments.push({ campaignId: c.id, teacherEmail: t, stage, answers: out, context, updatedAt: c.start + 'T16:00:00Z', submittedAt: c.start + 'T16:00:00Z' })
       }
     }

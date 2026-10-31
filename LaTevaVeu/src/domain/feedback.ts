@@ -149,7 +149,7 @@ const emptyDist = (nOptions: number): Dist => ({ counts: Array(nOptions).fill(0)
  */
 function redactStage(r: StageReport): StageReport {
   const nOpt = r.scale.options.length
-  const groups = r.groups.map((g) => (g.shown && !r.suppressed ? g : { ...g, fav: {} }))
+  const groups = r.groups.map((g) => (g.shown && !r.suppressed ? g : { ...g, fav: {}, items: {} }))
   if (!r.suppressed) return { ...r, groups }
   return {
     ...r,
@@ -177,6 +177,8 @@ export interface GroupRow {
   n: number
   shown: boolean
   fav: Record<string, number>
+  /** Percentatge favorable de cada afirmació en aquest grup (buit si el grup no arriba al llindar). */
+  items: Record<string, number>
   context: string[]
 }
 
@@ -237,7 +239,9 @@ export function stageReport(d: FeedbackData, scales: Scale[], c: FeedbackCampaig
     const ga = answers.filter((a) => a.gradeId === gradeId && a.group === group)
     const fav: Record<string, number> = {}
     for (const dim of form.dimensions) fav[dim.id] = distOf(valuesFor(ga, form, form.items.filter((i) => i.dimensionId === dim.id)), nOpt).fav
-    return { key, gradeId, group, n: ga.length, shown: ga.length >= THRESHOLD, fav, context: self?.context[key] ?? [] }
+    const items: Record<string, number> = {}
+    for (const item of form.items) items[item.id] = distOf(valuesFor(ga, form, [item]), nOpt).fav
+    return { key, gradeId, group, n: ga.length, shown: ga.length >= THRESHOLD, fav, items, context: self?.context[key] ?? [] }
   })
   let previous: StageReport['previous']
   const prev = withPrevious ? previousCampaign(d, c) : undefined

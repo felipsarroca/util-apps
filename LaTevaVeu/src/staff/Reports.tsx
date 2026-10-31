@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { logAudit, useDemoState, visibleGrades } from '../data/api'
 import { gradeById, GRADES } from '../domain/catalog'
+import { groupName } from '../domain/groups'
 import type { Session } from '../domain/types'
 import { buildReportModel, ReportPages, SheetViewer } from '../report/Report'
 import { Icon, Modal, useToast } from '../ui/common'
@@ -126,7 +127,7 @@ export function ReportsScreen({ session }: { session: Session }) {
                     return (
                       <tr key={id}>
                         <td><input type="checkbox" checked={sel.has(id)} onChange={() => toggle(id)} aria-label={`Selecciona ${fullName(r.student)}`} style={{ width: 18, height: 18, accentColor: 'var(--brand)' }} /></td>
-                        <td className="student-cell"><b>{fullName(r.student)}</b><small>Grup {r.student.group}</small></td>
+                        <td className="student-cell"><b>{fullName(r.student)}</b><small>{groupName(r.student.gradeId, r.student.group)}</small></td>
                         <td><span className={`badge ${RESP_TONE[r.status]}`}>{RESP_LABEL[r.status]}</span></td>
                         <td>
                           <button className="btn small" disabled={!r.response} onClick={() => setPreview(id)}><Icon name="eye" /> Veure</button>

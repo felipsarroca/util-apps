@@ -5,9 +5,11 @@ import {
   acceptUnflagged, centerView, createFeedbackCampaign, isDirection, logReportView, moderateComment, RESULTS_VISIBLE_DIRECTION, RESULTS_VISIBLE_TEACHER,
   saveSelfAssessment, selfAssessmentTasks, setFeedbackStatus, teacherReport, useDemoState,
 } from '../data/api'
-import { gradeShort, GRADES, STAGES } from '../domain/catalog'
+import { GRADES, STAGES } from '../domain/catalog'
+import { groupName, groupNameOfKey } from '../domain/groups'
 import { eligibleStudents, groupKey, stageOfGrade, stagesOfTeacher, teachersForStudent, THRESHOLD } from '../domain/feedback'
-import { CONTEXT_TAGS, type Answers, type FeedbackCampaign, type FeedbackStatus, type GradeId, type SelfTask, type Session, type StageId } from '../domain/types'
+import type { TeacherReport } from '../domain/feedback'
+import { CONTEXT_TAGS, type Answers, type FeedbackCampaign, type FeedbackStatus, type SelfTask, type Session, type StageId } from '../domain/types'
 import { BarLegend, CenterReportPages, DistBar, FeedbackReportPages, heat } from '../report/FeedbackReport'
 import { SheetViewer } from '../report/Report'
 import { SegScale } from '../student/Questions'
@@ -163,7 +165,7 @@ function SelfForm({ task, save, onBack }: { task: SelfTask; save: SaveSelf; onBa
         <div className="ctx-grid">
           {groups.map((g) => (
             <fieldset key={g} className="ctx-group" disabled={locked}>
-              <legend>{gradeShort(g.split('-')[0] as GradeId)} {g.split('-')[1]}</legend>
+              <legend>{groupNameOfKey(g)}</legend>
               {CONTEXT_TAGS.map((t) => (
                 <label key={t.id} className="check">
                   <input type="checkbox" checked={context[g]?.includes(t.id) ?? false} onChange={() => toggleTag(g, t.id)} />
@@ -331,7 +333,7 @@ export function CenterScreen({ session }: { session: Session }) {
   return (
     <>
       <PageHead title="Visió de centre" sub="Mirada agregada de l’alumnat sobre la docència. Ordenat alfabèticament: no hi ha rànquings ni notes úniques.">
-        <select className="select" value={cid} onChange={(e) => setCid(e.target.value)} aria-label="Recollida">
+        <select className="select" style={{ width: 'auto' }} value={cid} onChange={(e) => setCid(e.target.value)} aria-label="Recollida">
           {campaigns.map((c) => (
             <option key={c.id} value={c.id}>{c.label} · {c.year}</option>
           ))}
@@ -462,6 +464,145 @@ export function CenterScreen({ session }: { session: Session }) {
           <CenterReportPages view={view} campaign={campaign} />
         </PrintPortal>
       )}
+    </>
+  )
+}
+
+/** Estat de cada docent d'una recollida: valoracions rebudes (només el recompte) i autoavaluació lliurada. */
+function teacherRows(s: ReturnType<typeof useDemoState>, c: FeedbackCampaign) {
+  return [...c.teachers]
+    .map((email) => {
+      const stages = stagesOfTeacher(c, email)
+      const n = s.participation.filter((p) => p.campaignId === c.id && p.teacherEmail === email).length
+      const eligible = stages.reduce((a, st) => a + eligibleStudents(s, c, email, st).length, 0)
+      const selfs = stages.map((st) => s.selfAssessments.find((x) => x.campaignId === c.id && x.teacherEmail === email && x.stage === st))
+      return { email, name: s.staff.find((x) => x.email === email)?.name ?? email, n, eligible, stages, selfDone: selfs.filter((x) => x?.submittedAt).length }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'ca'))
+}
+
+// ---------- Seguiment del professorat (Equip Directiu) ----------
+
+export function TeachersScreen({ session }: { session: Session }) {
+  const s = useDemoState()
+  const campaigns = s.feedbackCampaigns.filter((c) => !['ESBORRANY', 'PROGRAMADA'].includes(c.status)).sort((a, b) => (a.start < b.start ? 1 : -1))
+  const [cid, setCid] = useState(campaigns[0]?.id ?? '')
+  const [onlyPending, setOnlyPending] = useState(false)
+  const [open, setOpen] = useState<string | null>(null)
+  const [batch, setBatch] = useState<TeacherReport[] | null>(null)
+  const [toast, showToast] = useToast()
+  const c = campaigns.find((x) => x.id === cid)
+  if (!c) return <PageHead title="Professorat" sub="Encara no s’ha obert cap recollida d’Et veig." />
+  const visible = RESULTS_VISIBLE_DIRECTION.includes(c.status)
+  const rows = teacherRows(s, c)
+  const pending = rows.filter((t) => t.selfDone < t.stages.length)
+  const shown = onlyPending ? pending : rows
+  const reportable = rows.filter((t) => t.stages.length)
+  const printAll = () => {
+    const reports = reportable.map((t) => {
+      logReportView(session, c.id, t.email, 'Descàrrega')
+      return teacherReport(session, c.id, t.email)
+    })
+    setBatch(reports)
+  }
+  const copyPending = async () => {
+    try {
+      await navigator.clipboard.writeText(pending.map((t) => t.email).join(', '))
+      showToast(`${pending.length} adreces copiades: enganxa-les al correu de recordatori.`)
+    } catch {
+      showToast('No s’han pogut copiar les adreces.')
+    }
+  }
+  return (
+    <>
+      <PageHead title="Professorat" sub="Qui ha fet l’autoavaluació, quantes valoracions ha rebut cada docent i el seu informe. Mai es mostra qui ha valorat ni què ha respost cada alumne.">
+        <select className="select" style={{ width: 'auto' }} value={cid} onChange={(e) => setCid(e.target.value)} aria-label="Recollida">
+          {campaigns.map((x) => <option key={x.id} value={x.id}>{x.label} · {x.year}</option>)}
+        </select>
+        <button className="btn primary ev" disabled={!visible || !reportable.length} onClick={printAll} title={visible ? undefined : 'Disponible quan es generin els informes'}>
+          <Icon name="print" /> Tots els informes en PDF
+        </button>
+      </PageHead>
+      <div className="kpis">
+        <div className="card kpi accent ev">
+          <span className="l">Autoavaluacions fetes</span>
+          <span className="v">{rows.length - pending.length}/{rows.length}</span>
+          <span className="s">{pending.length ? `${pending.length} docents pendents` : 'Tothom l’ha feta'}</span>
+        </div>
+        <div className="card kpi">
+          <span className="l">Llindar assolit</span>
+          <span className="v">{rows.filter((t) => t.n >= THRESHOLD).length}/{rows.length}</span>
+          <span className="s">Docents amb {THRESHOLD} valoracions o més</span>
+        </div>
+        <div className="card kpi">
+          <span className="l">Estat</span>
+          <span className="v" style={{ fontSize: '1.15rem' }}>{FB_LABEL[c.status]}</span>
+          <span className="s">Del {fmtDate(c.start)} al {fmtDate(c.end)}</span>
+        </div>
+      </div>
+      {pending.length > 0 && (
+        <div className="notice warn">
+          <Icon name="alert" />
+          <div>
+            <b>Autoavaluació pendent:</b> {pending.map((t) => t.name).join(', ')}.
+            <div className="row" style={{ marginTop: '.4rem' }}>
+              <button className="btn small" style={{ whiteSpace: 'normal', textAlign: 'left' }} onClick={copyPending}><Icon name="mail" /> Copia les adreces per enviar un recordatori</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {!visible && (
+        <div className="notice">
+          <Icon name="info" />
+          <div>Els informes de cada docent estaran disponibles quan la recollida arribi a «Informes generats». Fins llavors, aquí només es veu el seguiment.</div>
+        </div>
+      )}
+      <div className="toolbar">
+        <label className="check">
+          <input type="checkbox" checked={onlyPending} onChange={(e) => setOnlyPending(e.target.checked)} /> Només autoavaluació pendent
+        </label>
+      </div>
+      <div className="table-wrap">
+        <table className="t">
+          <thead>
+            <tr>
+              <th>Docent</th>
+              <th>Etapes</th>
+              <th className="num">Valoracions</th>
+              <th>Llindar ({THRESHOLD})</th>
+              <th>Autoavaluació</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((t) => (
+              <tr key={t.email}>
+                <td><b>{t.name}</b><br /><small className="muted">{t.email}</small></td>
+                <td>{t.stages.map((st) => STAGES[st].short).join(' · ')}</td>
+                <td className="num">{t.n} / {t.eligible}</td>
+                <td>{t.n >= THRESHOLD ? <span className="badge ok">Assolit</span> : <span className="badge warn">Encara no</span>}</td>
+                <td>{t.selfDone === t.stages.length ? <span className="badge ok">Feta</span> : <span className="badge bad">Pendent{t.stages.length > 1 ? ` (${t.selfDone}/${t.stages.length})` : ''}</span>}</td>
+                <td className="actions">
+                  <button className="btn small" disabled={!visible || !t.stages.length} onClick={() => { logReportView(session, c.id, t.email, 'Consulta'); setOpen(t.email) }}>
+                    <Icon name="eye" /> Informe
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {open && (
+        <Modal title={`Així et veiem · ${s.staff.find((x) => x.email === open)?.name}`} onClose={() => setOpen(null)} wide>
+          <ReportView session={session} campaignId={c.id} teacherEmail={open} />
+        </Modal>
+      )}
+      {batch && (
+        <PrintPortal onDone={() => setBatch(null)}>
+          {batch.map((r) => <FeedbackReportPages key={r.teacher.email} report={r} />)}
+        </PrintPortal>
+      )}
+      {toast}
     </>
   )
 }
@@ -599,7 +740,7 @@ function CampaignDetail({ session, campaign: c, toast }: { session: Session; cam
   const [tab, setTab] = useState<'groups' | 'teachers' | 'moderation'>(c.status === 'MODERACIO' ? 'moderation' : 'groups')
   const dir = isDirection(session)
   const groups = GRADES.filter((g) => c.stages.includes(g.stage)).flatMap((g) =>
-    [...new Set(s.students.filter((x) => x.gradeId === g.id).map((x) => x.group))].sort().map((group) => {
+    (s.classGroups[g.id] ?? []).map((group) => {
       const studs = s.students.filter((x) => x.gradeId === g.id && x.group === group)
       let full = 0
       let some = 0
@@ -612,15 +753,7 @@ function CampaignDetail({ session, campaign: c, toast }: { session: Session; cam
       return { key: `${g.id}-${group}`, gradeId: g.id, group, total: studs.length, full, some }
     }),
   )
-  const teachers = [...c.teachers]
-    .map((email) => {
-      const stages = stagesOfTeacher(c, email)
-      const n = s.participation.filter((p) => p.campaignId === c.id && p.teacherEmail === email).length
-      const eligible = stages.reduce((a, st) => a + eligibleStudents(s, c, email, st).length, 0)
-      const selfs = stages.map((st) => s.selfAssessments.find((x) => x.campaignId === c.id && x.teacherEmail === email && x.stage === st))
-      return { email, name: s.staff.find((x) => x.email === email)?.name ?? email, n, eligible, stages, selfDone: selfs.filter((x) => x?.submittedAt).length }
-    })
-    .sort((a, b) => a.name.localeCompare(b.name, 'ca'))
+  const teachers = teacherRows(s, c)
   const comments = s.feedbackComments
     .filter((x) => x.campaignId === c.id)
     .sort((a, b) => (a.status === 'pendent' ? 0 : 1) - (b.status === 'pendent' ? 0 : 1) || b.flags.length - a.flags.length)
@@ -640,7 +773,7 @@ function CampaignDetail({ session, campaign: c, toast }: { session: Session; cam
           <div className="bars">
             {groups.map((g) => (
               <div className="bar-row" key={g.key}>
-                <b>{gradeShort(g.gradeId)} {g.group}</b>
+                <b>{groupName(g.gradeId, g.group)}</b>
                 <div className="stack" role="img" aria-label={`${g.full} han acabat, ${g.some} a mitges, ${g.total - g.full - g.some} sense començar`}>
                   <span className="s-ok" style={{ width: `${(g.full / g.total) * 100}%` }} />
                   <span className="s-run" style={{ width: `${(g.some / g.total) * 100}%` }} />

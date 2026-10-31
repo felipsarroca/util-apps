@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { addStaff, importCensus, isDirection, removeStaff, setDirection, setElective, useDemoState, type CensusRow } from '../data/api'
+import { addStaff, importCensus, isDirection, removeStaff, setDirection, setElective, setStudentGroup, useDemoState, type CensusRow } from '../data/api'
 import { gradeShort, GRADES, SCHOOL } from '../domain/catalog'
+import { groupName, groupNameOfKey } from '../domain/groups'
 import { detectColumns, normalizeGrade, parseCsv } from '../domain/csv'
 import type { GradeId, Session } from '../domain/types'
 import { fmtShort, Icon, Modal, useToast } from '../ui/common'
@@ -70,7 +71,7 @@ function Access({ session }: { session: Session }) {
               <tr key={p.email}>
                 <td className="student-cell"><b>{p.name}</b><small>{p.email}</small></td>
                 <td>{p.role === 'admin' ? <span className="badge brand">Administració</span> : <span className="badge info">Professorat</span>}</td>
-                <td>{p.role === 'admin' ? 'Tots' : p.groups.map((g) => g.replace(/^(\d(?:EP|ESO))-(.+)$/, (_, gr: string, x: string) => `${gradeShort(gr as GradeId)} ${x}`)).join(', ') || '—'}</td>
+                <td>{p.role === 'admin' ? 'Tots' : p.groups.map(groupNameOfKey).join(', ') || '—'}</td>
                 <td>
                   <label className="toggle" title={!dir ? 'Només ho pot canviar l’Equip Directiu' : p.email === session.email ? 'No pots canviar la teva pròpia pertinença' : undefined}>
                     <input type="checkbox" checked={!!p.direction} disabled={!dir || p.email === session.email} onChange={(e) => toggleDir(p.email, e.target.checked)} />
@@ -98,7 +99,7 @@ function AddStaff({ onClose, onOk }: { onClose: () => void; onOk: (email: string
   const [name, setName] = useState('')
   const [role, setRole] = useState<'admin' | 'teacher'>('teacher')
   const [groups, setGroups] = useState<string[]>([])
-  const allGroups = GRADES.flatMap((g) => [...new Set(s.students.filter((x) => x.gradeId === g.id).map((x) => x.group))].sort().map((x) => `${g.id}-${x}`))
+  const allGroups = GRADES.flatMap((g) => (s.classGroups[g.id] ?? []).map((x) => `${g.id}-${x}`))
   const okDomain = email.trim().toLowerCase().endsWith(`@${SCHOOL.domain}`)
   return (
     <Modal title="Dona accés a una persona" onClose={onClose}>
@@ -114,7 +115,7 @@ function AddStaff({ onClose, onOk }: { onClose: () => void; onOk: (email: string
           <span>Grups</span>
           <div className="row">
             {allGroups.map((g) => (
-              <label key={g} className="check"><input type="checkbox" checked={groups.includes(g)} onChange={(e) => setGroups((p) => (e.target.checked ? [...p, g] : p.filter((x) => x !== g)))} />{gradeShort(g.split('-')[0] as GradeId)} {g.split('-')[1]}</label>
+              <label key={g} className="check"><input type="checkbox" checked={groups.includes(g)} onChange={(e) => setGroups((p) => (e.target.checked ? [...p, g] : p.filter((x) => x !== g)))} />{groupNameOfKey(g)}</label>
             ))}
           </div>
         </fieldset>
@@ -127,11 +128,11 @@ function AddStaff({ onClose, onOk }: { onClose: () => void; onOk: (email: string
   )
 }
 
-const SAMPLE = `id_alumne;nom;cognoms;correu;curs;grup
-ALU9001;Txell;Bosch Mas;txell.bosch@ramonpont.cat;3r ESO;A
-ALU9002;Pere;Roca Coll;pere.roca@gmail.com;3r ESO;A
-ALU9003;Sara;Font Prat;sara.font@ramonpont.cat;Tercer;A
-ALU9004;Biel;Sala Costa;biel.sala@ramonpont.cat;5è de primària;A`
+const SAMPLE = `id_alumne;nom;cognoms;correu;curs
+ALU9001;Txell;Bosch Mas;txell.bosch@ramonpont.cat;3r ESO
+ALU9002;Pere;Roca Coll;pere.roca@gmail.com;3r ESO
+ALU9003;Sara;Font Prat;sara.font@ramonpont.cat;Tercer
+ALU9004;Biel;Sala Costa;biel.sala@ramonpont.cat;5è de primària`
 
 function Census({ session }: { session: Session }) {
   const s = useDemoState()
@@ -158,13 +159,16 @@ function Census({ session }: { session: Session }) {
         if (!get(map.name)) issues.push('Falta el nom')
         if (!email.endsWith(`@${SCHOOL.domain}`)) issues.push(`El correu no és @${SCHOOL.domain}`)
         if (!gradeId) issues.push(`Curs no reconegut: «${get(map.grade)}»`)
+        const groups = gradeId ? s.classGroups[gradeId] ?? [] : []
+        const group = get(map.group) || groups[0] || 'A'
+        if (gradeId && !groups.includes(group)) issues.push(`El grup «${group}» no existeix a ${gradeShort(gradeId)} (Centre › Grups)`)
         if (seenId.has(id)) issues.push('Identificador repetit al fitxer')
         if (seenMail.has(email)) issues.push('Correu repetit al fitxer')
         const other = s.students.find((x) => x.email === email && x.id !== id)
         if (other) issues.push(`El correu ja és de ${fullName(other)} (${other.id})`)
         seenId.add(id)
         seenMail.add(email)
-        return { id, name: get(map.name), surname: get(map.surname), email, gradeId, group: get(map.group) || 'A', issues }
+        return { id, name: get(map.name), surname: get(map.surname), email, gradeId, group, issues }
       }),
     )
   }
@@ -193,7 +197,15 @@ function Census({ session }: { session: Session }) {
             {students.map((st) => (
               <tr key={st.id}>
                 <td className="student-cell"><b>{fullName(st)}</b><small>{st.id}</small></td>
-                <td>{st.group}</td>
+                <td>
+                  {(s.classGroups[grade] ?? []).length > 1 ? (
+                    <select className="select" value={st.group} onChange={(e) => { try { setStudentGroup(session, st.id, e.target.value) } catch (err) { showToast((err as Error).message) } }} aria-label={`Grup de ${fullName(st)}`}>
+                      {(s.classGroups[grade] ?? []).map((g) => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  ) : (
+                    <span className="muted">Únic</span>
+                  )}
+                </td>
                 <td className="muted">{st.email}</td>
                 {electives.map((e) => (
                   <td key={e.subjectId}>
@@ -211,7 +223,7 @@ function Census({ session }: { session: Session }) {
         <Modal title="Importació del cens" onClose={() => { setCsv(null); setRows(null) }} wide>
           {!rows ? (
             <>
-              <p>Columnes necessàries, en qualsevol ordre: <b>identificador, nom, cognoms, correu, curs</b> i, opcionalment, <b>grup</b>. Separador «;» o «,». Res no es desa fins que confirmis.</p>
+              <p>Columnes necessàries, en qualsevol ordre: <b>identificador, nom, cognoms, correu, curs</b> i, opcionalment, <b>grup</b> (si el curs només té un grup, no cal). Separador «;» o «,». Res no es desa fins que confirmis.</p>
               <div className="row">
                 <label className="btn"><Icon name="upload" /> Tria un fitxer<input type="file" accept=".csv,text/csv" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const t = await f.text(); setCsv(t); analyse(t) } }} /></label>
                 <button className="btn ghost" onClick={() => setCsv(SAMPLE)}>Carrega un exemple</button>
@@ -236,7 +248,7 @@ function Census({ session }: { session: Session }) {
                         <td>{r.id || '—'}</td>
                         <td>{r.surname}, {r.name}</td>
                         <td>{r.email}</td>
-                        <td>{r.gradeId ? `${gradeShort(r.gradeId)} ${r.group}` : '—'}</td>
+                        <td>{r.gradeId ? groupName(r.gradeId, r.group) : '—'}</td>
                         <td>{r.issues.length ? <span style={{ color: 'var(--bad)', fontWeight: 700 }}>{r.issues.join(' · ')}</span> : <span className="badge ok">Correcte</span>}</td>
                       </tr>
                     ))}

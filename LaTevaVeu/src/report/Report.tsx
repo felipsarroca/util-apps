@@ -3,6 +3,7 @@
 
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { gradeById, SCHOOL } from '../domain/catalog'
+import { gradeAndGroup } from '../domain/groups'
 import { keyOf, NA, scaleLabel, subjectsForStudent } from '../domain/engine'
 import type { Campaign, Scale, Section, Student, StudentResponse, Subject, TemplateVersion } from '../domain/types'
 import type { DemoState } from '../data/seed'
@@ -218,7 +219,7 @@ function useBlocks(m: ReportModel, acknowledgement: boolean): Block[] {
               <b>
                 {m.student.name} {m.student.surname}
               </b>
-              {grade.name} · Grup {m.student.group}
+              {gradeAndGroup(m.student.gradeId, m.student.group)}
               <br />
               {m.campaign.label} · {m.campaign.year}
             </div>

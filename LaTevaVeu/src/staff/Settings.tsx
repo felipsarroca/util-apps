@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { discardFeedbackDraft, importAssignments, newFeedbackDraft, publishFeedbackForm, saveFeedbackFormDraft, setAssignment, setModules, useDemoState } from '../data/api'
-import { gradeShort, GRADES, STAGES } from '../domain/catalog'
+import { GRADES, STAGES } from '../domain/catalog'
+import { groupName } from '../domain/groups'
 import { parseAssignmentsCsv, type AssignmentImport } from '../domain/csv'
 import { subjectsForStudent } from '../domain/engine'
 import { validateFeedbackForm } from '../domain/feedbackForms'
@@ -54,7 +55,7 @@ export function AssignmentsScreen({ session }: { session: Session }) {
   const s = useDemoState()
   const [toast, showToast] = useToast()
   const teachers = s.staff.filter((x) => x.role === 'teacher').sort((a, b) => a.name.localeCompare(b.name, 'ca'))
-  const groups = GRADES.flatMap((g) => [...new Set(s.students.filter((x) => x.gradeId === g.id).map((x) => x.group))].sort().map((group) => ({ grade: g, group })))
+  const groups = GRADES.flatMap((g) => (s.classGroups[g.id] ?? []).map((group) => ({ grade: g, group })))
   const [sel, setSel] = useState(`${groups[0].grade.id}-${groups[0].group}`)
   const cur = groups.find((x) => `${x.grade.id}-${x.group}` === sel)!
   const [importing, setImporting] = useState(false)
@@ -62,7 +63,7 @@ export function AssignmentsScreen({ session }: { session: Session }) {
   const missing = groups.flatMap(({ grade, group }) =>
     s.gradeSubjects
       .filter((gs) => gs.gradeId === grade.id && gs.active && !s.assignments.some((a) => a.gradeId === grade.id && a.group === group && a.subjectId === gs.subjectId))
-      .map((gs) => `${gradeShort(grade.id)} ${group} · ${s.subjects.find((x) => x.id === gs.subjectId)?.short}`),
+      .map((gs) => `${groupName(grade.id, group)} · ${s.subjects.find((x) => x.id === gs.subjectId)?.short}`),
   )
   const idle = teachers.filter((t) => !s.assignments.some((a) => a.teacherEmail === t.email))
   return (
@@ -88,7 +89,7 @@ export function AssignmentsScreen({ session }: { session: Session }) {
       <div className="tabs" role="tablist">
         {groups.map(({ grade, group }) => (
           <button key={`${grade.id}-${group}`} role="tab" aria-selected={sel === `${grade.id}-${group}`} className={`tab${sel === `${grade.id}-${group}` ? ' cur' : ''}`} onClick={() => setSel(`${grade.id}-${group}`)}>
-            {gradeShort(grade.id)} {group}
+            {groupName(grade.id, group)}
           </button>
         ))}
       </div>
@@ -145,13 +146,13 @@ function ImportAssignments({ session, onClose, onDone }: { session: Session; onC
   const s = useDemoState()
   const [text, setText] = useState('')
   const [result, setResult] = useState<AssignmentImport | null>(null)
-  const analyse = (t: string) => setResult(parseAssignmentsCsv(t, { gradeSubjects: s.gradeSubjects, subjects: s.subjects, staffEmails: s.staff.map((x) => x.email) }))
+  const analyse = (t: string) => setResult(parseAssignmentsCsv(t, { gradeSubjects: s.gradeSubjects, subjects: s.subjects, staffEmails: s.staff.map((x) => x.email), classGroups: s.classGroups }))
   return (
     <Modal title="Importa assignacions des de CSV" onClose={onClose} wide>
       {!result ? (
         <>
           <p>
-            Fes servir la plantilla <b>07_Plantilla_assignacions.csv</b> (carpeta <code>docs</code>): una fila per matèria i grup, amb les columnes <b>curs, grup, codi_materia</b> i <b>correu_docent</b>. Res no es desa fins que confirmis.
+            Fes servir la plantilla <b>07_Plantilla_assignacions.csv</b> (carpeta <code>docs</code>): una fila per matèria i grup, amb les columnes <b>curs, codi_materia</b> i <b>correu_docent</b> (i <b>grup</b> si el curs en té més d’un). Res no es desa fins que confirmis.
           </p>
           <div className="row">
             <label className="btn">

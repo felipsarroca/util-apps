@@ -1,22 +1,25 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { isDirection, useDemoState, visibleGrades } from '../data/api'
-import { gradeShort, GRADES } from '../domain/catalog'
-import type { GradeId, ResponseStatus, Session } from '../domain/types'
+import { GRADES } from '../domain/catalog'
+import { groupName, groupNameOfKey } from '../domain/groups'
+import type { ResponseStatus, Session } from '../domain/types'
 import { buildReportModel, ReportPages, SheetViewer } from '../report/Report'
 import { fmtDate, fmtShort, Icon, Modal, readSection, useSection, type Section } from '../ui/common'
 import { CampaignsScreen } from './Campaigns'
 import { EditorScreen } from './Editor'
-import { CenterScreen, FeedbackCampaignsScreen, MyReportsScreen, SelfAssessScreen } from './EtVeig'
+import { CenterScreen, FeedbackCampaignsScreen, MyReportsScreen, SelfAssessScreen, TeachersScreen } from './EtVeig'
 import { PeopleScreen } from './People'
 import { ReportsScreen } from './Reports'
 import { CAMPAIGN_LABEL, CAMPAIGN_TONE, currentCampaign, fullName, PrintJob, RESP_LABEL, RESP_TONE, trackingRows } from './shared'
 import { AssignmentsScreen, FeedbackFormsScreen, ModulesScreen } from './Settings'
 import { SubjectsScreen } from './Subjects'
+import { FamiliesScreen } from './Families'
+import { GroupsScreen } from './Groups'
 
 type Screen =
   | 'dashboard' | 'tracking' | 'reports' | 'campaigns'
   | 'self' | 'myreports' | 'center' | 'fbcampaigns' | 'fbforms'
-  | 'templates' | 'subjects' | 'assign' | 'people' | 'modules' | 'audit'
+  | 'templates' | 'subjects' | 'assign' | 'people' | 'groups' | 'families' | 'teachers' | 'modules' | 'audit'
 
 /** Qui veu cada entrada: administració, Equip Directiu, tutoria (grups d'«Em miro»), qui fa classe o qui pot veure resultats. */
 type Need = 'admin' | 'dir' | 'manage' | 'tutor' | 'teaches' | 'results'
@@ -36,10 +39,13 @@ const NAV: { id: Screen; label: string; icon: string; need: Need; space: Section
   { id: 'self', label: 'La meva autoavaluació', icon: 'edit', need: 'teaches', space: 'et-veig', kind: 'use' },
   { id: 'myreports', label: 'Així et veiem', icon: 'eye', need: 'results', space: 'et-veig', kind: 'use' },
   { id: 'center', label: 'Visió de centre', icon: 'chart', need: 'dir', space: 'et-veig', kind: 'use' },
+  { id: 'teachers', label: 'Professorat', icon: 'users', need: 'dir', space: 'et-veig', kind: 'use' },
   { id: 'fbcampaigns', label: 'Recollides i moderació', icon: 'calendar', need: 'manage', space: 'et-veig', kind: 'use' },
   { id: 'fbforms', label: 'Preguntes', icon: 'list', need: 'admin', space: 'et-veig', kind: 'config' },
   { id: 'assign', label: 'Qui fa classe a qui', icon: 'users', need: 'admin', space: 'et-veig', kind: 'config' },
   { id: 'people', label: 'Alumnat i accessos', icon: 'users', need: 'admin', space: 'centre', kind: 'config' },
+  { id: 'groups', label: 'Grups', icon: 'list', need: 'admin', space: 'centre', kind: 'config' },
+  { id: 'families', label: 'Famílies', icon: 'mail', need: 'manage', space: 'centre', kind: 'config' },
   { id: 'subjects', label: 'Matèries', icon: 'book', need: 'admin', space: 'centre', kind: 'config' },
   { id: 'modules', label: 'Apartats', icon: 'settings', need: 'admin', space: 'centre', kind: 'config' },
   { id: 'audit', label: 'Registre', icon: 'history', need: 'admin', space: 'centre', kind: 'config' },
@@ -48,7 +54,7 @@ const NAV: { id: Screen; label: string; icon: string; need: Need; space: Section
 export const SPACES: Record<Section, { name: string; emoji: string; tagline: string; cls: string }> = {
   'em-miro': { name: 'Em miro', emoji: '💭', tagline: 'Autoavaluació de l’alumnat', cls: 'space-em' },
   'et-veig': { name: 'Et veig', emoji: '👀', tagline: 'L’alumnat valora el professorat', cls: 'space-ev' },
-  centre: { name: 'Centre', emoji: '🏫', tagline: 'Dades comunes: alumnat, matèries i accessos', cls: 'space-ce' },
+  centre: { name: 'Centre', emoji: '🏫', tagline: 'Dades comunes: alumnat, grups, famílies i accessos', cls: 'space-ce' },
 }
 
 export function StaffApp({ session }: { session: Session }) {
@@ -56,7 +62,7 @@ export function StaffApp({ session }: { session: Session }) {
   const isAdmin = session.role === 'admin'
   const dir = isDirection(session)
   const teaches = s.assignments.some((a) => a.teacherEmail === session.email) || s.feedbackCampaigns.some((c) => c.teachers.includes(session.email))
-  const tutor = isAdmin || (session.groups?.length ?? 0) > 0
+  const tutor = isAdmin || dir || (session.groups?.length ?? 0) > 0
   const allowed: Record<Need, boolean> = { admin: isAdmin, dir, manage: isAdmin || dir, tutor, teaches, results: teaches || dir }
   const nav = NAV.filter((n) => allowed[n.need])
   const spaces = (Object.keys(SPACES) as Section[]).filter((sp) => nav.some((n) => n.space === sp))
@@ -119,10 +125,13 @@ export function StaffApp({ session }: { session: Session }) {
         {screen === 'self' && teaches && <SelfAssessScreen session={session} />}
         {screen === 'myreports' && (teaches || dir) && <MyReportsScreen session={session} />}
         {screen === 'center' && dir && <CenterScreen session={session} />}
+        {screen === 'teachers' && dir && <TeachersScreen session={session} />}
         {screen === 'fbcampaigns' && (isAdmin || dir) && <FeedbackCampaignsScreen session={session} />}
         {screen === 'fbforms' && isAdmin && <FeedbackFormsScreen session={session} />}
         {screen === 'templates' && isAdmin && <EditorScreen session={session} />}
         {screen === 'subjects' && isAdmin && <SubjectsScreen session={session} />}
+        {screen === 'groups' && isAdmin && <GroupsScreen session={session} />}
+        {screen === 'families' && (isAdmin || dir) && <FamiliesScreen session={session} />}
         {screen === 'assign' && isAdmin && <AssignmentsScreen session={session} />}
         {screen === 'people' && isAdmin && <PeopleScreen session={session} />}
         {screen === 'modules' && isAdmin && <ModulesScreen session={session} />}
@@ -135,7 +144,7 @@ export function StaffApp({ session }: { session: Session }) {
 const SPACE_TEXT: Record<Section, string> = {
   'em-miro': 'L’alumnat pensa en com aprèn. La tutoria en fa el seguiment i en treu l’informe «Així em veig» per a les famílies.',
   'et-veig': 'L’alumnat explica com viu les classes de cada docent. Cada docent rep el seu informe «Així et veiem»; ningú no veu respostes individuals.',
-  centre: 'Cens de l’alumnat, accessos del personal, matèries, apartats actius i registre d’operacions.',
+  centre: 'Cens de l’alumnat, accessos del personal, grups, matèries, famílies, apartats actius i registre d’operacions.',
 }
 
 /** Pantalla d'inici del personal: cada espai, amb el que hi pot fer aquesta persona. */
@@ -214,7 +223,7 @@ function Dashboard({ session, go }: { session: Session; go: (s: Screen | null) =
   const delivered = count(['LLIURADA', 'VALIDADA'])
   const noFamily = rows.filter((r) => !r.student.guardians.some((g) => g.validated)).length
   const pct = rows.length ? Math.round((delivered / rows.length) * 100) : 0
-  const scope = session.role === 'admin' ? 'tota l’escola' : (session.groups ?? []).map((g) => g.replace('-', ' ').replace(/^(\d)(EP|ESO)/, (_, n, e) => gradeShort(`${n}${e}` as GradeId))).join(', ')
+  const scope = session.role === 'admin' || isDirection(session) ? 'tota l’escola' : (session.groups ?? []).map(groupNameOfKey).join(', ')
 
   return (
     <>
@@ -271,9 +280,7 @@ function Dashboard({ session, go }: { session: Session; go: (s: Screen | null) =
                 const c = rs[0]?.campaign
                 return (
                   <div className="bar-row" key={g.id + grp}>
-                    <b>
-                      {gradeShort(g.id)} {grp}
-                    </b>
+                    <b>{groupName(g.id, grp)}</b>
                     <div className="stack" role="img" aria-label={`${ok} lliurades, ${run} en curs, ${rs.length - ok - run} sense començar`}>
                       <span className="s-ok" style={{ width: `${(ok / rs.length) * 100}%` }} />
                       <span className="s-run" style={{ width: `${(run / rs.length) * 100}%` }} />
@@ -323,7 +330,7 @@ function Tracking({ session }: { session: Session }) {
     .sort((a, b) => a.student.gradeId.localeCompare(b.student.gradeId) || a.student.group.localeCompare(b.student.group) || a.student.surname.localeCompare(b.student.surname))
   const groupOptions = GRADES.filter((g) => grades.includes(g.id)).flatMap((g) => {
     const gs = [...new Set(rows.filter((r) => r.student.gradeId === g.id).map((r) => r.student.group))].sort()
-    return [{ v: g.id, l: g.name }, ...(gs.length > 1 ? gs.map((x) => ({ v: `${g.id}-${x}`, l: `   ${gradeShort(g.id)} ${x}` })) : [])]
+    return [{ v: g.id, l: g.name }, ...(gs.length > 1 ? gs.map((x) => ({ v: `${g.id}-${x}`, l: `   ${groupName(g.id, x)}` })) : [])]
   })
   const model = view && buildReportModel(s, view.studentId, view.campaignId)
 
@@ -369,7 +376,7 @@ function Tracking({ session }: { session: Session }) {
                   <b>{fullName(r.student)}</b>
                   <small>{r.student.email}</small>
                 </td>
-                <td>{gradeShort(r.student.gradeId)} {r.student.group}</td>
+                <td>{groupName(r.student.gradeId, r.student.group)}</td>
                 <td>{r.campaign ? <>{r.campaign.label} <span className={`badge plain ${CAMPAIGN_TONE[r.campaign.status]}`}>{CAMPAIGN_LABEL[r.campaign.status]}</span></> : '—'}</td>
                 <td>
                   <span className={`badge ${RESP_TONE[r.status]}`}>{RESP_LABEL[r.status]}</span>

@@ -25,7 +25,7 @@ Només s'hi pot entrar amb un compte **@ramonpont.cat**. Tenir aquest compte no 
 | --- | --- |
 | Alumne al cens | Només la seva autoavaluació, el seu curs i les seves matèries |
 | Professorat | A «Em miro», només els grups que té assignats; a «Et veig», la seva autoavaluació i el seu informe quan es publica |
-| Equip Directiu | Tots els informes d'«Et veig», la visió de centre i la moderació de comentaris; mai qui ha dit què. Només un membre de l'Equip Directiu pot afegir-hi o treure'n persones (a «Alumnat i accessos») |
+| Equip Directiu | El seguiment de tot l'alumnat a «Em miro»; a «Et veig», el seguiment del professorat, tots els informes, la visió de centre i la moderació de comentaris; mai qui ha dit què. Gestiona els correus de les famílies. Només un membre de l'Equip Directiu pot afegir-hi o treure'n persones (a «Alumnat i accessos») |
 | Administració | La configuració, amb registre de cada acció; no veu resultats d'«Et veig» |
 | Compte de l'escola fora del cens | Pantalla «Encara no tens accés», sense cap dada |
 | Compte d'un altre domini | Rebutjat abans d'entrar |
@@ -47,7 +47,8 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`) i es
 
 **Et veig: professorat i Equip Directiu**
 - Autoavaluació del docent: una per etapa, amb les mateixes afirmacions en primera persona i etiquetes opcionals de context per grup.
-- Informe «Així et veiem»: dimensions, mirall alumnat-docent amb quatre quadrants, detall per afirmació, resultats per grup, evolució i comentaris moderats. Imprimible en A4.
+- Informe «Així et veiem»: dimensions, mirall alumnat-docent amb quatre quadrants, detall per afirmació, classe per classe (blocs i, amb dos grups visibles o més, cada afirmació per grup), evolució i comentaris moderats (els repetits, una vegada amb el nombre de persones). Imprimible en A4.
+- Professorat (Equip Directiu): qui ha fet l'autoavaluació, valoracions rebudes i llindar de cada docent, adreces dels pendents per enviar un recordatori, informe de cada docent i tots els informes en un sol PDF.
 - Confidencialitat: les respostes es desen sense identificar l'alumne; no es mostra cap agregat amb menys de 15 respostes.
 - Visió de centre (Equip Directiu): participació, dimensions per etapa amb la variació respecte de la recollida anterior, i mapa de calor del professorat en ordre alfabètic. Es pot imprimir o desar en PDF (A4).
 - Recollides independents de les avaluacions: `Esborrany → Programada → Oberta → Tancada → Moderació → Informes generats → Publicada → Arxivada`. Les assignacions es congelen en obrir-les.
@@ -62,6 +63,9 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`) i es
 - Qüestionaris: editor sense programar (apartats, preguntes, escales, obligatorietat, límits, etiquetes de PDF), previsualització d'alumne, prova de l'informe amb respostes curtes i llargues, versions immutables un cop publicades.
 - Matèries per curs: ordre, comunes i optatives, activació.
 - Alumnat i accessos: permisos per grup, cens amb optatives, importació CSV amb validació prèvia, incidències d'identitat.
+- Grups: per defecte, un grup únic per curs (es mostra sense lletra); es poden afegir, reanomenar i treure grups si s'obre una segona línia.
+- Famílies (administració i Equip Directiu): importació CSV dels correus dels responsables amb validació prèvia, i validació o retirada de cada correu.
+- Guia d'administració completa (botó «Guia» o `#/guia`), imprimible.
 - Registre d'operacions.
 
 ## Adreces dels apartats

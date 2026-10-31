@@ -120,7 +120,7 @@ describe('Et veig: informes i permisos', () => {
     const marta = buildTeacherReport(st, st.scales, 'FV-2526-MAIG', 'tutoria.2eso@ramonpont.cat')!
     const eso = marta.stages.find((x) => x.stage === 'ESO')!
     expect(eso.suppressed).toBe(false)
-    const b = eso.groups.find((g) => g.key === '2ESO-B')!
+    const b = eso.groups.find((g) => g.key === '3ESO-A')!
     expect(b.n).toBeLessThan(THRESHOLD)
     expect(b.shown).toBe(false)
     expect(eso.groups.some((g) => g.shown)).toBe(true)
@@ -170,7 +170,7 @@ describe('Et veig: informes i permisos', () => {
     const f = tasks[0].form
     const all = Object.fromEntries(f.items.map((i) => [i.id, '4']))
     expect(() => api.saveSelfAssessment(marta, tasks[0].campaign.id, 'ESO', {}, {}, true)).toThrow()
-    api.saveSelfAssessment(marta, tasks[0].campaign.id, 'ESO', all, { '2ESO-B': ['gestio'] }, true)
+    api.saveSelfAssessment(marta, tasks[0].campaign.id, 'ESO', all, { '3ESO-A': ['gestio'] }, true)
     expect(() => api.saveSelfAssessment(marta, tasks[0].campaign.id, 'ESO', all, {}, true)).toThrow()
     expect(() => api.saveSelfAssessment(sergi, tasks[0].campaign.id, 'ESO', all, {}, false)).toThrow() // ja lliurada per en Sergi a la demo
   })
@@ -225,5 +225,61 @@ describe('Et veig: comentaris repetits', () => {
       { text: 'Més exemples.', count: 3 },
       { text: 'Els projectes en grup', count: 1 },
     ])
+  })
+})
+
+describe('Centre: grups de cada curs', () => {
+  it('un sol grup es mostra sense lletra; en afegir-ne un, amb lletra', async () => {
+    const { groupName } = await import('../src/domain/groups')
+    api.resetDemo()
+    const admin = login('admin.demo@ramonpont.cat')
+    expect(groupName('2ESO', 'A')).toBe('2n ESO')
+    api.addClassGroup(admin, '2ESO', 'B')
+    expect(groupName('2ESO', 'A')).toBe('2n ESO A')
+    expect(() => api.addClassGroup(admin, '2ESO', 'b')).toThrow()
+    expect(() => api.addClassGroup(admin, '2ESO', 'C-1')).toThrow()
+    api.renameClassGroup(admin, '2ESO', 'B', 'Línia 2')
+    expect(api.snapshot().classGroups['2ESO']).toEqual(['A', 'Línia 2'])
+    expect(() => api.removeClassGroup(admin, '2ESO', 'A')).toThrow() // té alumnes
+    api.removeClassGroup(admin, '2ESO', 'Línia 2')
+    expect(groupName('2ESO', 'A')).toBe('2n ESO')
+    expect(() => api.removeClassGroup(admin, '2ESO', 'A')).toThrow() // l'únic grup
+    expect(() => api.addClassGroup(login('tutoria.2eso@ramonpont.cat'), '2ESO', 'B')).toThrow()
+  })
+})
+
+describe('Centre: correus de les famílies', () => {
+  it('valida el CSV i substitueix els correus dels alumnes del fitxer', async () => {
+    const { parseGuardiansCsv } = await import('../src/domain/csv')
+    api.resetDemo()
+    const st = api.snapshot().students
+    const [a, b] = st
+    const csv = ['id_alumne;nom_responsable;correu_responsable', `${a.id};Maria Serra;maria@exemple.cat`, `${a.id};Joan Font;joan@exemple.cat`, `${b.id};Rosa Puig;rosa@exemple`, 'ALU9999;Pere Roca;pere@exemple.cat', `${a.id};Repetit;maria@exemple.cat`].join('\n')
+    const r = parseGuardiansCsv(csv, st)
+    expect(r.rows.length).toBe(2)
+    expect(r.issues.length).toBe(3)
+    expect(() => api.importGuardians(login('tutoria.2eso@ramonpont.cat'), r.rows)).toThrow()
+    expect(api.importGuardians(login('direccio.demo@ramonpont.cat'), r.rows)).toBe(1)
+    const after = api.snapshot().students
+    expect(after.find((x) => x.id === a.id)!.guardians.map((g) => g.email)).toEqual(['maria@exemple.cat', 'joan@exemple.cat'])
+    expect(after.find((x) => x.id === b.id)!.guardians).toEqual(b.guardians)
+  })
+})
+
+describe('Així et veiem: classe per classe', () => {
+  it('cada grup visible té el % de cada afirmació; els grups sota el llindar no en porten cap', () => {
+    const st = createDemoState()
+    let shown = 0
+    for (const email of st.feedbackCampaigns.find((c) => c.id === 'FV-2526-MAIG')!.teachers) {
+      const r = buildTeacherReport(st, st.scales, 'FV-2526-MAIG', email)
+      for (const sr of r?.stages ?? [])
+        for (const g of sr.groups) {
+          if (g.shown && !sr.suppressed) {
+            shown++
+            expect(Object.keys(g.items).sort()).toEqual(sr.form.items.map((i) => i.id).sort())
+          } else expect(g.items).toEqual({})
+        }
+    }
+    expect(shown).toBeGreaterThan(0)
   })
 })

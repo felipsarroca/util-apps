@@ -1,6 +1,7 @@
 // Importació de cens en CSV, amb detecció flexible de capçaleres i de cursos.
 
-import type { GradeId, GradeSubject, Subject } from './types'
+import type { ClassGroups } from './groups'
+import type { GradeId, GradeSubject, Guardian, Student, Subject } from './types'
 
 export function parseCsv(text: string): string[][] {
   const clean = text.replace(/^\uFEFF/, '')
@@ -82,15 +83,15 @@ export interface AssignmentImport { rows: AssignmentRow[]; issues: { line: numbe
  */
 export function parseAssignmentsCsv(
   text: string,
-  ctx: { gradeSubjects: GradeSubject[]; subjects: Subject[]; staffEmails: string[] },
+  ctx: { gradeSubjects: GradeSubject[]; subjects: Subject[]; staffEmails: string[]; classGroups?: ClassGroups },
 ): AssignmentImport {
   const [header = [], ...data] = parseCsv(text)
   const h = header.map(norm)
   const col = (...keys: string[]) => h.findIndex((x) => keys.some((k) => x === k || x.includes(k)))
   const c = { grade: col('curs', 'nivell'), group: col('grup'), code: col('codi materia', 'codi'), subject: h.findIndex((x) => x === 'materia'), email: col('correu docent', 'correu', 'email') }
   const out: AssignmentImport = { rows: [], issues: [], empty: 0 }
-  if (c.grade < 0 || c.group < 0 || c.email < 0 || (c.code < 0 && c.subject < 0)) {
-    out.issues.push({ line: 1, msg: 'Falten columnes: calen curs, grup, codi_materia (o materia) i correu_docent.' })
+  if (c.grade < 0 || c.email < 0 || (c.code < 0 && c.subject < 0)) {
+    out.issues.push({ line: 1, msg: 'Falten columnes: calen curs, codi_materia (o materia) i correu_docent; el grup només cal si el curs en té més d’un.' })
     return out
   }
   const seen = new Set<string>()
@@ -100,8 +101,11 @@ export function parseAssignmentsCsv(
     if (!email) return void out.empty++
     const gradeId = normalizeGrade(r[c.grade] ?? '')
     if (!gradeId) return void out.issues.push({ line, msg: `Curs no reconegut: «${r[c.grade] ?? ''}».` })
-    const group = (r[c.group] ?? '').toUpperCase()
-    if (!group) return void out.issues.push({ line, msg: 'Falta el grup.' })
+    // Sense columna o sense valor, el grup és l'únic (o el primer) del curs.
+    const raw0 = (c.group >= 0 ? r[c.group] ?? '' : '').trim()
+    const configured = ctx.classGroups?.[gradeId]
+    const group = configured ? (raw0 ? configured.find((g) => g.toLowerCase() === raw0.toLowerCase()) : configured[0]) : raw0.toUpperCase() || 'A'
+    if (!group) return void out.issues.push({ line, msg: `El grup «${raw0}» no existeix en aquest curs. Crea’l primer a Centre › Grups.` })
     const raw = c.code >= 0 && r[c.code] ? r[c.code] : (r[c.subject] ?? '')
     const subj = ctx.subjects.find((s) => s.id.toLowerCase() === raw.toLowerCase() || norm(s.long) === norm(raw) || norm(s.short) === norm(raw))
     if (!subj) return void out.issues.push({ line, msg: `Matèria desconeguda: «${raw}». Crea-la primer a Matèries.` })
@@ -112,6 +116,51 @@ export function parseAssignmentsCsv(
     if (seen.has(key)) return void out.issues.push({ line, msg: `${subj.short} de ${gradeId} ${group} surt repetida: només s’aplica la primera.` })
     seen.add(key)
     out.rows.push({ line, gradeId, group, subjectId: subj.id, teacherEmail: email })
+  })
+  return out
+}
+
+// ---------- Correus de les famílies ----------
+
+export interface GuardianRow { line: number; studentId: string; studentName: string; guardian: Guardian }
+export interface GuardianImport { rows: GuardianRow[]; issues: { line: number; msg: string }[] }
+
+const EMAIL = /^[^\s@;,]+@[^\s@;,]+\.[a-z]{2,}$/i
+
+/**
+ * Una fila per responsable: identificador (o correu) de l'alumne, nom del responsable i correu.
+ * Un alumne pot tenir diverses files. Les files amb errors no s'apliquen.
+ */
+export function parseGuardiansCsv(text: string, students: Student[]): GuardianImport {
+  const [header = [], ...data] = parseCsv(text)
+  const h = header.map(norm)
+  const col = (...keys: string[]) => h.findIndex((x) => keys.some((k) => x === k || x.includes(k)))
+  const c = {
+    id: col('id alumne', 'identificador', 'ralc', 'id'),
+    studentEmail: h.findIndex((x) => x.includes('correu') && x.includes('alumne')),
+    name: h.findIndex((x) => x.includes('nom') && (x.includes('respons') || x.includes('famil') || x.includes('tutor'))),
+    email: h.findIndex((x) => (x.includes('correu') || x.includes('email') || x.includes('mail')) && !x.includes('alumne')),
+  }
+  const out: GuardianImport = { rows: [], issues: [] }
+  if ((c.id < 0 && c.studentEmail < 0) || c.email < 0) {
+    out.issues.push({ line: 1, msg: 'Falten columnes: calen id_alumne (o correu_alumne), nom_responsable i correu_responsable.' })
+    return out
+  }
+  const seen = new Set<string>()
+  data.forEach((r, i) => {
+    const line = i + 2
+    const id = c.id >= 0 ? (r[c.id] ?? '').trim() : ''
+    const se = c.studentEmail >= 0 ? (r[c.studentEmail] ?? '').trim().toLowerCase() : ''
+    const st = students.find((x) => (id && x.id === id) || (se && x.email === se))
+    if (!st) return void out.issues.push({ line, msg: `No hi ha cap alumne al cens amb ${id ? `l’identificador ${id}` : `el correu ${se || '(buit)'}`}.` })
+    const email = (r[c.email] ?? '').trim().toLowerCase()
+    if (!EMAIL.test(email)) return void out.issues.push({ line, msg: `Correu no vàlid: «${email}».` })
+    if (email.endsWith('@ramonpont.cat') && email === st.email) return void out.issues.push({ line, msg: 'És el correu de l’alumne, no el de la família.' })
+    const key = `${st.id}|${email}`
+    if (seen.has(key)) return void out.issues.push({ line, msg: `${email} surt repetit per al mateix alumne.` })
+    seen.add(key)
+    const name = (c.name >= 0 ? r[c.name] ?? '' : '').trim() || 'Família'
+    out.rows.push({ line, studentId: st.id, studentName: `${st.name} ${st.surname}`, guardian: { name, email, validated: true } })
   })
   return out
 }

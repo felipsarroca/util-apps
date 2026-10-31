@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { feedbackHome, logAudit, saveDraft, studentHome, submitResponse, useDemoState, type FeedbackHome } from '../data/api'
 import { gradeById, STAGES } from '../domain/catalog'
+import { gradeAndGroup } from '../domain/groups'
 import { buildSteps, findMissing, progress, requiredKeys, stepComplete, type Step } from '../domain/engine'
 import type { Answers, Session } from '../domain/types'
 import { fmtDate, Icon, Modal, readSection, useSection, useToast, type Section } from '../ui/common'
@@ -91,7 +92,7 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
               {student.name} {student.surname}
             </b>
             <div className="muted" style={{ fontWeight: 700 }}>
-              {grade.name} · Grup {student.group}
+              {gradeAndGroup(student.gradeId, student.group)}
             </div>
           </div>
           <button className="link-btn" onClick={() => setWrong(true)}>

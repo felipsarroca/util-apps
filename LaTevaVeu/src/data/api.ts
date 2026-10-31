@@ -10,11 +10,12 @@ import {
   type CenterStage, type TeacherReport, type TeacherTarget,
 } from '../domain/feedback'
 import { validateFeedbackForm } from '../domain/feedbackForms'
+import { checkGroupLabel, setGroupConfig } from '../domain/groups'
 import type {
-  Answers, Campaign, CampaignStatus, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, ModerationStatus, Modules,
+  Answers, Campaign, CampaignStatus, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, Guardian, ModerationStatus, Modules,
   Section, SelfAssessment, Session, StageId, Student, StudentResponse, Subject, TemplateVersion,
 } from '../domain/types'
-import type { AssignmentRow } from '../domain/csv'
+import type { AssignmentRow, GuardianRow } from '../domain/csv'
 import { checkSchoolEmail } from './auth'
 import { createDemoState, DEMO_VERSION, type DemoState } from './seed'
 
@@ -36,10 +37,12 @@ function load(): DemoState {
 }
 
 let state: DemoState = load()
+setGroupConfig(state.classGroups)
 const listeners = new Set<() => void>()
 
 function commit(next: DemoState) {
   state = next
+  setGroupConfig(next.classGroups)
   try {
     localStorage.setItem(KEY, JSON.stringify(state))
   } catch {
@@ -83,7 +86,8 @@ export function resolveSession(rawEmail: string, profile?: { name?: string; pict
 const groupKey = (s: Student) => `${s.gradeId}-${s.group}`
 
 export function canSeeStudent(session: Session, st: Student): boolean {
-  if (session.role === 'admin') return true
+  // L'Equip Directiu fa el seguiment de tot l'alumnat.
+  if (session.role === 'admin' || isDirection(session)) return true
   if (session.role === 'teacher') return !!session.groups?.includes(groupKey(st))
   return session.studentId === st.id
 }
@@ -100,7 +104,7 @@ function requireAdminOrDirection(session: Session) {
 export const visibleStudents = (s: DemoState, session: Session) => s.students.filter((st) => canSeeStudent(session, st))
 
 export const visibleGrades = (s: DemoState, session: Session): GradeId[] =>
-  session.role === 'admin' ? GRADES.map((g) => g.id) : [...new Set(visibleStudents(s, session).map((x) => x.gradeId))]
+  session.role === 'admin' || isDirection(session) ? GRADES.map((g) => g.id) : [...new Set(visibleStudents(s, session).map((x) => x.gradeId))]
 
 export const templateById = (s: DemoState, id: string) => s.templates.find((t) => t.id === id)
 
@@ -317,6 +321,104 @@ export function importCensus(session: Session, rows: CensusRow[]): number {
   }
   commit(audit({ ...state, students: [...byId.values()] }, session.email, 'Importació de cens', `${ok.length} alumnes importats o actualitzats`))
   return ok.length
+}
+
+// ---------- Correus de les famílies ----------
+
+/** Substitueix els responsables de cada alumne que surt al fitxer; la resta d'alumnes no canvia. */
+export function importGuardians(session: Session, rows: GuardianRow[]): number {
+  requireAdminOrDirection(session)
+  const by = new Map<string, Guardian[]>()
+  for (const r of rows) by.set(r.studentId, [...(by.get(r.studentId) ?? []), r.guardian])
+  commit(
+    audit(
+      { ...state, students: state.students.map((st) => (by.has(st.id) ? { ...st, guardians: by.get(st.id)! } : st)) },
+      session.email,
+      'Correus de les famílies',
+      `${rows.length} correus importats per a ${by.size} alumnes`,
+    ),
+  )
+  return by.size
+}
+
+export function setGuardianValidated(session: Session, studentId: string, email: string, validated: boolean) {
+  requireAdminOrDirection(session)
+  commit(
+    audit(
+      { ...state, students: state.students.map((st) => (st.id === studentId ? { ...st, guardians: st.guardians.map((g) => (g.email === email ? { ...g, validated } : g)) } : st)) },
+      session.email,
+      'Correus de les famílies',
+      `${studentId}: ${email} ${validated ? 'validat' : 'pendent de validar'}`,
+    ),
+  )
+}
+
+export function removeGuardian(session: Session, studentId: string, email: string) {
+  requireAdminOrDirection(session)
+  commit(audit({ ...state, students: state.students.map((st) => (st.id === studentId ? { ...st, guardians: st.guardians.filter((g) => g.email !== email) } : st)) }, session.email, 'Correus de les famílies', `${studentId}: ${email} eliminat`))
+}
+
+// ---------- Grups de cada curs ----------
+
+export function addClassGroup(session: Session, gradeId: GradeId, label: string) {
+  requireAdmin(session)
+  const cur = state.classGroups[gradeId] ?? []
+  const err = checkGroupLabel(label, cur)
+  if (err) throw new Error(err)
+  commit(audit({ ...state, classGroups: { ...state.classGroups, [gradeId]: [...cur, label.trim()] } }, session.email, 'Grups', `${gradeId}: nou grup «${label.trim()}»`))
+}
+
+/** Canvia el nom d'un grup a tot arreu: alumnat, assignacions i grups del professorat. */
+export function renameClassGroup(session: Session, gradeId: GradeId, from: string, to: string) {
+  requireAdmin(session)
+  const cur = state.classGroups[gradeId] ?? []
+  const err = checkGroupLabel(to, cur.filter((x) => x !== from))
+  if (err) throw new Error(err)
+  const t = to.trim()
+  const key = (g: string) => (g === `${gradeId}-${from}` ? `${gradeId}-${t}` : g)
+  commit(
+    audit(
+      {
+        ...state,
+        classGroups: { ...state.classGroups, [gradeId]: cur.map((x) => (x === from ? t : x)) },
+        students: state.students.map((x) => (x.gradeId === gradeId && x.group === from ? { ...x, group: t } : x)),
+        assignments: state.assignments.map((a) => (a.gradeId === gradeId && a.group === from ? { ...a, group: t } : a)),
+        staff: state.staff.map((p) => ({ ...p, groups: p.groups.map(key) })),
+      },
+      session.email,
+      'Grups',
+      `${gradeId}: «${from}» passa a dir-se «${t}»`,
+    ),
+  )
+}
+
+/** Només es pot treure un grup buit, sense assignacions i que no sigui l'únic del curs. */
+export function removeClassGroup(session: Session, gradeId: GradeId, label: string) {
+  requireAdmin(session)
+  const cur = state.classGroups[gradeId] ?? []
+  if (cur.length <= 1) throw new Error('Cada curs ha de tenir com a mínim un grup.')
+  if (state.students.some((x) => x.gradeId === gradeId && x.group === label)) throw new Error('Aquest grup encara té alumnes: canvia’ls de grup abans de treure’l.')
+  commit(
+    audit(
+      {
+        ...state,
+        classGroups: { ...state.classGroups, [gradeId]: cur.filter((x) => x !== label) },
+        assignments: state.assignments.filter((a) => !(a.gradeId === gradeId && a.group === label)),
+        staff: state.staff.map((p) => ({ ...p, groups: p.groups.filter((g) => g !== `${gradeId}-${label}`) })),
+      },
+      session.email,
+      'Grups',
+      `${gradeId}: grup «${label}» eliminat`,
+    ),
+  )
+}
+
+/** Canvia un alumne de grup (dins del seu curs). */
+export function setStudentGroup(session: Session, studentId: string, group: string) {
+  requireAdmin(session)
+  const st = state.students.find((x) => x.id === studentId)
+  if (!st || !(state.classGroups[st.gradeId] ?? []).includes(group)) throw new Error('Aquest grup no existeix en aquest curs.')
+  commit(audit({ ...state, students: state.students.map((x) => (x.id === studentId ? { ...x, group } : x)) }, session.email, 'Grups', `${studentId}: grup ${st.group} → ${group}`))
 }
 
 export function setElective(session: Session, studentId: string, subjectId: string, on: boolean) {
