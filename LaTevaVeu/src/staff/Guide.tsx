@@ -1,4 +1,4 @@
-// Guia d'administració: com funciona tota l'app, pas a pas, per a l'administració i l'Equip Directiu.
+// Guia del personal: com funciona tota l'app, amb un recorregut pas a pas per a la tutoria i un per a l'administració.
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { THRESHOLD } from '../domain/feedback'
@@ -8,6 +8,8 @@ const TOC: { id: string; title: string; emoji: string }[] = [
   { id: 'que-es', title: 'Què és La teva veu', emoji: '🧭' },
   { id: 'rols', title: 'Qui pot fer què', emoji: '🔐' },
   { id: 'pantalla', title: 'Com es mou per l’app', emoji: '🖥️' },
+  { id: 'tutoria', title: 'Pas a pas: tutoria i professorat', emoji: '📋' },
+  { id: 'administracio', title: 'Pas a pas: administració', emoji: '🗂️' },
   { id: 'inici-curs', title: 'Posada en marxa del curs', emoji: '🚀' },
   { id: 'centre', title: 'Centre: persones, grups i famílies', emoji: '🏫' },
   { id: 'em-miro', title: 'Em miro pas a pas', emoji: '💭' },
@@ -101,11 +103,25 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
         <header className="guide-cover">
           <img src={APP_ICON} alt="" />
           <div>
-            <small>Escola Ramon Pont · Guia d’administració</small>
+            <small>Escola Ramon Pont · Guia del personal</small>
             <h1>La teva veu</h1>
-            <p>Tot el que cal saber per configurar l’app, obrir i tancar les recollides, moderar i lliurar els informes.</p>
+            <p>Com funciona l’app pas a pas: un recorregut per a la tutoria i el professorat, un per a l’administració i, després, el detall de cada pantalla.</p>
           </div>
         </header>
+
+        <div className="guide-start no-print">
+          <b>Per on començo?</b>
+          <div className="guide-cards two">
+            <button className="guide-card em" onClick={() => go('tutoria')}>
+              <b>📋 Soc tutor, tutora o docent</b>
+              <p>Què he de fer abans, durant i després de cada recollida, i com consulto el meu informe.</p>
+            </button>
+            <button className="guide-card ce" onClick={() => go('administracio')}>
+              <b>🗂️ Faig l’administració</b>
+              <p>Com es prepara el curs, com s’obre i es tanca cada recollida i com arriben els informes.</p>
+            </button>
+          </div>
+        </div>
 
         <Sec id="que-es">
           <p>
@@ -167,6 +183,125 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li><b>Adreces directes.</b> …/#/em-miro, …/#/et-veig i …/#/centre obren cada espai; …/#/guia obre aquesta guia.</li>
           </ol>
           <Tip>Amb pantalles petites, l’app es compacta per mantenir la mateixa disposició. Al mòbil, el menú lateral passa a ser una barra horitzontal a sota de la capçalera.</Tip>
+        </Sec>
+
+        <Sec id="tutoria">
+          <p>El recorregut d’una recollida d’<b>Em miro</b> des del punt de vista del tutor o la tutora, i el de cada docent a <b>Et veig…</b>. Si no tens tutoria, ves directament als passos 6 i 7.</p>
+          <Tip>Amb el teu compte només veus l’alumnat dels grups que tens assignats. Si hi falta un grup o un alumne, demana-ho a l’administració: ho canvia a <b>Centre › Alumnat i accessos</b>.</Tip>
+
+          <h3>1. Abans de la primera recollida</h3>
+          <ol className="guide-steps">
+            <li>Entra amb el compte de l’escola i, a la pantalla d’inici, clica <b>Em miro › Entra</b>.</li>
+            <li>Al <Where>Tauler</Where> comprova que hi surten els teus grups. A <Where>Respostes</Where> hi ha la llista de l’alumnat: revisa que no hi falti ningú i que tothom sigui al grup correcte.</li>
+            <li>A <Where>Així em veig i famílies</Where> mira la columna del correu familiar. Si un alumne no en té cap de validat, el seu informe s’haurà de lliurar en paper.</li>
+          </ol>
+
+          <h3>2. Quan s’obre la recollida</h3>
+          <ol className="guide-steps">
+            <li>L’administració obre la recollida del teu curs. A <Where>Recollides</Where> en veus l’estat i les dates; tu no l’has d’obrir ni tancar.</li>
+            <li>Reserva una sessió amb ordinadors o tauletes. Calcula uns 5 minuts a 3r i 4t, uns 8 a 5è i 6è i uns 12 a l’ESO, més el temps d’entrar.</li>
+            <li>Explica a l’alumnat per què ho fem. Per exemple: <i>«No és un examen: no hi ha respostes bones ni dolentes. Pensa en com aprens i què podries millorar. El que escriguis ho llegirà la teva família amb tu.»</i></li>
+            <li>Cada alumne entra amb el seu compte de l’escola i clica <b>Comença</b>. A primària, el botó <b>Escolta</b> llegeix les preguntes en veu alta.</li>
+          </ol>
+          <Tip>Les respostes es desen soles. Si a algú no li dona temps, pot continuar un altre dia mentre la recollida sigui oberta.</Tip>
+
+          <h3>3. Mentre és oberta</h3>
+          <ol className="guide-steps">
+            <li>Al <Where>Tauler</Where>, la barra de cada grup mostra quants alumnes han lliurat, quants van a mitges i quants no han començat.</li>
+            <li>A <Where>Respostes</Where> filtra per <b>En curs</b> o <b>No iniciada</b> per saber a qui has de recordar que l’acabi.</li>
+            <li>Amb <b>Veure</b> pots llegir les respostes d’un alumne que ja ha lliurat.</li>
+          </ol>
+
+          <h3>4. Quan es tanca: revisar i preparar els informes</h3>
+          <ol className="guide-steps">
+            <li>Quan l’administració tanca la recollida, l’alumnat ja no pot respondre.</li>
+            <li>Ves a <Where>Així em veig i famílies</Where> i tria la recollida.</li>
+            <li>Obre l’informe de cada alumne amb <b>Veure</b> i llegeix-lo. Si hi ha alguna cosa que t’hagi de fer parlar amb l’alumne o la família, aquest és el moment.</li>
+            <li>Marca la casella <b>Canal</b> dels alumnes que no han de rebre l’informe per correu (per exemple, perquè l’hi vols lliurar en mà).</li>
+            <li>Per lliurar-los en paper: <b>PDF dels que no tenen correu</b>, o selecciona alumnes i clica <b>PDF únic dels seleccionats</b>. Activa <b>Doble cara</b> si imprimeixes a dues cares.</li>
+            <li>Amb <b>Prepara l’enviament</b> comproves qui rebrà cada informe, des de quin compte s’enviarà i amb quin assumpte. Res no s’envia fins a l’aprovació final.</li>
+          </ol>
+
+          <h3>5. Amb la família</h3>
+          <p>L’informe «Així em veig» és la reflexió de l’alumne, no una nota. A l’entrevista, aquestes preguntes poden ajudar a començar la conversa:</p>
+          <ul>
+            <li>De quina matèria n’està més satisfet o satisfeta? Per què?</li>
+            <li>Quin dels seus compromisos li sembla més important?</li>
+            <li>Com el podem ajudar, des de casa i des de l’escola, a complir-lo?</li>
+          </ul>
+          <Tip>Si la família respon el correu, la resposta arriba a la tutoria, tret que l’administració hagi triat una altra adreça a <b>Centre › Correu</b>.</Tip>
+
+          <h3>6. Et veig…: la teva autoavaluació</h3>
+          <ol className="guide-steps">
+            <li>Quan s’obre una recollida d’Et veig…, ves a <Where>Et veig… › La meva autoavaluació</Where>.</li>
+            <li>Respon les mateixes afirmacions que l’alumnat, però en primera persona. Si fas classe a diverses etapes, en fas una per etapa. Pots afegir etiquetes de context per grup.</li>
+            <li>Pots desar-la i continuar més tard. Quan la lliuris, ja no es podrà canviar. Es pot lliurar mentre la recollida és oberta o tancada.</li>
+          </ol>
+          <Tip>Mentrestant, l’alumnat et valora a l’aula. Ningú, tampoc l’Equip Directiu, no pot saber què ha respost cada alumne.</Tip>
+
+          <h3>7. Et veig…: el teu informe</h3>
+          <ol className="guide-steps">
+            <li>Quan l’Equip Directiu el publica, apareix a <Where>Et veig… › Així et veiem</Where>. Amb el correu activat, també t’arriba un avís, sense l’informe adjunt.</li>
+            <li>Comença pel <b>mirall</b>: compara com et veus amb com et veu l’alumnat. Després mira les fortaleses, el detall classe per classe i els comentaris.</li>
+            <li>Al final hi ha l’espai <b>Per reflexionar</b>. El pots imprimir o desar en PDF.</li>
+          </ol>
+          <Warn>Si en una etapa hi ha menys de {THRESHOLD} respostes, l’informe diu «Mostra insuficient» i no en mostra res. És una protecció de l’alumnat.</Warn>
+
+          <div className="guide-check">
+            <b>Resum per a la tutoria</b>
+            <label><input type="checkbox" /> Els meus grups i el meu alumnat hi són tots</label>
+            <label><input type="checkbox" /> He reservat la sessió a l’aula mentre la recollida és oberta</label>
+            <label><input type="checkbox" /> He recordat l’autoavaluació als que la tenien a mitges</label>
+            <label><input type="checkbox" /> He llegit els informes abans de lliurar-los</label>
+            <label><input type="checkbox" /> He imprès els informes dels alumnes sense correu familiar</label>
+            <label><input type="checkbox" /> He fet la meva autoavaluació d’Et veig…</label>
+          </div>
+        </Sec>
+
+        <Sec id="administracio">
+          <p>El recorregut de l’administració durant el curs. Els apartats següents de la guia expliquen cada pantalla amb detall.</p>
+
+          <h3>1. Setembre: preparar el curs (una vegada)</h3>
+          <ol className="guide-steps">
+            <li>Dona accés al personal i marca l’Equip Directiu. <Where>Centre › Alumnat i accessos</Where></li>
+            <li>Revisa els grups de cada curs. <Where>Centre › Grups</Where></li>
+            <li>Importa el cens de l’alumnat i marca les optatives. <Where>Centre › Alumnat i accessos › Cens</Where></li>
+            <li>Importa els correus de les famílies. <Where>Centre › Famílies</Where></li>
+            <li>Revisa les matèries de cada curs. <Where>Centre › Matèries</Where></li>
+            <li>Indica qui fa classe a qui. <Where>Et veig… › Qui fa classe a qui</Where></li>
+            <li>Comprova que hi ha qüestionaris publicats per a cada etapa. <Where>Em miro › Qüestionaris</Where> <Where>Et veig… › Preguntes</Where></li>
+            <li>Indica des de quin compte s’envien els correus i revisa’n el text. <Where>Centre › Correu</Where></li>
+          </ol>
+          <Tip>L’apartat <b>Posada en marxa del curs</b> té aquests passos amb més detall i una llista de comprovació.</Tip>
+
+          <h3>2. Cada avaluació: una recollida d’Em miro</h3>
+          <ol className="guide-steps">
+            <li><b>Crea-la</b> unes setmanes abans a <Where>Em miro › Recollides › Nova recollida</Where>, amb el nom («2a avaluació»), els cursos i les dates. Queda <i>Programada</i>.</li>
+            <li><b>Avisa la tutoria</b> de les dates perquè reservi la sessió a l’aula.</li>
+            <li><b>Obre-la</b> el primer dia amb <b>Obre a l’alumnat</b>. A partir d’aquí, l’alumnat la veu a la seva pantalla d’inici.</li>
+            <li><b>Segueix la participació</b> al <Where>Tauler</Where>. Si cal més temps, <b>Canvia dates</b> indicant-ne el motiu.</li>
+            <li><b>Tanca-la</b> l’últim dia. Si s’ha tancat massa d’hora, <b>Reobre</b> amb el motiu.</li>
+            <li>Passa-la a <b>En revisió</b> perquè la tutoria llegeixi els informes, i després a <b>Informes generats</b> i <b>Validada</b>.</li>
+            <li><b>Lliura els informes</b>: els de paper, amb el PDF d’<Where>Així em veig i famílies</Where>; els de correu, amb <b>Prepara l’enviament</b>, una prova al teu compte i l’aprovació final (quan el servidor estigui connectat).</li>
+            <li>Marca-la com a <b>Distribuïda</b> i, al final del curs, <b>arxiva-la</b>.</li>
+          </ol>
+
+          <h3>3. Una o dues vegades l’any: una recollida d’Et veig…</h3>
+          <ol className="guide-steps">
+            <li>Comprova que <b>Qui fa classe a qui</b> és complet: en obrir la recollida, es congela.</li>
+            <li><b>Crea-la</b> a <Where>Et veig… › Recollides i moderació</Where>, amb les etapes i les dates, i <b>obre-la</b>.</li>
+            <li>Segueix-la amb el botó <b>Seguiment</b>: participació per grup i valoracions rebudes per docent. Recorda al professorat que faci la seva autoavaluació.</li>
+            <li><b>Tanca-la</b> i passa-la a <b>Moderació</b>. L’Equip Directiu revisa els comentaris.</li>
+            <li>L’Equip Directiu <b>genera els informes</b>, els revisa i els <b>publica</b> als docents. L’administració no en veu cap resultat.</li>
+            <li>Al final del curs, <b>arxiva-la</b>: servirà de comparació per a la recollida següent.</li>
+          </ol>
+
+          <h3>4. Durant tot el curs</h3>
+          <ul>
+            <li><b>Altes i baixes</b>: torna a importar el cens o retoca’l a <Where>Centre › Alumnat i accessos</Where>.</li>
+            <li><b>Incidències d’identitat</b>: quan un alumne d’ESO avisa que les seves dades no són correctes, surt un comptador al menú.</li>
+            <li><b>Dubtes</b>: consulta <b>Problemes freqüents</b>. Cada acció queda al <Where>Centre › Registre</Where>.</li>
+          </ul>
         </Sec>
 
         <Sec id="inici-curs">
@@ -431,6 +566,10 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           <dl className="guide-faq">
             <dt>Un alumne diu que no pot entrar.</dt>
             <dd>Comprova que entra amb el compte @ramonpont.cat i que consta al cens. Si veu «Encara no tens accés», no és al cens: afegeix-lo.</dd>
+            <dt>Com a tutor, no veig un dels meus grups.</dt>
+            <dd>L’administració ha d’afegir-te el grup a <b>Centre › Alumnat i accessos › Professorat i administració</b>.</dd>
+            <dt>Un alumne ha lliurat massa ràpid o vol canviar una resposta.</dt>
+            <dd>Mentre la recollida és oberta, pot tornar a entrar i clicar <b>Revisa les respostes</b>. Un cop tancada, ja no es pot canviar.</dd>
             <dt>Un alumne no troba la seva autoavaluació.</dt>
             <dd>La recollida del seu curs ha d’estar <b>Oberta</b> i l’apartat Em miro, actiu.</dd>
             <dt>A un alumne no li surt un docent a Et veig…, o li en surt un que no toca.</dt>
@@ -471,7 +610,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <dt>Registre</dt><dd>Llista inalterable de les operacions rellevants.</dd>
           </dl>
         </Sec>
-        <p className="guide-end muted">La teva veu · Escola Ramon Pont · Guia d’administració</p>
+        <p className="guide-end muted">La teva veu · Escola Ramon Pont · Guia del personal</p>
       </article>
     </div>
   )

@@ -865,6 +865,10 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .guide-card b { color: var(--c); font-size: 1.05rem; }
 .guide-card span { font-size: .82rem; font-weight: 800; color: var(--ink-3); }
 .guide-t td, .guide-t th { vertical-align: top; }
+.guide-start { display: grid; gap: .6rem; margin-bottom: 1.6rem; }
+.guide-start > b { font-size: 1.1rem; font-weight: 900; }
+button.guide-card { border-left: 0; border-right: 0; border-bottom: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; transition: box-shadow .15s, transform .15s; }
+button.guide-card:hover { box-shadow: var(--sh-2); transform: translateY(-1px); }
 .guide-check { display: grid; gap: .35rem; padding: .9rem 1rem; border: 2px dashed var(--line); border-radius: var(--r-m, 12px); }
 .guide-check label { display: flex; gap: .5rem; align-items: center; }
 .guide-faq dt, .guide-gloss dt { font-weight: 900; margin-top: .6rem; }

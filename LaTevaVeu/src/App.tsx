@@ -44,7 +44,7 @@ export default function App() {
   // Mode connectat: les dades arriben del servidor cada vegada que s'obre l'app (no es guarden al navegador).
   const [ready, setReady] = useState(() => !API_URL || !session || !!session.pending)
   const [toast, showToast] = useToast()
-  // La guia d'administració s'obre a …/#/guia.
+  // La guia del personal s'obre a …/#/guia.
   const [guide, setGuide] = useState(() => location.hash === '#/guia')
   // La presentació del projecte s'obre a …/#/projecte, sense haver d'entrar.
   const [about, setAbout] = useState(() => location.hash === '#/projecte')
@@ -56,7 +56,8 @@ export default function App() {
     window.addEventListener('hashchange', on)
     return () => window.removeEventListener('hashchange', on)
   }, [])
-  const canGuide = !!session && !session.pending && (session.role === 'admin' || !!session.direction)
+  // Tot el personal hi té accés: hi ha un recorregut per a la tutoria i un per a l'administració.
+  const canGuide = !!session && !session.pending && session.role !== 'student'
   const showGuide = guide && canGuide
 
   useEffect(() => {
@@ -166,7 +167,7 @@ export default function App() {
             </button>
           )}
           {canGuide && (
-            <button className={`btn small${showGuide ? ' primary' : ''}`} onClick={() => (location.hash = showGuide ? '' : '#/guia')} title="Guia d’administració">
+            <button className={`btn small${showGuide ? ' primary' : ''}`} onClick={() => (location.hash = showGuide ? '' : '#/guia')} title="Guia de l’app, pas a pas">
               <Icon name="book" /> <span className="guide-btn-text">Guia</span>
             </button>
           )}
