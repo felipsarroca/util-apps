@@ -36,3 +36,6 @@ preview-*.png
 *.gdoc
 *.gslides
 *.tmp
+
+# Fitxers de bloqueig d'Office
+~$*

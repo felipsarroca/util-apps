@@ -114,55 +114,52 @@ Criteris per revisar:
 
 **Escala:** Mai · De vegades · Sovint · Sempre · i «No ho puc valorar».
 
-**18 afirmacions** en 6 dimensions.
+**20 afirmacions** en 5 dimensions.
 
-### 💡 Claredat i explicacions
-
-| # | Alumnat | Docent (autoavaluació) | S’entén | Mantenir | Proposta |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Entenc què hem d’aprendre i què s’espera de mi. | Deixo clar què han d’aprendre i què espero de l’alumnat. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 2 | Les explicacions i els exemples m’ajuden a entendre. | Les meves explicacions i exemples ajuden a entendre. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 3 | Quan no ho entenem, ho torna a explicar d’una altra manera. | Quan no ho entenen, ho torno a explicar d’una altra manera. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-
-### 🗂️ Organització
+### 💡 Explicacions i domini
 
 | # | Alumnat | Docent (autoavaluació) | S’entén | Mantenir | Proposta |
 | --- | --- | --- | --- | --- | --- |
-| 4 | Les classes estan ben organitzades i s’aprofita el temps. | Les meves classes estan ben organitzades i s’aprofita el temps. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 5 | Sé quines tasques he de fer i quan les he de lliurar. | L’alumnat sap quines tasques ha de fer i quan les ha de lliurar. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 6 | Les activitats tenen relació amb el que hem d’aprendre. | Les activitats tenen relació amb el que han d’aprendre. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 1 | Les seves explicacions són entenedores. | Les meves explicacions són entenedores. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 2 | Es preocupa perquè s’entenguin els conceptes. | Em preocupo perquè s’entenguin els conceptes. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 3 | Procura resoldre tots els dubtes. | Procuro resoldre tots els dubtes. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 4 | Sembla dominar la matèria que imparteix. | Domino la matèria que imparteixo. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
 
-### 📝 Avaluació i retorn
-
-| # | Alumnat | Docent (autoavaluació) | S’entén | Mantenir | Proposta |
-| --- | --- | --- | --- | --- | --- |
-| 7 | Sé com se’m valorarà abans d’una prova o d’una feina. | Explico com valoraré una prova o una feina abans de fer-la. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 8 | Els comentaris que rebo m’ajuden a millorar. | Els meus comentaris ajuden l’alumnat a millorar. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 9 | Les correccions arriben a temps perquè em siguin útils. | Les meves correccions arriben a temps perquè siguin útils. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-
-### 🤝 Ambient i respecte
+### ✨ Interès i motivació
 
 | # | Alumnat | Docent (autoavaluació) | S’entén | Mantenir | Proposta |
 | --- | --- | --- | --- | --- | --- |
-| 10 | A classe puc aprendre en un ambient respectuós. | A les meves classes es pot aprendre en un ambient respectuós. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 11 | Em tracta amb respecte. | Tracto l’alumnat amb respecte. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 12 | Les normes són clares i valen igual per a tothom. | Les normes són clares i les aplico igual per a tothom. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 5 | Les seves classes són entretingudes. | Les meves classes són entretingudes. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 6 | Sap captar l’atenció de la classe. | Sé captar l’atenció de la classe. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 7 | Motiva a estudiar. | Motivo a estudiar. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 8 | Els seus comentaris fan pensar. | Els meus comentaris fan pensar. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
 
-### 🤲 Suport
-
-| # | Alumnat | Docent (autoavaluació) | S’entén | Mantenir | Proposta |
-| --- | --- | --- | --- | --- | --- |
-| 13 | Quan tinc dubtes, puc demanar ajuda. | Quan tenen dubtes, l’alumnat em pot demanar ajuda. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 14 | Té en compte que no tots aprenem al mateix ritme. | Tinc en compte que no tothom aprèn al mateix ritme. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 15 | Noto que li importa que aprengui. | L’alumnat nota que m’importa que aprengui. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-
-### ✨ Participació i motivació
+### 🤝 Respecte i ambient
 
 | # | Alumnat | Docent (autoavaluació) | S’entén | Mantenir | Proposta |
 | --- | --- | --- | --- | --- | --- |
-| 16 | Tinc oportunitats de participar i de fer preguntes. | L’alumnat té oportunitats de participar i de fer preguntes. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 17 | Les seves classes em desperten interès. | Les meves classes desperten interès. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
-| 18 | Em sento capaç d’aprendre a les seves classes. | L’alumnat se sent capaç d’aprendre a les meves classes. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 9 | Es mostra pacient. | Em mostro pacient. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 10 | Tracta els alumnes amb respecte. | Tracto els alumnes amb respecte. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 11 | Escolta els alumnes. | Escolto els alumnes. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 12 | A les seves classes hi ha un ambient ordenat que permet escoltar i treballar. | A les meves classes hi ha un ambient ordenat que permet escoltar i treballar. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+
+### 📝 Avaluació i progrés
+
+| # | Alumnat | Docent (autoavaluació) | S’entén | Mantenir | Proposta |
+| --- | --- | --- | --- | --- | --- |
+| 13 | Retorna corregits els treballs i els exàmens en poc temps. | Retorno corregits els treballs i els exàmens en poc temps. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 14 | Té en compte el progrés de cadascú. | Tinc en compte el progrés de cadascú. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 15 | Deixa clars els criteris d’avaluació. | Deixo clars els criteris d’avaluació. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+
+### 🌟 Actitud i exemple
+
+| # | Alumnat | Docent (autoavaluació) | S’entén | Mantenir | Proposta |
+| --- | --- | --- | --- | --- | --- |
+| 16 | Es veu que li agrada el que fa. | Es veu que m’agrada el que faig. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 17 | Admet els seus errors. | Admeto els meus errors. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 18 | Deixa clar quan el que diu és la seva opinió. | Deixo clar quan el que dic és la meva opinió. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 19 | Somriu freqüentment. | Somric freqüentment. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
+| 20 | Arriba a classe amb energia i actitud positiva. | Arribo a classe amb energia i actitud positiva. | ☐ Sí ☐ No | ☐ Sí ☐ No | |
 
 ### 💬 Preguntes obertes (opcionals)
 

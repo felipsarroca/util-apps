@@ -33,7 +33,7 @@ export interface DemoState {
   selfAssessments: SelfAssessment[]
 }
 
-export const DEMO_VERSION = 5
+export const DEMO_VERSION = 6
 
 const FIRST = ['Pau', 'Laia', 'Marc', 'Júlia', 'Arnau', 'Aina', 'Pol', 'Martina', 'Biel', 'Ona', 'Jan', 'Clàudia', 'Nil', 'Èlia', 'Roc', 'Mariona', 'Iu', 'Abril', 'Quim', 'Noa', 'Àlex', 'Txell', 'Oriol', 'Fatima', 'Yusuf', 'Ainhoa', 'Lucas', 'Mei', 'Hugo', 'Zoe']
 const LAST = ['Serra', 'Puig', 'Vidal', 'Soler', 'Ferrer', 'Roca', 'Font', 'Casals', 'Pujol', 'Riera', 'Camps', 'Bosch', 'Mas', 'Sala', 'Prat', 'Valls', 'Coll', 'Duran', 'Badia', 'Costa', 'El Amrani', 'Lin', 'Pérez', 'Torrent']
@@ -288,7 +288,7 @@ const stableRng = (seed: string) => {
 
 function feedbackDemo(r: () => number, students: Student[], staff: StaffMember[], assignments: TeachingAssignment[], gradeSubjects: GradeSubject[]) {
   const forms = INITIAL_FEEDBACK_FORMS
-  const formIds = { CM: 'fb-cm-v1', CS: 'fb-cs-v1', ESO: 'fb-eso-v1' }
+  const formIds = { CM: 'fb-cm-v1', CS: 'fb-cs-v1', ESO: 'fb-eso-v2' }
   const teachers = [...new Set(assignments.map((a) => a.teacherEmail))]
   const prev: FeedbackCampaign = { id: 'FV-2526-MAIG', year: '2025-2026', label: 'Recollida de maig', stages: ['CM', 'CS', 'ESO'], start: '2026-05-11', end: '2026-05-22', status: 'PUBLICADA', formIds, assignments, teachers }
   const cur: FeedbackCampaign = { id: 'FV-2627-TARDOR', year: '2026-2027', label: 'Recollida de tardor', stages: ['CM', 'CS', 'ESO'], start: '2026-10-26', end: '2026-11-20', status: 'OBERTA', formIds, assignments, teachers }
@@ -297,7 +297,7 @@ function feedbackDemo(r: () => number, students: Student[], staff: StaffMember[]
   const profile = (email: string, dim: string, campaignId: string) => {
     let base = 0.5 + stableRng(email + dim)() * 0.4
     if (email.startsWith('tutoria.2eso') && dim === 'aval') base = 0.42 // punt cec per a la demostració
-    if (email.startsWith('tutoria.2eso') && dim === 'sup') base = 0.8 // fortalesa oculta
+    if (email.startsWith('tutoria.2eso') && (dim === 'sup' || dim === 'act')) base = 0.8 // fortalesa oculta
     return Math.min(0.95, base + (campaignId === cur.id ? 0.03 : 0))
   }
   const names = [...new Set([...students.map((s) => s.name), ...staff.map((s) => s.name.split(' ')[0])])]

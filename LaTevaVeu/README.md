@@ -42,7 +42,7 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`) i es
 
 **Et veig: alumnat**
 - Llista dels seus docents (també especialistes), en ordre aleatori estable; cada docent es valora una sola vegada per recollida, no per matèria.
-- Preguntes per etapa: cicle mitjà (6 afirmacions, una per pantalla, escala de cares), cicle superior (12) i ESO (18), agrupades en dimensions. Sempre hi ha l'opció «No ho sé / No ho puc valorar».
+- Preguntes per etapa: cicle mitjà (6 afirmacions, una per pantalla, escala de cares), cicle superior (12) i ESO (20 ítems proposats per Felip Sarroca, en cinc blocs: explicacions i domini, interès i motivació, respecte i ambient, avaluació i progrés, actitud i exemple). Sempre hi ha l'opció «No ho sé / No ho puc valorar».
 - Comentaris opcionals, confirmació abans de lliurar; un cop lliurat no es pot canviar.
 
 **Et veig: professorat i Equip Directiu**
