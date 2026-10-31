@@ -4,7 +4,7 @@
 import { useMemo, type ReactNode } from 'react'
 import { SCHOOL, STAGES } from '../domain/catalog'
 import { groupNameOfKey } from '../domain/groups'
-import { nearestLabel, QUADRANTS, THRESHOLD, type CenterStage, type Dist, type Quadrant, type StageReport, type TeacherReport } from '../domain/feedback'
+import { itemExtremes, nearestLabel, QUADRANTS, THRESHOLD, type CenterStage, type Dist, type Quadrant, type StageReport, type TeacherReport } from '../domain/feedback'
 import { CONTEXT_TAGS, type FeedbackCampaign, type Scale } from '../domain/types'
 import { asset } from '../ui/common'
 import { PagedDoc, type Block } from './Report'
@@ -506,6 +506,23 @@ export function CenterReportPages({ view, campaign }: { view: CenterStage[]; cam
           </div>
         ),
       })
+      const ex = itemExtremes(v)
+      if (ex.best.length)
+        out.push({
+          id: `${v.stage}-items`,
+          node: (
+            <div className="fb-quads">
+              <div className="fb-quad q-confirmades">
+                <b>Afirmacions més ben valorades</b>
+                {ex.best.map((x) => <span key={x.item.id}>{x.item.student} ({pct(x.dist.fav)})</span>)}
+              </div>
+              <div className="fb-quad q-reptes">
+                <b>Afirmacions amb més marge de millora</b>
+                {ex.worst.map((x) => <span key={x.item.id}>{x.item.student} ({pct(x.dist.fav)})</span>)}
+              </div>
+            </div>
+          ),
+        })
       out.push({
         id: `${v.stage}-heat`,
         node: (

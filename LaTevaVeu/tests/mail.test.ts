@@ -52,9 +52,23 @@ describe('correu: format', () => {
     expect(m.html).toContain('<ul')
     expect(m.html).toContain('border-left:4px solid')
   })
-  it('l’avís al professorat no adjunta res i porta l’enllaç', () => {
-    const m = renderMail('teachers', DEFAULT_MAIL, { docent: 'Marta', recollida: 'Recollida de tardor', enllac: 'https://ja.cat/tensveu' })
+  it('el lliurament al professorat adjunta el seu informe, és amable i porta l’enllaç', () => {
+    const m = renderMail('teachers', DEFAULT_MAIL, { docent: 'Marta', docent_complet: 'Marta Ribas', etapes: 'cicle superior i ESO', recollida: 'Recollida de tardor', curs_escolar: '2026-2027', enllac: 'https://ja.cat/tensveu' })
+    expect(m.subject).toBe('«Així et veiem» · Recollida de tardor')
+    expect(m.text).toContain('Hola, Marta')
+    expect(m.text).toContain('els alumnes de cicle superior i ESO')
+    expect(m.text).toContain('fortaleses')
+    expect(m.text).not.toMatch(/\{\w+\}/)
     expect(m.html).toContain('<a href="https://ja.cat/tensveu"')
-    expect(m.html).not.toContain('adjunt en PDF')
+    expect(m.html).toContain('adjunt en PDF')
+    expect(m.attachment).toBe('Així et veiem – Marta Ribas – Recollida de tardor.pdf')
+  })
+  it('el text antic de l’avís al professorat (sense adjunt) es canvia pel nou; un text propi es respecta', () => {
+    const old = 'Hola, {docent},\n\nJa tens disponible el teu informe «Així et veiem» de la {recollida}. Recull, de manera anònima i agregada, com viu les teves classes l’alumnat.\n\nEl trobaràs a La teva veu, a «Et veig… › Així et veiem»:\n{enllac}\n\n> L’informe és confidencial: només el podeu veure tu i l’Equip Directiu. Per això no s’adjunta al correu.\n\nEt proposem que el llegeixis amb calma i que hi busquis una o dues idees per continuar millorant.\n\nUna salutació cordial,\n{escola}'
+    expect(cleanMail({ teachers: { subject: 'x', body: old } }).teachers).toEqual({ subject: 'x', body: DEFAULT_MAIL.teachers.body })
+    expect(cleanMail({ teachers: { subject: 'x', body: 'Hola, {docent}.' } }).teachers.body).toBe('Hola, {docent}.')
+  })
+  it('el nom de l’adjunt de les famílies porta l’alumne i no té caràcters prohibits', () => {
+    expect(renderMail('families', DEFAULT_MAIL, { ...vars, alumne_complet: 'Laia Puig/Soler' }).attachment).toBe('Així em veig – Laia Puig-Soler.pdf')
   })
 })

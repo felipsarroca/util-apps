@@ -1,7 +1,7 @@
 // Proves d'«Et veig» (criteris d'acceptació del pla mestre v2, §10).
 import { describe, expect, it } from 'vitest'
 import { createDemoState } from '../src/data/seed'
-import { buildCenterView, buildTeacherReport, distOf, flagComment, groupComments, quadrantOf, stableShuffle, teachersForStudent, THRESHOLD } from '../src/domain/feedback'
+import { buildCenterView, buildTeacherReport, distOf, flagComment, groupComments, itemExtremes, quadrantOf, stableShuffle, teachersForStudent, THRESHOLD } from '../src/domain/feedback'
 import { parseAssignmentsCsv } from '../src/domain/csv'
 import { INITIAL_FEEDBACK_FORMS, validateFeedbackForm } from '../src/domain/feedbackForms'
 import type { Session } from '../src/domain/types'
@@ -135,6 +135,20 @@ describe('Et veig: informes i permisos', () => {
     const jv = centre.find((v) => v.stage === 'ESO')!.teachers.find((t) => t.email === 'jaume.valls@ramonpont.cat')!
     expect(jv.suppressed).toBe(true)
     expect(jv.fav).toEqual({})
+  })
+  it('la visió de centre dona les afirmacions més ben valorades i les que tenen més marge de millora de cada etapa', () => {
+    const st = createDemoState()
+    const eso = buildCenterView(st, st.scales, 'FV-2526-MAIG').find((v) => v.stage === 'ESO')!
+    expect(eso.items.length).toBe(eso.form.items.length)
+    const { best, worst } = itemExtremes(eso)
+    expect(best.length).toBe(3)
+    expect(worst.length).toBe(3)
+    expect(best[0].dist.fav).toBeGreaterThanOrEqual(best[2].dist.fav)
+    expect(worst[0].dist.fav).toBeLessThanOrEqual(worst[2].dist.fav)
+    expect(best[2].dist.fav).toBeGreaterThanOrEqual(worst[2].dist.fav)
+    expect(best.some((b) => worst.some((w) => w.item.id === b.item.id))).toBe(false)
+    // Sense prou respostes a l'etapa, no se'n dona cap.
+    expect(itemExtremes({ items: [] })).toEqual({ best: [], worst: [] })
   })
   it('l’informe es genera sense autoavaluació (criteri 6) i un docent de dues etapes té dos blocs (criteri 7)', () => {
     const st = createDemoState()

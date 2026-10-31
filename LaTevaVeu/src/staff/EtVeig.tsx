@@ -7,7 +7,7 @@ import {
 } from '../data/api'
 import { GRADES, STAGES } from '../domain/catalog'
 import { groupName, groupNameOfKey } from '../domain/groups'
-import { eligibleStudents, groupKey, stageOfGrade, stagesOfTeacher, teachersForStudent, THRESHOLD } from '../domain/feedback'
+import { eligibleStudents, groupKey, itemExtremes, stageOfGrade, stagesOfTeacher, teachersForStudent, THRESHOLD } from '../domain/feedback'
 import type { TeacherReport } from '../domain/feedback'
 import { CONTEXT_TAGS, type Answers, type FeedbackCampaign, type FeedbackStatus, type SelfTask, type Session, type StageId } from '../domain/types'
 import { BarLegend, CenterReportPages, DistBar, FeedbackReportPages, heat } from '../report/FeedbackReport'
@@ -16,6 +16,7 @@ import { SegScale } from '../student/Questions'
 import { TeacherAvatar } from '../student/EtVeig'
 import { fmtDate, Icon, Modal, useToast } from '../ui/common'
 import { PageHead } from './StaffApp'
+import { TeacherDelivery } from './Delivery'
 import { PrintPortal } from './shared'
 
 export const FB_LABEL: Record<FeedbackStatus, string> = {
@@ -372,6 +373,7 @@ export function CenterScreen({ session }: { session: Session }) {
 
       {view.map((v) => {
         const sorted = [...v.dims].filter((d) => d.dist.valid).sort((a, b) => b.dist.fav - a.dist.fav)
+        const ex = itemExtremes(v)
         return (
           <section key={v.stage} className="card panel">
             <div className="row">
@@ -405,6 +407,22 @@ export function CenterScreen({ session }: { session: Session }) {
                 </div>
               </div>
             </div>
+            {ex.best.length > 0 && (
+              <div className="grid-2 center-items">
+                {([['ok', 'Afirmacions més ben valorades', ex.best], ['warn', 'Afirmacions amb més marge de millora', ex.worst]] as const).map(([tone, title, list]) => (
+                  <div key={tone} className={`sw ${tone}`}>
+                    <b>{title}</b>
+                    {list.map((x) => (
+                      <div key={x.item.id} className="center-item">
+                        <span>{x.item.student}</span>
+                        <DistBar dist={x.dist} scale={v.scale} />
+                        <b>{pct(x.dist.fav)}</b>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="table-wrap">
               <table className="t heat">
                 <thead>
@@ -483,8 +501,10 @@ function teacherRows(s: ReturnType<typeof useDemoState>, c: FeedbackCampaign) {
 
 // ---------- Seguiment del professorat (Equip Directiu) ----------
 
-export function TeachersScreen({ session }: { session: Session }) {
+export function TeachersScreen({ session, onEditMail }: { session: Session; onEditMail?: () => void }) {
   const s = useDemoState()
+  const [sel, setSel] = useState<Set<string>>(new Set())
+  const [delivering, setDelivering] = useState(false)
   const campaigns = s.feedbackCampaigns.filter((c) => !['ESBORRANY', 'PROGRAMADA'].includes(c.status)).sort((a, b) => (a.start < b.start ? 1 : -1))
   const [cid, setCid] = useState(campaigns[0]?.id ?? '')
   const [onlyPending, setOnlyPending] = useState(false)
@@ -521,6 +541,9 @@ export function TeachersScreen({ session }: { session: Session }) {
         </select>
         <button className="btn primary ev" disabled={!visible || !reportable.length} onClick={printAll} title={visible ? undefined : 'Disponible quan es generin els informes'}>
           <Icon name="print" /> Tots els informes en PDF
+        </button>
+        <button className="btn gold" disabled={!visible || !sel.size} onClick={() => setDelivering(true)} title={visible ? 'Tria els docents a la taula' : 'Disponible quan es generin els informes'}>
+          <Icon name="mail" /> Lliura per correu ({sel.size})
         </button>
       </PageHead>
       <div className="kpis">
@@ -566,6 +589,7 @@ export function TeachersScreen({ session }: { session: Session }) {
         <table className="t">
           <thead>
             <tr>
+              {visible && <th className="pick"><input type="checkbox" aria-label="Selecciona tots els docents" checked={sel.size > 0 && sel.size === rows.length} onChange={(e) => setSel(e.target.checked ? new Set(rows.map((t) => t.email)) : new Set())} /></th>}
               <th>Docent</th>
               <th>Etapes</th>
               <th className="num">Valoracions</th>
@@ -576,7 +600,8 @@ export function TeachersScreen({ session }: { session: Session }) {
           </thead>
           <tbody>
             {shown.map((t) => (
-              <tr key={t.email}>
+              <tr key={t.email} className={sel.has(t.email) ? 'picked' : undefined}>
+                {visible && <td className="pick"><input type="checkbox" aria-label={`Selecciona ${t.name}`} checked={sel.has(t.email)} onChange={(e) => setSel((p) => { const n = new Set(p); if (e.target.checked) n.add(t.email); else n.delete(t.email); return n })} /></td>}
                 <td><b>{t.name}</b><br /><small className="muted">{t.email}</small></td>
                 <td>{t.stages.map((st) => STAGES[st].short).join(' · ')}</td>
                 <td className="num">{t.n} / {t.eligible}</td>
@@ -601,6 +626,20 @@ export function TeachersScreen({ session }: { session: Session }) {
         <PrintPortal onDone={() => setBatch(null)}>
           {batch.map((r) => <FeedbackReportPages key={r.teacher.email} report={r} />)}
         </PrintPortal>
+      )}
+      {delivering && (
+        <TeacherDelivery
+          campaign={c}
+          rows={rows.filter((t) => sel.has(t.email))}
+          mail={s.mail}
+          loadReports={async (emails) => emails.map((e) => {
+            logReportView(session, c.id, e, 'Descàrrega')
+            return teacherReport(session, c.id, e)
+          })}
+          canEdit={session.role === 'admin' && !!onEditMail}
+          onEdit={() => onEditMail?.()}
+          onClose={() => setDelivering(false)}
+        />
       )}
       {toast}
     </>

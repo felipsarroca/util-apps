@@ -298,6 +298,8 @@ export interface CenterStage {
   form: FeedbackForm
   scale: Scale
   dims: { dim: FeedbackDimension; dist: Dist; prevFav?: number }[]
+  /** Cada afirmació del qüestionari amb totes les respostes de l'etapa (buit per sota del llindar). */
+  items: { item: FeedbackItem; dist: Dist }[]
   teachers: { email: string; name: string; n: number; suppressed: boolean; fav: Record<string, number>; self: boolean }[]
   students: number
   participants: number
@@ -322,6 +324,7 @@ export function buildCenterView(d: FeedbackData, scales: Scale[], campaignId: st
       const pd = prevForm && prevAnswers.length >= THRESHOLD ? distOf(valuesFor(prevAnswers, prevForm, prevForm.items.filter((i) => i.dimensionId === dim.id)), nOpt) : undefined
       return { dim, dist, prevFav: pd?.valid ? pd.fav : undefined }
     })
+    const items = form.items.map((item) => ({ item, dist: distOf(valuesFor(answers, form, [item]), nOpt) }))
     const emails = [...new Set(c.assignments.filter((a) => stageOfGrade(a.gradeId) === stage && c.teachers.includes(a.teacherEmail)).map((a) => a.teacherEmail))]
     const teachers = emails
       .map((email) => {
@@ -339,11 +342,22 @@ export function buildCenterView(d: FeedbackData, scales: Scale[], campaignId: st
       {
         stage, form, scale, students: studs.length, participants, n: answers.length,
         dims: stageSuppressed ? dims.map((x) => ({ ...x, dist: emptyDist(nOpt), prevFav: undefined })) : dims,
+        items: stageSuppressed ? [] : items,
         // Els docents per sota del llindar no porten cap resultat.
         teachers: teachers.map((t) => (t.suppressed ? { ...t, fav: {} } : t)),
       },
     ]
   })
+}
+
+/**
+ * Afirmacions més ben valorades i amb més marge de millora d'una etapa, per percentatge favorable.
+ * Si n'hi ha poques, les dues llistes no es repeteixen.
+ */
+export function itemExtremes(v: Pick<CenterStage, 'items'>, n = 3) {
+  const sorted = (v.items ?? []).filter((x) => x.dist.valid).sort((a, b) => b.dist.fav - a.dist.fav)
+  const k = Math.min(n, Math.floor(sorted.length / 2))
+  return { best: sorted.slice(0, k), worst: sorted.slice(sorted.length - k).reverse() }
 }
 
 // ---------- Moderació dels comentaris ----------

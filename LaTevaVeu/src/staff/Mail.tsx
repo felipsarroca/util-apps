@@ -19,7 +19,7 @@ export function MailScreen({ session }: { session: Session }) {
   const tpl = draft[kind]
   const setTpl = (patch: Partial<MailSettings[MailKind]>) => setDraft((d) => ({ ...d, [kind]: { ...d[kind], ...patch } }))
   const preview = renderMail(kind, cleanMail(draft), exampleVars(kind))
-  const replyTo = draft.replyTo === 'tutor' ? (kind === 'families' ? 'el tutor o tutora del grup' : 'cap: missatge informatiu') : draft.replyToEmail || '—'
+  const replyTo = draft.replyTo === 'tutor' ? (kind === 'families' ? 'el tutor o tutora del grup' : 'el compte que envia') : draft.replyToEmail || '—'
 
   // Insereix el marcador on hi ha el cursor del text.
   const insert = (key: string) => {
@@ -153,12 +153,8 @@ export function MailScreen({ session }: { session: Session }) {
             <dd>{replyTo}</dd>
             <dt>Assumpte</dt>
             <dd><b>{preview.subject}</b></dd>
-            {MAIL_KINDS[kind].attachment && (
-              <>
-                <dt>Adjunt</dt>
-                <dd><Icon name="file" /> Així em veig – Laia Puig Soler.pdf</dd>
-              </>
-            )}
+            <dt>Adjunt</dt>
+            <dd><Icon name="file" /> {preview.attachment}</dd>
           </dl>
           <iframe className="mail-frame" title="Previsualització del correu" sandbox="" srcDoc={`<!doctype html><meta charset="utf-8"><body style="margin:0">${preview.html}</body>`} />
           <small className="muted">Amb dades d’exemple. Cada missatge es personalitza amb les dades reals.</small>

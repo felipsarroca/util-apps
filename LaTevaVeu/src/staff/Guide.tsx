@@ -236,8 +236,8 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>Ves a <Where>Així em veig i famílies</Where> i tria la recollida.</li>
             <li>Obre l’informe de cada alumne amb <b>Veure</b> i llegeix-lo. Si hi ha alguna cosa que t’hagi de fer parlar amb l’alumne o la família, aquest és el moment.</li>
             <li>Marca la casella <b>Canal</b> dels alumnes que no han de rebre l’informe per correu (per exemple, perquè l’hi vols lliurar en mà).</li>
-            <li>Per lliurar-los en paper: <b>PDF dels que no tenen correu</b>, o selecciona alumnes i clica <b>PDF únic dels seleccionats</b>. Activa <b>Doble cara</b> si imprimeixes a dues cares.</li>
-            <li>Amb <b>Prepara l’enviament</b> comproves qui rebrà cada informe, des de quin compte s’enviarà i amb quin assumpte. Res no s’envia fins a l’aprovació final.</li>
+            <li>Per lliurar-los en paper: <b>En paper</b> mostra els alumnes que no rebran l’informe per correu (sense correu, correu pendent de validar o no vàlid, o marcats «Paper»). Tria’ls un per un o tots alhora i clica <b>Desa en PDF</b> o <b>Imprimeix</b>. Activa <b>Doble cara</b> si imprimeixes a dues cares.</li>
+            <li>Amb <b>Prepara l’enviament</b> comproves qui rebrà cada informe i veus el correu tal com arribarà a cada família. Els que no es poden enviar surten sols a la llista <b>No s’enviaran per correu</b>, per desar-los o imprimir-los al moment. Res no s’envia fins a l’aprovació final.</li>
           </ol>
 
           <h3>5. Amb la família</h3>
@@ -463,7 +463,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li><b>Previsualitza</b> l’informe de cada alumne amb <b>Veure</b>.</li>
             <li><b>Selecciona les lliurades</b> per triar de cop tots els alumnes que han acabat.</li>
             <li><b>PDF únic dels seleccionats</b> genera un sol document per imprimir. Amb <b>Doble cara</b>, cada informe comença en una cara nova.</li>
-            <li><b>PDF dels que no tenen correu</b> prepara directament els informes que s’han de lliurar en paper.</li>
+            <li><b>En paper</b> llista els informes que no s’enviaran per correu, amb el motiu, per desar-los en PDF o imprimir-los (tots o només els que triïs).</li>
             <li>La casella <b>Canal</b> marca un alumne com a «no enviar per correu»: el seu informe es lliurarà en paper.</li>
             <li><b>Prepara l’enviament</b> (només amb la recollida tancada) mostra exactament qui rebrà cada informe abans d’enviar res.</li>
           </ol>
@@ -536,12 +536,12 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           </ul>
           <h3>Qui ho veu i quan</h3>
           <ul>
-            <li><b>Equip Directiu</b>: tots els informes a partir de «Informes generats». <Where>Et veig… › Professorat</Where> té el botó <b>Informe</b> de cada docent (per llegir-lo, imprimir-lo o desar-lo en PDF i parlar-ne amb ell) i <b>Tots els informes en PDF</b>, que en genera un sol document. També es poden obrir des de la visió de centre i des d’Així et veiem. Cada consulta o descàrrega de l’informe d’un altre docent queda registrada.</li>
+            <li><b>Equip Directiu</b>: tots els informes a partir de «Informes generats». <Where>Et veig… › Professorat</Where> té el botó <b>Informe</b> de cada docent (per llegir-lo, imprimir-lo o desar-lo en PDF i parlar-ne amb ell) i <b>Tots els informes en PDF</b>, que en genera un sol document. Per enviar a cada docent el seu informe per correu, marca’ls a la taula i clica <b>Lliura per correu</b>: hi veuràs el missatge personal de cada docent, amb l’informe adjunt, i els que no es poden enviar per desar-los o imprimir-los. Cal haver publicat la recollida. El text del missatge l’edita l’administració a <Where>Centre › Correu › Professorat</Where>. També es poden obrir des de la visió de centre i des d’Així et veiem. Cada consulta o descàrrega de l’informe d’un altre docent queda registrada.</li>
             <li><b>Cada docent</b>: només el seu, a partir de «Publicada».</li>
             <li><b>Administració</b>: cap resultat, si no forma part de l’Equip Directiu.</li>
           </ul>
           <h3>Visió de centre</h3>
-          <p>Només per a l’Equip Directiu. Mostra la participació per etapa, les autoavaluacions fetes, les fortaleses i els reptes de cada etapa i una taula de docents ordenada alfabèticament, amb el percentatge favorable per bloc. <b>No hi ha rànquings ni notes úniques.</b> La variació respecte de la recollida anterior es mostra en punts. Es pot imprimir o desar en PDF.</p>
+          <p>Només per a l’Equip Directiu. Mostra la participació per etapa, les autoavaluacions fetes, les fortaleses i els reptes de cada etapa, les tres afirmacions més ben valorades i les tres amb més marge de millora, i una taula de docents ordenada alfabèticament, amb el percentatge favorable per bloc. <b>No hi ha rànquings ni notes úniques.</b> La variació respecte de la recollida anterior es mostra en punts. Es pot imprimir o desar en PDF.</p>
           <Warn>Els resultats són un retorn per reflexionar i millorar, no una avaluació del docent. Comparteix-los amb aquest sentit.</Warn>
         </Sec>
 

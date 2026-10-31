@@ -575,6 +575,10 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .sw b { font-weight: 900; }
 .sw.ok { background: var(--ok-soft); color: #134d31; }
 .sw.warn { background: var(--warn-soft); color: #6b3f00; }
+.center-items { margin-top: .2rem; }
+.center-item { display: grid; grid-template-columns: 1fr minmax(90px, 30%) 3rem; gap: .6rem; align-items: center; font-size: .9rem; }
+.center-item > b { text-align: right; }
+@media (max-width: 640px) { .center-item { grid-template-columns: 1fr 3rem; } .center-item .fb-bar { display: none; } }
 .t.heat td.heat-cell { font-weight: 800; color: #1f2430; }
 .mod-list { display: grid; gap: .6rem; }
 .mod-item { display: grid; gap: .45rem; padding: .75rem .9rem; border: 1.5px solid var(--line); border-radius: var(--r-m); background: var(--card); }
@@ -1020,3 +1024,15 @@ button.guide-card:hover { box-shadow: var(--sh-2); transform: translateY(-1px); 
 .ck-sheet table { border-collapse: collapse; width: 100%; font-size: .85rem; }
 .ck-sheet td { padding: .35rem .6rem; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); white-space: nowrap; }
 .ck-sheet td.hd { background: var(--bg); font-weight: 800; }
+
+/* ---------- Lliurament d'informes ---------- */
+.mail-preview { display: grid; gap: .6rem; align-content: start; }
+.mail-preview .mail-frame { height: 460px; }
+.delivery-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1rem; }
+@media (max-width: 820px) { .delivery-grid { grid-template-columns: 1fr; } }
+.paper-list { display: grid; gap: .6rem; padding: .9rem 1rem; border: 1.5px dashed var(--line-2); border-radius: var(--r-m); background: var(--bg); }
+.paper-list h3 { display: flex; align-items: center; gap: .45rem; margin: 0; font-size: 1.02rem; font-weight: 900; }
+.paper-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; max-height: 260px; overflow: auto; }
+.paper-list li { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .3rem .5rem; border-radius: var(--r-s); background: var(--card); }
+.paper-list li .check { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.paper-list li .badge { flex: none; }

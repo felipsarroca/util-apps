@@ -1,6 +1,7 @@
 // Personal en mode connectat: recollides d'«Et veig…», autoavaluació docent, moderació i informes,
 // servits per les rutes confidencials del servidor (server/etveig.ts).
 import { useState } from 'react'
+import { useDemoState } from '../data/api'
 import { whenSynced, fetchCampaigns, fetchCenter, fetchComments, fetchReport, fetchSelfTasks, fetchTeacherStatus, postModeration, postStatus, putSelf, useRemote, type RemoteCampaign, type RemoteComment } from '../data/remote'
 import { THRESHOLD, type TeacherReport } from '../domain/feedback'
 import { STAGES } from '../domain/catalog'
@@ -9,6 +10,7 @@ import { CenterReportPages, FeedbackReportPages } from '../report/FeedbackReport
 import { SheetViewer } from '../report/Report'
 import { fmtDate, Icon, Modal, useToast } from '../ui/common'
 import { FB_LABEL, FB_TONE, NewFeedbackCampaign, NEXT, SelfAssessView } from './EtVeig'
+import { TeacherDelivery } from './Delivery'
 import { PrintPortal } from './shared'
 import { PageHead } from './StaffApp'
 
@@ -22,7 +24,7 @@ type Screen = { kind: 'list' } | { kind: 'self' } | { kind: 'moderate'; c: Remot
  * «Et veig…» en mode connectat. Les respostes són confidencials: el servidor només en torna agregats
  * i informes, per això aquestes pantalles no fan servir l'estat compartit de la resta de l'app.
  */
-export function RemoteEtVeig({ session, view }: { session: Session; view: 'list' | 'self' }) {
+export function RemoteEtVeig({ session, view, onEditMail }: { session: Session; view: 'list' | 'self'; onEditMail?: () => void }) {
   const [screen, setScreen] = useState<Screen>({ kind: view })
   const [last, setLast] = useState(view)
   if (last !== view) {
@@ -37,7 +39,7 @@ export function RemoteEtVeig({ session, view }: { session: Session; view: 'list'
       {screen.kind === 'moderate' && <Moderation c={screen.c} onBack={back} />}
       {screen.kind === 'report' && <Report c={screen.c} teacher={screen.teacher} onBack={back} />}
       {screen.kind === 'center' && <Center c={screen.c} onBack={back} go={setScreen} />}
-      {screen.kind === 'teachers' && <Teachers session={session} c={screen.c} onBack={back} go={setScreen} />}
+      {screen.kind === 'teachers' && <Teachers session={session} c={screen.c} onBack={back} go={setScreen} onEditMail={onEditMail} />}
     </>
   )
 }
@@ -317,8 +319,11 @@ function Center({ c, onBack, go }: { c: RemoteCampaign; onBack: () => void; go: 
   )
 }
 
-function Teachers({ session, c, onBack, go }: { session: Session; c: RemoteCampaign; onBack: () => void; go: (s: Screen) => void }) {
+function Teachers({ session, c, onBack, go, onEditMail }: { session: Session; c: RemoteCampaign; onBack: () => void; go: (s: Screen) => void; onEditMail?: () => void }) {
   const r = useRemote(() => fetchTeacherStatus(c.id), c.id)
+  const { mail } = useDemoState()
+  const [sel, setSel] = useState<Set<string>>(new Set())
+  const [delivering, setDelivering] = useState(false)
   const [onlyPending, setOnlyPending] = useState(false)
   const [batch, setBatch] = useState<TeacherReport[] | null>(null)
   const [busy, setBusy] = useState(false)
@@ -351,6 +356,11 @@ function Teachers({ session, c, onBack, go }: { session: Session; c: RemoteCampa
         {reports && (
           <button className="btn primary ev" disabled={busy || !rows.length} onClick={printAll}>
             <Icon name="print" /> {busy ? 'Preparant…' : 'Tots els informes en PDF'}
+          </button>
+        )}
+        {reports && (
+          <button className="btn gold" disabled={!sel.size} onClick={() => setDelivering(true)} title="Tria els docents a la taula">
+            <Icon name="mail" /> Lliura per correu ({sel.size})
           </button>
         )}
       </PageHead>
@@ -389,11 +399,12 @@ function Teachers({ session, c, onBack, go }: { session: Session; c: RemoteCampa
           <div className="table-wrap">
             <table className="t">
               <thead>
-                <tr><th>Docent</th><th>Etapes</th><th className="num">Valoracions</th><th>Llindar ({THRESHOLD})</th><th>Autoavaluació</th>{reports && <th />}</tr>
+                <tr>{reports && <th className="pick"><input type="checkbox" aria-label="Selecciona tots els docents" checked={sel.size > 0 && sel.size === rows.length} onChange={(e) => setSel(e.target.checked ? new Set(rows.map((t) => t.email)) : new Set())} /></th>}<th>Docent</th><th>Etapes</th><th className="num">Valoracions</th><th>Llindar ({THRESHOLD})</th><th>Autoavaluació</th>{reports && <th />}</tr>
               </thead>
               <tbody>
                 {shown.map((t) => (
-                  <tr key={t.email}>
+                  <tr key={t.email} className={sel.has(t.email) ? 'picked' : undefined}>
+                    {reports && <td className="pick"><input type="checkbox" aria-label={`Selecciona ${t.name}`} checked={sel.has(t.email)} onChange={(e) => setSel((p) => { const n = new Set(p); if (e.target.checked) n.add(t.email); else n.delete(t.email); return n })} /></td>}
                     <td><b>{t.name}</b><br /><small className="muted">{t.email}</small></td>
                     <td>{t.stages.map((st) => STAGES[st].short).join(' · ')}</td>
                     <td className="num">{t.n} / {t.eligible}</td>
@@ -417,6 +428,17 @@ function Teachers({ session, c, onBack, go }: { session: Session; c: RemoteCampa
         <PrintPortal onDone={() => setBatch(null)}>
           {batch.map((x) => <FeedbackReportPages key={x.teacher.email} report={x} />)}
         </PrintPortal>
+      )}
+      {delivering && (
+        <TeacherDelivery
+          campaign={c}
+          rows={rows.filter((t) => sel.has(t.email))}
+          mail={mail}
+          loadReports={(emails) => Promise.all(emails.map((e) => fetchReport(c.id, e)))}
+          canEdit={session.role === 'admin' && !!onEditMail}
+          onEdit={() => onEditMail?.()}
+          onClose={() => setDelivering(false)}
+        />
       )}
       {toast}
     </>

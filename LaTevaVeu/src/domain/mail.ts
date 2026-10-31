@@ -6,6 +6,9 @@ import type { MailSettings, MailTemplate } from './types'
 
 export type MailKind = 'families' | 'teachers'
 
+/** Enllaç curt a l'app, per als correus. */
+export const APP_LINK = 'https://ja.cat/tensveu'
+
 /** Marcadors que es poden fer servir a cada missatge, amb un exemple per a la previsualització. */
 export const MAIL_FIELDS: Record<MailKind, { key: string; label: string; example: string }[]> = {
   families: [
@@ -18,16 +21,25 @@ export const MAIL_FIELDS: Record<MailKind, { key: string; label: string; example
   ],
   teachers: [
     { key: 'docent', label: 'Nom del docent', example: 'Marta' },
+    { key: 'docent_complet', label: 'Nom i cognoms', example: 'Marta Ribas Vila' },
+    { key: 'etapes', label: 'Etapes', example: 'cicle superior i ESO' },
     { key: 'recollida', label: 'Recollida', example: 'Recollida de tardor' },
     { key: 'curs_escolar', label: 'Curs escolar', example: '2026-2027' },
-    { key: 'enllac', label: 'Enllaç a l’app', example: 'https://ja.cat/tensveu' },
+    { key: 'enllac', label: 'Enllaç a l’app', example: APP_LINK },
     { key: 'escola', label: 'Escola', example: SCHOOL.name },
   ],
 }
 
-export const MAIL_KINDS: Record<MailKind, { title: string; kicker: string; attachment: boolean; who: string }> = {
-  families: { title: 'Famílies', kicker: 'Així em veig', attachment: true, who: 'Cada responsable validat de l’alumne, amb l’informe «Així em veig» en PDF adjunt.' },
-  teachers: { title: 'Professorat', kicker: 'Així et veiem', attachment: false, who: 'Cada docent, quan el seu informe «Així et veiem» és disponible. L’informe és confidencial: no s’adjunta, es consulta a l’app.' },
+/** `attachment`: nom del PDF adjunt, amb marcadors. `foot`: peu del correu amb format. */
+export const MAIL_KINDS: Record<MailKind, { title: string; kicker: string; attachment: string; foot: string; who: string }> = {
+  families: {
+    title: 'Famílies', kicker: 'Així em veig', attachment: 'Així em veig – {alumne_complet}.pdf', foot: 'Trobareu l’informe adjunt en PDF.',
+    who: 'Cada responsable validat de l’alumne, amb l’informe «Així em veig» en PDF adjunt.',
+  },
+  teachers: {
+    title: 'Professorat', kicker: 'Així et veiem', attachment: 'Així et veiem – {docent_complet} – {recollida}.pdf', foot: 'Trobaràs el teu informe adjunt en PDF. És confidencial: no el reenviïs.',
+    who: 'Cada docent, amb el seu informe «Així et veiem» en PDF adjunt, un cop l’Equip Directiu l’ha publicat. Només el rep la persona interessada.',
+  },
 }
 
 export const DEFAULT_TEMPLATES: Record<MailKind, MailTemplate> = {
@@ -56,6 +68,32 @@ Una salutació cordial,
     subject: '«Així et veiem» · {recollida}',
     body: `Hola, {docent},
 
+Gràcies per la teva dedicació i per obrir les teves classes a la mirada de l’alumnat. Et fem arribar el teu informe «Així et veiem» de la {recollida} (curs {curs_escolar}): recull, de manera anònima i agregada, com viuen les teves classes els alumnes de {etapes}.
+
+Et proposem llegir-lo amb calma i amb una mirada positiva:
+
+- Comença per allò que l’alumnat valora més: són les teves fortaleses.
+- Tria una o dues idees per continuar creixent. No cal canviar-ho tot.
+- Compara-ho amb la teva autoavaluació: les coincidències i les sorpreses són les que més ensenyen.
+
+> L’informe és confidencial: només el reps tu i el pot consultar l’Equip Directiu. Mai no mostra qui ha respost ni què ha dit cada alumne.
+
+L’informe va adjunt en PDF i també el pots consultar quan vulguis a La teva veu, a «Et veig… › Així et veiem»:
+{enllac}
+
+Si en vols parlar, l’Equip Directiu t’acompanyarà amb molt de gust.
+
+Una salutació cordial,
+{escola}`,
+  },
+}
+
+/**
+ * Text per defecte anterior de l'avís al professorat, que deia que l'informe no s'adjuntava.
+ * Si encara és el desat, es canvia pel text nou (ara l'informe va adjunt).
+ */
+const LEGACY_TEACHERS_BODY = `Hola, {docent},
+
 Ja tens disponible el teu informe «Així et veiem» de la {recollida}. Recull, de manera anònima i agregada, com viu les teves classes l’alumnat.
 
 El trobaràs a La teva veu, a «Et veig… › Així et veiem»:
@@ -66,9 +104,7 @@ El trobaràs a La teva veu, a «Et veig… › Així et veiem»:
 Et proposem que el llegeixis amb calma i que hi busquis una o dues idees per continuar millorant.
 
 Una salutació cordial,
-{escola}`,
-  },
-}
+{escola}`
 
 export const DEFAULT_MAIL: MailSettings = {
   sender: '',
@@ -111,7 +147,10 @@ export function cleanMail(raw: Partial<MailSettings> | undefined): MailSettings 
     replyTo: m.replyTo,
     replyToEmail: m.replyTo === 'fixed' ? String(m.replyToEmail).trim().toLowerCase() : '',
     families: tpl(m.families, DEFAULT_TEMPLATES.families),
-    teachers: tpl(m.teachers, DEFAULT_TEMPLATES.teachers),
+    teachers: (() => {
+      const t = tpl(m.teachers, DEFAULT_TEMPLATES.teachers)
+      return t.body === LEGACY_TEACHERS_BODY ? { ...t, body: DEFAULT_TEMPLATES.teachers.body } : t
+    })(),
   }
 }
 
@@ -140,6 +179,8 @@ export interface RenderedMail {
   subject: string
   text: string
   html: string
+  /** Nom del PDF adjunt. */
+  attachment: string
 }
 
 /** Omple els marcadors i en fa la versió de text i la versió amb format (estil de l'escola). */
@@ -160,7 +201,7 @@ export function renderMail(kind: MailKind, settings: MailSettings, vars: Record<
     )
     .join('')
   const kicker = `LA TEVA VEU · ${MAIL_KINDS[kind].kicker.toUpperCase()}`
-  const foot = MAIL_KINDS[kind].attachment ? 'Trobareu l’informe adjunt en PDF.' : 'Aquest missatge s’ha enviat des de La teva veu.'
+  const foot = MAIL_KINDS[kind].foot
   const html =
     '<div style="background:#f5f2ed;padding:24px 12px;font-family:Arial,sans-serif;color:#252525;font-size:15px">' +
     '<div style="max-width:600px;margin:auto;background:#fff;border:1px solid #ddd7ce;border-radius:12px;overflow:hidden">' +
@@ -169,7 +210,8 @@ export function renderMail(kind: MailKind, settings: MailSettings, vars: Record<
     `<div style="padding:22px 24px">${body}</div>` +
     `<div style="background:#f8f6f2;color:#646464;font-size:12px;padding:12px 24px">${esc(foot)}</div>` +
     '</div></div>'
-  return { subject, text, html }
+  const attachment = fill(MAIL_KINDS[kind].attachment, all).replace(/[\\/:*?"<>|]+/g, '-')
+  return { subject, text, html, attachment }
 }
 
 /** Valors d'exemple per a la previsualització. */

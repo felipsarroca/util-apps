@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { logAudit, useDemoState, visibleGrades } from '../data/api'
-import { gradeById, GRADES } from '../domain/catalog'
+import { gradeById, gradeShort, GRADES } from '../domain/catalog'
 import { gradeAndGroup, groupName } from '../domain/groups'
 import { renderMail } from '../domain/mail'
 import type { Session } from '../domain/types'
 import { buildReportModel, ReportPages, SheetViewer } from '../report/Report'
 import { Icon, Modal, useToast } from '../ui/common'
+import { isValidEmail, MailPreview, PaperList, type OutputMode, type PaperItem } from './Delivery'
 import { CAMPAIGN_LABEL, CAMPAIGN_TONE, fullName, PrintJob, RESP_LABEL, RESP_TONE, trackingRows } from './shared'
 import { PageHead } from './StaffApp'
 
@@ -25,12 +26,26 @@ export function ReportsScreen({ session }: { session: Session }) {
   const [noSend, setNoSend] = useState<Set<string>>(new Set())
   const [duplex, setDuplex] = useState(true)
   const [preview, setPreview] = useState<string | null>(null)
-  const [printItems, setPrintItems] = useState<string[] | null>(null)
+  const [printItems, setPrintItems] = useState<{ ids: string[]; title?: string } | null>(null)
   const [prepare, setPrepare] = useState(false)
+  const [paperOpen, setPaperOpen] = useState(false)
+  const [who, setWho] = useState('')
   const [toast, showToast] = useToast()
 
   const delivered = rows.filter((r) => r.status === 'LLIURADA' || r.status === 'VALIDADA')
-  const hasMail = (id: string) => !!rows.find((r) => r.student.id === id)?.student.guardians.some((g) => g.validated) && !noSend.has(id)
+  const recipients = (r: (typeof rows)[number]) => r.student.guardians.filter((g) => g.validated && isValidEmail(g.email))
+  /** Per què l'informe d'un alumne no es pot enviar per correu (buit si sí que es pot). */
+  const reasonOf = (r: (typeof rows)[number]) =>
+    !r.response ? 'Sense resposta'
+      : noSend.has(r.student.id) ? 'Marcat per lliurar en paper'
+        : !r.student.guardians.length ? 'Sense correu familiar'
+          : !r.student.guardians.some((g) => g.validated) ? 'Correu pendent de validar'
+            : !recipients(r).length ? 'Correu no vàlid'
+              : ''
+  const hasMail = (id: string) => { const r = rows.find((x) => x.student.id === id); return !!r && !!recipients(r).length && !noSend.has(id) }
+  const paperOf = (list: typeof rows): PaperItem[] =>
+    list.filter((r) => reasonOf(r)).map((r) => ({ id: r.student.id, name: fullName(r.student), sub: groupName(r.student.gradeId, r.student.group), reason: reasonOf(r), printable: !!r.response }))
+  const paperAll = paperOf(rows.filter((r) => r.response))
   const selected = rows.filter((r) => sel.has(r.student.id))
   const toggle = (id: string) => setSel((p) => {
     const n = new Set(p)
@@ -38,11 +53,14 @@ export function ReportsScreen({ session }: { session: Session }) {
     else n.add(id)
     return n
   })
-  const print = (ids: string[]) => {
+  const print = (ids: string[], mode: OutputMode = 'print') => {
     if (!ids.length) return showToast('No hi ha cap informe per imprimir.')
-    logAudit(session, 'Impressió d’informes', `${campaign!.gradeId} · ${campaign!.label}: ${ids.length} informes${duplex ? ' (doble cara)' : ''}`)
-    setPrintItems(ids)
+    logAudit(session, mode === 'save' ? 'Informes desats en PDF' : 'Impressió d’informes', `${campaign!.gradeId} · ${campaign!.label}: ${ids.length} informes${duplex ? ' (doble cara)' : ''}`)
+    const one = ids.length === 1 ? rows.find((r) => r.student.id === ids[0])?.student : undefined
+    const title = mode === 'save' ? `Així em veig – ${one ? `${one.name} ${one.surname}` : gradeShort(campaign!.gradeId)} – ${campaign!.label}` : undefined
+    setPrintItems({ ids, title })
   }
+  const sendable = selected.filter((r) => !reasonOf(r))
   const model = preview && campaign ? buildReportModel(s, preview, campaign.id) : null
   const open = campaign?.status === 'OBERTA'
 
@@ -88,8 +106,8 @@ export function ReportsScreen({ session }: { session: Session }) {
             <button className="btn small" onClick={() => setSel(new Set(delivered.map((r) => r.student.id)))}>Selecciona les lliurades</button>
             <button className="btn small" onClick={() => setSel(new Set())} disabled={!sel.size}>Treu la selecció</button>
             <span className="spacer" />
-            <button className="btn small" onClick={() => print(delivered.filter((r) => !hasMail(r.student.id)).map((r) => r.student.id))}>
-              <Icon name="print" /> PDF dels que no tenen correu
+            <button className="btn small" disabled={!paperAll.length} onClick={() => setPaperOpen(true)}>
+              <Icon name="print" /> En paper ({paperAll.filter((x) => x.printable).length})
             </button>
             <button className="btn primary small" disabled={!sel.size} onClick={() => print(selected.map((r) => r.student.id))}>
               <Icon name="print" /> PDF únic dels seleccionats ({sel.size})
@@ -149,7 +167,7 @@ export function ReportsScreen({ session }: { session: Session }) {
                             <span className="sr-only">Marca «no enviar per correu»</span>
                           </label>
                         </td>
-                        <td><span className="badge plain">No enviat</span></td>
+                        <td>{reasonOf(r) ? <span className="badge warn" title={reasonOf(r)}>En paper</span> : <span className="badge plain">No enviat</span>}</td>
                       </tr>
                     )
                   })}
@@ -175,21 +193,28 @@ export function ReportsScreen({ session }: { session: Session }) {
 
       {prepare && campaign && (
         <Modal title="Preparació de l’enviament" onClose={() => setPrepare(false)} wide>
-          <p>Comprova exactament qui rebrà cada informe. Res no s’envia fins a l’aprovació final.</p>
-          {selected[0] && (() => {
-            const st = selected[0].student
+          <p>Comprova exactament qui rebrà cada informe. Res no s’envia fins a l’aprovació final. Els que no es poden enviar surten a part, al final, per desar-los o imprimir-los.</p>
+          {(() => {
+            const r = sendable.find((x) => x.student.id === who) ?? sendable[0]
+            if (!r) return null
+            const st = r.student
             const mail = renderMail('families', s.mail, {
-              alumne: st.name, alumne_complet: fullName(st), curs: gradeAndGroup(st.gradeId, st.group), recollida: campaign.label, curs_escolar: campaign.year,
+              alumne: st.name, alumne_complet: `${st.name} ${st.surname}`, curs: gradeAndGroup(st.gradeId, st.group), recollida: campaign.label, curs_escolar: campaign.year,
             })
             return (
-              <dl className="mail-head">
-                <dt>De</dt>
-                <dd>{s.mail.senderName} &lt;{s.mail.sender || 'compte pendent'}&gt;</dd>
-                <dt>Respon a</dt>
-                <dd>{s.mail.replyTo === 'tutor' ? 'el tutor o tutora del grup' : s.mail.replyToEmail}</dd>
-                <dt>Assumpte</dt>
-                <dd>{mail.subject}{selected.length > 1 ? ' (exemple del primer alumne)' : ''}</dd>
-              </dl>
+              <MailPreview
+                mail={mail}
+                settings={s.mail}
+                replyTo={s.mail.replyTo === 'tutor' ? 'el tutor o tutora del grup' : s.mail.replyToEmail}
+                picker={sendable.length > 1 && (
+                  <label className="field">
+                    <span>Previsualitza el correu de</span>
+                    <select className="select" value={st.id} onChange={(e) => setWho(e.target.value)}>
+                      {sendable.map((x) => <option key={x.student.id} value={x.student.id}>{fullName(x.student)}</option>)}
+                    </select>
+                  </label>
+                )}
+              />
             )
           })()}
           {!s.mail.sender && (
@@ -198,28 +223,27 @@ export function ReportsScreen({ session }: { session: Session }) {
               <div>Encara no s’ha indicat el compte que envia. L’administració ho fa a <b>Centre › Correu</b>, on també es pot revisar el text del missatge.</div>
             </div>
           )}
-          <div className="table-wrap" style={{ maxHeight: 360, overflow: 'auto' }}>
-            <table className="t">
-              <thead><tr><th>Alumne</th><th>Destinataris</th><th>Informe</th></tr></thead>
-              <tbody>
-                {selected.map((r) => (
-                  <tr key={r.student.id}>
-                    <td><b>{fullName(r.student)}</b></td>
-                    <td>
-                      {hasMail(r.student.id)
-                        ? r.student.guardians.filter((g) => g.validated).map((g) => <div key={g.email}>{g.name} · <span className="muted">{g.email}</span></div>)
-                        : <span className="badge warn">En paper</span>}
-                    </td>
-                    <td>{r.response ? `Revisió ${r.response.revision}` : <span className="badge bad">Sense resposta</span>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {sendable.length > 0 && (
+            <div className="table-wrap" style={{ maxHeight: 300, overflow: 'auto' }}>
+              <table className="t">
+                <thead><tr><th>Alumne ({sendable.length})</th><th>Destinataris</th><th>Informe</th></tr></thead>
+                <tbody>
+                  {sendable.map((r) => (
+                    <tr key={r.student.id}>
+                      <td><b>{fullName(r.student)}</b></td>
+                      <td>{recipients(r).map((g) => <div key={g.email}>{g.name} · <span className="muted">{g.email}</span></div>)}</td>
+                      <td>Revisió {r.response!.revision}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <PaperList title="No s’enviaran per correu" items={paperOf(selected)} onOutput={print} />
           <div className="notice">
             <Icon name="cloud" />
             <div>
-              <b>L’enviament real necessita el servidor de l’escola.</b> Quan estigui connectat, aquí hi haurà «Envia’m una prova» i «Aprova i envia»: cua al servidor, clau idempotent per alumne, destinatari i versió del PDF (sense duplicats) i registre de cada intent.
+              <b>L’enviament real necessita el servidor de l’escola.</b> Quan estigui connectat, aquí hi haurà «Envia’m una prova» i «Aprova i envia»: cua al servidor, clau idempotent per alumne, destinatari i versió del PDF (sense duplicats) i registre de cada intent. Els correus que no s’hagin pogut lliurar tornaran a sortir a la llista «No s’enviaran per correu».
             </div>
           </div>
           <div className="row" style={{ justifyContent: 'flex-end' }}>
@@ -228,8 +252,14 @@ export function ReportsScreen({ session }: { session: Session }) {
           </div>
         </Modal>
       )}
+      {paperOpen && campaign && (
+        <Modal title="Informes per lliurar en paper" onClose={() => setPaperOpen(false)} wide>
+          <p>Alumnes d’aquesta recollida que no rebran l’informe per correu. Tria’ls un per un o tots alhora i desa’ls en PDF o imprimeix-los.</p>
+          <PaperList title="Sense enviament per correu" items={paperAll} onOutput={print} />
+        </Modal>
+      )}
       {printItems && campaign && (
-        <PrintJob state={s} items={printItems.map((studentId) => ({ studentId, campaignId: campaign.id }))} duplex={duplex && printItems.length > 1} onDone={() => setPrintItems(null)} />
+        <PrintJob state={s} title={printItems.title} items={printItems.ids.map((studentId) => ({ studentId, campaignId: campaign.id }))} duplex={duplex && printItems.ids.length > 1} onDone={() => setPrintItems(null)} />
       )}
       {toast}
     </>

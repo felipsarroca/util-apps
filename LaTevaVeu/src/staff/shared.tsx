@@ -71,9 +71,9 @@ export const groupLabel = (s: Student) => `${gradeById(s.gradeId).name} ${s.grou
  * Imprimeix un conjunt d'informes. Es renderitzen fora de la pantalla, es paginen
  * i s'obre el diàleg d'impressió del navegador (permet «Desa com a PDF»).
  */
-export function PrintJob({ state, items, duplex, onDone }: { state: DemoState; items: { studentId: string; campaignId: string }[]; duplex: boolean; onDone: () => void }) {
+export function PrintJob({ state, items, duplex, onDone, title }: { state: DemoState; items: { studentId: string; campaignId: string }[]; duplex: boolean; onDone: () => void; title?: string }) {
   return (
-    <PrintPortal onDone={onDone}>
+    <PrintPortal onDone={onDone} title={title}>
       {items.map((it) => {
         const m = buildReportModel(state, it.studentId, it.campaignId)
         return m ? <ReportPages key={`${it.studentId}-${it.campaignId}`} model={m} duplex={duplex} /> : null
@@ -82,17 +82,23 @@ export function PrintJob({ state, items, duplex, onDone }: { state: DemoState; i
   )
 }
 
-/** Imprimeix qualsevol conjunt de pàgines A4 (es preparen fora de la pantalla). */
-export function PrintPortal({ children, onDone }: { children: ReactNode; onDone: () => void }) {
+/**
+ * Imprimeix qualsevol conjunt de pàgines A4 (es preparen fora de la pantalla).
+ * `title` és el nom que el navegador proposa en desar-ho com a PDF.
+ */
+export function PrintPortal({ children, onDone, title }: { children: ReactNode; onDone: () => void; title?: string }) {
   const [ready, setReady] = useState(false)
   useEffect(() => {
     document.body.classList.add('printing')
+    const before = document.title
+    if (title) document.title = title
     const t = window.setTimeout(() => setReady(true), 400)
     return () => {
       window.clearTimeout(t)
       document.body.classList.remove('printing')
+      document.title = before
     }
-  }, [])
+  }, [title])
   useEffect(() => {
     if (!ready) return
     const after = () => onDone()

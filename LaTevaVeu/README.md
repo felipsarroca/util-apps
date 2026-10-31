@@ -121,7 +121,7 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`). El 
 - **Centre**: accessos del personal, cens amb optatives (CSV amb validació prèvia), grups, matèries per curs, correus de les famílies (CSV), incidències d'identitat, apartats actius i registre d'operacions inalterable.
 - **Correu**: compte de l'escola que envia, on arriben les respostes (tutoria o adreça fixa) i text editable dels dos missatges, amb previsualització:
   - a les famílies, amb l'informe «Així em veig» adjunt (text basat en el de VeuAlumnat);
-  - al professorat, un avís que «Així et veiem» és disponible, sense adjunt perquè és confidencial.
+  - al professorat, el seu informe «Així et veiem» en PDF adjunt, amb un missatge amable; l’Equip Directiu el lliura des d’«Et veig… › Professorat».
 
 ### Guia del personal
 

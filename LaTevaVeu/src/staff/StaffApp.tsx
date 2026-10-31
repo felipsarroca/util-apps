@@ -142,12 +142,12 @@ export function StaffApp({ session }: { session: Session }) {
         {screen === 'tracking' && tutor && <Tracking session={session} />}
         {screen === 'reports' && tutor && <ReportsScreen session={session} />}
         {screen === 'campaigns' && tutor && <CampaignsScreen session={session} />}
-        {screen === 'evlist' && remote && <RemoteEtVeig session={session} view="list" />}
+        {screen === 'evlist' && remote && <RemoteEtVeig session={session} view="list" onEditMail={isAdmin ? () => setScreen('mail') : undefined} />}
         {screen === 'evself' && remote && <RemoteEtVeig session={session} view="self" />}
         {screen === 'self' && allowed.teaches && <SelfAssessScreen session={session} />}
         {screen === 'myreports' && allowed.results && <MyReportsScreen session={session} />}
         {screen === 'center' && allowed.dirDemo && <CenterScreen session={session} />}
-        {screen === 'teachers' && allowed.dirDemo && <TeachersScreen session={session} />}
+        {screen === 'teachers' && allowed.dirDemo && <TeachersScreen session={session} onEditMail={isAdmin ? () => setScreen('mail') : undefined} />}
         {screen === 'fbcampaigns' && allowed.manageDemo && <FeedbackCampaignsScreen session={session} />}
         {screen === 'fbforms' && isAdmin && <FeedbackFormsScreen session={session} />}
         {screen === 'templates' && isAdmin && <EditorScreen session={session} />}
