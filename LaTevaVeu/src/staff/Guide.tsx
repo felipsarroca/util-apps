@@ -403,6 +403,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>Per a cada curs: ordre de presentació (fletxes), <b>Comuna / Optativa</b> i <b>Activa</b>.</li>
             <li>Els canvis s’apliquen a les recollides noves. Les ja creades conserven la llista de matèries que tenien.</li>
             <li><b>Matèria nova</b>: nom curt (pantalles), nom complet (informe i lectura en veu alta) i, si vols, s’afegeix al curs que tens triat com a comuna o optativa. Per posar-la en altres cursos, tria el curs i fes servir «Afegeix una matèria del catàleg».</li>
+            <li><b>Tutoria</b>: és a tots els cursos, sempre comuna i activa, i no es pot reanomenar. Qui la fa en un grup n’és el tutor o tutora i <b>veu els resultats d’«Em miro» d’aquell grup</b>. Es tria a <Where>Et veig… › Qui fa classe a qui</Where> o, al revés, a la columna <b>Tutoria</b> de <Where>Centre › Alumnat i accessos</Where>: totes dues són la mateixa dada. L’alumnat la valora a «Et veig…», però no surt com a matèria a «Em miro».</li>
             <li><b>Canviar el nom</b>: el llapis de cada fila. El nom nou surt a tot arreu, també als informes ja fets. Les matèries no s’esborren: si ja no es fa, desactiva-la.</li>
             <li>El nom d’una matèria nova o reanomenada es llegeix en veu alta amb la veu catalana del navegador, que sona una mica diferent de la resta.</li>
           </ul>

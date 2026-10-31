@@ -3,7 +3,7 @@
 // Per connectar-hi Neon, cal implementar la mateixa interfície amb crides HTTP.
 
 import { useSyncExternalStore } from 'react'
-import { GRADES, gradeShort, nextGrade, nextYear } from '../domain/catalog'
+import { emMiroSubjects, GRADES, gradeShort, nextGrade, nextYear, TUTORIA } from '../domain/catalog'
 import { buildSteps, findMissing, subjectsForStudent } from '../domain/engine'
 import {
   buildCenterView, buildTeacherReport, encodeAnswers, flagComment, missingItems, stableShuffle, stageOfGrade, stagesOfTeacher, teachersForStudent,
@@ -13,7 +13,7 @@ import { validateFeedbackForm } from '../domain/feedbackForms'
 import { checkGroupLabel, setGroupConfig } from '../domain/groups'
 import type {
   Answers, Campaign, CampaignStatus, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, Guardian, MailSettings, ModerationStatus, Modules,
-  Section, SelfAssessment, Session, StageId, Student, StudentResponse, Subject, TemplateVersion,
+  Section, SelfAssessment, Session, StaffMember, StageId, Student, StudentResponse, Subject, TeachingAssignment, TemplateVersion,
 } from '../domain/types'
 import type { AssignmentRow, GuardianRow } from '../domain/csv'
 import { checkSchoolEmail } from '../domain/email'
@@ -239,13 +239,14 @@ function createCampaign$(session: Session, gradeId: GradeId, label: string, star
   const tpl = state.templates.filter((t) => t.stage === stage && t.status === 'published').sort((a, b) => b.version - a.version)[0]
   if (!tpl) throw new Error('No hi ha cap qüestionari publicat per a aquesta etapa.')
   const id = crypto.randomUUID()
-  const campaign: Campaign = { id, year: state.year, gradeId, label, templateVersionId: tpl.id, start, end, status: 'PROGRAMADA', subjectsSnapshot: state.gradeSubjects.filter((g) => g.gradeId === gradeId).map((g) => ({ ...g })) }
+  const campaign: Campaign = { id, year: state.year, gradeId, label, templateVersionId: tpl.id, start, end, status: 'PROGRAMADA', subjectsSnapshot: emMiroSubjects(state.gradeSubjects.filter((g) => g.gradeId === gradeId)).map((g) => ({ ...g })) }
   commit(audit({ ...state, campaigns: [...state.campaigns, campaign] }, session.email, 'Nova recollida', `${gradeId} · ${label} amb ${tpl.name} v${tpl.version}`))
 }
 
 function setGradeSubject$(session: Session, gs: GradeSubject) {
   requireAdmin(session)
   if (!state.subjects.some((x) => x.id === gs?.subjectId) || !GRADES.some((g) => g.id === gs.gradeId)) throw new Error('Aquesta matèria no existeix.')
+  if (gs.subjectId === TUTORIA && (gs.optional || !gs.active)) throw new Error('La tutoria és sempre comuna i activa.')
   const exists = state.gradeSubjects.some((x) => x.gradeId === gs.gradeId && x.subjectId === gs.subjectId)
   const list = exists ? state.gradeSubjects.map((x) => (x.gradeId === gs.gradeId && x.subjectId === gs.subjectId ? gs : x)) : [...state.gradeSubjects, gs]
   commit(audit({ ...state, gradeSubjects: list }, session.email, 'Matèries', `${gs.gradeId} · ${gs.subjectId}: ${gs.active ? 'activa' : 'desactivada'}${gs.optional ? ', optativa' : ''}`))
@@ -268,6 +269,7 @@ function saveSubject$(session: Session, input: { id?: string; short: string; lon
   const short = String(input?.short ?? '').trim().replace(/\s+/g, ' ')
   const long = String(input?.long ?? '').trim().replace(/\s+/g, ' ') || short
   if (!short || short.length > 40 || long.length > 120) throw new Error('El nom curt ha de tenir entre 1 i 40 caràcters i el llarg, fins a 120.')
+  if (input.id === TUTORIA) throw new Error('La tutoria no es pot reanomenar.')
   const prev = input.id ? state.subjects.find((x) => x.id === input.id) : undefined
   if (input.id && !prev) throw new Error('Aquesta matèria no existeix.')
   if (state.subjects.some((x) => x.id !== input.id && x.short.toLowerCase() === short.toLowerCase())) throw new Error(`Ja hi ha una matèria que es diu «${short}».`)
@@ -613,12 +615,56 @@ function setMail$(session: Session, patch: Partial<MailSettings>) {
   commit(audit({ ...state, mail }, session.email, 'Correu', `Remitent: ${mail.senderName} <${from}> · respostes: ${mail.replyTo === 'tutor' ? 'tutoria' : mail.replyToEmail}`))
 }
 
+/**
+ * Qui fa la tutoria d'un grup en veu els resultats d'«Em miro»: el grup s'afegeix al docent nou i es treu
+ * a l'anterior. Els grups que l'administració hagi donat a mà a altres persones no canvien.
+ */
+function withTutors(staff: StaffMember[], before: TeachingAssignment[], after: TeachingAssignment[]): StaffMember[] {
+  const tutors = (list: TeachingAssignment[]) => new Map(list.filter((a) => a.subjectId === TUTORIA).map((a) => [`${a.gradeId}-${a.group}`, a.teacherEmail]))
+  const was = tutors(before)
+  const now = tutors(after)
+  return staff.map((m) => {
+    let groups = m.groups
+    for (const [k, email] of was) if (email === m.email && now.get(k) !== email) groups = groups.filter((x) => x !== k)
+    for (const [k, email] of now) if (email === m.email && !groups.includes(k)) groups = [...groups, k]
+    return groups === m.groups ? m : { ...m, groups }
+  })
+}
+
 function setAssignment$(session: Session, gradeId: GradeId, group: string, subjectId: string, teacherEmail: string | null) {
   requireAdmin(session)
   if (teacherEmail && !state.staff.some((x) => x.email === teacherEmail)) throw new Error(`${teacherEmail} no té accés a l’aplicació.`)
   const rest = state.assignments.filter((a) => !(a.gradeId === gradeId && a.group === group && a.subjectId === subjectId))
   const assignments = teacherEmail ? [...rest, { gradeId, group, subjectId, teacherEmail }] : rest
-  commit(audit({ ...state, assignments }, session.email, 'Assignació docent', `${gradeId} ${group} · ${subjectId}: ${teacherEmail ?? 'sense docent'}`))
+  commit(
+    audit(
+      { ...state, assignments, staff: withTutors(state.staff, state.assignments, assignments) },
+      session.email,
+      'Assignació docent',
+      `${gradeId} ${group} · ${subjectId}: ${teacherEmail ?? 'sense docent'}${subjectId === TUTORIA ? ' (tutoria: veu els resultats d’Em miro del grup)' : ''}`,
+    ),
+  )
+}
+
+/**
+ * Tutoria des del llistat del personal: la persona passa a fer la tutoria del grup triat (i deixa la que tenia).
+ * És el mateix que triar-la a «Qui fa classe a qui» a la matèria Tutoria. Amb `null`, deixa de fer-ne cap.
+ */
+function setTutorOf$(session: Session, email: string, groupKey: string | null) {
+  requireAdmin(session)
+  if (!state.staff.some((x) => x.email === email)) throw new Error(`${email} no té accés a l’aplicació.`)
+  const target = groupKey ? GRADES.flatMap((g) => (state.classGroups[g.id] ?? []).map((group) => ({ gradeId: g.id, group }))).find((x) => `${x.gradeId}-${x.group}` === groupKey) : undefined
+  if (groupKey && !target) throw new Error('Aquest grup no existeix.')
+  const rest = state.assignments.filter((a) => !(a.subjectId === TUTORIA && (a.teacherEmail === email || (target && a.gradeId === target.gradeId && a.group === target.group))))
+  const assignments = target ? [...rest, { ...target, subjectId: TUTORIA, teacherEmail: email }] : rest
+  commit(
+    audit(
+      { ...state, assignments, staff: withTutors(state.staff, state.assignments, assignments) },
+      session.email,
+      'Assignació docent',
+      `${email}: tutoria ${target ? `de ${gradeShort(target.gradeId)} ${target.group}` : 'cap'}`,
+    ),
+  )
 }
 
 /** Aplica d'una vegada les assignacions validades d'una importació CSV. */
@@ -630,7 +676,8 @@ function importAssignments$(session: Session, rows: AssignmentRow[]): number {
   const keys = new Set(rows.map((r) => `${r.gradeId}|${r.group}|${r.subjectId}`))
   const kept = state.assignments.filter((a) => !keys.has(`${a.gradeId}|${a.group}|${a.subjectId}`))
   const added = rows.map(({ gradeId, group, subjectId, teacherEmail }) => ({ gradeId, group, subjectId, teacherEmail }))
-  commit(audit({ ...state, assignments: [...kept, ...added] }, session.email, 'Assignació docent', `Importació CSV: ${rows.length} assignacions`))
+  const assignments = [...kept, ...added]
+  commit(audit({ ...state, assignments, staff: withTutors(state.staff, state.assignments, assignments) }, session.email, 'Assignació docent', `Importació CSV: ${rows.length} assignacions`))
   return rows.length
 }
 
@@ -886,6 +933,7 @@ export const logAudit = op('logAudit', logAudit$)
 export const setModules = op('setModules', setModules$)
 export const setMail = op('setMail', setMail$)
 export const setAssignment = op('setAssignment', setAssignment$)
+export const setTutorOf = op('setTutorOf', setTutorOf$)
 export const importAssignments = op('importAssignments', importAssignments$)
 export const createFeedbackCampaign = op('createFeedbackCampaign', createFeedbackCampaign$)
 export const saveFeedbackFormDraft = op('saveFeedbackFormDraft', saveFeedbackFormDraft$)
@@ -926,6 +974,7 @@ export const SERVER_OPS = {
   setModules: setModules$,
   setMail: setMail$,
   setAssignment: setAssignment$,
+  setTutorOf: setTutorOf$,
   importAssignments: importAssignments$,
   createFeedbackCampaign: createFeedbackCampaign$,
   saveFeedbackFormDraft: saveFeedbackFormDraft$,

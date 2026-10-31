@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { adoptTemplateInScheduled, discardDraft, newDraftFrom, publishTemplate, saveTemplateDraft, useDemoState } from '../data/api'
-import { GRADES, STAGES } from '../domain/catalog'
+import { emMiroSubjects, GRADES, STAGES } from '../domain/catalog'
 import { buildSteps, keyOf, subjectsForStudent, validateTemplate, type Step } from '../domain/engine'
 import type { DemoState } from '../data/seed'
 import type { Answers, Campaign, Question, QuestionType, Scale, Section, Session, StageId, Student, TemplateVersion } from '../domain/types'
@@ -269,7 +269,7 @@ function StudentPreview({ template, sectionIndex }: { template: TemplateVersion;
   const s = useDemoState()
   const [answers, setAnswers] = useState<Answers>({})
   const student = demoStudent(template.stage)
-  const subjects = subjectsForStudent(s.gradeSubjects, student, s.subjects).slice(0, 3)
+  const subjects = subjectsForStudent(emMiroSubjects(s.gradeSubjects), student, s.subjects).slice(0, 3)
   const sec = template.sections[sectionIndex]
   const steps: Step[] = useMemo(
     () => (sec ? buildSteps({ ...template, sections: [sec] }, { stage: template.stage, subjects, previousGoal: 'Llegir mitja hora cada dia' }).filter((x) => x.kind !== 'review') : []),
@@ -292,7 +292,7 @@ function StudentPreview({ template, sectionIndex }: { template: TemplateVersion;
 function fakeReport(t: TemplateVersion, all: DemoState, long: boolean): ReportModel {
   const s = demoStudent(t.stage)
   const scales = all.scales
-  const subj = subjectsForStudent(all.gradeSubjects.map((g) => ({ ...g, optional: false })), s, all.subjects)
+  const subj = subjectsForStudent(emMiroSubjects(all.gradeSubjects).map((g) => ({ ...g, optional: false })), s, all.subjects)
   const answers: Answers = {}
   const txt = long
     ? 'He après moltes coses noves aquest trimestre, però també he vist que necessito organitzar-me millor. Quan faig un esquema abans d’estudiar ho entenc tot millor i recordo més detalls. Em proposo dedicar-hi una estona cada dia, preguntar els dubtes a classe i revisar les correccions que em fa el professorat. També vull col·laborar més amb els companys i companyes d’equip, escoltar les seves idees i ajudar-los quan els costi alguna cosa. '

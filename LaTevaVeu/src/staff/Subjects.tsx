@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { moveGradeSubject, saveSubject, setGradeSubject, useDemoState } from '../data/api'
-import { gradeShort, GRADES } from '../domain/catalog'
+import { gradeShort, GRADES, TUTORIA } from '../domain/catalog'
 import type { GradeId, Session, Subject } from '../domain/types'
 import { Icon, Modal, useToast } from '../ui/common'
 import { PageHead } from './StaffApp'
@@ -56,19 +56,21 @@ export function SubjectsScreen({ session }: { session: Session }) {
                   </td>
                   <td className="muted">{sub.long}</td>
                   <td>
-                    <button className="btn icon small ghost" onClick={() => setEditing(sub)} aria-label={`Canvia el nom de ${sub.short}`} title="Canvia el nom">
-                      <Icon name="edit" />
-                    </button>
+                    {sub.id !== TUTORIA && (
+                      <button className="btn icon small ghost" onClick={() => setEditing(sub)} aria-label={`Canvia el nom de ${sub.short}`} title="Canvia el nom">
+                        <Icon name="edit" />
+                      </button>
+                    )}
                   </td>
                   <td>
                     <label className="toggle" style={{ fontSize: '.88rem' }}>
-                      <input type="checkbox" checked={gs.optional} onChange={(e) => setGradeSubject(session, { ...gs, optional: e.target.checked })} />
+                      <input type="checkbox" checked={gs.optional} disabled={gs.subjectId === TUTORIA} onChange={(e) => setGradeSubject(session, { ...gs, optional: e.target.checked })} />
                       {gs.optional ? 'Optativa' : 'Comuna'}
                     </label>
                   </td>
                   <td className="num">{enrolled(gs.subjectId, gs.optional)}</td>
                   <td>
-                    <label className="toggle"><input type="checkbox" checked={gs.active} onChange={(e) => setGradeSubject(session, { ...gs, active: e.target.checked })} /><span className="sr-only">Activa</span></label>
+                    <label className="toggle"><input type="checkbox" checked={gs.active} disabled={gs.subjectId === TUTORIA} onChange={(e) => setGradeSubject(session, { ...gs, active: e.target.checked })} /><span className="sr-only">Activa</span></label>
                   </td>
                 </tr>
               )

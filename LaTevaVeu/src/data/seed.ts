@@ -1,6 +1,6 @@
 // Dades FICTÍCIES per al mode de demostració. Cap nom ni correu correspon a persones reals.
 
-import { GRADES, SUBJECTS, initialGradeSubjects } from '../domain/catalog'
+import { emMiroSubjects, GRADES, SUBJECTS, initialGradeSubjects, TUTORIA } from '../domain/catalog'
 import { buildSteps, keyOf, requiredKeys, subjectsForStudent } from '../domain/engine'
 import { flagComment, stageOfGrade, teachersForStudent } from '../domain/feedback'
 import { FEEDBACK_SCALES, INITIAL_FEEDBACK_FORMS } from '../domain/feedbackForms'
@@ -39,7 +39,7 @@ export interface DemoState {
   classGroups: ClassGroups
 }
 
-export const DEMO_VERSION = 7
+export const DEMO_VERSION = 8
 
 const FIRST = ['Pau', 'Laia', 'Marc', 'Júlia', 'Arnau', 'Aina', 'Pol', 'Martina', 'Biel', 'Ona', 'Jan', 'Clàudia', 'Nil', 'Èlia', 'Roc', 'Mariona', 'Iu', 'Abril', 'Quim', 'Noa', 'Àlex', 'Txell', 'Oriol', 'Fatima', 'Yusuf', 'Ainhoa', 'Lucas', 'Mei', 'Hugo', 'Zoe']
 const LAST = ['Serra', 'Puig', 'Vidal', 'Soler', 'Ferrer', 'Roca', 'Font', 'Casals', 'Pujol', 'Riera', 'Camps', 'Bosch', 'Mas', 'Sala', 'Prat', 'Valls', 'Coll', 'Duran', 'Badia', 'Costa', 'El Amrani', 'Lin', 'Pérez', 'Torrent']
@@ -172,7 +172,7 @@ export function createDemoState(): DemoState {
     if (g.stage === 'CS') {
       const prev: Campaign = {
         id: `C-${g.id}-PRE`, year, gradeId: g.id, label: 'Preavaluació', templateVersionId: templateFor(g.id).id,
-        start: '2026-09-28', end: '2026-10-09', status: 'ARXIVADA', subjectsSnapshot: gradeSubjects.filter((x) => x.gradeId === g.id),
+        start: '2026-09-28', end: '2026-10-09', status: 'ARXIVADA', subjectsSnapshot: emMiroSubjects(gradeSubjects.filter((x) => x.gradeId === g.id)),
       }
       campaigns.push(prev)
       for (const s of students.filter((x) => x.gradeId === g.id)) {
@@ -182,7 +182,7 @@ export function createDemoState(): DemoState {
     }
     const c: Campaign = {
       id: `C-${g.id}-1T`, year, gradeId: g.id, label: '1a avaluació', templateVersionId: templateFor(g.id).id,
-      start: '2026-10-26', end: '2026-11-13', status: g.id === '4ESO' ? 'TANCADA' : 'OBERTA', subjectsSnapshot: gradeSubjects.filter((x) => x.gradeId === g.id),
+      start: '2026-10-26', end: '2026-11-13', status: g.id === '4ESO' ? 'TANCADA' : 'OBERTA', subjectsSnapshot: emMiroSubjects(gradeSubjects.filter((x) => x.gradeId === g.id)),
     }
     campaigns.push(c)
     for (const s of students.filter((x) => x.gradeId === g.id)) {
@@ -259,9 +259,12 @@ export const DEMO_GROUPS: ClassGroups = { '3EP': ['A'], '4EP': ['A'], '5EP': ['A
 function initialAssignments(gradeSubjects: GradeSubject[]): TeachingAssignment[] {
   const out: TeachingAssignment[] = []
   for (const gs of gradeSubjects) {
-    const user = stageOfGrade(gs.gradeId) === 'ESO' ? ESO_BY_SUBJECT[gs.subjectId] : PRIMARY_SPECIALIST[gs.subjectId] ?? TUTOR[gs.gradeId]
-    if (!user) continue
-    for (const group of DEMO_GROUPS[gs.gradeId]) out.push({ teacherEmail: `${user}@ramonpont.cat`, gradeId: gs.gradeId, group, subjectId: gs.subjectId })
+    for (const group of DEMO_GROUPS[gs.gradeId]) {
+      // La tutoria la fa qui té el grup a càrrec.
+      const tutor = gs.subjectId === TUTORIA ? initialStaff().find((m) => m.role === 'teacher' && m.groups.includes(`${gs.gradeId}-${group}`))?.email.split('@')[0] : undefined
+      const user = tutor ?? (stageOfGrade(gs.gradeId) === 'ESO' ? ESO_BY_SUBJECT[gs.subjectId] : PRIMARY_SPECIALIST[gs.subjectId] ?? TUTOR[gs.gradeId])
+      if (user) out.push({ teacherEmail: `${user}@ramonpont.cat`, gradeId: gs.gradeId, group, subjectId: gs.subjectId })
+    }
   }
   return out
 }

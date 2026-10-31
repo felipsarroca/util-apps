@@ -59,7 +59,17 @@ export const SUBJECTS: Subject[] = [
   { id: 'LLA', short: 'Llatí', long: 'Llatí', hue: 15, active: true },
   { id: 'ECO', short: 'Economia', long: 'Economia i Emprenedoria', hue: 145, active: true },
   { id: 'REC', short: 'Projecte de recerca', long: 'Projecte de Recerca', hue: 175, active: true },
+  { id: 'TUT', short: 'Tutoria', long: 'Tutoria', hue: 0, active: true },
 ]
+
+/**
+ * Tutoria: a tots els cursos, sempre comuna i activa. Qui la fa en un grup n'és el tutor o tutora i veu
+ * els resultats d'«Em miro» d'aquell grup. Es valora a «Et veig…», però no és una matèria d'«Em miro».
+ */
+export const TUTORIA = 'TUT'
+
+/** Matèries que l'alumnat valora a «Em miro»: totes menys la tutoria. */
+export const emMiroSubjects = <T extends { subjectId: string }>(list: T[]): T[] => list.filter((g) => g.subjectId !== TUTORIA)
 
 export const subjectById = (id: string): Subject | undefined => SUBJECTS.find((s) => s.id === id)
 
@@ -86,5 +96,6 @@ export const initialGradeSubjects = (): GradeSubject[] =>
     return [
       ...p.common.map((subjectId, i) => ({ gradeId: g.id, subjectId, order: i + 1, optional: false, active: true })),
       ...p.optional.map((subjectId, i) => ({ gradeId: g.id, subjectId, order: p.common.length + i + 1, optional: true, active: true })),
+      { gradeId: g.id, subjectId: TUTORIA, order: p.common.length + p.optional.length + 1, optional: false, active: true },
     ]
   })

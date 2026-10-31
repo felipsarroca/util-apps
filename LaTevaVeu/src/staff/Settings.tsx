@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { discardFeedbackDraft, importAssignments, newFeedbackDraft, publishFeedbackForm, saveFeedbackFormDraft, setAssignment, setModules, useDemoState } from '../data/api'
-import { GRADES, STAGES } from '../domain/catalog'
+import { GRADES, STAGES, TUTORIA } from '../domain/catalog'
 import { groupName } from '../domain/groups'
 import { parseAssignmentsCsv, type AssignmentImport } from '../domain/csv'
 import { subjectsForStudent } from '../domain/engine'
@@ -114,7 +114,7 @@ export function AssignmentsScreen({ session }: { session: Session }) {
               return (
                 <tr key={gs.subjectId}>
                   <td><b>{subj.long}</b></td>
-                  <td>{gs.optional ? <span className="badge info">Optativa</span> : <span className="badge plain">Comuna</span>}</td>
+                  <td>{gs.subjectId === TUTORIA ? <span className="badge brand" title="Qui la fa veu els resultats d’Em miro d’aquest grup">Tutoria · veu Em miro</span> : gs.optional ? <span className="badge info">Optativa</span> : <span className="badge plain">Comuna</span>}</td>
                   <td className="num">{studs}</td>
                   <td>
                     <select

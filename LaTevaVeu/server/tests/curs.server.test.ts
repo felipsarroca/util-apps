@@ -74,6 +74,17 @@ describe('matèries', () => {
   })
 })
 
+describe('tutoria', () => {
+  it('qui fa la tutoria passa a veure el grup a la base de dades', async () => {
+    const { state: s } = await state('admin')
+    const g = s.classGroups['2ESO'][0]
+    expect((await op('admin', 'setTutorOf', mail('xavier'), `2ESO-${g}`)).status).toBe(200)
+    const rows = (await db.query("select 1 from teacher_group_assignments t join users u on u.id = t.user_id join class_groups c on c.id = t.group_id where u.email = $1 and c.grade_id = '2ESO'", [mail('xavier')])).rows
+    expect(rows.length).toBe(1)
+    expect((await db.query("select 1 from teaching_assignments where subject_id = 'TUT'")).rows.length).toBe(1)
+  })
+})
+
 describe('curs nou', () => {
   it('només l’administració, i només el curs següent', async () => {
     expect((await call('marta', 'POST', '/api/centre/curs-nou', { year: '2027-2028' })).status).toBe(403)

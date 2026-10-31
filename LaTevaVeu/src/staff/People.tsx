@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { addStaff, importCensus, isDirection, moveStudents, removeStaff, removeStudents, setDirection, setElective, setStudentGroup, useDemoState, type CensusRow } from '../data/api'
-import { gradeShort, GRADES, SCHOOL } from '../domain/catalog'
+import { addStaff, importCensus, isDirection, moveStudents, removeStaff, removeStudents, setDirection, setElective, setStudentGroup, setTutorOf, useDemoState, type CensusRow } from '../data/api'
+import { gradeShort, GRADES, SCHOOL, TUTORIA } from '../domain/catalog'
 import { groupName, groupNameOfKey } from '../domain/groups'
 import { detectColumns, normalizeGrade, parseCsv } from '../domain/csv'
 import type { GradeId, Session } from '../domain/types'
@@ -55,6 +55,17 @@ function Access({ session }: { session: Session }) {
       showToast((e as Error).message)
     }
   }
+  const allGroups = GRADES.flatMap((g) => (s.classGroups[g.id] ?? []).map((group) => ({ key: `${g.id}-${group}`, name: groupName(g.id, group) })))
+  const tutorOf = (email: string) => s.assignments.find((a) => a.subjectId === TUTORIA && a.teacherEmail === email)
+  const tutorName = (key: string) => s.staff.find((m) => s.assignments.some((a) => a.subjectId === TUTORIA && `${a.gradeId}-${a.group}` === key && a.teacherEmail === m.email))?.name
+  const pickTutor = (email: string, key: string) => {
+    try {
+      setTutorOf(session, email, key || null)
+      showToast(key ? `Tutoria de ${groupNameOfKey(key)} assignada.` : 'Ja no fa cap tutoria.')
+    } catch (e) {
+      showToast((e as Error).message)
+    }
+  }
   return (
     <>
       <div className="row" style={{ alignItems: 'flex-start' }}>
@@ -62,18 +73,32 @@ function Access({ session }: { session: Session }) {
           <li><b>Rol.</b> Decideix què pot gestionar cada persona. <b>Professorat</b>: només veu els seus grups de tutoria. <b>Administració</b>: gestiona l’app (accessos, cens, recollides, informes) i veu totes les autoavaluacions d’«Em miro».</li>
           <li><b>Ser avaluat.</b> No depèn del rol: tothom qui surt a <b>Et veig… › Qui fa classe a qui</b> és valorat pel seu alumnat i veu el seu propi informe, també si és d’administració.</li>
           <li><b>Equip Directiu.</b> Veu els resultats d’«Et veig…» de tot el professorat. {dir ? 'Ningú no pot canviar la seva pròpia pertinença.' : 'Només l’administració o l’Equip Directiu poden canviar qui en forma part.'}</li>
+          <li><b>Tutoria.</b> Qui fa la tutoria d’un grup en veu els resultats d’«Em miro». Es pot triar aquí o a <b>Et veig… › Qui fa classe a qui</b>, a la matèria Tutoria: totes dues coses són la mateixa.</li>
           <li><b>Recomanació.</b> Administració només per a les 2 o 3 persones que gestionen l’app; la resta, Professorat amb els seus grups.</li>
         </ul>
         <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" /> Dona accés</button>
       </div>
       <div className="table-wrap">
         <table className="t">
-          <thead><tr><th>Persona</th><th>Rol</th><th>Grups</th><th>Equip Directiu</th><th /></tr></thead>
+          <thead><tr><th>Persona</th><th>Rol</th><th>Tutoria</th><th>Veu Em miro de</th><th>Equip Directiu</th><th /></tr></thead>
           <tbody>
             {s.staff.map((p) => (
               <tr key={p.email}>
                 <td className="student-cell"><b>{p.name}</b><small>{p.email}</small></td>
                 <td>{p.role === 'admin' ? <span className="badge brand">Administració</span> : <span className="badge info">Professorat</span>}</td>
+                <td>
+                  {session.role === 'admin' ? (
+                    <select className="select" value={tutorOf(p.email) ? `${tutorOf(p.email)!.gradeId}-${tutorOf(p.email)!.group}` : ''} onChange={(e) => pickTutor(p.email, e.target.value)} aria-label={`Tutoria de ${p.name}`}>
+                      <option value="">—</option>
+                      {allGroups.map((g) => {
+                        const other = tutorName(g.key)
+                        return <option key={g.key} value={g.key}>{g.name}{other && other !== p.name ? ` (ara: ${other})` : ''}</option>
+                      })}
+                    </select>
+                  ) : (
+                    tutorOf(p.email) ? groupName(tutorOf(p.email)!.gradeId, tutorOf(p.email)!.group) : '—'
+                  )}
+                </td>
                 <td>{p.role === 'admin' ? 'Tots' : p.groups.map(groupNameOfKey).join(', ') || '—'}</td>
                 <td>
                   <label className="toggle" title={!dir ? 'Només ho pot canviar l’administració o l’Equip Directiu' : p.email === session.email ? 'No pots canviar la teva pròpia pertinença' : undefined}>

@@ -100,3 +100,37 @@ describe('matèries', () => {
     expect(() => api.setGradeSubject(login(ADMIN), { gradeId: '3ESO', subjectId: 'NOEXISTEIX', order: 1, optional: false, active: true })).toThrow()
   })
 })
+
+describe('tutoria', () => {
+  it('és a tots els cursos, sempre comuna i activa, i no surt a Em miro', async () => {
+    const { TUTORIA, GRADES } = await import('../src/domain/catalog')
+    api.resetDemo()
+    const s = api.snapshot()
+    for (const g of GRADES) expect(s.gradeSubjects.find((x) => x.gradeId === g.id && x.subjectId === TUTORIA)).toMatchObject({ optional: false, active: true })
+    const gs = s.gradeSubjects.find((x) => x.gradeId === '3ESO' && x.subjectId === TUTORIA)!
+    expect(() => api.setGradeSubject(login(ADMIN), { ...gs, active: false })).toThrow()
+    expect(() => api.saveSubject(login(ADMIN), { id: TUTORIA, short: 'Tut', long: 'Tut' })).toThrow()
+    expect(s.campaigns.every((c) => c.subjectsSnapshot.every((x) => x.subjectId !== TUTORIA))).toBe(true)
+  })
+
+  it('qui fa la tutoria veu Em miro del grup; triar-la des del personal és el mateix', async () => {
+    const { TUTORIA } = await import('../src/domain/catalog')
+    api.resetDemo()
+    const g = api.snapshot().classGroups['2ESO'][0]
+    const key = `2ESO-${g}`
+    const before = api.snapshot().assignments.find((a) => a.subjectId === TUTORIA && `${a.gradeId}-${a.group}` === key)!.teacherEmail
+    const nou = 'xavier.duran@ramonpont.cat'
+    api.setAssignment(login(ADMIN), '2ESO', g, TUTORIA, nou)
+    let s = api.snapshot()
+    expect(s.staff.find((x) => x.email === nou)!.groups).toContain(key)
+    expect(s.staff.find((x) => x.email === before)!.groups).not.toContain(key)
+    // Al revés: des del llistat del personal.
+    api.setTutorOf(login(ADMIN), before, key)
+    s = api.snapshot()
+    expect(s.assignments.find((a) => a.subjectId === TUTORIA && `${a.gradeId}-${a.group}` === key)!.teacherEmail).toBe(before)
+    expect(s.staff.find((x) => x.email === before)!.groups).toContain(key)
+    expect(s.staff.find((x) => x.email === nou)!.groups).not.toContain(key)
+    api.setTutorOf(login(ADMIN), before, null)
+    expect(api.snapshot().assignments.some((a) => a.subjectId === TUTORIA && a.teacherEmail === before)).toBe(false)
+  })
+})
