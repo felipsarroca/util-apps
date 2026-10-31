@@ -126,11 +126,13 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`). El 
   - cens amb optatives (CSV amb validació prèvia), accions en bloc (canviar de curs o de grup, donar de baixa) i **curs nou**, que copia grups, matèries i assignacions, passa l'alumnat de curs i respecta els repetidors;
   - grups amb el tutor o tutora de cada un;
   - matèries per curs, matèries noves i canvis de nom; la **Tutoria** és a tots els cursos i qui la fa veu l'«Em miro» del grup;
-  - correus de les famílies: el **llistat de pares i mares de Clickedu** tal com surt (amb ajuda pas a pas a la mateixa pantalla) o un CSV propi;
-  - incidències d'identitat, apartats actius i registre d'operacions inalterable.
+  - correus de les famílies: el **llistat de pares i mares de Clickedu** tal com surt (amb ajuda pas a pas a la mateixa pantalla) o un CSV propi; també es poden **corregir a mà** el nom i el correu de cada responsable i **afegir-ne** quan no n'hi ha cap o en falta un;
+  - incidències d'identitat, apartats actius i registre d'operacions inalterable;
+  - **còpies de seguretat**: una còpia completa cada dia i abans de cada canvi gran (curs nou, importació de correus, restauració), i restauració amb un clic i confirmació escrita.
 - **Correu**: text editable dels dos missatges, amb previsualització:
   - a les famílies, amb l'informe «Així em veig» adjunt (text basat en el de VeuAlumnat), des del compte que triï l'escola; les respostes van a la tutoria o a una adreça fixa;
-  - al professorat, amb el seu informe «Així et veiem» adjunt, sempre des de **direccio@ramonpont.cat**.
+  - al professorat, amb el seu informe «Així et veiem» adjunt, sempre des de **direccio@ramonpont.cat**;
+  - **recordatoris automàtics**, des de direccio@ramonpont.cat, uns dies abans que es tanqui una recollida (de 1 a 5, per defecte 2): a l'alumnat que no ha lliurat «Em miro» i al professorat que no ha lliurat l'autoavaluació d'«Et veig…». Un sol recordatori per persona i recollida. Botons «Envia'm una prova» i «Envia ara els pendents».
 
 ### Guia del personal
 
@@ -144,17 +146,17 @@ Botó **Guia** a la capçalera, per a tot el personal. Comença amb dos recorreg
 2. **Alumnat nou.** *Centre › Alumnat i accessos › Cens*: afegeix el nou 3r de primària i les altes, i dona de baixa les baixes (en bloc).
 3. **Personal.** Altes i baixes, i la **tutoria** de cada docent (columna Tutoria).
 4. **Matèries i docents.** *Centre › Matèries* i *Et veig… › Qui fa classe a qui*.
-5. **Famílies.** *Centre › Famílies › Importa des de CSV*, amb el llistat de Clickedu. El botó **Com s'obté de Clickedu** ho explica pas a pas: *Administració › Gestió d'usuaris › Llistats › Llistat de pares i mares*, totes les classes de 3r de primària a 4t d'ESO, marcant *Nom alumne*, *Nom i cognoms* i *Correu electrònic*, i *Exportar a excel*. Revisa les propostes i les incidències, i **esborra el fitxer de Baixades** quan acabis.
+5. **Famílies.** *Centre › Famílies › Importa des de CSV*, amb el llistat de Clickedu. El botó **Com s'obté de Clickedu** ho explica pas a pas: *Administració › Gestió d'usuaris › Llistats › Llistat de pares i mares*, totes les classes de 3r de primària a 4t d'ESO, marcant *Nom alumne*, *Nom i cognoms* i *Correu electrònic*, i *Exportar a excel*. Revisa les propostes i les incidències, i **esborra el fitxer de Baixades** quan acabis. Els correus que falten o s'han de corregir s'afegeixen o s'editen a mà a la mateixa pantalla.
 
 ### A cada avaluació (Em miro)
 
 1. L'administració crea la recollida de cada curs (*Em miro › Recollides*) i l'obre.
-2. La tutoria segueix la participació al **Tauler** i a **Respostes**.
+2. La tutoria segueix la participació al **Tauler** i a **Respostes**. Si els recordatoris estan activats, uns dies abans del tancament l'alumnat que no ha acabat en rep un per correu.
 3. Quan es tanca, a *Així em veig i famílies*: **Prepara l'enviament** per als que tenen correu i **En paper** per als altres (desar en PDF o imprimir).
 
 ### Una o dues vegades l'any (Et veig…)
 
-1. L'Equip Directiu o l'administració crea la recollida i l'obre; el professorat fa la seva autoavaluació.
+1. L'Equip Directiu o l'administració crea la recollida i l'obre; el professorat fa la seva autoavaluació (qui no l'ha lliurat rep un recordatori abans del tancament).
 2. Es tanca, l'Equip Directiu modera els comentaris i es generen els informes.
 3. L'Equip Directiu revisa la **Visió de centre** i els informes, i els **publica** als docents.
 4. *Et veig… › Professorat › Lliura per correu*: cada docent rep el seu informe des de direccio@ramonpont.cat.
@@ -222,6 +224,9 @@ La carpeta `server` conté el backend de tota l'app.
 - **Em miro i Centre.** `GET /api/state` torna només les dades que cada persona pot veure. `POST /api/ops` executa cada operació amb les mateixes regles que la demostració, dins d'una transacció exclusiva, i només escriu el que ha canviat. La configuració del correu es desa a `app_settings`.
 - **Et veig….** Respostes sense identificador d'alumne, esborranys xifrats (AES-256-GCM) i esborrats en lliurar, ordre barrejat en tancar, llista de participació esborrada en publicar, llindar de 15 i moderació aplicats al servidor.
 - **Mode connectat.** Amb `VITE_API_URL`, l'app treballa amb el servidor i no desa dades al navegador.
+- **Còpies de seguretat** (`server/backups.ts`). Cada còpia és un JSON amb totes les taules de treball, desat a la taula `backups` de la mateixa base de dades. Es fa cada dia, abans del curs nou, abans d'importar correus de les famílies, abans de restaurar i a mà. Es conserven 30 dies (com a mínim, les 10 més recents). Restaurar ho fa tot en una transacció; no toca el registre d'operacions ni els recordatoris enviats. El pla gratuït de Neon només permet una instantània manual i cap de programada; per això les còpies són de l'app.
+- **Recordatoris** (`server/reminders.ts`) i **enviament** (`server/gmail.ts`): API de Gmail amb un compte de servei amb delegació de domini, només amb l'abast `gmail.send`, en nom de direccio@ramonpont.cat. La taula `reminders_sent` evita duplicats; els que fallen es tornen a provar.
+- **Tasca diària.** Un activador programat de Neon (`0 6 * * *`, 7 h o 8 h a Catalunya) crida `POST /api/tasques/diaries`: còpia diària i recordatoris, si estan activats. Només l'accepta amb la capçalera que hi posa Neon.
 - **Desplegament.** Neon Functions (Frankfurt), funció `latevaveu` a la branca `produccio`. Es torna a desplegar amb `bash scripts/desplega-servidor.sh` (detalls a [SEGUIMENT.md](SEGUIMENT.md#producció)).
 
 Per provar-ho tot en local amb dades fictícies:
@@ -237,9 +242,22 @@ VITE_API_URL=http://127.0.0.1:8787 VITE_DEV_AUTH=1 npm run dev -- --port 5191
 - El registre d'operacions (`audit_log`) només creix: un activador impedeix modificar-ne o esborrar-ne files. El servidor s'hi connecta amb el rol `latevaveu_app` (`db/permisos.sql`).
 - La cadena de connexió no s'escriu mai en cap fitxer.
 
+### Autoritzar l'enviament des de direccio@ramonpont.cat
+
+Ho fa una vegada una persona administradora de Google Workspace. La clau no es puja mai al repositori ni es copia en cap missatge.
+
+1. **Gmail API.** [Google Cloud](https://console.cloud.google.com), projecte «La teva veu» (el del client de Google): *API i serveis › Biblioteca › Gmail API › Habilita*.
+2. **Compte de servei.** *IAM i administració › Comptes de servei › Crea un compte de servei*: nom `latevaveu-correu`, sense cap rol. Obre'l i copia l'**ID únic** (un número llarg).
+3. **Clau.** Al compte de servei, *Claus › Afegeix una clau › Crea una clau nova › JSON*. Desa el fitxer fora de Google Drive, per exemple a `C:\Users\<usuari>\claus\latevaveu-correu.json`. Si Google no deixa crear claus, a *IAM i administració › Polítiques de l'organització* desactiva temporalment `iam.disableServiceAccountKeyCreation` per a aquest projecte.
+4. **Delegació.** [Consola d'administració](https://admin.google.com) › *Seguretat › Accés i control de dades › Controls de l'API › Delegació a tot el domini › Afegeix-ne un de nou*: l'ID únic del pas 2 i l'abast `https://www.googleapis.com/auth/gmail.send`. Pot trigar uns minuts a fer efecte.
+5. **Servidor.** A l'ordinador que desplega, la variable d'usuari amb el camí del fitxer (PowerShell): `[Environment]::SetEnvironmentVariable('LATEVAVEU_GMAIL_SA_FILE', 'C:\Users\<usuari>\claus\latevaveu-correu.json', 'User')`. Obre un terminal nou i desplega (`bash scripts/desplega-servidor.sh`): la clau passa a la funció com a `GMAIL_SERVICE_ACCOUNT`.
+6. **Prova.** *Centre › Correu › Recordatoris automàtics › Envia'm una prova*. Si arriba, activa «Envia'ls automàticament» i desa.
+
+`direccio@ramonpont.cat` ha de ser un usuari amb bústia de Gmail (no un grup).
+
 ## Pendent
 
-1. **Enviament real dels correus.** Al professorat, des de direccio@ramonpont.cat (decidit). A les famílies, decidir el compte. Cal autoritzar el servidor a enviar en nom d'aquests comptes (Gmail API amb delegació de domini o SMTP de Google Workspace) i fer la cua d'enviament amb «Envia'm una prova», «Aprova i envia», sense duplicats i amb registre de cada missatge.
+1. **Enviament real dels informes.** Els recordatoris ja surten per Gmail (un cop autoritzat). Falta fer servir el mateix camí per lliurar els informes amb el PDF adjunt: al professorat des de direccio@ramonpont.cat, i a les famílies des del compte que triï l'escola, amb «Envia'm una prova», «Aprova i envia», sense duplicats i amb registre de cada missatge.
 2. Revisar amb l'Equip Directiu les matèries d'ESO de cada curs i qui fa classe a qui.
 3. Prova pilot amb alumnat de cada etapa per ajustar preguntes, durada i obligatorietat.
 4. Revisió final amb la persona delegada de protecció de dades.

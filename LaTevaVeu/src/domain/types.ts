@@ -212,6 +212,12 @@ export interface MailSettings {
   replyToEmail: string
   families: MailTemplate
   teachers: MailTemplate
+  /** Recordatori a l'alumnat que no ha lliurat «Em miro». */
+  remindStudents: MailTemplate
+  /** Recordatori al professorat amb l'autoavaluació d'«Et veig…» pendent. */
+  remindTeachers: MailTemplate
+  /** Recordatoris automàtics: s'envien una sola vegada, uns dies abans que es tanqui cada recollida. */
+  reminders: { enabled: boolean; daysBefore: number }
 }
 
 /** Qui imparteix cada matèria a cada grup. És la base d'«Et veig…». */

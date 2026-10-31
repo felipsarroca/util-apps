@@ -4,7 +4,7 @@
 import { useState, type ReactNode } from 'react'
 import { STAGES } from '../domain/catalog'
 import type { TeacherReport } from '../domain/feedback'
-import { APP_LINK, renderMail, senderOf, TEACHER_SENDER, type RenderedMail } from '../domain/mail'
+import { APP_LINK, renderMail, senderOf, stagesText, TEACHER_SENDER, type RenderedMail } from '../domain/mail'
 import type { FeedbackStatus, MailSettings, StageId } from '../domain/types'
 import { FeedbackReportPages } from '../report/FeedbackReport'
 import { Icon, Modal, useToast } from '../ui/common'
@@ -88,14 +88,6 @@ const EMAIL = /^[^\s@;,]+@[^\s@;,]+\.[a-z]{2,}$/i
 export const isValidEmail = (x: string) => EMAIL.test(x.trim())
 
 const PUBLISHED: FeedbackStatus[] = ['PUBLICADA', 'ARXIVADA']
-
-const STAGE_WORDS: Record<StageId, string> = { CM: 'cicle mitjà', CS: 'cicle superior', ESO: 'ESO' }
-
-/** «cicle superior i ESO» */
-export const stagesText = (stages: StageId[]) => {
-  const names = stages.map((st) => STAGE_WORDS[st])
-  return names.length > 1 ? `${names.slice(0, -1).join(', ')} i ${names[names.length - 1]}` : names[0] ?? ''
-}
 
 export interface TeacherRow { email: string; name: string; stages: StageId[]; n: number }
 

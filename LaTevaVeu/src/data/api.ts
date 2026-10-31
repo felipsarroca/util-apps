@@ -15,7 +15,7 @@ import type {
   Answers, Campaign, CampaignStatus, FeedbackAnswer, FeedbackCampaign, FeedbackComment, FeedbackForm, FeedbackStatus, GradeId, GradeSubject, Guardian, MailSettings, ModerationStatus, Modules,
   Section, SelfAssessment, Session, StaffMember, StageId, Student, StudentResponse, Subject, TeachingAssignment, TemplateVersion,
 } from '../domain/types'
-import type { AssignmentRow, GuardianRow } from '../domain/csv'
+import { EMAIL, type AssignmentRow, type GuardianRow } from '../domain/csv'
 import { checkSchoolEmail } from '../domain/email'
 import { cleanMail, validateMail } from '../domain/mail'
 import { createDemoState, DEMO_VERSION, type DemoState } from './seed'
@@ -454,6 +454,25 @@ function setGuardianValidated$(session: Session, studentId: string, email: strin
       `${studentId}: ${email} ${validated ? 'validat' : 'pendent de validar'}`,
     ),
   )
+}
+
+/**
+ * Afegeix un responsable a mà (`original` buit) o en corregeix el nom i el correu. El correu es pot marcar
+ * validat directament: l'ha escrit l'escola a partir d'una font fiable.
+ */
+function saveGuardian$(session: Session, studentId: string, original: string | null, guardian: Guardian) {
+  requireAdminOrDirection(session)
+  const st = state.students.find((x) => x.id === studentId)
+  if (!st) throw new Error('No s’ha trobat l’alumne.')
+  const g: Guardian = { name: String(guardian?.name ?? '').replace(/\s+/g, ' ').trim(), email: String(guardian?.email ?? '').trim().toLowerCase(), validated: guardian?.validated === true }
+  if (!g.name || g.name.length > 120) throw new Error('Escriu el nom del pare, la mare o el tutor legal.')
+  if (!EMAIL.test(g.email) || g.email.length > 200) throw new Error('El correu no és vàlid.')
+  if (original !== null && !st.guardians.some((x) => x.email === original)) throw new Error('Aquest responsable ja no hi és: torna a carregar la pàgina.')
+  if (st.guardians.some((x) => x.email === g.email && x.email !== original)) throw new Error('Aquest correu ja és d’un responsable de l’alumne.')
+  if (original === null && st.guardians.length >= 4) throw new Error('Com a màxim hi pot haver 4 responsables per alumne.')
+  const guardians = original === null ? [...st.guardians, g] : st.guardians.map((x) => (x.email === original ? g : x))
+  const what = original === null ? `${g.email} afegit` : original === g.email ? `${g.email} editat` : `${original} → ${g.email}`
+  commit(audit({ ...state, students: state.students.map((x) => (x.id === studentId ? { ...x, guardians } : x)) }, session.email, 'Correus de les famílies', `${studentId}: ${what} (${g.validated ? 'validat' : 'pendent de validar'})`))
 }
 
 function removeGuardian$(session: Session, studentId: string, email: string) {
@@ -936,6 +955,7 @@ export const importCensus = op('importCensus', importCensus$)
 export const importGuardians = op('importGuardians', importGuardians$)
 export const setGuardianValidated = op('setGuardianValidated', setGuardianValidated$)
 export const removeGuardian = op('removeGuardian', removeGuardian$)
+export const saveGuardian = op('saveGuardian', saveGuardian$)
 export const addClassGroup = op('addClassGroup', addClassGroup$)
 export const renameClassGroup = op('renameClassGroup', renameClassGroup$)
 export const removeClassGroup = op('removeClassGroup', removeClassGroup$)
@@ -977,6 +997,7 @@ export const SERVER_OPS = {
   importGuardians: importGuardians$,
   setGuardianValidated: setGuardianValidated$,
   removeGuardian: removeGuardian$,
+  saveGuardian: saveGuardian$,
   addClassGroup: addClassGroup$,
   renameClassGroup: renameClassGroup$,
   removeClassGroup: removeClassGroup$,
@@ -995,4 +1016,55 @@ export const SERVER_OPS = {
   newFeedbackDraft: newFeedbackDraft$,
   discardFeedbackDraft: discardFeedbackDraft$,
   publishFeedbackForm: publishFeedbackForm$,
+}
+
+// ---------- Còpies de seguretat (demostració) ----------
+// Al servidor les còpies es desen a la base de dades (server/backups.ts). A la demostració, al navegador.
+
+const COPIES_KEY = 'latevaveu:copies-demo'
+
+export interface DemoBackup {
+  id: number
+  at: string
+  reason: string
+  by: string | null
+  year: string | null
+  rows: number
+  bytes: number
+}
+
+function readCopies(): (DemoBackup & { data: DemoState })[] {
+  try {
+    return JSON.parse(localStorage.getItem(COPIES_KEY) ?? '[]')
+  } catch {
+    return []
+  }
+}
+
+export function demoBackups(): DemoBackup[] {
+  return readCopies().map((c) => ({ id: c.id, at: c.at, reason: c.reason, by: c.by, year: c.year, rows: c.rows, bytes: c.bytes }))
+}
+
+export function demoBackupNow(session: Session, reason = 'Feta a mà') {
+  requireAdmin(session)
+  const json = JSON.stringify(state)
+  const rows = Object.values(state).reduce((n: number, v) => n + (Array.isArray(v) ? v.length : 0), 0)
+  const all = readCopies()
+  const copy = { id: Math.max(0, ...all.map((c) => c.id)) + 1, at: new Date().toISOString(), reason, by: session.name, year: state.year, rows, bytes: json.length, data: JSON.parse(json) as DemoState }
+  try {
+    localStorage.setItem(COPIES_KEY, JSON.stringify([copy, ...all].slice(0, 5)))
+  } catch {
+    throw new Error('El navegador no té espai per desar més còpies.')
+  }
+  return { id: copy.id }
+}
+
+export function demoRestore(session: Session, id: number) {
+  requireAdmin(session)
+  const copy = readCopies().find((c) => c.id === id)
+  if (!copy) throw new Error('No s’ha trobat la còpia.')
+  const safety = demoBackupNow(session, `Abans de restaurar la còpia del ${new Date(copy.at).toLocaleString('ca')}`).id
+  // El registre no torna enrere: es conserva l'actual.
+  commit(audit({ ...copy.data, mail: cleanMail(copy.data.mail), audit: state.audit }, session.email, 'Còpia restaurada', `Còpia del ${new Date(copy.at).toLocaleString('ca')}`))
+  return { restored: id, safety }
 }

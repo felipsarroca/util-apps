@@ -1,7 +1,7 @@
 // Proves de la configuració i del format dels correus.
 import { describe, expect, it } from 'vitest'
 import { createDemoState } from '../src/data/seed'
-import { cleanMail, DEFAULT_MAIL, renderMail, senderOf, validateMail } from '../src/domain/mail'
+import { cleanMail, DEFAULT_MAIL, exampleVars, longDate, renderMail, senderOf, validateMail } from '../src/domain/mail'
 import type { Session } from '../src/domain/types'
 
 const mem = new Map<string, string>()
@@ -78,5 +78,28 @@ describe('correu: remitent', () => {
     const m = { ...DEFAULT_MAIL, sender: 'latevaveu@ramonpont.cat', senderName: 'La teva veu' }
     expect(senderOf('teachers', m)).toEqual({ name: 'Equip Directiu · Escola Ramon Pont', email: 'direccio@ramonpont.cat' })
     expect(senderOf('families', m)).toEqual({ name: 'La teva veu', email: 'latevaveu@ramonpont.cat' })
+  })
+})
+
+describe('recordatoris', () => {
+  it('per defecte estan aturats, a 2 dies, i un valor estrany es corregeix', () => {
+    expect(cleanMail(undefined).reminders).toEqual({ enabled: false, daysBefore: 2 })
+    expect(cleanMail({ reminders: { enabled: true, daysBefore: 9 } }).reminders).toEqual({ enabled: true, daysBefore: 2 })
+    expect(validateMail({ ...DEFAULT_MAIL, reminders: { enabled: true, daysBefore: 9 } })).toMatch(/dies/)
+  })
+  it('surten de direcció, sense adjunt i amb la data en català', () => {
+    expect(longDate('2026-11-20')).toBe('divendres 20 de novembre')
+    const m = renderMail('remindStudents', DEFAULT_MAIL, { ...exampleVars('remindStudents'), alumne: 'Pol', data_final: longDate('2026-11-20') })
+    expect(m.subject).toBe('Recordatori: «Em miro» es tanca el divendres 20 de novembre')
+    expect(m.text).toContain('Hola, Pol')
+    expect(m.text).not.toMatch(/\{\w+\}/)
+    expect(m.attachment).toBe('')
+    const t = renderMail('remindTeachers', DEFAULT_MAIL, exampleVars('remindTeachers'))
+    expect(t.text).not.toMatch(/\{\w+\}/)
+    expect(senderOf('remindStudents', { ...DEFAULT_MAIL, sender: 'altre@ramonpont.cat' }).email).toBe('direccio@ramonpont.cat')
+  })
+  it('el text es pot editar i es valida com els altres', () => {
+    expect(validateMail({ ...DEFAULT_MAIL, remindTeachers: { subject: 'Hola {docent}', body: 'Fins al {data_final}' } })).toBeNull()
+    expect(validateMail({ ...DEFAULT_MAIL, remindStudents: { subject: 'Hola', body: 'Hola {docent}' } })).toMatch(/\{docent\}/)
   })
 })

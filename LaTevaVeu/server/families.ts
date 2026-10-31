@@ -6,6 +6,7 @@ import type { Actor } from './auth'
 import type { Queryable } from './db'
 import { forbidden, invalid, notFound } from './errors'
 import type { Ctx } from './etveig'
+import { createBackup } from './backups'
 
 export interface FamilyRow {
   /** Identificador del cens (school_ref), el mateix que porta el CSV. */
@@ -52,6 +53,7 @@ export async function importFamilies(ctx: Ctx, actor: Actor, csv: string, filena
   const parsed = parseGuardiansCsv(csv, asStudents)
   const refs = [...new Set(parsed.rows.map((r) => r.studentId))]
   await ctx.db.tx(async (q) => {
+    await createBackup(q, 'Abans d’importar correus de les famílies', actor.userId, ctx.yearId)
     const imp = (
       await q.query<{ id: string }>('insert into contact_imports (imported_by, filename, row_count) values ($1, $2, $3) returning id', [actor.userId, filename?.slice(0, 200) ?? null, parsed.rows.length + parsed.issues.length])
     ).rows[0]

@@ -1,11 +1,11 @@
 // Correus de les famílies: importació en CSV i validació. Ho gestiona l'administració o l'Equip Directiu.
 
 import { useState } from 'react'
-import { importGuardians, removeGuardian, setGuardianValidated, useDemoState } from '../data/api'
+import { importGuardians, removeGuardian, saveGuardian, setGuardianValidated, useDemoState } from '../data/api'
 import { GRADES } from '../domain/catalog'
-import { parseGuardiansCsv, type GuardianImport } from '../domain/csv'
+import { EMAIL, parseGuardiansCsv, type GuardianImport } from '../domain/csv'
 import { groupName } from '../domain/groups'
-import type { GradeId, Session } from '../domain/types'
+import type { GradeId, Guardian, Session, Student } from '../domain/types'
 import { Icon, Modal, useToast } from '../ui/common'
 import { ClickeduHelp } from './ClickeduHelp'
 import { fullName } from './shared'
@@ -34,6 +34,8 @@ export function FamiliesScreen({ session }: { session: Session }) {
   const [grade, setGrade] = useState<GradeId | ''>('')
   const [importing, setImporting] = useState(false)
   const [help, setHelp] = useState(false)
+  // Responsable que s'edita (original: null quan se n'afegeix un).
+  const [editing, setEditing] = useState<{ st: Student; original: Guardian | null } | null>(null)
   const [toast, showToast] = useToast()
   const students = s.students
     .filter((x) => !grade || x.gradeId === grade)
@@ -95,12 +97,20 @@ export function FamiliesScreen({ session }: { session: Session }) {
                           <input type="checkbox" checked={g.validated} onChange={(e) => act(() => setGuardianValidated(session, st.id, g.email, e.target.checked), e.target.checked ? 'Correu validat.' : 'Correu pendent de validar.')} />
                           {g.validated ? 'Validat' : 'Pendent'}
                         </label>
+                        <button className="btn icon small ghost" onClick={() => setEditing({ st, original: g })} aria-label={`Edita ${g.email}`} title="Edita el nom o el correu">
+                          <Icon name="edit" />
+                        </button>
                         <button className="btn icon small ghost" onClick={() => act(() => removeGuardian(session, st.id, g.email), 'Correu eliminat.')} aria-label={`Treu ${g.email}`}>
                           <Icon name="trash" />
                         </button>
                       </div>
                     ))}
                   </div>
+                  {st.guardians.length < 4 && (
+                    <button className="btn small ghost fam-add" onClick={() => setEditing({ st, original: null })}>
+                      <Icon name="plus" /> Afegeix {st.guardians.length ? 'un altre responsable' : 'un responsable'}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -109,6 +119,18 @@ export function FamiliesScreen({ session }: { session: Session }) {
       </div>
       {importing && <ImportFamilies session={session} onClose={() => setImporting(false)} onHelp={() => setHelp(true)} onDone={(n) => { setImporting(false); showToast(`Correus actualitzats per a ${n} alumnes.`) }} />}
       {help && <ClickeduHelp onClose={() => setHelp(false)} />}
+      {editing && (
+        <GuardianForm
+          student={editing.st}
+          original={editing.original}
+          onClose={() => setEditing(null)}
+          onSave={(g) => {
+            saveGuardian(session, editing.st.id, editing.original?.email ?? null, g)
+            setEditing(null)
+            showToast(editing.original ? 'Responsable actualitzat.' : 'Responsable afegit.')
+          }}
+        />
+      )}
       {toast}
     </>
   )
@@ -220,6 +242,56 @@ function ImportFamilies({ session, onClose, onDone, onHelp }: { session: Session
           </div>
         </>
       )}
+    </Modal>
+  )
+}
+
+/** Afegir o corregir a mà el nom i el correu d'un pare, una mare o un tutor legal. */
+function GuardianForm({ student, original, onClose, onSave }: { student: Student; original: Guardian | null; onClose: () => void; onSave: (g: Guardian) => void }) {
+  const [name, setName] = useState(original?.name ?? '')
+  const [email, setEmail] = useState(original?.email ?? '')
+  const [validated, setValidated] = useState(original?.validated ?? true)
+  const [error, setError] = useState<string | null>(null)
+  const clean = email.trim().toLowerCase()
+  const problem = !name.trim()
+    ? 'Escriu el nom.'
+    : !EMAIL.test(clean)
+      ? 'El correu no és vàlid.'
+      : student.guardians.some((g) => g.email === clean && g.email !== original?.email)
+        ? 'Aquest correu ja és d’un altre responsable de l’alumne.'
+        : null
+  const save = () => {
+    try {
+      onSave({ name, email: clean, validated })
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+  return (
+    <Modal title={original ? 'Edita el responsable' : 'Afegeix un responsable'} onClose={onClose}>
+      <p className="muted">
+        {fullName(student)} · {groupName(student.gradeId, student.group)}
+      </p>
+      <label className="field">
+        <span>Nom i cognoms</span>
+        <input className="input" maxLength={120} value={name} onChange={(e) => setName(e.target.value)} placeholder="p. ex. Maria Serra Puig" />
+      </label>
+      <label className="field">
+        <span>Correu electrònic</span>
+        <input className="input" type="email" maxLength={200} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="p. ex. maria.serra@exemple.cat" />
+      </label>
+      <label className="check">
+        <input type="checkbox" checked={validated} onChange={(e) => setValidated(e.target.checked)} />
+        <span>Correu comprovat amb la família (validat)</span>
+      </label>
+      <small className="muted">Només els correus validats reben l’informe. Si el canvies, desmarca-ho fins que la família te’l confirmi.</small>
+      {(error || (problem && (name || email))) && <p className="notice bad">{error ?? problem}</p>}
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn" onClick={onClose}>Cancel·la</button>
+        <button className="btn primary" disabled={!!problem} onClick={save}>
+          <Icon name="check" /> Desa
+        </button>
+      </div>
     </Modal>
   )
 }

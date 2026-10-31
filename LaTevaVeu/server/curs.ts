@@ -7,6 +7,7 @@ import type { Actor } from './auth'
 import { conflict, forbidden } from './errors'
 import type { Ctx } from './etveig'
 import { LOCK } from './ops'
+import { createBackup } from './backups'
 import type { NewYearResult } from '../src/data/api'
 
 export async function startNewYear(ctx: Ctx, actor: Actor, year: unknown, repeaters: string[] = []): Promise<NewYearResult> {
@@ -18,6 +19,8 @@ export async function startNewYear(ctx: Ctx, actor: Actor, year: unknown, repeat
     // El navegador diu quin curs vol començar: si no és el següent (doble clic, pestanya antiga), no es fa res.
     if (year !== next) throw conflict(`El curs actual és ${old}: només es pot començar el ${next}.`)
     if ((await q.query('select 1 from academic_years where id = $1', [next])).rows.length) throw conflict(`El curs ${next} ja existeix.`)
+    // Si alguna cosa no surt com s'esperava, es pot tornar a aquest punt des de Centre › Còpies de seguretat.
+    await createBackup(q, `Abans del curs nou (${next})`, actor.userId, old)
     const [y1, y2] = next.split('-')
     await q.query('insert into academic_years (id, starts_on, ends_on, current) values ($1, $2, $3, false)', [next, `${y1}-09-01`, `${y2}-06-30`])
     await q.query('insert into grade_subjects (year_id, grade_id, subject_id, sort, optional, active) select $2, grade_id, subject_id, sort, optional, active from grade_subjects where year_id = $1', [old, next])

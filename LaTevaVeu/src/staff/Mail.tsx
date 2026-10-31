@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react'
 import { setMail, useDemoState } from '../data/api'
 import { SCHOOL } from '../domain/catalog'
-import { DEFAULT_TEMPLATES, exampleVars, MAIL_FIELDS, MAIL_KINDS, MAIL_LIMITS, renderMail, senderOf, TEACHER_SENDER, validateMail, cleanMail, type MailKind } from '../domain/mail'
+import { DEFAULT_TEMPLATES, exampleVars, longDate, MAIL_FIELDS, MAIL_KINDS, MAIL_LIMITS, REMINDER_DAYS, renderMail, senderOf, TEACHER_SENDER, validateMail, cleanMail, type MailKind } from '../domain/mail'
+import { fetchReminders, postRemindNow, postRemindTest, useRemote } from '../data/remote'
 import type { MailSettings, Session } from '../domain/types'
 import { Icon, useToast } from '../ui/common'
 import { PageHead } from './StaffApp'
@@ -19,7 +20,7 @@ export function MailScreen({ session }: { session: Session }) {
   const tpl = draft[kind]
   const setTpl = (patch: Partial<MailSettings[MailKind]>) => setDraft((d) => ({ ...d, [kind]: { ...d[kind], ...patch } }))
   const preview = renderMail(kind, cleanMail(draft), exampleVars(kind))
-  const replyTo = kind === 'teachers' ? TEACHER_SENDER.email : draft.replyTo === 'tutor' ? 'el tutor o tutora del grup' : draft.replyToEmail || '—'
+  const replyTo = kind !== 'families' ? TEACHER_SENDER.email : draft.replyTo === 'tutor' ? 'el tutor o tutora del grup' : draft.replyToEmail || '—'
   const from = senderOf(kind, draft)
 
   // Insereix el marcador on hi ha el cursor del text.
@@ -105,6 +106,30 @@ export function MailScreen({ session }: { session: Session }) {
         )}
       </section>
 
+      <section className="card panel">
+        <h2>Recordatoris automàtics</h2>
+        <p className="muted">
+          Uns dies abans que es tanqui una recollida, La teva veu envia un recordatori a l’alumnat que encara no ha lliurat «Em miro» i al professorat que no ha lliurat l’autoavaluació d’«Et veig…».
+          Cada persona en rep <b>un sol</b> per recollida, des de <b>{TEACHER_SENDER.email}</b>. El text es pot canviar a les pestanyes de sota.
+        </p>
+        <div className="row" style={{ gap: 18, flexWrap: 'wrap' }}>
+          <label className="check">
+            <input type="checkbox" checked={draft.reminders.enabled} onChange={(e) => setDraft({ ...draft, reminders: { ...draft.reminders, enabled: e.target.checked } })} />
+            <span><b>Envia’ls automàticament</b></span>
+          </label>
+          <label className="field inline">
+            <span>Quan falten</span>
+            <select className="input" value={draft.reminders.daysBefore} onChange={(e) => setDraft({ ...draft, reminders: { ...draft.reminders, daysBefore: Number(e.target.value) } })}>
+              {REMINDER_DAYS.map((d) => (
+                <option key={d} value={d}>{d === 1 ? '1 dia' : `${d} dies`}</option>
+              ))}
+            </select>
+            <span>per tancar la recollida</span>
+          </label>
+        </div>
+        {session.remote ? <ReminderStatus dirty={dirty} /> : <p className="muted"><small>A la demostració no s’envia cap correu.</small></p>}
+      </section>
+
       <div className="tabs" role="tablist">
         {(Object.keys(MAIL_KINDS) as MailKind[]).map((k) => (
           <button key={k} role="tab" aria-selected={kind === k} className={`tab${kind === k ? ' cur' : ''}`} onClick={() => setKind(k)}>
@@ -155,8 +180,12 @@ export function MailScreen({ session }: { session: Session }) {
             <dd>{replyTo}</dd>
             <dt>Assumpte</dt>
             <dd><b>{preview.subject}</b></dd>
-            <dt>Adjunt</dt>
-            <dd><Icon name="file" /> {preview.attachment}</dd>
+            {preview.attachment && (
+              <>
+                <dt>Adjunt</dt>
+                <dd><Icon name="file" /> {preview.attachment}</dd>
+              </>
+            )}
           </dl>
           <iframe className="mail-frame" title="Previsualització del correu" sandbox="" srcDoc={`<!doctype html><meta charset="utf-8"><body style="margin:0">${preview.html}</body>`} />
           <small className="muted">Amb dades d’exemple. Cada missatge es personalitza amb les dades reals.</small>
@@ -171,5 +200,75 @@ export function MailScreen({ session }: { session: Session }) {
       )}
       {toast}
     </>
+  )
+}
+
+/** Mode connectat: si el servidor pot enviar, qui els rebria avui i què s'ha enviat. */
+function ReminderStatus({ dirty }: { dirty: boolean }) {
+  const st = useRemote(fetchReminders)
+  const [busy, setBusy] = useState(false)
+  const [toast, showToast] = useToast()
+  const run = async (fn: () => Promise<string>) => {
+    setBusy(true)
+    try {
+      showToast(await fn())
+      st.reload()
+    } catch (e) {
+      showToast((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (st.loading) return <p className="muted">Comprovant el servidor…</p>
+  if (st.error || !st.data) return <p className="notice bad">{st.error}</p>
+  const d = st.data
+  const total = d.pending.reduce((n, p) => n + p.n, 0)
+  const who = (k: 'students' | 'teachers', n: number) => (k === 'students' ? `${n} ${n === 1 ? 'alumne' : 'alumnes'}` : `${n} ${n === 1 ? 'docent' : 'docents'}`)
+  return (
+    <div className="reminder-status">
+      {!d.configured && (
+        <div className="notice warn">
+          <Icon name="alert" />
+          <div>El servidor encara no té permís per enviar des de {d.sender}. Fins que l’Equip Directiu no autoritzi l’enviament a Google Workspace (vegeu el README), els recordatoris no surten.</div>
+        </div>
+      )}
+      <h3>Avui ({longDate(d.today)}) els rebrien</h3>
+      {d.pending.length ? (
+        <ul>
+          {d.pending.map((p) => (
+            <li key={`${p.kind}${p.campaign}`}>
+              {who(p.kind, p.n)} · {p.kind === 'students' ? 'Em miro' : 'Et veig…'} · {p.campaign} <small className="muted">(es tanca el {longDate(p.end)})</small>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="muted">Ningú: no hi ha cap recollida oberta que es tanqui en {d.daysBefore === 1 ? '1 dia' : `${d.daysBefore} dies`} o menys amb lliuraments pendents.</p>
+      )}
+      {!!d.sent.length && (
+        <>
+          <h3>Enviats</h3>
+          <ul>
+            {d.sent.map((x) => (
+              <li key={`${x.kind}${x.campaign}`}>
+                {who(x.kind, x.n)} · {x.campaign} <small className="muted">(darrer: {new Date(x.last).toLocaleString('ca', { dateStyle: 'short', timeStyle: 'short' })})</small>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+        <button className="btn" disabled={!d.configured || busy || dirty} onClick={() => run(async () => `Prova enviada a ${(await postRemindTest()).to}.`)}>
+          <Icon name="mail" /> Envia’m una prova
+        </button>
+        <button className="btn" disabled={!d.configured || busy || dirty || !total} onClick={() => run(async () => {
+          const r = await postRemindNow()
+          return r.failed ? `${r.sent} enviats; ${r.failed} no s’han pogut enviar (es tornaran a provar).` : `${r.sent} recordatoris enviats.`
+        })}>
+          <Icon name="mail" /> Envia ara els pendents ({total})
+        </button>
+        {dirty && <small className="muted">Desa els canvis abans d’enviar.</small>}
+      </div>
+      {toast}
+    </div>
   )
 }

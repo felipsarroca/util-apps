@@ -1036,3 +1036,11 @@ button.guide-card:hover { box-shadow: var(--sh-2); transform: translateY(-1px); 
 .paper-list li { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .3rem .5rem; border-radius: var(--r-s); background: var(--card); }
 .paper-list li .check { display: flex; align-items: center; gap: .5rem; min-width: 0; }
 .paper-list li .badge { flex: none; }
+
+/* Recordatoris i còpies */
+.field.inline { display: inline-flex; flex-direction: row; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.field.inline .input { width: auto; }
+.reminder-status { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: .8rem; display: grid; gap: .5rem; }
+.reminder-status h3 { margin: .3rem 0 0; font-size: 1rem; }
+.reminder-status ul { margin: 0; padding-left: 1.2rem; line-height: 1.6; }
+.fam-add { margin-top: .3rem; }

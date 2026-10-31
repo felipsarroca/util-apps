@@ -396,6 +396,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>Clica <b>Analitza</b>. L’app detecta alumnes que no són al cens, correus mal escrits, correus repetits i el correu del mateix alumne en lloc del de la família.</li>
             <li>Confirma amb <b>Importa N correus</b>. Per a cada alumne del fitxer, els correus nous <b>substitueixen</b> els anteriors i queden validats. Els alumnes que no surten al fitxer no canvien.</li>
             <li>A la taula pots filtrar per curs, marcar un correu com a <b>Validat</b> o <b>Pendent</b> i treure’l.</li>
+            <li>Per corregir el nom o el correu d’un responsable, clica el <b>llapis</b>. Si un alumne no en té cap o en falta un (el pare o la mare), clica <b>Afegeix un responsable</b>. Marca <b>Validat</b> només si el correu l’ha confirmat la família.</li>
           </ol>
           <Tip>Només s’envia als correus validats. Els comptadors de dalt indiquen quants alumnes tenen correu validat, quants el tenen pendent i quants no en tenen (el seu informe es lliurarà en paper).</Tip>
           <h3>Incidències d’identitat</h3>
@@ -412,13 +413,21 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           <h3>Apartats</h3>
           <p>Activa o desactiva temporalment Em miro o Et veig… Desactivar-lo l’amaga a l’alumnat sense esborrar cap dada; és útil, per exemple, si cal aturar una recollida per un problema.</p>
           <h3>Correu</h3>
-          <p><Where>Centre › Correu</Where> Només per a l’administració. Hi ha tres decisions:</p>
+          <p><Where>Centre › Correu</Where> Només per a l’administració. Hi ha quatre decisions:</p>
           <ul>
             <li><b>Compte que envia.</b> Un compte de l’escola (@ramonpont.cat). És millor un compte dedicat a l’app que el d’una persona: no depèn de qui ocupa el càrrec i tots els enviaments queden junts.</li>
             <li><b>On arriben les respostes.</b> Per defecte, al tutor o tutora del grup, que és qui coneix l’alumne. També es pot posar una adreça fixa, com la de secretaria.</li>
-            <li><b>Text dels missatges.</b> Un per a les famílies, amb l’informe «Així em veig» adjunt, i un per al professorat, que només avisa que l’informe «Així et veiem» és disponible (no s’adjunta perquè és confidencial). Els marcadors entre claus, com {'{alumne}'}, es canvien per les dades de cada destinatari. A la dreta es veu com quedarà.</li>
+            <li><b>Recordatoris automàtics.</b> Si els actives, uns dies abans que es tanqui una recollida (tu tries quants) l’alumnat que no ha lliurat «Em miro» i el professorat que no ha lliurat l’autoavaluació d’«Et veig…» reben un recordatori des de direccio@ramonpont.cat. Només un per persona i recollida. Amb <b>Envia’m una prova</b> reps els dos textos al teu correu, i <b>Envia ara els pendents</b> els envia sense esperar l’endemà.</li>
+            <li><b>Text dels missatges.</b> Quatre pestanyes: famílies (amb l’informe «Així em veig» adjunt), professorat (amb el seu informe «Així et veiem» adjunt, sempre des de direccio@ramonpont.cat) i els dos recordatoris. Els marcadors entre claus, com {'{alumne}'}, es canvien per les dades de cada destinatari. A la dreta es veu com quedarà.</li>
           </ul>
           <Tip>Si es toca el text i no convenç, <b>Recupera el text original</b> el torna a deixar com era.</Tip>
+          <h3>Còpies de seguretat</h3>
+          <p><Where>Centre › Còpies de seguretat</Where> Només per a l’administració. Cada dia es fa una còpia completa de totes les dades, i també abans de començar un curs nou, abans d’importar correus de les famílies i abans de restaurar-ne una. Se’n conserven 30 dies.</p>
+          <ul>
+            <li><b>Fes una còpia ara</b> abans d’un canvi gran que vulguis poder desfer.</li>
+            <li><b>Restaura</b> torna totes les dades a com eren en aquell moment. Cal escriure RESTAURA per confirmar-ho. Abans es fa una còpia de l’estat actual: si t’equivoques, la restaures i tornes on eres.</li>
+            <li>El registre d’operacions no torna enrere i els recordatoris que ja han sortit no es tornen a enviar.</li>
+          </ul>
           <h3>Registre d’operacions</h3>
           <p>Hi consten les accions rellevants amb data, persona i detall: permisos, canvis de configuració, canvis d’estat, impressions d’informes, consultes d’informes d’altres docents i incidències. No es pot modificar.</p>
         </Sec>

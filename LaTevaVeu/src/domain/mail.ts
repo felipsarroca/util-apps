@@ -2,9 +2,9 @@
 // Sense dependències del navegador: el servidor farà servir el mateix format per enviar.
 // El text de les famílies parteix del correu de VeuAlumnat.
 import { SCHOOL } from './catalog'
-import type { MailSettings, MailTemplate } from './types'
+import type { MailSettings, MailTemplate, StageId } from './types'
 
-export type MailKind = 'families' | 'teachers'
+export type MailKind = 'families' | 'teachers' | 'remindStudents' | 'remindTeachers'
 
 /** Enllaç curt a l'app, per als correus. */
 export const APP_LINK = 'https://ja.cat/tensveu'
@@ -12,10 +12,21 @@ export const APP_LINK = 'https://ja.cat/tensveu'
 /** Els correus al professorat surten sempre del compte de direcció (decisió de l'escola), i les respostes hi tornen. */
 export const TEACHER_SENDER = { name: `Equip Directiu · ${SCHOOL.name}`, email: `direccio@${SCHOOL.domain}` }
 
-/** Qui envia cada tipus de correu: les famílies, el compte configurat; el professorat, sempre direcció. */
+/** Qui envia cada tipus de correu: les famílies, el compte configurat; el professorat i els recordatoris, sempre direcció. */
 export function senderOf(kind: MailKind, m: MailSettings): { name: string; email: string } {
-  return kind === 'teachers' ? TEACHER_SENDER : { name: m.senderName, email: m.sender }
+  return kind === 'families' ? { name: m.senderName, email: m.sender } : TEACHER_SENDER
 }
+
+const STAGE_WORDS: Record<StageId, string> = { CM: 'cicle mitjà', CS: 'cicle superior', ESO: 'ESO' }
+
+/** «cicle superior i ESO» */
+export const stagesText = (stages: StageId[]) => {
+  const names = stages.map((st) => STAGE_WORDS[st])
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} i ${names[names.length - 1]}` : names[0] ?? ''
+}
+
+/** Dies d'antelació possibles per als recordatoris. */
+export const REMINDER_DAYS = [1, 2, 3, 4, 5]
 
 /** Marcadors que es poden fer servir a cada missatge, amb un exemple per a la previsualització. */
 export const MAIL_FIELDS: Record<MailKind, { key: string; label: string; example: string }[]> = {
@@ -36,9 +47,24 @@ export const MAIL_FIELDS: Record<MailKind, { key: string; label: string; example
     { key: 'enllac', label: 'Enllaç a l’app', example: APP_LINK },
     { key: 'escola', label: 'Escola', example: SCHOOL.name },
   ],
+  remindStudents: [
+    { key: 'alumne', label: 'Nom de l’alumne', example: 'Laia' },
+    { key: 'recollida', label: 'Recollida', example: '1a avaluació' },
+    { key: 'data_final', label: 'Darrer dia', example: 'divendres 13 de novembre' },
+    { key: 'enllac', label: 'Enllaç a l’app', example: APP_LINK },
+    { key: 'escola', label: 'Escola', example: SCHOOL.name },
+  ],
+  remindTeachers: [
+    { key: 'docent', label: 'Nom del docent', example: 'Marta' },
+    { key: 'etapes', label: 'Etapes', example: 'cicle superior i ESO' },
+    { key: 'recollida', label: 'Recollida', example: 'Recollida de tardor' },
+    { key: 'data_final', label: 'Darrer dia', example: 'divendres 13 de novembre' },
+    { key: 'enllac', label: 'Enllaç a l’app', example: APP_LINK },
+    { key: 'escola', label: 'Escola', example: SCHOOL.name },
+  ],
 }
 
-/** `attachment`: nom del PDF adjunt, amb marcadors. `foot`: peu del correu amb format. */
+/** `attachment`: nom del PDF adjunt, amb marcadors (buit: sense adjunt). `foot`: peu del correu amb format. */
 export const MAIL_KINDS: Record<MailKind, { title: string; kicker: string; attachment: string; foot: string; who: string }> = {
   families: {
     title: 'Famílies', kicker: 'Així em veig', attachment: 'Així em veig – {alumne_complet}.pdf', foot: 'Trobareu l’informe adjunt en PDF.',
@@ -47,6 +73,14 @@ export const MAIL_KINDS: Record<MailKind, { title: string; kicker: string; attac
   teachers: {
     title: 'Professorat', kicker: 'Així et veiem', attachment: 'Així et veiem – {docent_complet} – {recollida}.pdf', foot: 'Trobaràs el teu informe adjunt en PDF. És confidencial: no el reenviïs.',
     who: 'Cada docent, amb el seu informe «Així et veiem» en PDF adjunt, un cop l’Equip Directiu l’ha publicat. Només el rep la persona interessada. S’envia sempre des de direccio@ramonpont.cat.',
+  },
+  remindStudents: {
+    title: 'Recordatori a l’alumnat', kicker: 'Em miro', attachment: '', foot: 'Missatge automàtic de La teva veu. Si ja has lliurat l’autoavaluació, no cal que facis res.',
+    who: 'Cada alumne que encara no ha lliurat l’autoavaluació d’una recollida oberta, uns dies abans que es tanqui. Una sola vegada per recollida, des de direccio@ramonpont.cat, al seu correu de l’escola.',
+  },
+  remindTeachers: {
+    title: 'Recordatori al professorat', kicker: 'Et veig…', attachment: '', foot: 'Missatge automàtic de La teva veu. Si ja has lliurat l’autoavaluació, no cal que facis res.',
+    who: 'Cada docent que encara no ha lliurat la seva autoavaluació d’una recollida d’«Et veig…» oberta, uns dies abans que es tanqui. Una sola vegada per recollida, des de direccio@ramonpont.cat.',
   },
 }
 
@@ -94,6 +128,37 @@ Si en vols parlar, l’Equip Directiu t’acompanyarà amb molt de gust.
 Una salutació cordial,
 {escola}`,
   },
+  remindStudents: {
+    subject: 'Recordatori: «Em miro» es tanca el {data_final}',
+    body: `Hola, {alumne},
+
+Encara no has lliurat la teva autoavaluació «Em miro» de la {recollida}. Es tanca el {data_final}.
+
+Només necessites uns minuts. Entra a La teva veu amb el teu compte de l’escola:
+{enllac}
+
+> Si ja l’has començada, el que has escrit està desat: només cal que l’acabis i la lliuris.
+
+Gràcies per dedicar-hi una estona!
+
+{escola}`,
+  },
+  remindTeachers: {
+    subject: 'Recordatori: la teva autoavaluació d’«Et veig…» · {recollida}',
+    body: `Hola, {docent},
+
+Et recordem que encara tens pendent la teva autoavaluació d’«Et veig…» de la {recollida} ({etapes}). La recollida es tanca el {data_final}.
+
+La teva mirada és tan important com la de l’alumnat: quan rebis l’informe «Així et veiem», podràs comparar com veus les teves classes amb com les viuen els teus alumnes.
+
+Hi pots accedir a La teva veu, a «Et veig… › La meva autoavaluació»:
+{enllac}
+
+Gràcies per la teva dedicació.
+
+Una salutació cordial,
+{escola}`,
+  },
 }
 
 /**
@@ -121,6 +186,9 @@ export const DEFAULT_MAIL: MailSettings = {
   replyToEmail: '',
   families: DEFAULT_TEMPLATES.families,
   teachers: DEFAULT_TEMPLATES.teachers,
+  remindStudents: DEFAULT_TEMPLATES.remindStudents,
+  remindTeachers: DEFAULT_TEMPLATES.remindTeachers,
+  reminders: { enabled: false, daysBefore: 2 },
 }
 
 export const MAIL_LIMITS = { subject: 200, body: 4000, name: 80 }
@@ -133,14 +201,15 @@ export function validateMail(m: MailSettings): string | null {
   if (!m.senderName.trim() || m.senderName.length > MAIL_LIMITS.name) return 'Escriu el nom del remitent (com a màxim 80 caràcters).'
   if (m.replyTo !== 'tutor' && m.replyTo !== 'fixed') return 'Tria on han d’anar les respostes.'
   if (m.replyTo === 'fixed' && !isMail(m.replyToEmail)) return 'Escriu l’adreça que ha de rebre les respostes.'
+  if (!REMINDER_DAYS.includes(m.reminders.daysBefore)) return 'Tria quants dies abans s’envien els recordatoris.'
   for (const kind of Object.keys(MAIL_KINDS) as MailKind[]) {
     const t = m[kind]
-    const name = MAIL_KINDS[kind].title.toLowerCase()
-    if (!t.subject.trim() || t.subject.length > MAIL_LIMITS.subject) return `Revisa l’assumpte del correu al ${name}.`
-    if (!t.body.trim() || t.body.length > MAIL_LIMITS.body) return `Revisa el text del correu al ${name}.`
+    const name = MAIL_KINDS[kind].title
+    if (!t.subject.trim() || t.subject.length > MAIL_LIMITS.subject) return `Revisa l’assumpte del correu «${name}».`
+    if (!t.body.trim() || t.body.length > MAIL_LIMITS.body) return `Revisa el text del correu «${name}».`
     const allowed = new Set(MAIL_FIELDS[kind].map((f) => f.key))
     const unknown = [...`${t.subject}\n${t.body}`.matchAll(/\{([^{}\s]+)\}/g)].map((x) => x[1]).find((k) => !allowed.has(k))
-    if (unknown) return `El marcador {${unknown}} no existeix al correu al ${name}.`
+    if (unknown) return `El marcador {${unknown}} no existeix al correu «${MAIL_KINDS[kind].title}».`
   }
   return null
 }
@@ -159,6 +228,12 @@ export function cleanMail(raw: Partial<MailSettings> | undefined): MailSettings 
       const t = tpl(m.teachers, DEFAULT_TEMPLATES.teachers)
       return t.body === LEGACY_TEACHERS_BODY ? { ...t, body: DEFAULT_TEMPLATES.teachers.body } : t
     })(),
+    remindStudents: tpl(m.remindStudents, DEFAULT_TEMPLATES.remindStudents),
+    remindTeachers: tpl(m.remindTeachers, DEFAULT_TEMPLATES.remindTeachers),
+    reminders: {
+      enabled: m.reminders?.enabled === true,
+      daysBefore: REMINDER_DAYS.includes(Number(m.reminders?.daysBefore)) ? Number(m.reminders.daysBefore) : DEFAULT_MAIL.reminders.daysBefore,
+    },
   }
 }
 
@@ -187,8 +262,13 @@ export interface RenderedMail {
   subject: string
   text: string
   html: string
-  /** Nom del PDF adjunt. */
+  /** Nom del PDF adjunt (buit: sense adjunt). */
   attachment: string
+}
+
+/** Data llarga en català per als correus: «divendres 13 de novembre». */
+export function longDate(isoDay: string): string {
+  return new Intl.DateTimeFormat('ca', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${isoDay}T12:00:00Z`)).replace(',', '')
 }
 
 /** Omple els marcadors i en fa la versió de text i la versió amb format (estil de l'escola). */

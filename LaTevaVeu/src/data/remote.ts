@@ -232,3 +232,37 @@ export async function postNewYear(year: string, repeaters: string[]) {
   await loadRemoteState()
   return r
 }
+
+// ---------- Centre: còpies de seguretat i recordatoris ----------
+
+export interface RemoteBackup {
+  id: number
+  at: string
+  reason: string
+  by: string | null
+  year: string | null
+  rows: number
+  bytes: number
+}
+export const fetchBackups = () => call<RemoteBackup[]>('GET', '/api/centre/copies')
+export const postBackup = () => call<{ id: number }>('POST', '/api/centre/copies')
+/** Restaura la còpia i torna a carregar totes les dades. */
+export async function postRestore(id: number) {
+  await whenSynced()
+  const r = await call<{ restored: number; safety: number }>('POST', `/api/centre/copies/${id}/restaura`, { confirm: id })
+  await loadRemoteState()
+  return r
+}
+
+export interface RemoteReminders {
+  configured: boolean
+  sender: string
+  enabled: boolean
+  daysBefore: number
+  today: string
+  pending: { kind: 'students' | 'teachers'; campaign: string; end: string; n: number }[]
+  sent: { kind: 'students' | 'teachers'; campaign: string; n: number; last: string }[]
+}
+export const fetchReminders = () => call<RemoteReminders>('GET', '/api/centre/recordatoris')
+export const postRemindNow = () => call<{ sent: number; failed: number }>('POST', '/api/centre/recordatoris/envia')
+export const postRemindTest = () => call<{ to: string }>('POST', '/api/centre/recordatoris/prova')

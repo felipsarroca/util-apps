@@ -127,7 +127,7 @@ export interface GuardianRow { line: number; studentId: string; studentName: str
 /** Una incidència pot portar una proposta (un nom de Clickedu semblant al d'un alumne del cens) que es pot acceptar. */
 export interface GuardianImport { rows: GuardianRow[]; issues: { line: number; msg: string; proposal?: GuardianRow }[] }
 
-const EMAIL = /^[^\s@;,]+@[^\s@;,]+\.[a-z]{2,}$/i
+export const EMAIL = /^[^\s@;,]+@[^\s@;,]+\.[a-z]{2,}$/i
 
 /**
  * Identificador (o correu) de l'alumne i els correus de la família. Serveixen els dos formats habituals:

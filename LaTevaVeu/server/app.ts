@@ -9,6 +9,9 @@ import * as etVeig from './etveig'
 import * as families from './families'
 import * as curs from './curs'
 import * as ops from './ops'
+import * as backups from './backups'
+import * as reminders from './reminders'
+import type { Mailer } from './gmail'
 
 export interface AppOptions {
   db: Db
@@ -21,6 +24,8 @@ export interface AppOptions {
   logger?: boolean
   /** Rep els errors inesperats (p. ex. per escriure'ls on la plataforma els recull). */
   onError?: (err: unknown) => void
+  /** Enviament de correus (Gmail). Sense, els recordatoris no surten. */
+  mailer?: Mailer
 }
 
 export function buildApp(o: AppOptions) {
@@ -145,7 +150,48 @@ export function buildApp(o: AppOptions) {
     return reply.code(204).send()
   })
 
+  // ---------- Centre: còpies de seguretat ----------
+  app.get('/api/centre/copies', async (req) => backups.listBackups(ctx, await actorOf(req)))
+  app.post('/api/centre/copies', async (req) => backups.backupNow(ctx, await actorOf(req)))
+  app.post<{ Params: { id: string }; Body: { confirm?: unknown } }>('/api/centre/copies/:id/restaura', async (req) => {
+    const id = Number(req.params.id)
+    // El navegador ha de repetir l'identificador: així no es restaura res per error.
+    if (!Number.isSafeInteger(id) || req.body?.confirm !== id) throw new HttpError(400, 'Cal confirmar la restauració.')
+    return backups.restoreBackup(ctx, await actorOf(req), id)
+  })
+
+  // ---------- Centre: recordatoris ----------
+  app.get('/api/centre/recordatoris', async (req) => reminders.reminderStatus(ctx, await actorOf(req), o.mailer))
+  app.post('/api/centre/recordatoris/envia', async (req) => reminders.remindNow(ctx, await actorOf(req), o.mailer))
+  app.post('/api/centre/recordatoris/prova', async (req) => reminders.remindTest(ctx, await actorOf(req), o.mailer))
+
+  // ---------- Tasca diària (activador programat de Neon) ----------
+  // Ruta pública: Neon hi afegeix la capçalera x-neon-trigger-invocation-id i treu la que envia qualsevol altre.
+  // Tot el que fa és idempotent: una còpia diària com a màxim i un recordatori per persona i recollida.
+  app.post('/api/tasques/diaries', async (req, reply) => {
+    if (!req.headers['x-neon-trigger-invocation-id']) return reply.code(403).send({ error: 'Només per a la tasca programada.' })
+    return daily(ctx, o.mailer)
+  })
+
   return app
+}
+
+/** Còpia diària i recordatoris. Torna només recomptes: cap dada personal. */
+export async function daily(ctx: etVeig.Ctx, mailer: Mailer | undefined, now = new Date()) {
+  const recent = (await ctx.db.query("select 1 from backups where reason = 'Diària' and at > $1::timestamptz - interval '20 hours'", [now.toISOString()])).rows.length
+  const backup = recent ? null : await ctx.db.tx(async (q) => {
+    await q.query('select pg_advisory_xact_lock($1)', [ops.LOCK])
+    return backups.createBackup(q, 'Diària', null, ctx.yearId)
+  })
+  const settings = await reminders.mailSettings(ctx.db)
+  let sent: reminders.ReminderRun | 'aturats' | 'sense correu' = 'aturats'
+  if (settings.reminders.enabled) {
+    sent = mailer
+      ? await reminders.sendReminders(ctx.db, mailer, settings, await reminders.pendingReminders(ctx.db, ctx.yearId, reminders.schoolDay(now), settings.reminders.daysBefore))
+      : 'sense correu'
+  }
+  console.log('Tasca diària:', JSON.stringify({ backup, reminders: sent }))
+  return { backup, reminders: sent }
 }
 
 /** Accepta només un objecte pla de cadenes curtes: res de més. */
