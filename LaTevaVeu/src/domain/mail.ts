@@ -9,6 +9,14 @@ export type MailKind = 'families' | 'teachers'
 /** Enllaç curt a l'app, per als correus. */
 export const APP_LINK = 'https://ja.cat/tensveu'
 
+/** Els correus al professorat surten sempre del compte de direcció (decisió de l'escola), i les respostes hi tornen. */
+export const TEACHER_SENDER = { name: `Equip Directiu · ${SCHOOL.name}`, email: `direccio@${SCHOOL.domain}` }
+
+/** Qui envia cada tipus de correu: les famílies, el compte configurat; el professorat, sempre direcció. */
+export function senderOf(kind: MailKind, m: MailSettings): { name: string; email: string } {
+  return kind === 'teachers' ? TEACHER_SENDER : { name: m.senderName, email: m.sender }
+}
+
 /** Marcadors que es poden fer servir a cada missatge, amb un exemple per a la previsualització. */
 export const MAIL_FIELDS: Record<MailKind, { key: string; label: string; example: string }[]> = {
   families: [
@@ -38,7 +46,7 @@ export const MAIL_KINDS: Record<MailKind, { title: string; kicker: string; attac
   },
   teachers: {
     title: 'Professorat', kicker: 'Així et veiem', attachment: 'Així et veiem – {docent_complet} – {recollida}.pdf', foot: 'Trobaràs el teu informe adjunt en PDF. És confidencial: no el reenviïs.',
-    who: 'Cada docent, amb el seu informe «Així et veiem» en PDF adjunt, un cop l’Equip Directiu l’ha publicat. Només el rep la persona interessada.',
+    who: 'Cada docent, amb el seu informe «Així et veiem» en PDF adjunt, un cop l’Equip Directiu l’ha publicat. Només el rep la persona interessada. S’envia sempre des de direccio@ramonpont.cat.',
   },
 }
 
@@ -68,7 +76,7 @@ Una salutació cordial,
     subject: '«Així et veiem» · {recollida}',
     body: `Hola, {docent},
 
-Gràcies per la teva dedicació i per obrir les teves classes a la mirada de l’alumnat. Et fem arribar el teu informe «Així et veiem» de la {recollida} (curs {curs_escolar}): recull, de manera anònima i agregada, com viuen les teves classes els alumnes de {etapes}.
+Gràcies per la teva dedicació i per obrir les teves classes a la mirada de l’alumnat. Et fem arribar el teu informe «Així et veiem» de la {recollida} (curs {curs_escolar}): recull, de manera anònima i agregada, com viuen les teves classes els teus alumnes ({etapes}).
 
 Et proposem llegir-lo amb calma i amb una mirada positiva:
 

@@ -4,7 +4,7 @@
 import { useState, type ReactNode } from 'react'
 import { STAGES } from '../domain/catalog'
 import type { TeacherReport } from '../domain/feedback'
-import { APP_LINK, renderMail, type RenderedMail } from '../domain/mail'
+import { APP_LINK, renderMail, senderOf, TEACHER_SENDER, type RenderedMail } from '../domain/mail'
 import type { FeedbackStatus, MailSettings, StageId } from '../domain/types'
 import { FeedbackReportPages } from '../report/FeedbackReport'
 import { Icon, Modal, useToast } from '../ui/common'
@@ -13,12 +13,12 @@ import { PrintPortal } from './shared'
 export type OutputMode = 'save' | 'print'
 
 /** Capçalera i cos del correu tal com el veurà qui el rep. */
-export function MailPreview({ mail, settings, replyTo, picker }: { mail: RenderedMail; settings: MailSettings; replyTo: string; picker?: ReactNode }) {
+export function MailPreview({ mail, from, replyTo, picker }: { mail: RenderedMail; from: { name: string; email: string }; replyTo: string; picker?: ReactNode }) {
   return (
     <div className="mail-preview">
       <dl className="mail-head">
         <dt>De</dt>
-        <dd>{settings.senderName} &lt;{settings.sender || 'compte pendent'}&gt;</dd>
+        <dd>{from.name} &lt;{from.email || 'compte pendent'}&gt;</dd>
         <dt>Respon a</dt>
         <dd>{replyTo}</dd>
         <dt>Assumpte</dt>
@@ -143,18 +143,12 @@ export function TeacherDelivery({ campaign, rows, mail, loadReports, canEdit, on
           <div>Els informes encara no s’han publicat als docents. Publica la recollida (<b>Et veig… › Recollides › Publica als docents</b>) abans d’enviar-los.</div>
         </div>
       )}
-      {!mail.sender && (
-        <div className="notice warn">
-          <Icon name="alert" />
-          <div>Encara no s’ha indicat el compte que envia. Es fa a <b>Centre › Correu</b>.</div>
-        </div>
-      )}
       {preview && shown && (
         <div className="delivery-grid">
           <MailPreview
             mail={preview}
-            settings={mail}
-            replyTo={mail.replyTo === 'fixed' ? mail.replyToEmail : 'el compte que envia'}
+            from={senderOf('teachers', mail)}
+            replyTo={TEACHER_SENDER.email}
             picker={
               <div className="row">
                 <label className="field" style={{ flex: 1 }}>

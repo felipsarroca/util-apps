@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { logAudit, useDemoState, visibleGrades } from '../data/api'
 import { gradeById, gradeShort, GRADES } from '../domain/catalog'
 import { gradeAndGroup, groupName } from '../domain/groups'
-import { renderMail } from '../domain/mail'
+import { renderMail, senderOf } from '../domain/mail'
 import type { Session } from '../domain/types'
 import { buildReportModel, ReportPages, SheetViewer } from '../report/Report'
 import { Icon, Modal, useToast } from '../ui/common'
@@ -204,7 +204,7 @@ export function ReportsScreen({ session }: { session: Session }) {
             return (
               <MailPreview
                 mail={mail}
-                settings={s.mail}
+                from={senderOf('families', s.mail)}
                 replyTo={s.mail.replyTo === 'tutor' ? 'el tutor o tutora del grup' : s.mail.replyToEmail}
                 picker={sendable.length > 1 && (
                   <label className="field">

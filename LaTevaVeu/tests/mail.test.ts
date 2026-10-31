@@ -1,7 +1,7 @@
 // Proves de la configuració i del format dels correus.
 import { describe, expect, it } from 'vitest'
 import { createDemoState } from '../src/data/seed'
-import { cleanMail, DEFAULT_MAIL, renderMail, validateMail } from '../src/domain/mail'
+import { cleanMail, DEFAULT_MAIL, renderMail, senderOf, validateMail } from '../src/domain/mail'
 import type { Session } from '../src/domain/types'
 
 const mem = new Map<string, string>()
@@ -56,7 +56,7 @@ describe('correu: format', () => {
     const m = renderMail('teachers', DEFAULT_MAIL, { docent: 'Marta', docent_complet: 'Marta Ribas', etapes: 'cicle superior i ESO', recollida: 'Recollida de tardor', curs_escolar: '2026-2027', enllac: 'https://ja.cat/tensveu' })
     expect(m.subject).toBe('«Així et veiem» · Recollida de tardor')
     expect(m.text).toContain('Hola, Marta')
-    expect(m.text).toContain('els alumnes de cicle superior i ESO')
+    expect(m.text).toContain('els teus alumnes (cicle superior i ESO)')
     expect(m.text).toContain('fortaleses')
     expect(m.text).not.toMatch(/\{\w+\}/)
     expect(m.html).toContain('<a href="https://ja.cat/tensveu"')
@@ -70,5 +70,13 @@ describe('correu: format', () => {
   })
   it('el nom de l’adjunt de les famílies porta l’alumne i no té caràcters prohibits', () => {
     expect(renderMail('families', DEFAULT_MAIL, { ...vars, alumne_complet: 'Laia Puig/Soler' }).attachment).toBe('Així em veig – Laia Puig-Soler.pdf')
+  })
+})
+
+describe('correu: remitent', () => {
+  it('al professorat s’envia sempre des de direcció; a les famílies, des del compte configurat', () => {
+    const m = { ...DEFAULT_MAIL, sender: 'latevaveu@ramonpont.cat', senderName: 'La teva veu' }
+    expect(senderOf('teachers', m)).toEqual({ name: 'Equip Directiu · Escola Ramon Pont', email: 'direccio@ramonpont.cat' })
+    expect(senderOf('families', m)).toEqual({ name: 'La teva veu', email: 'latevaveu@ramonpont.cat' })
   })
 })

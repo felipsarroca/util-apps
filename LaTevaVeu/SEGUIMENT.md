@@ -4,7 +4,7 @@ Document per reprendre el projecte des de qualsevol ordinador. Última actualitz
 
 ## On ho hem deixat
 
-L'app està desplegada: servidor a Neon Functions (Frankfurt), base de dades de producció buida amb l'administrador, i entrada amb Google a l'adreça principal; la demostració és a `/demo/`. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. L'escola ja ha autoritzat l'ús de l'app i ja hi ha l'alumnat de 3r EP (grup A, 21 alumnes; identificador = part del correu abans de l'@). Ara hi ha accions en bloc al cens (canviar de curs o grup, donar de baixa), el pas al curs nou i la importació dels correus de família de tots els cursos en un sol fitxer. Falta carregar la resta del cens real, i el següent pas tècnic, l’enviament real de correus (punt 2 de *Pendent*).
+L'app està desplegada: servidor a Neon Functions (Frankfurt), entrada amb Google a l'adreça principal i demostració a `/demo/`. A producció hi ha el curs 2026-2027 carregat: 218 alumnes (3r EP a 4t ESO, grup A a cada curs; identificador = part del correu abans de l'@), 36 persones de personal (31 docents i 4 d'administració i Equip Directiu), tutories, 109 assignacions de «qui fa classe a qui» i els correus de les famílies del llistat de Clickedu (31-10-2026: 217 de 218 alumnes, 326 correus validats, amb una proposta de nom acceptada). Encara no hi ha cap recollida. Els correus al professorat s'enviaran sempre des de `direccio@ramonpont.cat` (`TEACHER_SENDER` a `src/domain/mail.ts`). El següent pas tècnic és l'enviament real de correus (punt 2 de *Pendent*).
 
 ## On és cada cosa
 
@@ -101,8 +101,8 @@ Torna-les a fer quan canviï alguna de les pantalles que surten al README.
 
 ## Pendent
 
-1. Primera entrada real amb Google (administrador: felip.sarroca@ramonpont.cat) i càrrega del cens: personal, alumnat, grups, famílies, matèries i qui fa classe a qui. L'autorització per fer servir l'app ja és confirmada (31 d'octubre de 2026).
-2. **Decidir el compte que envia els correus** (recomanat: un compte dedicat, com `latevaveu@ramonpont.cat`) i autoritzar el servidor a enviar en nom seu (Gmail API amb delegació de domini o SMTP de Google Workspace). Després, implementar l'enviament real: cua idempotent, «Envia'm una prova», «Aprova i envia» i registre de cada missatge, fent servir `renderMail` de `src/domain/mail.ts`.
+1. Revisar amb l'Equip Directiu les matèries d'ESO de cada curs i qui fa classe a qui. Pendents del llistat de Clickedu (31-10-2026): 3 noms que no són al cens, 1 correu no vàlid i 14 famílies sense correu (detall només a Clickedu, no aquí).
+2. **Enviament real dels correus.** Professorat: sempre des de `direccio@ramonpont.cat` (decidit). Famílies: decidir el compte (recomanat un compte dedicat, com `latevaveu@ramonpont.cat`). Autoritzar el servidor a enviar en nom seu (Gmail API amb delegació de domini o SMTP de Google Workspace) i implementar la cua idempotent, «Envia'm una prova», «Aprova i envia» i el registre de cada missatge, fent servir `renderMail` i `senderOf` de `src/domain/mail.ts`.
 3. Inventari real de les matèries d'ESO per curs i prova pilot amb alumnat de cada etapa.
 4. PFI: caldria un curs i un qüestionari propis (no es pot tractar com un grup).
 

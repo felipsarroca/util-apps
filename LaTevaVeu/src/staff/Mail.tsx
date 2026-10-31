@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { setMail, useDemoState } from '../data/api'
 import { SCHOOL } from '../domain/catalog'
-import { DEFAULT_TEMPLATES, exampleVars, MAIL_FIELDS, MAIL_KINDS, MAIL_LIMITS, renderMail, validateMail, cleanMail, type MailKind } from '../domain/mail'
+import { DEFAULT_TEMPLATES, exampleVars, MAIL_FIELDS, MAIL_KINDS, MAIL_LIMITS, renderMail, senderOf, TEACHER_SENDER, validateMail, cleanMail, type MailKind } from '../domain/mail'
 import type { MailSettings, Session } from '../domain/types'
 import { Icon, useToast } from '../ui/common'
 import { PageHead } from './StaffApp'
@@ -19,7 +19,8 @@ export function MailScreen({ session }: { session: Session }) {
   const tpl = draft[kind]
   const setTpl = (patch: Partial<MailSettings[MailKind]>) => setDraft((d) => ({ ...d, [kind]: { ...d[kind], ...patch } }))
   const preview = renderMail(kind, cleanMail(draft), exampleVars(kind))
-  const replyTo = draft.replyTo === 'tutor' ? (kind === 'families' ? 'el tutor o tutora del grup' : 'el compte que envia') : draft.replyToEmail || '—'
+  const replyTo = kind === 'teachers' ? TEACHER_SENDER.email : draft.replyTo === 'tutor' ? 'el tutor o tutora del grup' : draft.replyToEmail || '—'
+  const from = senderOf(kind, draft)
 
   // Insereix el marcador on hi ha el cursor del text.
   const insert = (key: string) => {
@@ -61,7 +62,8 @@ export function MailScreen({ session }: { session: Session }) {
       </div>
 
       <section className="card panel">
-        <h2>Remitent</h2>
+        <h2>Remitent dels correus a les famílies</h2>
+        <p className="muted">Els correus al professorat («Així et veiem») surten sempre de <b>{TEACHER_SENDER.email}</b>, en nom de l’Equip Directiu, i les respostes hi tornen.</p>
         <div className="mail-grid">
           <label className="field">
             <span>Compte que envia</span>
@@ -148,7 +150,7 @@ export function MailScreen({ session }: { session: Session }) {
           <h2>Previsualització</h2>
           <dl className="mail-head">
             <dt>De</dt>
-            <dd>{draft.senderName || '—'} &lt;{draft.sender || 'compte pendent'}&gt;</dd>
+            <dd>{from.name || '—'} &lt;{from.email || 'compte pendent'}&gt;</dd>
             <dt>Respon a</dt>
             <dd>{replyTo}</dd>
             <dt>Assumpte</dt>

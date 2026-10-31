@@ -10,12 +10,13 @@ Aplicació web de l'Escola Ramon Pont perquè l'alumnat de 3r de primària a 4t 
 | | |
 | --- | --- |
 | **App** | <https://felipsarroca.github.io/util-apps/LaTevaVeu/> · enllaç curt <https://ja.cat/tensveu> |
+| **Demostració** | <https://felipsarroca.github.io/util-apps/LaTevaVeu/demo/>, amb dades fictícies |
 | **Presentació del projecte** | [`#/projecte`](https://felipsarroca.github.io/util-apps/LaTevaVeu/#/projecte): sentit, marc normatiu, funcionament i beneficis |
 | **Guia del personal** | Dins de l'app, botó **Guia** (o `#/guia`): recorregut pas a pas per a la tutoria i per a l'administració |
 | **Estat de la feina** | [SEGUIMENT.md](SEGUIMENT.md) |
 | **Pla** | [Pla mestre v2](La_teva_veu_pla_mestre_v2.md) (implementa les fases 1 i 2) |
 
-> **Estat (31 d'octubre de 2026).** La versió publicada funciona en **mode de demostració**: el botó «Prova la demostració» de la pantalla d'entrada permet triar un perfil (alumnat, professorat, Equip Directiu o administració) amb dades fictícies desades només al navegador. Tota l'app té servidor i base de dades de proves, però encara no hi ha allotjament definitiu ni enviament real de correus.
+> **Estat (31 d'octubre de 2026).** L'app és **en funcionament** a l'adreça principal, amb entrada amb Google, servidor a Neon Functions (Frankfurt) i base de dades a la UE. Hi ha carregat el curs 2026-2027: 218 alumnes de 3r de primària a 4t d'ESO, el professorat, l'Equip Directiu i l'administració, les tutories, qui fa classe a qui i els correus de les famílies (217 de 218 alumnes, importats de Clickedu). Encara no s'ha obert cap recollida. **Falta l'enviament real dels correus**: de moment els informes es lliuren en PDF o en paper. La [demostració](https://felipsarroca.github.io/util-apps/LaTevaVeu/demo/) permet provar-ho tot amb dades fictícies.
 
 ## Com es veu
 
@@ -104,28 +105,59 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`). El 
 
 - **Tauler**: participació del grup, alumnes a mitges i sense començar, i alumnes sense correu familiar validat.
 - **Respostes**: estat i progrés de cada alumne, amb filtres i cerca.
-- **Així em veig i famílies**: informe A4 de cada alumne, un sol PDF dels seleccionats o dels que no tenen correu, doble cara, acusament de lectura retallable i preparació de l'enviament amb el remitent i l'assumpte real.
+- **Així em veig i famílies**: informe A4 de cada alumne, un sol PDF dels seleccionats, doble cara i acusament de lectura retallable.
+- **Lliurament**: «Prepara l'enviament» mostra el correu tal com el rebrà cada família. Els informes que no es poden enviar (sense correu, correu pendent de validar o no vàlid, marcats «Paper») surten sols en una llista per triar un per un o tots alhora i **desar en PDF** o **imprimir**. El botó «En paper» obre la mateixa llista.
 
 ### Professorat i Equip Directiu (Et veig…)
 
 - **Autoavaluació docent**, una per etapa, amb etiquetes opcionals de context per grup.
 - **Informe «Així et veiem»**: blocs, mirall alumnat-docent amb quatre quadrants, detall per afirmació, classe per classe, evolució i comentaris moderats (els repetits, una vegada amb el nombre de persones). Imprimible en A4.
 - **Seguiment del professorat** (Equip Directiu): autoavaluacions pendents, valoracions rebudes, adreces per a un recordatori i tots els informes en un PDF.
-- **Visió de centre** (Equip Directiu): participació, blocs per etapa amb la variació respecte de la recollida anterior i taula de docents en ordre alfabètic, sense rànquings.
+- **Lliurament per correu** (Equip Directiu): es marquen els docents i cadascun rep el seu informe «Així et veiem» en PDF adjunt, amb un missatge personal i amable, des de **direccio@ramonpont.cat**. Els que no es poden enviar es desen o s'imprimeixen. Cal haver publicat la recollida.
+- **Visió de centre** (Equip Directiu): participació, blocs per etapa amb la variació respecte de la recollida anterior, fortaleses i reptes de cada etapa, les tres afirmacions més ben valorades i les tres amb més marge de millora, i taula de docents en ordre alfabètic, sense rànquings.
 - **Confidencialitat**: respostes sense identificar l'alumne, cap resultat amb menys de 15 respostes i cap comentari sense moderar.
 
 ### Administració
 
 - **Recollides d'Em miro** (`Programada → Oberta → Tancada → En revisió → Informes generats → Validada → Distribuïda → Arxivada`) i **d'Et veig…** (`Programada → Oberta → Tancada → Moderació → Informes generats → Publicada → Arxivada`). Canvis de dates i reobertures amb motiu registrat.
 - **Qüestionaris** sense programar, amb previsualització, prova de l'informe i versions immutables.
-- **Centre**: accessos del personal, cens amb optatives (CSV amb validació prèvia), grups, matèries per curs, correus de les famílies (CSV), incidències d'identitat, apartats actius i registre d'operacions inalterable.
-- **Correu**: compte de l'escola que envia, on arriben les respostes (tutoria o adreça fixa) i text editable dels dos missatges, amb previsualització:
-  - a les famílies, amb l'informe «Així em veig» adjunt (text basat en el de VeuAlumnat);
-  - al professorat, el seu informe «Així et veiem» en PDF adjunt, amb un missatge amable; l’Equip Directiu el lliura des d’«Et veig… › Professorat».
+- **Centre**:
+  - accessos del personal, amb la tutoria de cada docent;
+  - cens amb optatives (CSV amb validació prèvia), accions en bloc (canviar de curs o de grup, donar de baixa) i **curs nou**, que copia grups, matèries i assignacions, passa l'alumnat de curs i respecta els repetidors;
+  - grups amb el tutor o tutora de cada un;
+  - matèries per curs, matèries noves i canvis de nom; la **Tutoria** és a tots els cursos i qui la fa veu l'«Em miro» del grup;
+  - correus de les famílies: el **llistat de pares i mares de Clickedu** tal com surt (amb ajuda pas a pas a la mateixa pantalla) o un CSV propi;
+  - incidències d'identitat, apartats actius i registre d'operacions inalterable.
+- **Correu**: text editable dels dos missatges, amb previsualització:
+  - a les famílies, amb l'informe «Així em veig» adjunt (text basat en el de VeuAlumnat), des del compte que triï l'escola; les respostes van a la tutoria o a una adreça fixa;
+  - al professorat, amb el seu informe «Així et veiem» adjunt, sempre des de **direccio@ramonpont.cat**.
 
 ### Guia del personal
 
 Botó **Guia** a la capçalera, per a tot el personal. Comença amb dos recorreguts pas a pas, un per a la tutoria i el professorat i un per a l'administració. Després detalla cada pantalla, la confidencialitat, un calendari orientatiu i els problemes freqüents. Es pot imprimir.
+
+## Com es fa servir
+
+### A l'inici de cada curs (administració)
+
+1. **Curs nou.** *Centre › Grups › Curs nou*. Abans, marca els alumnes que repeteixen. Es copien grups, matèries, tutories i qui fa classe a qui; l'alumnat passa al curs següent i el de 4t d'ESO surt.
+2. **Alumnat nou.** *Centre › Alumnat i accessos › Cens*: afegeix el nou 3r de primària i les altes, i dona de baixa les baixes (en bloc).
+3. **Personal.** Altes i baixes, i la **tutoria** de cada docent (columna Tutoria).
+4. **Matèries i docents.** *Centre › Matèries* i *Et veig… › Qui fa classe a qui*.
+5. **Famílies.** *Centre › Famílies › Importa des de CSV*, amb el llistat de Clickedu. El botó **Com s'obté de Clickedu** ho explica pas a pas: *Administració › Gestió d'usuaris › Llistats › Llistat de pares i mares*, totes les classes de 3r de primària a 4t d'ESO, marcant *Nom alumne*, *Nom i cognoms* i *Correu electrònic*, i *Exportar a excel*. Revisa les propostes i les incidències, i **esborra el fitxer de Baixades** quan acabis.
+
+### A cada avaluació (Em miro)
+
+1. L'administració crea la recollida de cada curs (*Em miro › Recollides*) i l'obre.
+2. La tutoria segueix la participació al **Tauler** i a **Respostes**.
+3. Quan es tanca, a *Així em veig i famílies*: **Prepara l'enviament** per als que tenen correu i **En paper** per als altres (desar en PDF o imprimir).
+
+### Una o dues vegades l'any (Et veig…)
+
+1. L'Equip Directiu o l'administració crea la recollida i l'obre; el professorat fa la seva autoavaluació.
+2. Es tanca, l'Equip Directiu modera els comentaris i es generen els informes.
+3. L'Equip Directiu revisa la **Visió de centre** i els informes, i els **publica** als docents.
+4. *Et veig… › Professorat › Lliura per correu*: cada docent rep el seu informe des de direccio@ramonpont.cat.
 
 ## Adreces directes
 
@@ -182,7 +214,7 @@ Per activar Google real: copia `.env.example` a `.env.local` i posa-hi `VITE_GOO
 | `scripts` | Generació dels documents de revisió (`npm run docs`) i dels àudios (`npm run audios`) |
 | `tests`, `server/tests` | Proves dels criteris d'acceptació (prototip i servidor) |
 
-## Servidor (sense desplegar)
+## Servidor
 
 La carpeta `server` conté el backend de tota l'app.
 
@@ -190,6 +222,7 @@ La carpeta `server` conté el backend de tota l'app.
 - **Em miro i Centre.** `GET /api/state` torna només les dades que cada persona pot veure. `POST /api/ops` executa cada operació amb les mateixes regles que la demostració, dins d'una transacció exclusiva, i només escriu el que ha canviat. La configuració del correu es desa a `app_settings`.
 - **Et veig….** Respostes sense identificador d'alumne, esborranys xifrats (AES-256-GCM) i esborrats en lliurar, ordre barrejat en tancar, llista de participació esborrada en publicar, llindar de 15 i moderació aplicats al servidor.
 - **Mode connectat.** Amb `VITE_API_URL`, l'app treballa amb el servidor i no desa dades al navegador.
+- **Desplegament.** Neon Functions (Frankfurt), funció `latevaveu` a la branca `produccio`. Es torna a desplegar amb `bash scripts/desplega-servidor.sh` (detalls a [SEGUIMENT.md](SEGUIMENT.md#producció)).
 
 Per provar-ho tot en local amb dades fictícies:
 
@@ -200,15 +233,14 @@ VITE_API_URL=http://127.0.0.1:8787 VITE_DEV_AUTH=1 npm run dev -- --port 5191
 
 ### Base de dades
 
-- Projecte de Neon «La teva veu» (Frankfurt, PostgreSQL 17). Branca `proves` amb `db/schema.sql` i `db/dades-prova.sql` (tot fictici); branca `integracio` per a les proves.
+- Projecte de Neon «La teva veu» (Frankfurt, PostgreSQL 17). Branca `produccio` amb les dades reals; branca `proves` amb `db/schema.sql` i `db/dades-prova.sql` (tot fictici); branca `integracio` per a les proves automàtiques.
 - El registre d'operacions (`audit_log`) només creix: un activador impedeix modificar-ne o esborrar-ne files. El servidor s'hi connecta amb el rol `latevaveu_app` (`db/permisos.sql`).
 - La cadena de connexió no s'escriu mai en cap fitxer.
 
-## Pendent abans de fer-la servir amb dades reals
+## Pendent
 
-1. Revisió amb l'Equip Directiu i la persona delegada de protecció de dades.
-2. Client OAuth de Google aprovat a la consola de Google Workspace (els comptes de menors poden tenir bloquejades les apps no configurades).
-3. Allotjament del servidor a la UE i desplegament.
-4. **Compte que envia els correus**: decidir-lo, crear-lo si cal i autoritzar el servidor a enviar en nom seu. Després, la cua d'enviament amb prova prèvia i sense duplicats.
-5. Inventari real de les matèries d'ESO per curs.
-6. Prova pilot amb alumnat de cada etapa per ajustar preguntes, durada i obligatorietat.
+1. **Enviament real dels correus.** Al professorat, des de direccio@ramonpont.cat (decidit). A les famílies, decidir el compte. Cal autoritzar el servidor a enviar en nom d'aquests comptes (Gmail API amb delegació de domini o SMTP de Google Workspace) i fer la cua d'enviament amb «Envia'm una prova», «Aprova i envia», sense duplicats i amb registre de cada missatge.
+2. Revisar amb l'Equip Directiu les matèries d'ESO de cada curs i qui fa classe a qui.
+3. Prova pilot amb alumnat de cada etapa per ajustar preguntes, durada i obligatorietat.
+4. Revisió final amb la persona delegada de protecció de dades.
+5. PFI: necessitaria un curs i un qüestionari propis.
