@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { addClassGroup, removeClassGroup, renameClassGroup, startNewYearLocal, useDemoState } from '../data/api'
 import { postNewYear } from '../data/remote'
-import { gradeShort, GRADES, nextGrade, nextYear, STAGES } from '../domain/catalog'
+import { gradeShort, GRADES, nextGrade, nextYear, STAGES, TUTORIA } from '../domain/catalog'
 import { groupName } from '../domain/groups'
 import type { GradeId, Session } from '../domain/types'
 import { Icon, Modal, useToast } from '../ui/common'
@@ -15,6 +15,10 @@ export function GroupsScreen({ session }: { session: Session }) {
   const [adding, setAdding] = useState<GradeId | null>(null)
   const [renaming, setRenaming] = useState<{ gradeId: GradeId; from: string } | null>(null)
   const [newYear, setNewYear] = useState(false)
+  const tutorOf = (gradeId: GradeId, group: string) => {
+    const email = s.assignments.find((a) => a.subjectId === TUTORIA && a.gradeId === gradeId && a.group === group)?.teacherEmail
+    return email ? s.staff.find((m) => m.email === email)?.name ?? email : undefined
+  }
   const run = (fn: () => void, ok: string) => {
     try {
       fn()
@@ -37,13 +41,13 @@ export function GroupsScreen({ session }: { session: Session }) {
       <div className="notice">
         <Icon name="info" />
         <div>
-          Afegeix un grup si s’obre una segona línia o un grup específic. En canviar-ne el nom, el canvi s’aplica a l’alumnat, a les assignacions i als grups del professorat. Només es pot treure un grup que no tingui alumnes.
+          El tutor o tutora de cada grup és qui fa la matèria Tutoria: es tria a Et veig… › Qui fa classe a qui o a la columna Tutoria d’Alumnat i accessos. Afegeix un grup si s’obre una segona línia o un grup específic. En canviar-ne el nom, el canvi s’aplica a l’alumnat, a les assignacions i als grups del professorat. Només es pot treure un grup que no tingui alumnes.
         </div>
       </div>
       <div className="table-wrap">
         <table className="t">
           <thead>
-            <tr><th>Curs</th><th>Etapa</th><th>Grups</th><th /></tr>
+            <tr><th>Curs</th><th>Etapa</th><th>Grups</th><th>Tutoria</th><th /></tr>
           </thead>
           <tbody>
             {GRADES.map((g) => {
@@ -74,6 +78,18 @@ export function GroupsScreen({ session }: { session: Session }) {
                         )
                       })}
                     </div>
+                  </td>
+                  <td>
+                    {groups.length === 0 && <span className="muted">—</span>}
+                    {groups.map((grp) => {
+                      const t = tutorOf(g.id, grp)
+                      return (
+                        <div key={grp} className="tutor-line">
+                          {groups.length > 1 && <b>{grp}: </b>}
+                          {t ?? <span className="muted">Sense tutor/a</span>}
+                        </div>
+                      )
+                    })}
                   </td>
                   <td className="actions">
                     <button className="btn small" onClick={() => setAdding(g.id)}>
