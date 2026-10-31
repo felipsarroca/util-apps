@@ -44,13 +44,22 @@ export interface Block {
 
 const Empty = () => <span className="rp-empty">Sense resposta</span>
 
+/**
+ * Totes les caselles d'una escala tenen la mateixa amplada, calculada amb l'etiqueta més llarga
+ * (en negreta i amb la marca de selecció) perquè cap resposta no surti del requadre.
+ */
 function OptionRow({ scale, value }: { scale: Scale; value?: string }) {
+  const labels = [...scale.options.map((o) => o.short ?? o.label), ...(scale.allowNA ? ['No escau'] : [])]
+  const ideal = Math.ceil((Math.max(...labels.map((l) => l.length)) + 2) * 1.32 + 3)
+  // Les etiquetes molt llargues (escales personalitzades) passen a dues línies en lloc d'eixamplar la fila.
+  const cls = ideal > 24 ? ' wrap' : ''
+  const width = `${Math.max(14, Math.min(24, ideal))}mm`
   return (
     <>
       {scale.options.map((o) => (
-        <span key={o.value} className={`rp-o${value === o.value ? ' sel' : ''}`}>{o.short ?? o.label}</span>
+        <span key={o.value} className={`rp-o${cls}${value === o.value ? ' sel' : ''}`} style={{ width }}>{o.short ?? o.label}</span>
       ))}
-      {scale.allowNA && <span className={`rp-o${value === NA ? ' sel' : ''}`}>No escau</span>}
+      {scale.allowNA && <span className={`rp-o${cls}${value === NA ? ' sel' : ''}`} style={{ width }}>No escau</span>}
     </>
   )
 }

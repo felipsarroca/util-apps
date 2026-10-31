@@ -333,7 +333,7 @@ export function FeedbackReportPages({ report, duplex = false }: { report: Teache
 export const selfLabel = (scale: Scale, v?: number) => (v === undefined ? '—' : nearestLabel(scale, v))
 
 /** Visió de centre en A4: participació, dimensions per etapa i mapa del professorat (ordre alfabètic). */
-export function CenterReportPages({ view, campaign }: { view: CenterStage[]; campaign: FeedbackCampaign }) {
+export function CenterReportPages({ view, campaign }: { view: CenterStage[]; campaign: Pick<FeedbackCampaign, 'label' | 'year'> }) {
   const blocks = useMemo(() => {
     const participants = view.reduce((a, v) => a + v.participants, 0)
     const students = view.reduce((a, v) => a + v.students, 0)

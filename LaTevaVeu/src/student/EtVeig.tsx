@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { feedbackHome, saveFeedbackDraft, submitFeedback, useDemoState, type FeedbackHome, type FeedbackTarget } from '../data/api'
 import { missingItems } from '../domain/feedback'
-import type { Answers, FeedbackItem, Session, StageId } from '../domain/types'
+import { fetchHome, postSubmit, putDraft, useRemote } from '../data/remote'
+import type { Answers, FeedbackItem, Scale, Session, StageId } from '../domain/types'
 import { fmtDate, Icon, initials, Modal, SpeakButton, useToast } from '../ui/common'
 import { BigScale, SegScale, TextAnswer } from './Questions'
 
@@ -18,17 +19,57 @@ export function TeacherAvatar({ t, size = 52 }: { t: { email: string; name: stri
   )
 }
 
+/** D'on surten les dades: el navegador (demostració) o el servidor (mode connectat). */
+interface EtVeigSource {
+  home: FeedbackHome | null
+  scale?: Scale
+  saveDraft: (campaignId: string, teacherEmail: string, answers: Answers) => void | Promise<void>
+  submit: (campaignId: string, teacherEmail: string, answers: Answers) => void | Promise<void>
+  /** Torna a demanar l'estat després d'un lliurament. */
+  refresh?: () => void
+}
+
 export function EtVeigStudent({ session, stage, onExit }: { session: Session; stage: StageId; onExit: () => void }) {
   const s = useDemoState()
   const home = feedbackHome(s, session)
+  const source: EtVeigSource = {
+    home,
+    scale: home ? s.scales.find((x) => x.id === home.form.scaleId) : undefined,
+    saveDraft: (c, t, a) => saveFeedbackDraft(session, c, t, a),
+    submit: (c, t, a) => submitFeedback(session, c, t, a),
+  }
+  return <EtVeigView source={source} stage={stage} onExit={onExit} />
+}
+
+/** Mode connectat: les dades i els lliuraments passen pel servidor. */
+export function EtVeigRemote({ onExit }: { onExit?: () => void }) {
+  const r = useRemote(fetchHome)
+  if (r.loading && !r.data) return <main className="stu-main"><section className="card hello"><p>Carregant…</p></section></main>
+  if (r.error)
+    return (
+      <main className="stu-main">
+        <section className="card hello">
+          <div className="notice bad" role="alert"><Icon name="alert" /><div>{r.error}</div></div>
+          <div className="row">
+            <button className="btn" onClick={r.reload}>Torna-ho a provar</button>
+          </div>
+        </section>
+      </main>
+    )
+  const home = r.data ?? null
+  return <EtVeigView source={{ home, scale: home?.scale, saveDraft: putDraft, submit: postSubmit, refresh: r.reload }} stage={home?.stage ?? 'ESO'} onExit={onExit} />
+}
+
+function EtVeigView({ source, stage, onExit }: { source: EtVeigSource; stage: StageId; onExit?: () => void }) {
+  const { home } = source
   const [current, setCurrent] = useState<string | null>(null)
   const [toast, showToast] = useToast()
-  if (!home) {
+  if (!home || !source.scale) {
     return (
       <main className="stu-main">
         <section className="card hello">
           <p>Ara no hi ha cap valoració del professorat oberta.</p>
-          <button className="btn" onClick={onExit}>Torna a l’inici</button>
+          {onExit && <button className="btn" onClick={onExit}>Torna a l’inici</button>}
         </section>
       </main>
     )
@@ -38,13 +79,18 @@ export function EtVeigStudent({ session, stage, onExit }: { session: Session; st
     return (
       <TeacherForm
         key={target.email}
-        session={session}
+        source={source}
+        scale={source.scale}
         stage={stage}
         home={home}
         target={target}
-        onBack={() => setCurrent(null)}
+        onBack={() => {
+          setCurrent(null)
+          source.refresh?.()
+        }}
         onDone={() => {
           setCurrent(null)
+          source.refresh?.()
           showToast(`Gràcies! La valoració de ${target.name} s’ha lliurat.`)
           window.scrollTo({ top: 0 })
         }}
@@ -58,7 +104,7 @@ export function EtVeigStudent({ session, stage, onExit }: { session: Session; st
   )
 }
 
-function TeacherList({ home, stage, onPick, onExit }: { home: FeedbackHome; stage: StageId; onPick: (email: string) => void; onExit: () => void }) {
+function TeacherList({ home, stage, onPick, onExit }: { home: FeedbackHome; stage: StageId; onPick: (email: string) => void; onExit?: () => void }) {
   const done = home.targets.filter((t) => t.status === 'lliurat').length
   const total = home.targets.length
   const all = done === total
@@ -97,11 +143,13 @@ function TeacherList({ home, stage, onPick, onExit }: { home: FeedbackHome; stag
           ))}
         </div>
         {!all && <p className="muted" style={{ fontSize: '.9rem' }}>Pots fer-ne uns quants avui i continuar un altre dia: el que comencis es desa sol.</p>}
-        <div className="row">
-          <button className="btn" onClick={onExit}>
-            <Icon name="arrowL" /> Torna a l’inici
-          </button>
-        </div>
+        {onExit && (
+          <div className="row">
+            <button className="btn" onClick={onExit}>
+              <Icon name="arrowL" /> Torna a l’inici
+            </button>
+          </div>
+        )}
       </section>
     </main>
   )
@@ -123,10 +171,9 @@ function TeacherCard({ t, onPick }: { t: FeedbackTarget; onPick: () => void }) {
 
 type FStep = { kind: 'item'; item: FeedbackItem; index: number } | { kind: 'dim'; dimId: string } | { kind: 'open' }
 
-function TeacherForm({ session, stage, home, target, onBack, onDone }: { session: Session; stage: StageId; home: FeedbackHome; target: FeedbackTarget; onBack: () => void; onDone: () => void }) {
-  const s = useDemoState()
+function TeacherForm({ source, scale, stage, home, target, onBack, onDone }: { source: EtVeigSource; scale: Scale; stage: StageId; home: FeedbackHome; target: FeedbackTarget; onBack: () => void; onDone: () => void }) {
   const { form, campaign } = home
-  const scale = s.scales.find((x) => x.id === form.scaleId)!
+  const [busy, setBusy] = useState(false)
   const steps: FStep[] = useMemo(
     () => [
       ...(stage === 'CM' ? form.items.map((item, index) => ({ kind: 'item' as const, item, index })) : form.dimensions.map((d) => ({ kind: 'dim' as const, dimId: d.id }))),
@@ -149,13 +196,14 @@ function TeacherForm({ session, stage, home, target, onBack, onDone }: { session
 
   const flush = () => {
     if (!pending.current) return
-    try {
-      saveFeedbackDraft(session, campaign.id, target.email, pending.current)
-      setSaved(true)
-    } catch (e) {
-      showToast((e as Error).message)
-    }
+    const answers = pending.current
     pending.current = null
+    Promise.resolve()
+      .then(() => source.saveDraft(campaign.id, target.email, answers))
+      .then(
+        () => setSaved(true),
+        (e: Error) => showToast(e.message),
+      )
   }
   useEffect(() => {
     const onHide = () => flush()
@@ -199,14 +247,17 @@ function TeacherForm({ session, stage, home, target, onBack, onDone }: { session
     go(i + 1)
   }
 
-  const submit = () => {
-    flush()
+  const submit = async () => {
+    window.clearTimeout(timer.current)
+    pending.current = null
+    setBusy(true)
     try {
-      submitFeedback(session, campaign.id, target.email, answers)
+      await source.submit(campaign.id, target.email, answers)
       onDone()
     } catch (e) {
       showToast((e as Error).message)
       setConfirm(false)
+      setBusy(false)
     }
   }
 
@@ -297,7 +348,7 @@ function TeacherForm({ session, stage, home, target, onBack, onDone }: { session
             </div>
             <p className="step-intro">És opcional. Escriu sobre les classes, no sobre companys. No posis noms ni detalls que permetin saber qui ets.</p>
             {form.open.map((q) => (
-              <TextAnswer key={q.id} q={{ id: q.id, type: 'shortText', text: q.text, required: false, maxLength: q.maxLength, active: true }} ctx={{ stage, scales: s.scales, answers, set }} />
+              <TextAnswer key={q.id} q={{ id: q.id, type: 'shortText', text: q.text, required: false, maxLength: q.maxLength, active: true }} ctx={{ stage, scales: [scale], answers, set }} />
             ))}
             {missing.length > 0 && (
               <div className="notice warn">
@@ -335,8 +386,8 @@ function TeacherForm({ session, stage, home, target, onBack, onDone }: { session
           <p>Un cop lliurada, s’ajuntarà amb la dels companys i ja no la podràs canviar.</p>
           <div className="row" style={{ justifyContent: 'flex-end' }}>
             <button className="btn" onClick={() => setConfirm(false)}>Encara no</button>
-            <button className="btn primary ev" onClick={submit}>
-              Sí, lliura-la
+            <button className="btn primary ev" onClick={submit} disabled={busy}>
+              {busy ? 'Lliurant…' : 'Sí, lliura-la'}
             </button>
           </div>
         </Modal>

@@ -395,7 +395,7 @@ export interface FeedbackTarget extends TeacherTarget {
 }
 
 export interface FeedbackHome {
-  campaign: FeedbackCampaign
+  campaign: Pick<FeedbackCampaign, 'id' | 'label' | 'end'>
   form: FeedbackForm
   targets: FeedbackTarget[]
 }

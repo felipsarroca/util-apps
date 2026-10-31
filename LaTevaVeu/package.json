@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "docs": "vite-node scripts/genera-documents.ts",
     "server:dev": "vite-node server/main.ts",
+    "server:local": "vite-node server/local.ts",
     "server:build": "vite build --ssr server/main.ts --outDir dist-server"
   },
   "dependencies": {

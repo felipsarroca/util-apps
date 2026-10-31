@@ -3,6 +3,7 @@
 import { writeFileSync } from 'node:fs'
 import { GRADES, initialGradeSubjects, STAGES, SUBJECTS } from '../src/domain/catalog'
 import { FEEDBACK_SCALES, INITIAL_FEEDBACK_FORMS } from '../src/domain/feedbackForms'
+import { seedScript } from '../server/seed'
 
 const OUT = new URL('../docs/', import.meta.url)
 const csvCell = (v: string | number) => (/[",;\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v))
@@ -65,3 +66,6 @@ for (const g of GRADES) {
 }
 writeFileSync(new URL('07_Plantilla_assignacions.csv', OUT), csv(plan))
 console.log(`Preguntes: ${rows.length - 1} files · Assignacions: ${plan.length - 1} files`)
+
+// Dades de prova per a una base de dades de proves (Neon o local): totes fictícies.
+writeFileSync(new URL('../db/dades-prova.sql', import.meta.url), seedScript())

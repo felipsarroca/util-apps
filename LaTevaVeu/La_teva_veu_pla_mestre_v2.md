@@ -412,7 +412,7 @@ Es mantenen els 15 criteris de l'especificació v2.0 (§15) per a «Em miro». �
 | 2. Prototip «Et veig» | Assignacions docents, recorregut de l'alumne, autoavaluació docent, llindars, «Així et veiem» i visió de centre amb dades fictícies | **Fet** |
 | 3. Validació pedagògica | Preguntes d'«Et veig» provades amb alumnat i revisades al claustre; inventari real de matèries d'ESO | **Material preparat** (`docs/04` a `07`, importació CSV d'assignacions); falta fer-la |
 | 4. Validació de privacitat | Revisió amb direcció i la persona delegada de protecció de dades; OAuth aprovat a Google Workspace | **Material preparat** (`docs/01` a `03`); falten les decisions |
-| 5. Backend i Neon | API, sessions, esquema, model de confidencialitat i proves de permisos | **Base feta** a `server/` (API d'«Et veig» amb proves); falta allotjament, Neon i connexió del frontend |
+| 5. Backend i Neon | API, sessions, esquema, model de confidencialitat i proves de permisos | **Et veig connectat**: API amb proves, base de dades de proves a Neon (Frankfurt), autoavaluació docent i app en mode connectat; falta allotjament, «Em miro» i gestió |
 | 6. Documents i correu | PDF al servidor, emmagatzematge privat, cua de correu per a «Em miro» | Pendent |
 | 7. Pilot | Una recollida real controlada de cada apartat | Pendent |
 

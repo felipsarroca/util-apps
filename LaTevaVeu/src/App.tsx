@@ -8,6 +8,9 @@ import { StaffApp } from './staff/StaffApp'
 import { StudentApp } from './student/StudentApp'
 import { asset, Footer, Icon, initials, useFitScale } from './ui/common'
 import { useDemoState } from './data/api'
+import { API_URL, DEV_AUTH, SESSION_EXPIRED, setToken } from './data/remote'
+import { RemoteStaff } from './staff/Remote'
+import { EtVeigRemote } from './student/EtVeig'
 
 const SESSION_KEY = 'mavaluo:session'
 const PREFS_KEY = 'mavaluo:prefs'
@@ -62,9 +65,16 @@ export default function App() {
     } catch {
       /* ignorat */
     }
+    setToken(null)
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
     setSession(null)
   }
+
+  // Mode connectat: si el servidor rebutja el testimoni (caducat), cal tornar a entrar.
+  useEffect(() => {
+    window.addEventListener(SESSION_EXPIRED, logout)
+    return () => window.removeEventListener(SESSION_EXPIRED, logout)
+  })
 
   // Tancament automàtic per inactivitat (alumnat).
   useEffect(() => {
@@ -83,10 +93,13 @@ export default function App() {
   }, [session])
 
   const student = session?.studentId ? s.students.find((x) => x.id === session.studentId) : undefined
+  const remoteGrade = session?.remote?.gradeId
   const subtitle = session?.pending
     ? 'Compte pendent de verificació'
     : student
       ? `${gradeById(student.gradeId).name} · Grup ${student.group}`
+      : remoteGrade
+        ? `${gradeById(remoteGrade).name} · Grup ${session?.remote?.group}`
       : session?.direction
         ? 'Equip Directiu'
         : session?.role === 'admin'
@@ -104,7 +117,8 @@ export default function App() {
               <small>Escola Ramon Pont</small>
             </span>
           </a>
-          {!GOOGLE_CLIENT_ID && <span className="demo-flag" title="Les dades són fictícies i es desen només en aquest navegador">Demostració</span>}
+          {!GOOGLE_CLIENT_ID && !API_URL && <span className="demo-flag" title="Les dades són fictícies i es desen només en aquest navegador">Demostració</span>}
+          {DEV_AUTH && <span className="demo-flag" title="Servidor local de proves amb dades fictícies">Servidor de proves</span>}
           <span className="spacer" />
           {session.role === 'student' && (
             <>
@@ -116,7 +130,7 @@ export default function App() {
               </button>
             </>
           )}
-          {session.role === 'admin' && !GOOGLE_CLIENT_ID && (
+          {session.role === 'admin' && !GOOGLE_CLIENT_ID && !API_URL && (
             <button className="btn small ghost" onClick={() => { if (confirm('Vols restaurar les dades fictícies inicials?')) resetDemo() }} title="Restaura les dades de demostració">
               <Icon name="history" /> <span className="sr-only">Restaura la demostració</span>
             </button>
@@ -136,8 +150,8 @@ export default function App() {
 
       {!session && <Login onLogin={login} />}
       {session?.pending && <Pending session={session} onLogout={logout} />}
-      {session && !session.pending && session.role === 'student' && <StudentApp session={session} />}
-      {session && !session.pending && session.role !== 'student' && <StaffApp session={session} />}
+      {session && !session.pending && session.role === 'student' && (session.remote ? <EtVeigRemote /> : <StudentApp session={session} />)}
+      {session && !session.pending && session.role !== 'student' && (session.remote ? <RemoteStaff session={session} /> : <StaffApp session={session} />)}
       <Footer />
     </>
   )

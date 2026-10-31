@@ -183,6 +183,8 @@ export interface Session {
   pending?: boolean
   picture?: string
   direction?: boolean
+  /** Sessió validada pel servidor (mode connectat). */
+  remote?: { gradeId?: GradeId; group?: string }
 }
 
 // ---------- Configuració general ----------
@@ -311,6 +313,17 @@ export const CONTEXT_TAGS = [
   { id: 'diversitat', label: 'Grup amb molta diversitat o NESE' },
   { id: 'hores', label: 'Poques hores setmanals amb el grup' },
 ] as const
+
+/** Una autoavaluació docent per fer: recollida, etapa, qüestionari i el que ja s'hagi desat. */
+export interface SelfTask {
+  campaign: Pick<FeedbackCampaign, 'id' | 'label' | 'year' | 'status' | 'end'>
+  stage: StageId
+  form: FeedbackForm
+  scale: Scale
+  /** Grups (`GRADE-GRUP`) d'aquesta etapa on fa classe, per a les etiquetes de context. */
+  groups: string[]
+  self?: Pick<SelfAssessment, 'answers' | 'context' | 'submittedAt'>
+}
 
 export interface SelfAssessment {
   campaignId: string

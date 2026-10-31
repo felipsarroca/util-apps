@@ -431,9 +431,11 @@ table.t { width: 100%; border-collapse: collapse; font-size: .92rem; }
 .rp-habits { width: 100%; border-collapse: collapse; font-size: 9pt; }
 .rp-habits td { padding: 1.4mm 1.5mm; border-bottom: .25mm solid #e8e4de; vertical-align: middle; }
 .rp-habits td.opts { white-space: nowrap; text-align: right; width: 1%; }
-.rp-o { display: inline-block; width: 16.5mm; margin-left: 1mm; padding: .5mm .6mm; white-space: nowrap; border: .3mm solid #c9c3ba; border-radius: 1.2mm; text-align: center; font-size: 7.6pt; color: #888; }
-.rp-o.sel { border: .6mm solid #1d1d1f; color: #1d1d1f; font-weight: 900; background: #f1ece4; }
-.rp-o.sel::before { content: '● '; }
+.rp-o { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; height: 5.2mm; margin-left: 1mm; padding: 0 .6mm; vertical-align: middle; white-space: nowrap; overflow: hidden; border: .3mm solid #c9c3ba; border-radius: 1.2mm; text-align: center; font-size: 7.6pt; line-height: 1; color: #888; }
+/* La seleccionada té exactament la mateixa mida: el reforç del marc és una ombra interior. */
+.rp-o.sel { border-color: #1d1d1f; box-shadow: inset 0 0 0 .35mm #1d1d1f; color: #1d1d1f; font-weight: 900; background: #f1ece4; }
+.rp-o.sel::before { content: '●'; margin-right: .8mm; font-size: .8em; }
+.rp-o.wrap { height: auto; min-height: 5.2mm; padding: .4mm .6mm; white-space: normal; line-height: 1.1; }
 .rp-subjects { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
 .rp-subj { border: .3mm solid #d9d3ca; border-left: 1.6mm solid var(--h, #8a2216); border-radius: 1.6mm; padding: 2.2mm 3mm; break-inside: avoid; }
 .rp-subj.wide { grid-column: 1 / -1; }
@@ -653,7 +655,7 @@ html.h-700 .login-steps { display: none; }
   .login-card { grid-template-columns: 1fr; }
   .login-brand { gap: 1rem; padding: 22px 22px 26px; }
   .login-steps { display: none; }
-  .staff { grid-template-columns: 1fr; }
+  .staff { grid-template-columns: 1fr; align-content: start; }
   .side { position: sticky; top: 62px; z-index: 18; height: auto; flex-direction: row; overflow-x: auto; scrollbar-width: none; padding: 6px 10px; border-right: 0; border-bottom: 1px solid var(--line); }
   .side-label { display: none; }
   .nav-btn { width: auto; flex: none; white-space: nowrap; }
@@ -705,4 +707,68 @@ html.h-700 .login-steps { display: none; }
 @media print {
   body.printing #root, body.printing .felip-app-footer, body.printing .modal-back, body.printing .topbar { display: none !important; }
   .print-root .measure { display: none; }
+}
+
+/* ───────── Espais separats: Em miro, Et veig i Centre ───────── */
+/* Cada espai redefineix el color de marca: botons, menú, pestanyes i indicadors canvien sols. */
+.space-ev { --brand: var(--ev); --brand-ink: var(--ev-ink); --brand-soft: var(--ev-soft); }
+.space-ce { --brand: #44506a; --brand-ink: #333d53; --brand-soft: #e9edf4; }
+.staff.space-em .side { background: #fcf7f5; }
+.staff.space-ev .side { background: #f3f9f9; }
+.staff.space-ce .side { background: #f4f6f9; }
+.staff .page-head { border-top: 4px solid var(--brand); padding-top: .7rem; }
+.space-switch { display: grid; gap: .25rem; padding-bottom: .6rem; margin-bottom: .3rem; border-bottom: 1px solid var(--line); }
+.sp-tab { display: flex; align-items: center; gap: .45rem; width: 100%; padding: .5rem .7rem; border: 2px solid transparent; border-radius: var(--r-s); background: transparent; font-weight: 800; color: var(--ink-2); text-align: left; }
+.sp-tab:hover { background: rgba(0, 0, 0, .04); }
+.sp-tab.cur { border-color: var(--brand); background: #fff; color: var(--brand); }
+.space-title { display: grid; gap: .1rem; padding: .5rem .75rem .2rem; }
+.space-title b { font-size: 1.05rem; font-weight: 900; color: var(--brand); }
+.space-title small { font-size: .78rem; font-weight: 700; color: var(--ink-3); }
+.side-home { margin-top: auto; color: var(--ink-3); }
+.spaces-home { max-width: 1180px; width: 100%; margin: 0 auto; }
+.spaces-home .page-head { border-top: 0; }
+.space-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.1rem; }
+.space-card { display: flex; flex-direction: column; align-items: flex-start; gap: .9rem; padding: 1.3rem; border: 2px solid var(--brand-soft); border-top: 8px solid var(--brand); border-radius: var(--r-l); background: #fff; text-align: left; font: inherit; color: inherit; cursor: pointer; box-shadow: var(--sh-1); transition: transform .15s, box-shadow .15s, border-color .15s; }
+.space-card:hover { transform: translateY(-2px); box-shadow: var(--sh-2); border-color: var(--brand); }
+.space-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.sc-head { display: flex; align-items: center; gap: .8rem; }
+.sc-head b { display: block; font-size: 1.45rem; font-weight: 900; color: var(--brand); }
+.sc-head small { display: block; font-weight: 800; color: var(--ink-2); }
+.sc-emoji { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--brand-soft); font-size: 1.8rem; }
+.sc-text { color: var(--ink-2); line-height: 1.5; }
+.sc-list { display: flex; flex-wrap: wrap; gap: .4rem; }
+.sc-list > span { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .6rem; border-radius: 99px; background: var(--brand-soft); color: var(--brand-ink); font-size: .82rem; font-weight: 800; }
+.sc-list > span.cfg { background: #f1f1f1; color: var(--ink-2); }
+.sc-list svg { width: 15px; height: 15px; }
+.sc-go { margin-top: auto; display: inline-flex; align-items: center; gap: .4rem; font-weight: 900; color: var(--brand); }
+.sc-go svg { width: 18px; height: 18px; }
+@media (max-width: 860px) {
+  .space-switch { display: flex; padding: 0 .4rem 0 0; margin: 0 .4rem 0 0; border-bottom: 0; border-right: 1px solid var(--line); }
+  .sp-tab { width: auto; white-space: nowrap; }
+  .space-title, .side-home { display: none; }
+}
+/* Inici de l'alumnat: els dos espais l'un al costat de l'altre. */
+.stu-spaces { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; align-items: stretch; }
+.stu-spaces .campaign-box.mod { border-top-width: 7px; }
+.stu-spaces .campaign-box.mod.em { border-top-color: var(--brand); }
+.stu-spaces .campaign-box.mod.ev { border-top-color: var(--ev); }
+.campaign-box.idle { opacity: .85; }
+/* Accés a la demostració */
+.demo-cta { display: grid; justify-items: start; gap: .3rem; padding-top: .9rem; border-top: 1px solid var(--line); }
+.demo-cta small { color: var(--ink-3); font-weight: 700; }
+.google-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+.demo-group { display: grid; gap: .45rem; }
+.demo-group h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); }
+.modal .demo-accounts { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.demo-reset { justify-content: flex-end; font-size: .88rem; }
+/* Finestres baixes (portàtils de 768 px amb escalat): demostració i espais més compactes. */
+@media (max-height: 700px) and (min-width: 861px) {
+  .modal:has(.demo-group) { gap: .6rem; padding: 1rem 1.2rem; }
+  .modal:has(.demo-group) > p { font-size: .9rem; }
+  .demo-group { gap: .3rem; }
+  .modal .demo-acc { padding: .35rem .6rem; }
+  .space-card { gap: .6rem; padding: 1rem 1.1rem; }
+  .sc-emoji { width: 46px; height: 46px; font-size: 1.5rem; }
+  .sc-head b { font-size: 1.3rem; }
+  .sc-text { font-size: .92rem; line-height: 1.4; }
 }

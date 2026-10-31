@@ -1,78 +1,53 @@
 // Proves del servidor d'«Et veig» contra un PostgreSQL real (PGlite) amb l'esquema complet.
 // Comproven els criteris d'acceptació del pla mestre v2 (§10) al servidor, no a la interfície.
-import { PGlite } from '@electric-sql/pglite'
+import type { PGlite } from '@electric-sql/pglite'
 import { randomBytes } from 'node:crypto'
-import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { initialGradeSubjects, SUBJECTS } from '../../src/domain/catalog'
-import { FEEDBACK_SCALES, INITIAL_FEEDBACK_FORMS } from '../../src/domain/feedbackForms'
+import { INITIAL_FEEDBACK_FORMS } from '../../src/domain/feedbackForms'
 import type { Answers } from '../../src/domain/types'
 import { buildApp } from '../app'
-import type { Db } from '../db'
+import pg from 'pg'
+import { pgDb, type Db } from '../db'
+import { memoryDb } from '../pglite'
+import { applySeed, PROVA, seedScript } from '../seed'
 
-const YEAR = '2026-2027'
-const CID = '11111111-1111-4111-8111-111111111111'
+const { year: YEAR, campaignId: CID } = PROVA
 const ESO = INITIAL_FEEDBACK_FORMS.find((f) => f.stage === 'ESO')!
 const mail = (u: string) => `${u}@ramonpont.cat`
 const full = (extra: Answers = {}): Answers => ({ ...Object.fromEntries(ESO.items.map((i) => [i.id, '3'])), ...extra })
 
-let pg: PGlite
+let db: Db
+let done: () => Promise<unknown>
 let app: ReturnType<typeof buildApp>
 
 const call = async (user: string | null, method: 'GET' | 'POST' | 'PUT', url: string, payload?: object) => {
   const r = await app.inject({ method, url, payload, headers: user ? { authorization: `Bearer ${mail(user)}` } : {} })
   return { status: r.statusCode, body: r.body ? (JSON.parse(r.body) as Record<string, unknown>) : undefined }
 }
-const one = async <T,>(sql: string, p: unknown[] = []) => (await pg.query<T>(sql, p)).rows[0]
+const one = async <T,>(sql: string, p: unknown[] = []) => (await db.query<T>(sql, p)).rows[0]
 const toStatus = (user: string, status: string) => call(user, 'POST', `/api/et-veig/${CID}/status`, { status })
 
 beforeAll(async () => {
-  pg = new PGlite()
-  await pg.exec(readFileSync(new URL('../../db/schema.sql', import.meta.url), 'utf8'))
-  const db: Db = {
-    query: async (sql, params) => ({ rows: (await pg.query(sql, params)).rows as never[] }),
-    tx: (fn) => pg.transaction((t) => fn({ query: async (sql, params) => ({ rows: (await t.query(sql, params)).rows as never[] }) })),
+  // Amb TEST_DATABASE_URL, les proves s'executen contra un PostgreSQL real (p. ex. una branca de Neon
+  // amb l'esquema i les dades de prova ja carregats). Si no, en memòria.
+  const url = process.env.TEST_DATABASE_URL
+  if (url) {
+    const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: true }, max: 3 })
+    db = pgDb(pool)
+    done = () => pool.end()
+  } else {
+    const mem = await memoryDb()
+    db = mem.db
+    done = () => mem.pg.close()
+    await applySeed(db)
   }
-  // Dades mínimes: 2n d'ESO A (16 alumnes) i 3r de primària A (3 alumnes).
-  await pg.query(`insert into academic_years values ($1, '2026-09-01', '2027-06-30', true)`, [YEAR])
-  for (const s of SUBJECTS) await pg.query('insert into subjects values ($1, $2, $3, $4, true)', [s.id, s.short, s.long, s.hue])
-  for (const g of initialGradeSubjects()) await pg.query('insert into grade_subjects values ($1, $2, $3, $4, $5, true)', [YEAR, g.gradeId, g.subjectId, g.order, g.optional])
-  const group = async (grade: string) => (await one<{ id: string }>('insert into class_groups (year_id, grade_id, label) values ($1, $2, $3) returning id', [YEAR, grade, 'A']))!.id
-  const eso = await group('2ESO')
-  const cm = await group('3EP')
-  const user = async (u: string, name: string, roles: string[]) => {
-    const id = (await one<{ id: string }>('insert into users (email, display_name) values ($1, $2) returning id', [mail(u), name]))!.id
-    for (const r of roles) await pg.query('insert into user_roles (user_id, role) values ($1, $2)', [id, r])
-    return id
-  }
-  const marta = await user('marta', 'Marta Riera', ['teacher'])
-  const xavier = await user('xavier', 'Xavier Duran', ['teacher'])
-  const anna = await user('anna', 'Anna Vila', ['teacher'])
-  await user('admin', 'Administració', ['admin'])
-  await user('dir', 'Direcció', ['admin', 'direction'])
-  await pg.query("insert into teaching_assignments values ($1, 'MAT', $2), ($1, 'CAT', $3), ($4, 'CAT', $5), ($4, 'MAT', $5)", [eso, marta, xavier, cm, anna])
-  const student = async (u: string, groupId: string, name = u) => {
-    const s = (await one<{ id: string }>("insert into students (school_ref, given_name, family_name, school_email) values ($1, $3, 'Prova', $2) returning id", [u, mail(u), name]))!.id
-    await pg.query('insert into enrollments (student_id, group_id) values ($1, $2)', [s, groupId])
-  }
-  for (let i = 1; i <= 16; i++) await student(`e${String(i).padStart(2, '0')}`, eso, i === 2 ? 'Biel' : undefined)
-  for (let i = 1; i <= 3; i++) await student(`p${i}`, cm)
-  for (const s of FEEDBACK_SCALES) await pg.query('insert into feedback_scales values ($1, $2, $3, $4)', [s.id, s.name, s.naLabel, JSON.stringify(s.options)])
-  for (const f of INITIAL_FEEDBACK_FORMS)
-    await pg.query("insert into feedback_forms (id, template_id, stage, version, status, scale_id, definition) values ($1, $2, $3, $4, 'published', $5, $6)", [
-      f.id, f.templateId, f.stage, f.version, f.scaleId, JSON.stringify({ dimensions: f.dimensions, items: f.items, open: f.open }),
-    ])
-  const formIds = Object.fromEntries(INITIAL_FEEDBACK_FORMS.map((f) => [f.stage, f.id]))
-  await pg.query("insert into feedback_campaigns (id, year_id, label, stages, starts_on, ends_on, status, form_ids) values ($1, $2, 'Recollida de prova', $3, '2026-11-02', '2026-11-20', 'PROGRAMADA', $4)", [
-    CID, YEAR, ['CM', 'ESO'], JSON.stringify(formIds),
-  ])
   // Verificador fals: el testimoni és el correu. El real comprova la signatura de Google.
   app = buildApp({ db, verify: async (t) => ({ sub: `sub-${t}`, email: t, name: t }), draftKey: randomBytes(32), yearId: YEAR })
 })
 
 afterAll(async () => {
   await app.close()
-  await pg.close()
+  await done()
 })
 
 describe('servidor d’«Et veig»', () => {
@@ -107,9 +82,9 @@ describe('servidor d’«Et veig»', () => {
   it('el lliurament no guarda cap identificador d’alumne i no es pot repetir (criteris 2 i 3)', async () => {
     expect((await call('e01', 'POST', `/api/et-veig/${CID}/submit/${mail('marta')}`, { answers: { [ESO.items[0].id]: '4' } })).status).toBe(400)
     expect((await call('e01', 'POST', `/api/et-veig/${CID}/submit/${mail('marta')}`, { answers: full({ millorar: 'El Biel parla massa' }) })).status).toBe(204)
-    const cols = (await pg.query<{ column_name: string }>("select column_name from information_schema.columns where table_name = 'feedback_answers'")).rows.map((r) => r.column_name)
+    const cols = (await db.query<{ column_name: string }>("select column_name from information_schema.columns where table_name = 'feedback_answers'")).rows.map((r) => r.column_name)
     expect(cols.some((c) => /student|user|enrollment/.test(c))).toBe(false)
-    const fks = (await pg.query<{ t: string }>("select ccu.table_name as t from information_schema.table_constraints tc join information_schema.constraint_column_usage ccu on ccu.constraint_name = tc.constraint_name where tc.table_name = 'feedback_answers' and tc.constraint_type = 'FOREIGN KEY'")).rows.map((r) => r.t)
+    const fks = (await db.query<{ t: string }>("select ccu.table_name as t from information_schema.table_constraints tc join information_schema.constraint_column_usage ccu on ccu.constraint_name = tc.constraint_name where tc.table_name = 'feedback_answers' and tc.constraint_type = 'FOREIGN KEY'")).rows.map((r) => r.t)
     expect(fks).not.toContain('students')
     expect((await one<{ n: number }>('select count(*)::int as n from feedback_drafts'))!.n).toBe(0)
     expect((await one<{ flags: string[] }>('select flags from feedback_comments'))!.flags.join()).toMatch(/Biel/)
@@ -123,6 +98,18 @@ describe('servidor d’«Et veig»', () => {
     expect((await call('marta', 'PUT', `/api/et-veig/${CID}/self/ESO`, { answers: full() })).status).toBe(409)
   })
 
+  it('la llista d’autoavaluacions mostra només les pròpies i el seu estat', async () => {
+    const tasks = (await call('marta', 'GET', '/api/et-veig/self')).body as unknown as { campaign: { id: string }; stage: string; groups: string[]; self?: { submittedAt?: string } }[]
+    expect(tasks.map((t) => t.stage)).toEqual(['ESO'])
+    expect(tasks[0].campaign.id).toBe(CID)
+    expect(tasks[0].groups.length).toBeGreaterThan(0)
+    expect(tasks[0].self?.submittedAt).toBeTruthy()
+    const other = (await call('xavier', 'GET', '/api/et-veig/self')).body as unknown as { self?: unknown }[]
+    expect(other.every((t) => !t.self)).toBe(true)
+    expect((await call('e01', 'GET', '/api/et-veig/self')).status).toBe(403)
+    expect((await call('dir', 'GET', '/api/et-veig/no-es-un-id/center')).status).toBe(404)
+  })
+
   it('cap resultat abans de temps, cap comentari sense moderar i llindar de 15 al servidor (criteris 4, 5 i 10)', async () => {
     expect((await call('dir', 'GET', `/api/et-veig/${CID}/reports/${mail('marta')}`)).status).toBe(403)
     // Marta: 14 respostes en total (per sota del llindar). Xavier: 16, amb un comentari.
@@ -131,9 +118,19 @@ describe('servidor d’«Et veig»', () => {
       const extra: Answers = i === 1 ? { mantenir: 'Les explicacions amb exemples' } : {}
       expect((await call(`e${String(i).padStart(2, '0')}`, 'POST', `/api/et-veig/${CID}/submit/${mail('xavier')}`, { answers: full(extra) })).status).toBe(204)
     }
-    for (const s of ['TANCADA', 'MODERACIO']) expect((await toStatus('admin', s)).status).toBe(204)
+    const before = (await db.query<{ id: string }>('select id from feedback_answers')).rows.map((r) => r.id)
+    expect((await toStatus('admin', 'TANCADA')).status).toBe(204)
+    // En tancar, les respostes es tornen a escriure: les mateixes, en un altre ordre.
+    const after = (await db.query<{ id: string }>('select id from feedback_answers')).rows.map((r) => r.id)
+    expect([...after].sort()).toEqual([...before].sort())
+    expect(await one('select grade_id, group_label, students, participants from feedback_participation_counts where grade_id = $1', ['2ESO'])).toEqual({ grade_id: '2ESO', group_label: 'A', students: 16, participants: 16 })
+    expect((await toStatus('admin', 'MODERACIO')).status).toBe(204)
     expect((await toStatus('admin', 'INFORMES_GENERATS')).status).toBe(409)
-    const comments = (await pg.query<{ id: string; original: string }>('select id, original from feedback_comments')).rows
+    expect((await call('admin', 'GET', `/api/et-veig/${CID}/comments`)).status).toBe(403)
+    const comments = (await call('dir', 'GET', `/api/et-veig/${CID}/comments`)).body as unknown as { id: string; original: string; teacherName: string }[]
+    expect(comments).toHaveLength(2)
+    expect((await call('e01', 'GET', '/api/et-veig/campaigns')).status).toBe(403)
+    expect((await call('marta', 'GET', '/api/et-veig/campaigns')).body).toMatchObject([{ id: CID, status: 'MODERACIO' }])
     const biel = comments.find((c) => c.original.includes('Biel'))!
     const good = comments.find((c) => c.original.includes('exemples'))!
     expect((await call('admin', 'POST', `/api/et-veig/comments/${good.id}/moderation`, { status: 'acceptat' })).status).toBe(403)
@@ -151,6 +148,8 @@ describe('servidor d’«Et veig»', () => {
 
   it('publicats: cada docent veu només el seu informe; l’administració sense direcció, cap (criteri 5)', async () => {
     expect((await toStatus('dir', 'PUBLICADA')).status).toBe(204)
+    // Publicada: ja no queda constància de qui ha participat, només els recomptes.
+    expect((await one<{ n: number }>('select count(*)::int as n from feedback_participation'))!.n).toBe(0)
     const x = (await call('xavier', 'GET', `/api/et-veig/${CID}/reports/${mail('xavier')}`)).body as { stages: { n: number; suppressed: boolean; comments: { texts: string[] }[]; dims: { dist: { valid: number } }[] }[] }
     expect(x.stages[0]).toMatchObject({ n: 16, suppressed: false })
     expect(x.stages[0].dims.every((d) => d.dist.valid > 0)).toBe(true)
@@ -158,9 +157,21 @@ describe('servidor d’«Et veig»', () => {
     expect((await call('marta', 'GET', `/api/et-veig/${CID}/reports/${mail('xavier')}`)).status).toBe(403)
     expect((await call('admin', 'GET', `/api/et-veig/${CID}/reports/${mail('xavier')}`)).status).toBe(403)
     expect((await call('admin', 'GET', `/api/et-veig/${CID}/center`)).status).toBe(403)
-    const centre = (await call('dir', 'GET', `/api/et-veig/${CID}/center`)).body as unknown as { stage: string; teachers: { email: string; fav: object }[] }[]
+    const centre = (await call('dir', 'GET', `/api/et-veig/${CID}/center`)).body as unknown as { stage: string; students: number; participants: number; teachers: { email: string; fav: object }[] }[]
+    expect(centre.find((v) => v.stage === 'ESO')).toMatchObject({ students: 16, participants: 16 })
     const t = centre.find((v) => v.stage === 'ESO')!.teachers
     expect(t.find((r) => r.email === mail('marta'))!.fav).toEqual({})
     expect(Object.keys(t.find((r) => r.email === mail('xavier'))!.fav).length).toBeGreaterThan(0)
+  })
+})
+
+describe('dades de prova', () => {
+  it('el fitxer SQL carrega les mateixes dades que les proves', async () => {
+    const { pg: other } = await memoryDb()
+    await other.exec(seedScript())
+    const n = async (p: PGlite, t: string) => (await p.query<{ n: number }>(`select count(*)::int as n from ${t}`)).rows[0].n
+    for (const t of ['users', 'students', 'enrollments', 'teaching_assignments', 'feedback_forms']) expect(await n(other, t)).toBeGreaterThan(0)
+    expect(await n(other, 'students')).toBe(19)
+    await other.close()
   })
 })

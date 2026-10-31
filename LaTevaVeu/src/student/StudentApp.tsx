@@ -73,6 +73,9 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
     [template, grade.stage, home.subjects, home.previousGoal],
   )
   const pr = progress(steps, response?.answers ?? {})
+  const { modules } = useDemoState()
+  const emMiroOn = modules.emMiro
+  const etVeigOn = modules.etVeig
   const delivered = response?.status === 'LLIURADA' || response?.status === 'VALIDADA'
 
   return (
@@ -96,21 +99,11 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
           </button>
         </div>
 
-        {!campaign && !fb && (
-          <div className="notice">
-            <Icon name="info" />
-            <div>
-              <b>Ara no tens res pendent.</b>
-              <br />
-              Quan s’obri una autoavaluació o una valoració del professorat, la trobaràs aquí.
-            </div>
-          </div>
-        )}
-
+        <div className="stu-spaces">
         {campaign && (
           <div className="campaign-box mod em">
             <div className="mod-kicker em">
-              <span aria-hidden="true">💭</span> Em miro
+              <span aria-hidden="true">💭</span> Em miro · M’autoavaluo
               <span className="mod-desc">Penso en com aprenc, què faig bé i què puc millorar</span>
             </div>
             <div className="row">
@@ -148,7 +141,29 @@ function StudentHome({ home, fb, session, onStart, onEtVeig, toast }: { home: No
           </div>
         )}
 
-        {fb && <EtVeigCard fb={fb} onOpen={onEtVeig} />}
+        {!campaign && emMiroOn && (
+          <div className="campaign-box mod em idle">
+            <div className="mod-kicker em">
+              <span aria-hidden="true">💭</span> Em miro · M’autoavaluo
+              <span className="mod-desc">Penso en com aprenc, què faig bé i què puc millorar</span>
+            </div>
+            <p className="muted">Ara no tens cap autoavaluació oberta. Quan n’hi hagi una, la trobaràs aquí.</p>
+          </div>
+        )}
+        {fb ? (
+          <EtVeigCard fb={fb} onOpen={onEtVeig} />
+        ) : (
+          etVeigOn && (
+            <div className="campaign-box mod ev idle">
+              <div className="mod-kicker ev">
+                <span aria-hidden="true">👀</span> Et veig · Valoro el professorat
+                <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>
+              </div>
+              <p className="muted">Ara no hi ha cap valoració del professorat oberta.</p>
+            </div>
+          )
+        )}
+        </div>
 
         {campaign && !delivered && (
           <div className="tips">
@@ -205,7 +220,7 @@ function EtVeigCard({ fb, onOpen }: { fb: FeedbackHome; onOpen: () => void }) {
   return (
     <div className="campaign-box mod ev">
       <div className="mod-kicker ev">
-        <span aria-hidden="true">👀</span> Et veig
+        <span aria-hidden="true">👀</span> Et veig · Valoro el professorat
         <span className="mod-desc">Explico com visc les classes i què m’ajuda a aprendre</span>
       </div>
       <div className="row">

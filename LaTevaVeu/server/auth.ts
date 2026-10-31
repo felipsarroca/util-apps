@@ -49,8 +49,8 @@ export async function resolveActor(db: Db, id: Identity, yearId: string): Promis
     // El mateix correu amb un altre identificador de Google vol dir un compte recreat: no s'accepta sense revisió.
     if (user?.google_sub && user.google_sub !== id.sub) throw forbidden('Aquest compte ha canviat. Cal que l’administració el revisi.')
     const [student] = (
-      await q.query<{ id: string; user_id: string | null; grade_id: GradeId; label: string; enrollment_id: string }>(
-        `select s.id, s.user_id, g.grade_id, g.label, e.id as enrollment_id
+      await q.query<{ id: string; user_id: string | null; name: string; grade_id: GradeId; label: string; enrollment_id: string }>(
+        `select s.id, s.user_id, s.given_name || ' ' || s.family_name as name, g.grade_id, g.label, e.id as enrollment_id
            from students s join enrollments e on e.student_id = s.id and e.active
            join class_groups g on g.id = e.group_id and g.year_id = $2
           where lower(s.school_email) = $1 and s.active`,
@@ -64,7 +64,8 @@ export async function resolveActor(db: Db, id: Identity, yearId: string): Promis
     await q.query('update users set google_sub = coalesce(google_sub, $2), last_login_at = now() where id = $1', [user.id, id.sub])
     if (student && student.user_id !== user.id) await q.query('update students set user_id = $2 where id = $1', [student.id, user.id])
     const roles = new Set((await q.query<{ role: Role }>('select role from user_roles where user_id = $1', [user.id])).rows.map((r) => r.role))
-    const actor: Actor = { userId: user.id, email: id.email, name: user.display_name, roles }
+    // L'alumnat apareix amb el nom del cens.
+    const actor: Actor = { userId: user.id, email: id.email, name: student?.name ?? user.display_name, roles }
     if (student) {
       const electives = (await q.query<{ subject_id: string }>('select subject_id from student_subjects where enrollment_id = $1', [student.enrollment_id])).rows.map((r) => r.subject_id)
       actor.student = { id: student.id, gradeId: student.grade_id, group: student.label, electives }

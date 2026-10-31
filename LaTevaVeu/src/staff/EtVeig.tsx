@@ -7,7 +7,7 @@ import {
 } from '../data/api'
 import { gradeShort, GRADES, STAGES } from '../domain/catalog'
 import { eligibleStudents, groupKey, stageOfGrade, stagesOfTeacher, teachersForStudent, THRESHOLD } from '../domain/feedback'
-import { CONTEXT_TAGS, type Answers, type FeedbackCampaign, type FeedbackStatus, type GradeId, type Session, type StageId } from '../domain/types'
+import { CONTEXT_TAGS, type Answers, type FeedbackCampaign, type FeedbackStatus, type GradeId, type SelfTask, type Session, type StageId } from '../domain/types'
 import { BarLegend, CenterReportPages, DistBar, FeedbackReportPages, heat } from '../report/FeedbackReport'
 import { SheetViewer } from '../report/Report'
 import { SegScale } from '../student/Questions'
@@ -24,7 +24,7 @@ export const FB_TONE: Record<FeedbackStatus, string> = {
   ESBORRANY: '', PROGRAMADA: 'info', OBERTA: 'ok', TANCADA: 'warn', MODERACIO: 'warn', INFORMES_GENERATS: 'brand', PUBLICADA: 'ok', ARXIVADA: '',
 }
 const FLOW: FeedbackStatus[] = ['ESBORRANY', 'PROGRAMADA', 'OBERTA', 'TANCADA', 'MODERACIO', 'INFORMES_GENERATS', 'PUBLICADA', 'ARXIVADA']
-const NEXT: Partial<Record<FeedbackStatus, { to: FeedbackStatus; label: string }>> = {
+export const NEXT: Partial<Record<FeedbackStatus, { to: FeedbackStatus; label: string }>> = {
   ESBORRANY: { to: 'PROGRAMADA', label: 'Programa-la' },
   PROGRAMADA: { to: 'OBERTA', label: 'Obre-la ara' },
   OBERTA: { to: 'TANCADA', label: 'Tanca la recollida' },
@@ -41,10 +41,21 @@ const stageNames = (c: FeedbackCampaign) => c.stages.map((st) => STAGES[st].shor
 
 export function SelfAssessScreen({ session }: { session: Session }) {
   const s = useDemoState()
-  const tasks = selfAssessmentTasks(s, session)
+  const tasks: SelfTask[] = selfAssessmentTasks(s, session).map((t) => ({
+    ...t,
+    scale: s.scales.find((x) => x.id === t.form.scaleId)!,
+    groups: [...new Set(t.campaign.assignments.filter((a) => a.teacherEmail === session.email && stageOfGrade(a.gradeId) === t.stage).map((a) => groupKey(a.gradeId, a.group)))],
+  }))
+  return <SelfAssessView tasks={tasks} save={(t, answers, context, submit) => saveSelfAssessment(session, t.campaign.id, t.stage, answers, context, submit)} />
+}
+
+export type SaveSelf = (task: SelfTask, answers: Answers, context: Record<string, string[]>, submit: boolean) => void | Promise<void>
+
+/** Llista i formulari de l'autoavaluació docent: el mateix per a la demostració i per al mode connectat. */
+export function SelfAssessView({ tasks, save }: { tasks: SelfTask[]; save: SaveSelf }) {
   const [open, setOpen] = useState<string | null>(null)
   const task = tasks.find((t) => `${t.campaign.id}|${t.stage}` === open)
-  if (task) return <SelfForm key={open} session={session} task={task} onBack={() => setOpen(null)} />
+  if (task) return <SelfForm key={open} task={task} save={save} onBack={() => setOpen(null)} />
   return (
     <>
       <PageHead title="La meva autoavaluació" sub="Una per etapa on fas classe. Fes-la abans de veure els resultats: l’informe hi contrastarà la mirada de l’alumnat." />
@@ -82,25 +93,25 @@ export function SelfAssessScreen({ session }: { session: Session }) {
   )
 }
 
-function SelfForm({ session, task, onBack }: { session: Session; task: ReturnType<typeof selfAssessmentTasks>[number]; onBack: () => void }) {
-  const s = useDemoState()
-  const { campaign, stage, form, self } = task
-  const scale = s.scales.find((x) => x.id === form.scaleId)!
+function SelfForm({ task, save, onBack }: { task: SelfTask; save: SaveSelf; onBack: () => void }) {
+  const { campaign, stage, form, self, scale, groups } = task
   const [answers, setAnswers] = useState<Answers>(self?.answers ?? {})
   const [context, setContext] = useState<Record<string, string[]>>(self?.context ?? {})
   const [confirm, setConfirm] = useState(false)
+  const [busy, setBusy] = useState(false)
   const [toast, showToast] = useToast()
   const locked = !!self?.submittedAt
-  const groups = [...new Set(campaign.assignments.filter((a) => a.teacherEmail === session.email && stageOfGrade(a.gradeId) === stage).map((a) => groupKey(a.gradeId, a.group)))]
   const missing = form.items.filter((i) => !answers[i.id]).length
-  const save = (submit: boolean) => {
+  const doSave = async (submit: boolean) => {
+    setBusy(true)
     try {
-      saveSelfAssessment(session, campaign.id, stage, answers, context, submit)
+      await save(task, answers, context, submit)
       showToast(submit ? 'Autoavaluació lliurada. Gràcies!' : 'Esborrany desat.')
       if (submit) setConfirm(false)
     } catch (e) {
       showToast((e as Error).message)
     }
+    setBusy(false)
   }
   const toggleTag = (g: string, tag: string) =>
     setContext((c) => {
@@ -167,8 +178,8 @@ function SelfForm({ session, task, onBack }: { session: Session; task: ReturnTyp
         <div className="row sticky-actions">
           <span className="muted" style={{ fontWeight: 700 }}>{missing ? `Falten ${missing} afirmacions` : 'Ho tens tot'}</span>
           <span className="spacer" />
-          <button className="btn" onClick={() => save(false)}>Desa l’esborrany</button>
-          <button className="btn primary ev" disabled={missing > 0} onClick={() => setConfirm(true)}>
+          <button className="btn" disabled={busy} onClick={() => doSave(false)}>Desa l’esborrany</button>
+          <button className="btn primary ev" disabled={missing > 0 || busy} onClick={() => setConfirm(true)}>
             Lliura <Icon name="check" />
           </button>
         </div>
@@ -178,7 +189,7 @@ function SelfForm({ session, task, onBack }: { session: Session; task: ReturnTyp
           <p>Un cop lliurada no es podrà modificar. Es farà servir per contrastar-la amb la mirada de l’alumnat a l’informe «Així et veiem».</p>
           <div className="row" style={{ justifyContent: 'flex-end' }}>
             <button className="btn" onClick={() => setConfirm(false)}>Encara no</button>
-            <button className="btn primary ev" onClick={() => save(true)}>Sí, lliura-la</button>
+            <button className="btn primary ev" disabled={busy} onClick={() => doSave(true)}>Sí, lliura-la</button>
           </div>
         </Modal>
       )}

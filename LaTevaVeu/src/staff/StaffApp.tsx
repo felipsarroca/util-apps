@@ -20,23 +20,36 @@ type Screen =
 
 /** Qui veu cada entrada: administració, Equip Directiu, tutoria (grups d'«Em miro»), qui fa classe o qui pot veure resultats. */
 type Need = 'admin' | 'dir' | 'manage' | 'tutor' | 'teaches' | 'results'
-const NAV: { id: Screen; label: string; icon: string; need: Need; group: string }[] = [
-  { id: 'dashboard', label: 'Tauler', icon: 'home', need: 'tutor', group: 'Em miro' },
-  { id: 'tracking', label: 'Respostes', icon: 'list', need: 'tutor', group: 'Em miro' },
-  { id: 'reports', label: 'Així em veig i famílies', icon: 'file', need: 'tutor', group: 'Em miro' },
-  { id: 'campaigns', label: 'Recollides', icon: 'calendar', need: 'tutor', group: 'Em miro' },
-  { id: 'self', label: 'La meva autoavaluació', icon: 'edit', need: 'teaches', group: 'Et veig' },
-  { id: 'myreports', label: 'Així et veiem', icon: 'eye', need: 'results', group: 'Et veig' },
-  { id: 'center', label: 'Visió de centre', icon: 'chart', need: 'dir', group: 'Et veig' },
-  { id: 'fbcampaigns', label: 'Recollides i moderació', icon: 'calendar', need: 'manage', group: 'Et veig' },
-  { id: 'fbforms', label: 'Preguntes', icon: 'list', need: 'admin', group: 'Et veig' },
-  { id: 'templates', label: 'Qüestionaris d’Em miro', icon: 'edit', need: 'admin', group: 'Configuració' },
-  { id: 'subjects', label: 'Matèries', icon: 'book', need: 'admin', group: 'Configuració' },
-  { id: 'assign', label: 'Assignacions docents', icon: 'users', need: 'admin', group: 'Configuració' },
-  { id: 'people', label: 'Alumnat i accessos', icon: 'users', need: 'admin', group: 'Configuració' },
-  { id: 'modules', label: 'Apartats', icon: 'settings', need: 'admin', group: 'Configuració' },
-  { id: 'audit', label: 'Registre', icon: 'history', need: 'admin', group: 'Configuració' },
+type Kind = 'use' | 'config'
+
+/**
+ * Tres espais ben separats: l'autoavaluació de l'alumnat (Em miro), la valoració del professorat
+ * (Et veig) i les dades comunes del centre. Cada espai té el seu color, les seves pantalles d'ús i la
+ * seva configuració.
+ */
+const NAV: { id: Screen; label: string; icon: string; need: Need; space: Section; kind: Kind }[] = [
+  { id: 'dashboard', label: 'Tauler', icon: 'home', need: 'tutor', space: 'em-miro', kind: 'use' },
+  { id: 'tracking', label: 'Respostes', icon: 'list', need: 'tutor', space: 'em-miro', kind: 'use' },
+  { id: 'reports', label: 'Així em veig i famílies', icon: 'file', need: 'tutor', space: 'em-miro', kind: 'use' },
+  { id: 'campaigns', label: 'Recollides', icon: 'calendar', need: 'tutor', space: 'em-miro', kind: 'use' },
+  { id: 'templates', label: 'Qüestionaris', icon: 'edit', need: 'admin', space: 'em-miro', kind: 'config' },
+  { id: 'self', label: 'La meva autoavaluació', icon: 'edit', need: 'teaches', space: 'et-veig', kind: 'use' },
+  { id: 'myreports', label: 'Així et veiem', icon: 'eye', need: 'results', space: 'et-veig', kind: 'use' },
+  { id: 'center', label: 'Visió de centre', icon: 'chart', need: 'dir', space: 'et-veig', kind: 'use' },
+  { id: 'fbcampaigns', label: 'Recollides i moderació', icon: 'calendar', need: 'manage', space: 'et-veig', kind: 'use' },
+  { id: 'fbforms', label: 'Preguntes', icon: 'list', need: 'admin', space: 'et-veig', kind: 'config' },
+  { id: 'assign', label: 'Qui fa classe a qui', icon: 'users', need: 'admin', space: 'et-veig', kind: 'config' },
+  { id: 'people', label: 'Alumnat i accessos', icon: 'users', need: 'admin', space: 'centre', kind: 'config' },
+  { id: 'subjects', label: 'Matèries', icon: 'book', need: 'admin', space: 'centre', kind: 'config' },
+  { id: 'modules', label: 'Apartats', icon: 'settings', need: 'admin', space: 'centre', kind: 'config' },
+  { id: 'audit', label: 'Registre', icon: 'history', need: 'admin', space: 'centre', kind: 'config' },
 ]
+
+export const SPACES: Record<Section, { name: string; emoji: string; tagline: string; cls: string }> = {
+  'em-miro': { name: 'Em miro', emoji: '💭', tagline: 'Autoavaluació de l’alumnat', cls: 'space-em' },
+  'et-veig': { name: 'Et veig', emoji: '👀', tagline: 'L’alumnat valora el professorat', cls: 'space-ev' },
+  centre: { name: 'Centre', emoji: '🏫', tagline: 'Dades comunes: alumnat, matèries i accessos', cls: 'space-ce' },
+}
 
 export function StaffApp({ session }: { session: Session }) {
   const s = useDemoState()
@@ -46,22 +59,39 @@ export function StaffApp({ session }: { session: Session }) {
   const tutor = isAdmin || (session.groups?.length ?? 0) > 0
   const allowed: Record<Need, boolean> = { admin: isAdmin, dir, manage: isAdmin || dir, tutor, teaches, results: teaches || dir }
   const nav = NAV.filter((n) => allowed[n.need])
-  // L'adreça …/#/em-miro o …/#/et-veig obre la primera pantalla de l'apartat.
-  const GROUP: Record<Section, string> = { 'em-miro': 'Em miro', 'et-veig': 'Et veig' }
-  const screenFor = (sec: Section | null) => (sec && nav.find((n) => n.group === GROUP[sec])?.id) || nav[0]?.id || 'dashboard'
-  const [screen, setScreenState] = useState<Screen>(() => screenFor(readSection()))
+  const spaces = (Object.keys(SPACES) as Section[]).filter((sp) => nav.some((n) => n.space === sp))
+  // L'adreça …/#/em-miro, …/#/et-veig o …/#/centre obre l'espai; sense apartat, la pantalla d'inici.
+  const screenFor = (sec: Section | null): Screen | null => (sec && nav.find((n) => n.space === sec)?.id) || (spaces.length === 1 ? nav[0].id : null)
+  const [screen, setScreenState] = useState<Screen | null>(() => screenFor(readSection()))
   const setSection = useSection((sec) => setScreenState(screenFor(sec)))
-  const setScreen = (id: Screen) => {
+  const setScreen = (id: Screen | null) => {
     setScreenState(id)
-    const g = nav.find((n) => n.id === id)?.group
-    setSection(g === 'Em miro' ? 'em-miro' : g === 'Et veig' ? 'et-veig' : null)
+    setSection(id ? nav.find((n) => n.id === id)!.space : null)
   }
+  const space = screen ? nav.find((n) => n.id === screen)!.space : null
   const pendingIdentity = s.audit.filter((a) => a.action === 'Incidència d’identitat').length
+  if (!space) return <SpaceChooser session={session} spaces={spaces} nav={nav} go={(sp) => setScreen(nav.find((n) => n.space === sp)!.id)} />
+  const items = nav.filter((n) => n.space === space)
   return (
-    <div className="staff">
+    <div className={`staff ${SPACES[space].cls}`}>
       <nav className="side no-print" aria-label="Seccions">
-        {nav.map((n, i) => {
-          const header = n.group !== nav[i - 1]?.group ? <div className="side-label">{n.group}</div> : null
+        {spaces.length > 1 && (
+          <div className="space-switch" role="tablist" aria-label="Espais">
+            {spaces.map((sp) => (
+              <button key={sp} role="tab" aria-selected={sp === space} className={`sp-tab ${SPACES[sp].cls}${sp === space ? ' cur' : ''}`} onClick={() => setScreen(nav.find((n) => n.space === sp)!.id)} title={SPACES[sp].tagline}>
+                <span aria-hidden="true">{SPACES[sp].emoji}</span> {SPACES[sp].name}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="space-title">
+          <b>
+            {SPACES[space].emoji} {SPACES[space].name}
+          </b>
+          <small>{SPACES[space].tagline}</small>
+        </div>
+        {items.map((n, i) => {
+          const header = n.kind !== items[i - 1]?.kind ? <div className="side-label">{n.kind === 'use' ? 'Seguiment' : 'Configuració'}</div> : null
           return (
             <span key={n.id} style={{ display: 'contents' }}>
               {header}
@@ -73,10 +103,15 @@ export function StaffApp({ session }: { session: Session }) {
             </span>
           )
         })}
+        {spaces.length > 1 && (
+          <button className="nav-btn side-home" onClick={() => setScreen(null)}>
+            <Icon name="home" /> Inici
+          </button>
+        )}
       </nav>
       <main className="staff-main">
-        {!s.modules.emMiro && nav.find((n) => n.id === screen)?.group === 'Em miro' && <ModuleOff name="Em miro" />}
-        {!s.modules.etVeig && nav.find((n) => n.id === screen)?.group === 'Et veig' && <ModuleOff name="Et veig" />}
+        {!s.modules.emMiro && space === 'em-miro' && <ModuleOff name="Em miro" />}
+        {!s.modules.etVeig && space === 'et-veig' && <ModuleOff name="Et veig" />}
         {screen === 'dashboard' && tutor && <Dashboard session={session} go={setScreen} />}
         {screen === 'tracking' && tutor && <Tracking session={session} />}
         {screen === 'reports' && tutor && <ReportsScreen session={session} />}
@@ -97,12 +132,56 @@ export function StaffApp({ session }: { session: Session }) {
   )
 }
 
+const SPACE_TEXT: Record<Section, string> = {
+  'em-miro': 'L’alumnat pensa en com aprèn. La tutoria en fa el seguiment i en treu l’informe «Així em veig» per a les famílies.',
+  'et-veig': 'L’alumnat explica com viu les classes de cada docent. Cada docent rep el seu informe «Així et veiem»; ningú no veu respostes individuals.',
+  centre: 'Cens de l’alumnat, accessos del personal, matèries, apartats actius i registre d’operacions.',
+}
+
+/** Pantalla d'inici del personal: cada espai, amb el que hi pot fer aquesta persona. */
+function SpaceChooser({ session, spaces, nav, go }: { session: Session; spaces: Section[]; nav: typeof NAV; go: (s: Section) => void }) {
+  const s = useDemoState()
+  const off = (sp: Section) => (sp === 'em-miro' && !s.modules.emMiro) || (sp === 'et-veig' && !s.modules.etVeig)
+  return (
+    <main className="staff-main spaces-home">
+      <PageHead title={`${greeting()}, ${session.name.split(' ')[0]}`} sub="Tria on vols treballar. Cada espai és independent." />
+      <div className="space-cards">
+        {spaces.map((sp) => (
+          <button key={sp} className={`space-card ${SPACES[sp].cls}`} onClick={() => go(sp)}>
+            <span className="sc-head">
+              <span className="sc-emoji" aria-hidden="true">{SPACES[sp].emoji}</span>
+              <span>
+                <b>{SPACES[sp].name}</b>
+                <small>{SPACES[sp].tagline}</small>
+              </span>
+            </span>
+            {off(sp) && <span className="badge warn">Desactivat per a l’alumnat</span>}
+            <span className="sc-text">{SPACE_TEXT[sp]}</span>
+            <span className="sc-list">
+              {nav
+                .filter((n) => n.space === sp)
+                .map((n) => (
+                  <span key={n.id} className={n.kind === 'config' ? 'cfg' : ''}>
+                    <Icon name={n.icon} /> {n.label}
+                  </span>
+                ))}
+            </span>
+            <span className="sc-go">
+              Entra <Icon name="arrowR" />
+            </span>
+          </button>
+        ))}
+      </div>
+    </main>
+  )
+}
+
 function ModuleOff({ name }: { name: string }) {
   return (
     <div className="notice warn">
       <Icon name="alert" />
       <div>
-        L’apartat «{name}» està desactivat: l’alumnat no el veu. Es pot tornar a activar a <b>Configuració › Apartats</b>.
+        L’apartat «{name}» està desactivat: l’alumnat no el veu. Es pot tornar a activar a <b>Centre › Apartats</b>.
       </div>
     </div>
   )
@@ -126,7 +205,7 @@ function greeting() {
   return h < 14 ? 'Bon dia' : h < 20 ? 'Bona tarda' : 'Bon vespre'
 }
 
-function Dashboard({ session, go }: { session: Session; go: (s: Screen) => void }) {
+function Dashboard({ session, go }: { session: Session; go: (s: Screen | null) => void }) {
   const s = useDemoState()
   const rows = useMemo(() => trackingRows(s, session), [s, session])
   const grades = visibleGrades(s, session)
@@ -139,7 +218,7 @@ function Dashboard({ session, go }: { session: Session; go: (s: Screen) => void 
 
   return (
     <>
-      <PageHead title={`${greeting()}, ${session.name.split(' ')[0]}`} sub={`Em miro · resum de les autoavaluacions · ${scope}`} />
+      <PageHead title={`${greeting()}, ${session.name.split(' ')[0]}`} sub={`Resum de les autoavaluacions de l’alumnat · ${scope}`} />
       <div className="kpis">
         <div className="card kpi accent">
           <span className="l">Participació</span>

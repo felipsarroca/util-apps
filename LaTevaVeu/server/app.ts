@@ -56,6 +56,10 @@ export function buildApp(o: AppOptions) {
     return { email: a.email, name: a.name, roles: [...a.roles], student: a.student ? { gradeId: a.student.gradeId, group: a.student.group } : undefined }
   })
 
+  app.get('/api/et-veig/campaigns', async (req) => etVeig.listCampaigns(ctx, await actorOf(req)))
+
+  app.get<{ Params: P }>('/api/et-veig/:campaignId/comments', async (req) => etVeig.listComments(ctx, await actorOf(req), req.params.campaignId))
+
   app.get('/api/et-veig/home', async (req) => etVeig.feedbackHome(ctx, await actorOf(req)))
 
   app.put<{ Params: P; Body: { answers: Answers } }>('/api/et-veig/:campaignId/drafts/:teacherEmail', async (req, reply) => {
@@ -67,6 +71,8 @@ export function buildApp(o: AppOptions) {
     await etVeig.submitFeedback(ctx, await actorOf(req), req.params.campaignId, req.params.teacherEmail.toLowerCase(), answersOf(req.body))
     return reply.code(204).send()
   })
+
+  app.get('/api/et-veig/self', async (req) => etVeig.selfTasks(ctx, await actorOf(req)))
 
   app.put<{ Params: P; Body: { answers: Answers; context?: Record<string, string[]>; submit?: boolean } }>('/api/et-veig/:campaignId/self/:stage', async (req, reply) => {
     await etVeig.saveSelfAssessment(ctx, await actorOf(req), req.params.campaignId, req.params.stage, answersOf(req.body), req.body?.context ?? {}, !!req.body?.submit)

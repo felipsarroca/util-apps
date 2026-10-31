@@ -7,7 +7,15 @@
 
 Implementa les fases 1 i 2 del [pla mestre v2](La_teva_veu_pla_mestre_v2.md). Publicada a <https://felipsarroca.github.io/util-apps/LaTevaVeu/> (l'adreça antiga `MAvaluo/` hi redirigeix).
 
-**Estat (31 d'octubre de 2026):** prototip funcional en **mode de demostració**. Les dades són fictícies i es desen al navegador. Encara no hi ha servidor, base de dades real ni enviament de correus.
+**Estat (31 d'octubre de 2026):** la versió publicada funciona en **mode de demostració**: el botó «Prova la demostració» de la pantalla d'entrada obre una finestra per triar el perfil (alumnat, professorat, Equip Directiu, administració) amb dades fictícies desades només al navegador, que es poden restaurar. «Et veig» ja té servidor i base de dades de proves (vegeu *Mode connectat*); encara no hi ha allotjament definitiu ni enviament de correus.
+
+## Dos espais ben separats
+
+- **Em miro** (color granat): autoavaluació de l'alumnat. La tutoria en fa el seguiment i l'informe «Així em veig».
+- **Et veig** (color verd blavós): l'alumnat valora el professorat; cada docent rep l'informe «Així et veiem».
+- **Centre** (color pissarra): dades comunes (cens, accessos, matèries, apartats i registre).
+
+El personal entra a una pantalla d'inici amb un requadre per espai i només hi veu el que li pertoca. Dins de cada espai, el menú separa **Seguiment** (ús) de **Configuració**, i unes pestanyes permeten canviar d'espai. L'alumnat veu els dos espais com dos requadres diferenciats a la pantalla d'inici.
 
 ## Requisit d'entrada
 
@@ -65,6 +73,8 @@ Si cal, primer es demana el compte de l'escola. Si l'apartat no està actiu, s'o
 
 ## Comptes de prova
 
+Es trien a la finestra de «Prova la demostració». Amb el servidor real (sense `VITE_DEV_AUTH`), aquest botó desapareix i només es pot entrar amb Google.
+
 | Compte | Per provar |
 | --- | --- |
 | Alumne de 3r, Alumna de 5è, Alumne de 2n d'ESO | Les dues experiències de cada etapa |
@@ -113,26 +123,41 @@ Per activar Google real: copia `.env.example` a `.env.local` i posa-hi `VITE_GOO
 
 ## Servidor (fase 5, sense desplegar)
 
-La carpeta `server` conté la base del backend d'«Et veig». No està desplegat ni connectat a cap base de dades real.
+La carpeta `server` conté el backend d'«Et veig». Encara no està desplegat a cap allotjament.
 
 - Cada petició porta el testimoni d'identitat de Google (`Authorization: Bearer …`). El servidor en comprova la signatura, l'emissor, l'audiència, el domini `ramonpont.cat` i el correu verificat.
 - Tenir compte de l'escola no dona accés: cal ser al cens de l'alumnat o tenir un rol (administració, docent, direcció).
 - Les respostes es desen sense cap identificador d'alumne; els esborranys, xifrats (AES-256-GCM) i esborrats en lliurar.
+- En tancar la recollida, es desen els recomptes de participació per grup i les respostes i els comentaris es tornen a escriure en ordre aleatori. En publicar-la, s'esborra la llista de qui ha participat.
 - El llindar de 15 respostes i la moderació (només direcció) s'apliquen al servidor amb el mateix codi del domini que el prototip.
+
+### Mode connectat
+
+Amb `VITE_API_URL`, l'app parla amb el servidor: l'alumnat valora el professorat i el personal gestiona les recollides, fa la seva autoavaluació docent, modera els comentaris i consulta els informes. Cada petició carrega només la recollida i l'alumne que necessita, amb les consultes en paral·lel. «Em miro» i la configuració (cens, assignacions, preguntes) encara funcionen només en demostració.
+
+Per provar-ho tot en local amb dades fictícies:
+
+```bash
+npm run server:local                                              # servidor a 127.0.0.1:8787, base de dades en memòria
+VITE_API_URL=http://127.0.0.1:8787 VITE_DEV_AUTH=1 npm run dev -- --port 5191
+```
+
+### Base de dades
+
+- Projecte de Neon «La teva veu» (Frankfurt, PostgreSQL 17), branca `proves` amb `db/schema.sql` i `db/dades-prova.sql` (tot fictici). La branca `integracio` serveix per passar-hi les proves.
+- `npm run docs` regenera `db/dades-prova.sql`. `scripts/aplica-sql.ts` aplica fitxers SQL a la base de dades de `DATABASE_URL` (la cadena de connexió no s'escriu mai en cap fitxer).
 
 Ordres:
 
 ```bash
-npm test               # inclou les proves del servidor amb PostgreSQL en memòria (PGlite)
-npm run server:dev     # cal definir les variables de .env.example a l'entorn
-npm run server:build   # genera dist-server/main.js
+npm test                 # inclou les proves del servidor amb PostgreSQL en memòria (PGlite)
+TEST_DATABASE_URL=… npx vitest run server --testTimeout=120000   # les mateixes proves contra Neon
+npm run server:build     # genera dist-server/main.js
 ```
 
 Pendent:
 
-1. Triar l'allotjament del servidor (UE) i crear el projecte de Neon: cal l'aprovació de direcció i de la persona delegada de protecció de dades.
-2. Connectar el frontend: substituir `src/data/api.ts` per crides a l'API mantenint la mateixa interfície.
-3. Esborrar la participació individual en publicar i conservar només els recomptes (`feedback_participation_counts`).
-4. Enregistrar les respostes en lots per evitar que l'ordre d'inserció permeti relacionar-les amb la participació.
-5. Rols i permisos de la base de dades (usuari de l'aplicació sense permisos d'esborrat sobre l'auditoria).
-6. API d'«Em miro», gestió (cens, personal, assignacions) i càrrega del CSV d'alumnat.
+1. Triar l'allotjament del servidor (UE) i desplegar-lo: cal l'aprovació de direcció i de la persona delegada de protecció de dades.
+2. API d'«Em miro», de l'autoavaluació docent a la interfície connectada i de la gestió (cens, personal, assignacions, càrrega de CSV).
+3. Rols i permisos de la base de dades (usuari de l'aplicació sense permisos d'esborrat sobre l'auditoria).
+4. Rendiment: cada petició carrega totes les dades de la recollida; caldrà consultes específiques abans d'usar-ho amb tot el centre.

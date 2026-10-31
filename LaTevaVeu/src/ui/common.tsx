@@ -125,10 +125,10 @@ export function useFitScale() {
 // ---------- Adreces dels apartats ----------
 
 /** Apartat que indica l'adreça: …/#/em-miro o …/#/et-veig. */
-export type Section = 'em-miro' | 'et-veig'
+export type Section = 'em-miro' | 'et-veig' | 'centre'
 
 export const readSection = (): Section | null => {
-  const m = window.location.hash.match(/^#\/(em-miro|et-veig)\b/)
+  const m = window.location.hash.match(/^#\/(em-miro|et-veig|centre)\b/)
   return m ? (m[1] as Section) : null
 }
 
