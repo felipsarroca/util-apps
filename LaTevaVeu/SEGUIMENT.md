@@ -4,7 +4,7 @@ Document per reprendre el projecte des de qualsevol ordinador. Última actualitz
 
 ## On ho hem deixat
 
-L'app està desplegada: servidor a Neon Functions (Frankfurt), base de dades de producció buida amb l'administrador, i entrada amb Google a l'adreça principal; la demostració és a `/demo/`. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. L'escola ja ha autoritzat l'ús de l'app; el següent pas és la càrrega del cens real, i el següent pas tècnic, l'enviament real de correus (punt 4 de *Pendent*).
+L'app està desplegada: servidor a Neon Functions (Frankfurt), base de dades de producció buida amb l'administrador, i entrada amb Google a l'adreça principal; la demostració és a `/demo/`. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. L'escola ja ha autoritzat l'ús de l'app; el següent pas és la càrrega del cens real, i el següent pas tècnic, l’enviament real de correus (punt 2 de *Pendent*).
 
 ## On és cada cosa
 
