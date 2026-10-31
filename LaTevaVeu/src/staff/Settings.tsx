@@ -55,6 +55,9 @@ export function AssignmentsScreen({ session }: { session: Session }) {
   const s = useDemoState()
   const [toast, showToast] = useToast()
   const teachers = s.staff.filter((x) => x.role === 'teacher').sort((a, b) => a.name.localeCompare(b.name, 'ca'))
+  // L'administració i l'Equip Directiu també fan classe: es poden triar com a docents.
+  const others = s.staff.filter((x) => x.role !== 'teacher').sort((a, b) => a.name.localeCompare(b.name, 'ca'))
+  const tag = (x: (typeof others)[number]) => [x.role === 'admin' && 'Administració', x.direction && 'Equip Directiu'].filter(Boolean).join(' · ')
   const groups = GRADES.flatMap((g) => (s.classGroups[g.id] ?? []).map((group) => ({ grade: g, group })))
   const [sel, setSel] = useState(`${groups[0].grade.id}-${groups[0].group}`)
   const cur = groups.find((x) => `${x.grade.id}-${x.group}` === sel)!
@@ -125,9 +128,18 @@ export function AssignmentsScreen({ session }: { session: Session }) {
                       style={{ minWidth: 220 }}
                     >
                       <option value="">— Sense docent —</option>
-                      {teachers.map((t) => (
-                        <option key={t.email} value={t.email}>{t.name}</option>
-                      ))}
+                      <optgroup label="Professorat">
+                        {teachers.map((t) => (
+                          <option key={t.email} value={t.email}>{t.name}</option>
+                        ))}
+                      </optgroup>
+                      {others.length > 0 && (
+                        <optgroup label="Administració i Equip Directiu">
+                          {others.map((t) => (
+                            <option key={t.email} value={t.email}>{t.name} ({tag(t)})</option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
                   </td>
                 </tr>

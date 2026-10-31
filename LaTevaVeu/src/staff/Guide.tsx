@@ -331,7 +331,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li><b>Importa els correus de les famílies.</b> <Where>Centre › Famílies</Where> Un CSV amb l’alumne i el nom i el correu de cada responsable.</li>
             <li><b>Revisa les matèries de cada curs.</b> <Where>Centre › Matèries</Where> Ordre, optatives i matèries actives. Afegeix les que no hi siguin amb <b>Matèria nova</b>.</li>
             <li><b>Marca les optatives de cada alumne.</b> <Where>Centre › Alumnat i accessos › Cens</Where> A cada alumne només li apareixen les optatives que cursa.</li>
-            <li><b>Indica qui fa classe a qui.</b> <Where>Et veig… › Qui fa classe a qui</Where> Una per una o amb el CSV de plantilla. Sense això, l’alumnat no sabrà quins docents ha de valorar.</li>
+            <li><b>Indica qui fa classe a qui.</b> <Where>Et veig… › Qui fa classe a qui</Where> Una per una o amb el CSV de plantilla. Al desplegable de cada matèria hi ha el professorat i, a part, les persones d’administració i de l’Equip Directiu, que també poden fer classe. Sense això, l’alumnat no sabrà quins docents ha de valorar.</li>
             <li><b>Revisa els qüestionaris.</b> <Where>Em miro › Qüestionaris</Where> i <Where>Et veig… › Preguntes</Where> Comprova que hi ha una versió publicada per a cada etapa.</li>
             <li><b>Comprova que els apartats estan actius.</b> <Where>Centre › Apartats</Where></li>
             <li><b>Decideix des d’on s’envien els correus.</b> <Where>Centre › Correu</Where> Compte remitent, on arriben les respostes i text dels missatges.</li>
