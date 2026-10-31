@@ -8,6 +8,8 @@ import { connectOps, hydrate, type FeedbackHome } from './api'
 import type { DemoState } from './seed'
 
 export const API_URL: string | undefined = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || undefined
+/** Amb servidor real, la demostració es publica a part (p. ex. demo/#/demo, al costat de l'app). */
+export const DEMO_URL: string | undefined = import.meta.env.VITE_DEMO_URL || undefined
 /** Només amb el servidor local de proves (npm run server:local): el testimoni és el correu. */
 export const DEV_AUTH = import.meta.env.VITE_DEV_AUTH === '1'
 

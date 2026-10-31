@@ -12,7 +12,7 @@ import { StaffApp } from './staff/StaffApp'
 import { StudentApp } from './student/StudentApp'
 import { APP_ICON, Footer, Icon, initials, stopSpeaking, useFitScale } from './ui/common'
 import { useDemoState } from './data/api'
-import { API_URL, DEV_AUTH, loadRemoteState, OP_FAILED, SESSION_EXPIRED, setToken } from './data/remote'
+import { API_URL, DEMO_URL, DEV_AUTH, loadRemoteState, OP_FAILED, SESSION_EXPIRED, setToken } from './data/remote'
 import { useToast } from './ui/common'
 
 const SESSION_KEY = 'mavaluo:session'
@@ -184,7 +184,7 @@ export default function App() {
         </header>
       )}
 
-      {!session && about && <AboutPage onClose={() => (location.hash = '')} onDemo={!API_URL || DEV_AUTH ? () => (location.hash = '#/demo') : undefined} />}
+      {!session && about && <AboutPage onClose={() => (location.hash = '')} onDemo={!API_URL || DEV_AUTH ? () => (location.hash = '#/demo') : DEMO_URL ? () => location.assign(DEMO_URL ?? '') : undefined} />}
       {!session && !about && <Login key={location.hash} onLogin={login} />}
       {session?.pending && <Pending session={session} onLogout={logout} />}
       {session && !session.pending && !ready && <p className="stu-main muted">Carregant…</p>}

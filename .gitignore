@@ -39,3 +39,4 @@ preview-*.png
 
 # Fitxers de bloqueig d'Office
 ~$*
+dist-demo/

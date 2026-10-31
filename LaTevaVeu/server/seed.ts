@@ -28,11 +28,39 @@ const STAFF: [user: string, name: string, roles: string[]][] = [
 ]
 const NAMES = ['Aina', 'Biel', 'Carla', 'Dani', 'Emma', 'Ferran', 'Gal·la', 'Hugo', 'Iris', 'Joel', 'Laia', 'Marc', 'Nora', 'Oriol', 'Pol', 'Queralt']
 
-export function seedStatements(): Statement[] {
-  const { year, campaignId } = PROVA
-  const out: Statement[] = [["insert into academic_years values ($1, '2026-09-01', '2027-06-30', true)", [year]]]
+/**
+ * Configuració inicial d'una base de dades nova, sense cap persona: curs, matèries, escales,
+ * qüestionaris d'«Em miro» i d'«Et veig…». La fan servir les dades de prova i la posada en marxa.
+ */
+export function baseStatements(year: string, starts: string, ends: string): Statement[] {
+  const out: Statement[] = [['insert into academic_years values ($1, $2, $3, true)', [year, starts, ends]]]
   for (const s of SUBJECTS) out.push(['insert into subjects values ($1, $2, $3, $4, true)', [s.id, s.short, s.long, s.hue]])
   for (const g of initialGradeSubjects()) out.push(['insert into grade_subjects values ($1, $2, $3, $4, $5, true)', [year, g.gradeId, g.subjectId, g.order, g.optional]])
+  for (const s of INITIAL_SCALES) out.push(['insert into answer_scales values ($1, $2, $3, $4)', [s.id, s.name, s.allowNA, JSON.stringify(s.options)]])
+  for (const t of [...new Map(INITIAL_TEMPLATES.map((t) => [t.templateId, t])).values()]) out.push(['insert into questionnaire_templates values ($1, $2, $3)', [t.templateId, t.name, t.stage]])
+  for (const t of INITIAL_TEMPLATES)
+    out.push([
+      'insert into template_versions (id, template_id, version, status, definition, change_note, published_at) values ($1, $2, $3, $4, $5, $6, $7)',
+      [t.id, t.templateId, t.version, t.status, JSON.stringify({ sections: t.sections }), t.changeNote ?? null, t.publishedAt ?? null],
+    ])
+  out.push(["insert into app_settings values ('modules', $1)", [JSON.stringify({ emMiro: true, etVeig: true })]])
+  for (const s of FEEDBACK_SCALES) out.push(['insert into feedback_scales values ($1, $2, $3, $4)', [s.id, s.name, s.naLabel, JSON.stringify(s.options)]])
+  for (const f of INITIAL_FEEDBACK_FORMS)
+    out.push([
+      "insert into feedback_forms (id, template_id, stage, version, status, scale_id, definition) values ($1, $2, $3, $4, 'published', $5, $6)",
+      [f.id, f.templateId, f.stage, f.version, f.scaleId, JSON.stringify({ dimensions: f.dimensions, items: f.items, open: f.open })],
+    ])
+  return out
+}
+
+/** Una persona del personal amb els seus rols (p. ex. el primer administrador). */
+export function staffStatements(id: string, email: string, name: string, roles: string[]): Statement[] {
+  return [['insert into users (id, email, display_name) values ($1, $2, $3)', [id, email.toLowerCase(), name]], ...roles.map((r): Statement => ['insert into user_roles (user_id, role) values ($1, $2)', [id, r]])]
+}
+
+export function seedStatements(): Statement[] {
+  const { year, campaignId } = PROVA
+  const out: Statement[] = baseStatements(year, '2026-09-01', '2027-06-30')
   // 2n d'ESO A (16 alumnes) i 3r de primària A (3 alumnes).
   const eso = uid(101)
   const cm = uid(102)
@@ -41,8 +69,7 @@ export function seedStatements(): Statement[] {
   STAFF.forEach(([u, name, roles], i) => {
     const id = uid(201 + i)
     staffId.set(u, id)
-    out.push(['insert into users (id, email, display_name) values ($1, $2, $3)', [id, mail(u), name]])
-    for (const r of roles) out.push(['insert into user_roles (user_id, role) values ($1, $2)', [id, r]])
+    out.push(...staffStatements(id, mail(u), name, roles))
   })
   out.push([
     "insert into teaching_assignments values ($1, 'MAT', $2), ($1, 'CAT', $3), ($4, 'CAT', $5), ($4, 'MAT', $5)",
@@ -56,26 +83,12 @@ export function seedStatements(): Statement[] {
   for (let i = 1; i <= 3; i++) student(400 + i, `p${i}`, `Primària ${i}`, cm)
   // Marta és la tutora de 2n d'ESO A.
   out.push(['insert into teacher_group_assignments values ($1, $2)', [staffId.get('marta'), eso]])
-  // «Em miro»: escales, qüestionaris i una recollida oberta de 2n d'ESO.
-  for (const s of INITIAL_SCALES) out.push(['insert into answer_scales values ($1, $2, $3, $4)', [s.id, s.name, s.allowNA, JSON.stringify(s.options)]])
-  for (const t of [...new Map(INITIAL_TEMPLATES.map((t) => [t.templateId, t])).values()]) out.push(['insert into questionnaire_templates values ($1, $2, $3)', [t.templateId, t.name, t.stage]])
-  for (const t of INITIAL_TEMPLATES)
-    out.push([
-      'insert into template_versions (id, template_id, version, status, definition, change_note, published_at) values ($1, $2, $3, $4, $5, $6, $7)',
-      [t.id, t.templateId, t.version, t.status, JSON.stringify({ sections: t.sections }), t.changeNote ?? null, t.publishedAt ?? null],
-    ])
+  // «Em miro»: una recollida oberta de 2n d'ESO.
   const esoTpl = INITIAL_TEMPLATES.filter((t) => t.stage === 'ESO' && t.status === 'published').sort((a, b) => b.version - a.version)[0]
   out.push([
     "insert into campaigns (id, year_id, grade_id, label, template_version_id, subjects_snapshot, starts_on, ends_on, status) values ($1, $2, '2ESO', '1a avaluació', $3, $4, '2026-11-02', '2026-11-20', 'OBERTA')",
     [PROVA.emCampaignId, year, esoTpl.id, JSON.stringify(initialGradeSubjects().filter((g) => g.gradeId === '2ESO'))],
   ])
-  out.push(["insert into app_settings values ('modules', $1)", [JSON.stringify({ emMiro: true, etVeig: true })]])
-  for (const s of FEEDBACK_SCALES) out.push(['insert into feedback_scales values ($1, $2, $3, $4)', [s.id, s.name, s.naLabel, JSON.stringify(s.options)]])
-  for (const f of INITIAL_FEEDBACK_FORMS)
-    out.push([
-      "insert into feedback_forms (id, template_id, stage, version, status, scale_id, definition) values ($1, $2, $3, $4, 'published', $5, $6)",
-      [f.id, f.templateId, f.stage, f.version, f.scaleId, JSON.stringify({ dimensions: f.dimensions, items: f.items, open: f.open })],
-    ])
   const formIds = Object.fromEntries(INITIAL_FEEDBACK_FORMS.map((f) => [f.stage, f.id]))
   out.push([
     "insert into feedback_campaigns (id, year_id, label, stages, starts_on, ends_on, status, form_ids) values ($1, $2, 'Recollida de prova', $3, '2026-11-02', '2026-11-20', 'PROGRAMADA', $4)",

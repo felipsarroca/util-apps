@@ -42,11 +42,22 @@ jobs:
         working-directory: LaTevaVeu
         run: npm ci
 
+      # Dues versions: la demostració (dades fictícies al navegador) a LaTevaVeu/demo/ i, a
+      # LaTevaVeu/, l'app connectada al servidor (Neon Functions) amb Google. Mentre no hi hagi
+      # les variables del repositori LATEVAVEU_API_URL i LATEVAVEU_GOOGLE_CLIENT_ID, totes dues són la demostració.
       - name: Prova i compila La teva veu
         working-directory: LaTevaVeu
+        env:
+          API_URL: ${{ vars.LATEVAVEU_API_URL }}
+          GOOGLE_CLIENT_ID: ${{ vars.LATEVAVEU_GOOGLE_CLIENT_ID }}
         run: |
           npm test
-          npm run build
+          npm run build -- --outDir dist-demo
+          if [ -n "$API_URL" ] && [ -n "$GOOGLE_CLIENT_ID" ]; then
+            VITE_API_URL="$API_URL" VITE_GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" VITE_DEMO_URL="demo/#/demo" npx vite build
+          else
+            cp -R dist-demo dist
+          fi
 
       - name: Prepara el portal complet
         run: |
@@ -61,6 +72,8 @@ jobs:
           mkdir _site/AvaluApp _site/LaTevaVeu _site/MAvaluo
           cp -R AvaluApp/dist/. _site/AvaluApp/
           cp -R LaTevaVeu/dist/. _site/LaTevaVeu/
+          mkdir _site/LaTevaVeu/demo
+          cp -R LaTevaVeu/dist-demo/. _site/LaTevaVeu/demo/
           # Adreça antiga de La teva veu: redirigeix-la i conserva l'apartat (#/em-miro, #/et-veig).
           cat > _site/MAvaluo/index.html <<'HTML'
           <!doctype html>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { resetDemo, resolveSession } from './data/api'
-import { API_URL, DEV_AUTH, remoteLogin } from './data/remote'
+import { API_URL, DEMO_URL, DEV_AUTH, remoteLogin } from './data/remote'
 import { checkGoogleProfile, decodeGoogleCredential, GOOGLE_CLIENT_ID, loadGoogleIdentity } from './data/auth'
 import { SCHOOL } from './domain/catalog'
 import type { Session } from './domain/types'
@@ -139,7 +139,7 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
             )}
 
             <div className="login-extra">
-              {DEMO_AVAILABLE && (
+              {DEMO_AVAILABLE ? (
                 <button className="login-tile demo" onClick={() => setDemo(true)}>
                   <span aria-hidden="true">🧪</span>
                   <span>
@@ -147,6 +147,16 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
                     <small>Amb dades fictícies, sense compte</small>
                   </span>
                 </button>
+              ) : (
+                DEMO_URL && (
+                  <a className="login-tile demo" href={DEMO_URL}>
+                    <span aria-hidden="true">🧪</span>
+                    <span>
+                      <b>Prova la demostració</b>
+                      <small>Amb dades fictícies, sense compte</small>
+                    </span>
+                  </a>
+                )
               )}
               <a className="login-tile about" href="#/projecte">
                 <span aria-hidden="true">💡</span>
