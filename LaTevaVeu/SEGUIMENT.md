@@ -4,7 +4,7 @@ Document per reprendre el projecte des de qualsevol ordinador. Última actualitz
 
 ## On ho hem deixat
 
-L'app està desplegada: servidor a Neon Functions (Frankfurt), base de dades de producció buida amb l'administrador, i entrada amb Google a l'adreça principal; la demostració és a `/demo/`. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. El següent pas que depèn de l'escola és la revisió amb l'Equip Directiu i la DPD; el següent pas tècnic, l'enviament real de correus (punt 4 de *Pendent*).
+L'app està desplegada: servidor a Neon Functions (Frankfurt), base de dades de producció buida amb l'administrador, i entrada amb Google a l'adreça principal; la demostració és a `/demo/`. L'última feina ha estat d'usabilitat i documentació: entrada i inici de l'alumnat més lleugers, configuració del correu, guia amb recorreguts per a la tutoria i l'administració, i README amb captures. L'escola ja ha autoritzat l'ús de l'app; el següent pas és la càrrega del cens real, i el següent pas tècnic, l'enviament real de correus (punt 4 de *Pendent*).
 
 ## On és cada cosa
 
@@ -95,11 +95,10 @@ Torna-les a fer quan canviï alguna de les pantalles que surten al README.
 
 ## Pendent
 
-1. Revisió amb l'Equip Directiu i la persona delegada de protecció de dades.
-2. Primera entrada real amb Google (administrador: felip.sarroca@ramonpont.cat) i càrrega del cens: personal, alumnat, grups i famílies. Només després de la revisió del punt 1.
-3. **Decidir el compte que envia els correus** (recomanat: un compte dedicat, com `latevaveu@ramonpont.cat`) i autoritzar el servidor a enviar en nom seu (Gmail API amb delegació de domini o SMTP de Google Workspace). Després, implementar l'enviament real: cua idempotent, «Envia'm una prova», «Aprova i envia» i registre de cada missatge, fent servir `renderMail` de `src/domain/mail.ts`.
-4. Inventari real de les matèries d'ESO per curs i prova pilot amb alumnat de cada etapa.
-5. PFI: caldria un curs i un qüestionari propis (no es pot tractar com un grup).
+1. Primera entrada real amb Google (administrador: felip.sarroca@ramonpont.cat) i càrrega del cens: personal, alumnat, grups, famílies, matèries i qui fa classe a qui. L'autorització per fer servir l'app ja és confirmada (31 d'octubre de 2026).
+2. **Decidir el compte que envia els correus** (recomanat: un compte dedicat, com `latevaveu@ramonpont.cat`) i autoritzar el servidor a enviar en nom seu (Gmail API amb delegació de domini o SMTP de Google Workspace). Després, implementar l'enviament real: cua idempotent, «Envia'm una prova», «Aprova i envia» i registre de cada missatge, fent servir `renderMail` de `src/domain/mail.ts`.
+3. Inventari real de les matèries d'ESO per curs i prova pilot amb alumnat de cada etapa.
+4. PFI: caldria un curs i un qüestionari propis (no es pot tractar com un grup).
 
 ## Precaucions
 
