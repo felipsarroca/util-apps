@@ -325,10 +325,10 @@ function addStaff$(session: Session, email: string, name: string, role: 'admin' 
 
 /**
  * Pertinença a l'Equip Directiu (permís per veure els resultats d'«Et veig…»).
- * Només la pot donar o treure algú que ja en forma part: l'administració sola no s'hi pot afegir.
+ * La pot donar o treure l'administració o algú que ja en forma part, mai a si mateix.
  */
 function setDirection$(session: Session, email: string, on: boolean) {
-  if (!isDirection(session)) throw new ForbiddenError('Només l’Equip Directiu pot canviar qui en forma part.')
+  requireAdminOrDirection(session)
   if (email === session.email) throw new Error('No pots canviar la teva pròpia pertinença a l’Equip Directiu.')
   const target = state.staff.find((s) => s.email === email)
   if (!target) throw new Error('Aquesta persona no té accés a l’aplicació.')
@@ -345,7 +345,6 @@ function setDirection$(session: Session, email: string, on: boolean) {
 function removeStaff$(session: Session, email: string) {
   requireAdmin(session)
   if (email === session.email) throw new Error('No et pots treure el teu propi accés.')
-  if (state.staff.find((s) => s.email === email)?.direction && !isDirection(session)) throw new ForbiddenError('Només l’Equip Directiu pot retirar l’accés d’un membre de l’Equip Directiu.')
   commit(audit({ ...state, staff: state.staff.filter((s) => s.email !== email) }, session.email, 'Permisos', `${email}: accés retirat`))
 }
 

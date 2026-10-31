@@ -171,7 +171,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
               </tbody>
             </table>
           </div>
-          <Tip>Si una persona d’administració també forma part de l’Equip Directiu, té tots dos permisos. Només un membre de l’Equip Directiu pot afegir-hi o treure’n persones, i ningú no pot canviar la seva pròpia pertinença.</Tip>
+          <Tip>Si una persona d’administració també forma part de l’Equip Directiu, té tots dos permisos. L’administració i l’Equip Directiu poden afegir-hi o treure’n persones, però ningú no pot canviar la seva pròpia pertinença.</Tip>
         </Sec>
 
         <Sec id="pantalla">

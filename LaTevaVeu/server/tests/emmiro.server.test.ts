@@ -135,11 +135,10 @@ describe('servidor d’«Em miro»', () => {
   it('personal i Equip Directiu', async () => {
     expect((await op('admin', 'addStaff', 'nova@ramonpont.cat', 'Nova Docent', 'teacher', ['3EP-A'])).status).toBe(200)
     expect((await state('nova')).session).toMatchObject({ role: 'teacher', groups: ['3EP-A'] })
-    expect((await op('admin', 'setDirection', 'nova@ramonpont.cat', true)).status).toBe(403)
-    expect((await op('dir', 'setDirection', 'nova@ramonpont.cat', true)).status).toBe(200)
+    expect((await op('nova', 'setDirection', 'nova@ramonpont.cat', true)).status).toBe(403)
+    expect((await op('admin', 'setDirection', 'nova@ramonpont.cat', true)).status).toBe(200)
     expect((await one<{ n: number }>("select count(*)::int as n from user_roles r join users u on u.id = r.user_id where u.email = 'nova@ramonpont.cat'"))!.n).toBe(2)
-    expect((await op('admin', 'removeStaff', 'nova@ramonpont.cat')).status).toBe(403)
-    expect((await op('dir', 'removeStaff', 'nova@ramonpont.cat')).status).toBe(200)
+    expect((await op('admin', 'removeStaff', 'nova@ramonpont.cat')).status).toBe(200)
     expect((await call('nova', 'GET', '/api/state')).status).toBe(403)
   })
 

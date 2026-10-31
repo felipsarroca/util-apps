@@ -45,7 +45,8 @@ function Access({ session }: { session: Session }) {
   const s = useDemoState()
   const [adding, setAdding] = useState(false)
   const [toast, showToast] = useToast()
-  const dir = isDirection(session)
+  // L'administració i l'Equip Directiu poden canviar qui en forma part (mai la pròpia pertinença).
+  const dir = session.role === 'admin' || isDirection(session)
   const toggleDir = (email: string, on: boolean) => {
     try {
       setDirection(session, email, on)
@@ -59,7 +60,7 @@ function Access({ session }: { session: Session }) {
       <div className="row">
         <p className="muted" style={{ flex: 1 }}>
           El professorat només veu els grups que té assignats. L’administració ho veu tot i cada acció queda registrada. Els resultats d’«Et veig…» només els veu l’<b>Equip Directiu</b>
-          {dir ? '.' : ': només un membre de l’Equip Directiu pot afegir-hi o treure’n persones.'}
+          {dir ? '.' : ': només l’administració o l’Equip Directiu poden afegir-hi o treure’n persones.'}
         </p>
         <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" /> Dona accés</button>
       </div>
@@ -73,14 +74,14 @@ function Access({ session }: { session: Session }) {
                 <td>{p.role === 'admin' ? <span className="badge brand">Administració</span> : <span className="badge info">Professorat</span>}</td>
                 <td>{p.role === 'admin' ? 'Tots' : p.groups.map(groupNameOfKey).join(', ') || '—'}</td>
                 <td>
-                  <label className="toggle" title={!dir ? 'Només ho pot canviar l’Equip Directiu' : p.email === session.email ? 'No pots canviar la teva pròpia pertinença' : undefined}>
+                  <label className="toggle" title={!dir ? 'Només ho pot canviar l’administració o l’Equip Directiu' : p.email === session.email ? 'No pots canviar la teva pròpia pertinença' : undefined}>
                     <input type="checkbox" checked={!!p.direction} disabled={!dir || p.email === session.email} onChange={(e) => toggleDir(p.email, e.target.checked)} />
                     <span className="sr-only">{p.name} forma part de l’Equip Directiu</span>
                     {p.direction ? 'Sí' : 'No'}
                   </label>
                 </td>
                 <td className="actions">
-                  <button className="btn small danger" disabled={p.email === session.email || (!!p.direction && !dir)} onClick={() => { try { removeStaff(session, p.email); showToast('Accés retirat') } catch (e) { showToast((e as Error).message) } }}>Retira l’accés</button>
+                  <button className="btn small danger" disabled={p.email === session.email} onClick={() => { try { removeStaff(session, p.email); showToast('Accés retirat') } catch (e) { showToast((e as Error).message) } }}>Retira l’accés</button>
                 </td>
               </tr>
             ))}

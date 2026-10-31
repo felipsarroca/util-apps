@@ -95,14 +95,17 @@ describe('Et veig: informes i permisos', () => {
     // Una recollida oberta no mostra resultats a ningú.
     expect(() => api.teacherReport(dir, 'FV-2627-TARDOR', marta.email)).toThrow()
   })
-  it('només l’Equip Directiu pot canviar qui en forma part; l’administració sola no s’hi pot afegir', () => {
+  it('l’administració i l’Equip Directiu canvien qui en forma part; ningú no canvia la seva pròpia pertinença', () => {
     api.resetDemo()
     const admin = login('admin.demo@ramonpont.cat')
     const dir = login('direccio.demo@ramonpont.cat')
+    const tutor = login('tutoria.2eso@ramonpont.cat')
     expect(() => api.setDirection(admin, admin.email, true)).toThrow()
-    expect(() => api.setDirection(admin, 'tutoria.2eso@ramonpont.cat', true)).toThrow()
     expect(() => api.setDirection(dir, dir.email, false)).toThrow()
-    expect(() => api.removeStaff(admin, dir.email)).toThrow()
+    expect(() => api.setDirection(tutor, 'tutoria.2eso@ramonpont.cat', true)).toThrow()
+    api.setDirection(admin, 'tutoria.2eso@ramonpont.cat', true)
+    expect(api.isDirection(login('tutoria.2eso@ramonpont.cat'))).toBe(true)
+    api.setDirection(admin, 'tutoria.2eso@ramonpont.cat', false)
     api.setDirection(dir, admin.email, true)
     expect(api.centerView(login(admin.email), 'FV-2526-MAIG').length).toBe(3)
     // Tornar a donar accés a una persona no li treu la pertinença a l'Equip Directiu.
