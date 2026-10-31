@@ -57,6 +57,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Gestió de centre'
         },
         {
+            name: 'La teva veu',
+            path: 'https://ja.cat/tensveu',
+            icon: 'LaTevaVeu/favicon.svg',
+            description: 'L’alumnat s’autoavalua («Em miro») i valora el professorat («Et veig…»), amb informes per a famílies, docents i Equip Directiu.',
+            category: 'Gestió de centre'
+        },
+        {
             name: 'BiblioPrompt',
             path: 'https://ja.cat/biblioprompt',
             icon: 'BiblioPrompt/favicon.svg',
