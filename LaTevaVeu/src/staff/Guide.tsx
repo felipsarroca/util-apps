@@ -404,7 +404,7 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>Els canvis s’apliquen a les recollides noves. Les ja creades conserven la llista de matèries que tenien.</li>
             <li><b>Matèria nova</b>: nom curt (pantalles), nom complet (informe i lectura en veu alta) i, si vols, s’afegeix al curs que tens triat com a comuna o optativa. Per posar-la en altres cursos, tria el curs i fes servir «Afegeix una matèria del catàleg».</li>
             <li><b>Canviar el nom</b>: el llapis de cada fila. El nom nou surt a tot arreu, també als informes ja fets. Les matèries no s’esborren: si ja no es fa, desactiva-la.</li>
-            <li>La lectura en veu alta del nom d’una matèria nova fa servir la veu del navegador fins que es tornin a generar els àudios.</li>
+            <li>El nom d’una matèria nova o reanomenada es llegeix en veu alta amb la veu catalana del navegador, que sona una mica diferent de la resta.</li>
           </ul>
           <h3>Apartats</h3>
           <p>Activa o desactiva temporalment Em miro o Et veig… Desactivar-lo l’amaga a l’alumnat sense esborrar cap dada; és útil, per exemple, si cal aturar una recollida per un problema.</p>
