@@ -153,7 +153,7 @@ describe('servidor d’«Et veig»', () => {
     const x = (await call('xavier', 'GET', `/api/et-veig/${CID}/reports/${mail('xavier')}`)).body as { stages: { n: number; suppressed: boolean; comments: { texts: string[] }[]; dims: { dist: { valid: number } }[] }[] }
     expect(x.stages[0]).toMatchObject({ n: 16, suppressed: false })
     expect(x.stages[0].dims.every((d) => d.dist.valid > 0)).toBe(true)
-    expect(x.stages[0].comments.flatMap((c) => c.texts)).toEqual(['Les explicacions amb exemples'])
+    expect(x.stages[0].comments.flatMap((c) => c.texts)).toEqual([{ text: 'Les explicacions amb exemples', count: 1 }])
     expect((await call('marta', 'GET', `/api/et-veig/${CID}/reports/${mail('xavier')}`)).status).toBe(403)
     expect((await call('admin', 'GET', `/api/et-veig/${CID}/reports/${mail('xavier')}`)).status).toBe(403)
     expect((await call('admin', 'GET', `/api/et-veig/${CID}/center`)).status).toBe(403)

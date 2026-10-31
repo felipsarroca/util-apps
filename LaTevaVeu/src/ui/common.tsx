@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 
 const base = (import.meta.env.BASE_URL || './').replace(/\/?$/, '/')
 export const asset = (p: string) => `${base}assets/${p}`
+/** Icona de l'app (la mateixa del favicon). */
+export const APP_ICON = `${base}favicon.svg`
 
 // ---------- Icones (traç, 24×24) ----------
 const P: Record<string, string> = {

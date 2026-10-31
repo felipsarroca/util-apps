@@ -191,7 +191,8 @@ export interface StageReport {
   items: { item: FeedbackItem; dist: Dist }[]
   groups: GroupRow[]
   previous?: { label: string; fav: Record<string, number> }
-  comments: { question: string; texts: string[] }[]
+  /** Comentaris publicats; els repetits hi surten una sola vegada amb el nombre de persones que els han escrit. */
+  comments: { question: string; texts: { text: string; count: number }[] }[]
   self?: SelfAssessment
 }
 
@@ -248,9 +249,11 @@ export function stageReport(d: FeedbackData, scales: Scale[], c: FeedbackCampaig
     ? []
     : form.open.map((q) => ({
         question: q.text,
-        texts: d.feedbackComments
-          .filter((x) => x.campaignId === c.id && x.teacherEmail === email && x.stage === stage && x.questionId === q.id && (x.status === 'acceptat' || x.status === 'editat') && x.published)
-          .map((x) => x.published!),
+        texts: groupComments(
+          d.feedbackComments
+            .filter((x) => x.campaignId === c.id && x.teacherEmail === email && x.stage === stage && x.questionId === q.id && (x.status === 'acceptat' || x.status === 'editat') && x.published)
+            .map((x) => x.published!),
+        ),
       }))
   return {
     stage, form, scale, n, eligible: eligibleStudents(d, c, email, stage).length, suppressed, dims,
@@ -267,6 +270,21 @@ export function buildTeacherReport(d: FeedbackData, scales: Scale[], campaignId:
     .filter((x): x is StageReport => !!x)
     .map(redactStage)
   return { campaign: c, teacher: { email, name: d.staff.find((s) => s.email === email)?.name ?? email }, stages }
+}
+
+/**
+ * Agrupa els comentaris iguals (sense tenir en compte majúscules, espais ni la puntuació final):
+ * cadascun surt una vegada, amb quantes persones l'han escrit. Primer els més repetits.
+ */
+export function groupComments(texts: string[]): { text: string; count: number }[] {
+  const key = (t: string) => t.toLocaleLowerCase('ca').replace(/\s+/g, ' ').replace(/[\s.!…]+$/u, '').trim()
+  const groups = new Map<string, { text: string; count: number }>()
+  for (const t of texts) {
+    const g = groups.get(key(t))
+    if (g) g.count++
+    else groups.set(key(t), { text: t.trim(), count: 1 })
+  }
+  return [...groups.values()].sort((a, b) => b.count - a.count)
 }
 
 // ---------- Visió de centre ----------

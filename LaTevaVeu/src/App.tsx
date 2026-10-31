@@ -6,7 +6,7 @@ import type { Session } from './domain/types'
 import { Login } from './Login'
 import { StaffApp } from './staff/StaffApp'
 import { StudentApp } from './student/StudentApp'
-import { asset, Footer, Icon, initials, useFitScale } from './ui/common'
+import { APP_ICON, Footer, Icon, initials, useFitScale } from './ui/common'
 import { useDemoState } from './data/api'
 import { API_URL, DEV_AUTH, SESSION_EXPIRED, setToken } from './data/remote'
 import { RemoteStaff } from './staff/Remote'
@@ -111,7 +111,7 @@ export default function App() {
       {session && (
         <header className="topbar no-print">
           <a className="brandmark" href="#" onClick={(e) => e.preventDefault()} aria-label="La teva veu">
-            <img src={asset('logo-escola-ramon-pont.png')} alt="" />
+            <img src={APP_ICON} alt="" />
             <span>
               <b>La teva veu</b>
               <small>Escola Ramon Pont</small>

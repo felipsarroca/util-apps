@@ -4,7 +4,7 @@ import { API_URL, DEV_AUTH, remoteLogin } from './data/remote'
 import { checkGoogleProfile, decodeGoogleCredential, GOOGLE_CLIENT_ID, loadGoogleIdentity } from './data/auth'
 import { SCHOOL } from './domain/catalog'
 import type { Session } from './domain/types'
-import { asset, GoogleLogo, Icon, Modal } from './ui/common'
+import { APP_ICON, asset, GoogleLogo, Icon, Modal } from './ui/common'
 
 type Profile = { email: string; em: string; label: string; hint: string; group: string }
 
@@ -88,7 +88,10 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
           </div>
           <div>
             <h1 className="login-title">
-              La teva <span>veu</span>
+              <img src={APP_ICON} alt="" className="login-app-icon" />
+              <span className="login-title-text">
+                La teva <span>veu</span>
+              </span>
             </h1>
             <p className="login-sub">La teva mirada ens ajuda a millorar</p>
           </div>

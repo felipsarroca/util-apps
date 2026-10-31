@@ -247,27 +247,36 @@ function stageBlocks(r: StageReport, multi: boolean): Block[] {
     })
   }
 
-  // 6. Comentaris moderats
-  r.comments.forEach((c, i) =>
-    blocks.push({
-      id: `${r.stage}-com-${i}`,
-      node: (
-        <div className="fb-comments">
-          <div className="fb-h">{c.question}</div>
-          {c.texts.length ? (
-            <ul>
-              {c.texts.slice(0, 14).map((t, k) => (
-                <li key={k}>{t}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="rp-empty">Cap comentari publicat.</p>
-          )}
-          {c.texts.length > 14 && <small>I {c.texts.length - 14} comentaris més en la mateixa línia.</small>}
-        </div>
-      ),
-    }),
-  )
+  // 6. Comentaris moderats: tots, els repetits una sola vegada, en blocs perquè es puguin repartir entre pàgines.
+  const PER_BLOCK = 12
+  r.comments.forEach((c, i) => {
+    const chunks = c.texts.length ? Array.from({ length: Math.ceil(c.texts.length / PER_BLOCK) }, (_, k) => c.texts.slice(k * PER_BLOCK, (k + 1) * PER_BLOCK)) : [[]]
+    chunks.forEach((chunk, k) =>
+      blocks.push({
+        id: `${r.stage}-com-${i}-${k}`,
+        node: (
+          <div className="fb-comments">
+            <div className="fb-h">
+              {c.question}
+              {k > 0 && <span className="muted"> (continuació)</span>}
+            </div>
+            {chunk.length ? (
+              <ul>
+                {chunk.map((t, j) => (
+                  <li key={j}>
+                    {t.text}
+                    {t.count > 1 && <b className="fb-count"> ({t.count} persones)</b>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="rp-empty">Cap comentari publicat.</p>
+            )}
+          </div>
+        ),
+      }),
+    )
+  })
   return blocks
 }
 

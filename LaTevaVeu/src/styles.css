@@ -168,7 +168,9 @@ body { padding-bottom: var(--footer-h); }
 .login-logo { display: flex; align-items: center; gap: .8rem; font-weight: 800; letter-spacing: .02em; font-size: .95rem; }
 .login-logo img { width: 52px; height: 52px; background: #fff; border-radius: 14px; padding: 5px; }
 .login-title { font-size: clamp(2.4rem, min(5vw, calc(7 * var(--vh))), 3.4rem); font-weight: 900; letter-spacing: -.03em; line-height: 1; }
-.login-title span { color: #f3c64c; }
+.login-title { display: flex; align-items: center; gap: .9rem; }
+.login-title-text span { color: #f3c64c; }
+.login-app-icon { flex: none; width: 1.25em; height: 1.25em; border-radius: 22%; box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 6px 18px rgba(0, 0, 0, .25); }
 .login-sub { font-size: 1.15rem; opacity: .92; margin-top: .6rem; font-weight: 600; }
 .login-steps { display: grid; gap: .7rem; position: relative; z-index: 1; }
 .login-steps li { display: flex; align-items: center; gap: .7rem; font-weight: 600; }
@@ -202,7 +204,7 @@ body { padding-bottom: var(--footer-h); }
   background: rgba(255, 255, 255, .94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
 }
 .brandmark { display: flex; align-items: center; gap: .6rem; text-decoration: none; color: var(--ink); }
-.brandmark img { width: 38px; height: 38px; }
+.brandmark img { width: 38px; height: 38px; border-radius: 10px; }
 .brandmark b { font-size: 1.25rem; font-weight: 900; letter-spacing: -.02em; color: var(--brand); }
 .brandmark small { display: block; font-size: .72rem; color: var(--ink-3); font-weight: 700; letter-spacing: .02em; margin-top: -2px; }
 .who { display: flex; align-items: center; gap: .6rem; min-width: 0; }
@@ -772,3 +774,4 @@ html.h-700 .login-steps { display: none; }
   .sc-head b { font-size: 1.3rem; }
   .sc-text { font-size: .92rem; line-height: 1.4; }
 }
+.fb-count { font-weight: 800; color: var(--ev, #1f6a73); white-space: nowrap; }

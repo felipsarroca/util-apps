@@ -1,7 +1,7 @@
 // Proves d'«Et veig» (criteris d'acceptació del pla mestre v2, §10).
 import { describe, expect, it } from 'vitest'
 import { createDemoState } from '../src/data/seed'
-import { buildCenterView, buildTeacherReport, distOf, flagComment, quadrantOf, stableShuffle, teachersForStudent, THRESHOLD } from '../src/domain/feedback'
+import { buildCenterView, buildTeacherReport, distOf, flagComment, groupComments, quadrantOf, stableShuffle, teachersForStudent, THRESHOLD } from '../src/domain/feedback'
 import { parseAssignmentsCsv } from '../src/domain/csv'
 import { INITIAL_FEEDBACK_FORMS, validateFeedbackForm } from '../src/domain/feedbackForms'
 import type { Session } from '../src/domain/types'
@@ -216,5 +216,14 @@ describe('Et veig: importació d’assignacions', () => {
     expect(api.importAssignments(admin, r.rows)).toBe(2)
     expect(api.snapshot().assignments.filter((a) => a.gradeId === '3EP' && a.group === 'A' && a.subjectId === 'CAT')).toEqual([{ gradeId: '3EP', group: 'A', subjectId: 'CAT', teacherEmail: 'emma.soler@ramonpont.cat' }])
     expect(() => api.importAssignments(login('tutoria.2eso@ramonpont.cat'), r.rows)).toThrow()
+  })
+})
+
+describe('Et veig: comentaris repetits', () => {
+  it('cada comentari surt una vegada amb quantes persones l’han escrit', () => {
+    expect(groupComments(['Més exemples.', 'Els projectes en grup', 'més  exemples', 'Més exemples!'])).toEqual([
+      { text: 'Més exemples.', count: 3 },
+      { text: 'Els projectes en grup', count: 1 },
+    ])
   })
 })

@@ -1,1 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#8a2216"/><path d="M18 34l9 9 19-21" fill="none" stroke="#f3c64c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a62b1b"/>
+      <stop offset="1" stop-color="#6c170d"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#g)"/>
+  <!-- Bafarada: la veu de l'alumnat -->
+  <path d="M14 13h36a7 7 0 0 1 7 7v19a7 7 0 0 1-7 7H29l-11 9v-9h-4a7 7 0 0 1-7-7V20a7 7 0 0 1 7-7z" fill="#fff8ee"/>
+  <!-- Tres punts: Em miro (granat), la veu (groc) i Et veig (verd blavós) -->
+  <circle cx="20.5" cy="29.5" r="5" fill="#8a2216"/>
+  <circle cx="32" cy="29.5" r="5" fill="#e9a91c"/>
+  <circle cx="43.5" cy="29.5" r="5" fill="#1f6a73"/>
+</svg>
