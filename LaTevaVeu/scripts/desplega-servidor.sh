@@ -12,9 +12,12 @@ if [ -z "${NEON_API_KEY:-}" ]; then
   export NEON_API_KEY
 fi
 cd "$(dirname "$0")/.."
+# Connexió directa del propietari de la base de dades: es llegeix de Neon a cada desplegament i no es mostra.
+DB_URL="$(neon connection-string produccio --project-id sparkling-field-60524633 --database-name latevaveu --role-name latevaveu_owner)"
 ARGS=(
+  --env APP_DATABASE_URL="$DB_URL"
   --env GOOGLE_CLIENT_ID=194568959977-76uptoa0untgofou0eiqlbbjivet8tmn.apps.googleusercontent.com
-  --env ACADEMIC_YEAR=2026-2027 --env SCHOOL_DOMAIN=ramonpont.cat --env DB_NAME=latevaveu
+  --env ACADEMIC_YEAR=2026-2027 --env SCHOOL_DOMAIN=ramonpont.cat --env DB_NAME=
   --env ALLOWED_ORIGIN=https://felipsarroca.github.io
 )
 if [ "${1:-}" = "--clau-nova" ]; then

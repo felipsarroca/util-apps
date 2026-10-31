@@ -1,7 +1,8 @@
 // Punt d'entrada per a Neon Functions: la mateixa API (buildApp) darrere d'un gestor fetch(Request).
-// Neon injecta DATABASE_URL_UNPOOLED (propietari de la branca); cada connexió passa al rol
+// APP_DATABASE_URL és la connexió directa del propietari de la base de dades (la posa
+// scripts/desplega-servidor.sh; la que injecta Neon no porta contrasenya). Cada connexió passa al rol
 // latevaveu_app amb SET ROLE, de manera que el servidor només té els permisos de db/permisos.sql.
-// Variables pròpies: GOOGLE_CLIENT_ID, DRAFT_KEY, ACADEMIC_YEAR, ALLOWED_ORIGIN, SCHOOL_DOMAIN i DB_NAME.
+// Variables pròpies: APP_DATABASE_URL, GOOGLE_CLIENT_ID, DRAFT_KEY, ACADEMIC_YEAR, ALLOWED_ORIGIN i SCHOOL_DOMAIN.
 import pg from 'pg'
 import { buildApp } from './app'
 import { googleVerifier } from './auth'
@@ -16,9 +17,7 @@ const need = (k: string) => {
 }
 
 // Connexió directa (sense agrupador): SET ROLE dura tota la sessió i no es perd entre consultes.
-const url = new URL(need('DATABASE_URL_UNPOOLED'))
-if (process.env.DB_NAME) url.pathname = `/${process.env.DB_NAME}`
-const pool = new pg.Pool({ connectionString: url.toString(), max: 5 })
+const pool = new pg.Pool({ connectionString: need('APP_DATABASE_URL'), max: 5 })
 pool.on('connect', (c) => void c.query('set role latevaveu_app'))
 // Neon tanca les connexions inactives: sense aquest oient, l'error del Pool aturaria el procés.
 pool.on('error', (e) => console.warn('Connexió a la base de dades tancada:', e.message))
