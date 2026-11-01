@@ -4,7 +4,7 @@ Aplicació gratuïta i de codi obert per llegir QR de manera immediata. En obrir
 
 ## Instal·lació
 
-Ara pots descarregar l'[APK signat de prova](https://github.com/felipsarroca/lector-qr-android/releases/tag/test-1.0.0-rc2). Encara cal validar-lo en mòbils reals abans de publicar la [primera versió estable](https://github.com/felipsarroca/lector-qr-android/releases/latest). Obre l'APK al mòbil i confirma la instal·lació quan Android ho demani. Per actualitzar, instal·la l'APK nou sobre l'anterior: totes les versions han de conservar el mateix identificador i certificat. L'app també permet comprovar versions des del menú `⋮` quan existeixi una Release estable.
+Accedeix a les descàrregues des de **[ja.cat/QR-cat](https://ja.cat/QR-cat)**. Ara hi trobaràs un APK signat de prova. Encara cal validar-lo en mòbils reals abans de publicar la primera versió estable. Obre l'APK al mòbil i confirma la instal·lació quan Android ho demani. Per actualitzar, instal·la l'APK nou sobre l'anterior: totes les versions han de conservar el mateix identificador i certificat. L'app també permet comprovar versions des del menú `⋮` quan existeixi una Release estable.
 
 ## Compilació
 
@@ -18,7 +18,7 @@ Les instruccions per al mantenidor són a [PUBLICACIO.md](PUBLICACIO.md). El wor
 
 ## Privacitat i llicències
 
-Consulta la [política de privacitat](PRIVACITAT.md) i la [llicència MIT](LICENSE). ZXing-C++ i AndroidX CameraX tenen llicència Apache 2.0; la seva documentació i llicències són als repositoris dels projectes: [ZXing-C++](https://github.com/zxing-cpp/zxing-cpp) i [AndroidX](https://github.com/androidx/androidx).
+Consulta la [política de privacitat](PRIVACITAT.md), la [llicència MIT del codi](LICENSE) i la [llicència CC BY-NC-SA 4.0 de la icona](ICONA-LLICENCIA.md). El [fitxer vectorial original](icona/lector-qr.svg) es pot reutilitzar segons aquesta llicència. ZXing-C++ i AndroidX CameraX tenen llicència Apache 2.0; la seva documentació i llicències són als repositoris dels projectes: [ZXing-C++](https://github.com/zxing-cpp/zxing-cpp) i [AndroidX](https://github.com/androidx/androidx).
 
 ## Estat de les proves
 

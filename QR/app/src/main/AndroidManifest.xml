@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <application android:allowBackup="false" android:label="Lector QR" android:theme="@style/AppTheme" android:usesCleartextTraffic="false">
+    <application android:allowBackup="false" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:label="Lector QR" android:theme="@style/AppTheme" android:usesCleartextTraffic="false">
         <activity android:name=".MainActivity" android:exported="true" android:screenOrientation="unspecified">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

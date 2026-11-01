@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Disseny original del projecte Lector QR. Llicència CC BY-NC-SA 4.0. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" role="img" aria-labelledby="title desc">
+  <title id="title">Icona del Lector QR</title>
+  <desc id="desc">Codi QR blanc emmarcat per quatre cantonades de lectura de color menta sobre fons verd fosc.</desc>
+  <rect width="108" height="108" rx="24" fill="#10332B"/>
+  <g fill="none" stroke="#66E0B4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 31H31V40 M68 31H77V40 M31 68V77H40 M77 68V77H68"/>
+  </g>
+  <g fill="#F7FAF5">
+    <path d="M39 39h12v12H39z M57 39h12v12H57z M39 57h12v12H39z"/>
+    <path d="M58 58h4v4h-4z M65 58h4v4h-4z M58 65h4v4h-4z M65 65h4v4h-4z"/>
+  </g>
+  <g fill="#10332B">
+    <path d="M42 42h6v6h-6z M60 42h6v6h-6z M42 60h6v6h-6z"/>
+  </g>
+  <g fill="#F7FAF5">
+    <path d="M44 44h2v2h-2z M62 44h2v2h-2z M44 62h2v2h-2z"/>
+  </g>
+</svg>

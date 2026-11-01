@@ -284,7 +284,7 @@ class MainActivity : ComponentActivity() {
 
     private fun showAbout() {
         android.app.AlertDialog.Builder(this).setTitle("Lector QR · ${BuildConfig.VERSION_NAME}")
-            .setMessage("Aplicació lliure amb llicència MIT. Els QR es llegeixen al dispositiu i no es guarden ni s'envien. Internet només s'utilitza per comprovar actualitzacions.\n\nMotor QR: ZXing-C++ (Apache 2.0). Càmera: AndroidX CameraX (Apache 2.0).")
+            .setMessage("Codi amb llicència MIT; icona de Felip Sarroca amb llicència CC BY-NC-SA 4.0. Els QR es llegeixen al dispositiu i no es guarden ni s'envien. Internet només s'utilitza per comprovar actualitzacions.\n\nMotor QR: ZXing-C++ (Apache 2.0). Càmera: AndroidX CameraX (Apache 2.0).")
             .setPositiveButton("Repositori") { _, _ -> safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/felipsarroca/lector-qr-android"))) }
             .setNegativeButton("Tanca", null).show()
     }
