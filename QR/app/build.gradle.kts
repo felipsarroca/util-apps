@@ -1,4 +1,4 @@
-plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
+﻿plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 
 android {
     namespace = "cat.felipsarroca.lectorqr"
@@ -37,7 +37,8 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$camera")
     implementation("androidx.camera:camera-view:$camera")
     implementation("androidx.activity:activity-ktx:1.12.4")
-    implementation("androidx.core:core-ktx:1.19.1")
+    implementation("androidx.core:core-ktx:1.18.0")
     implementation("io.github.zxing-cpp:android:3.1.1")
     testImplementation("junit:junit:4.13.2")
 }
+
