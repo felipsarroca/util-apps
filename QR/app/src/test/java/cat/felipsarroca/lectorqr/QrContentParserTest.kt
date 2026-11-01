@@ -43,11 +43,7 @@ class QrContentParserTest {
         val wifi = QrContentParser.parse("WIFI:T:WPA;S:Amagada;P:clau1234;H:true;;")
         assertTrue(wifi.wifiHidden)
         assertNull(QrContentParser.parse("WIFI:T:nopass;S:Oberta;P:;;").wifiPassword)
-        val event = QrContentParser.parse("BEGIN:VEVENT
-SUMMARY:Reunió
-DTSTART:20261112T173000
-DTEND:20261112T190000
-END:VEVENT")
+        val event = QrContentParser.parse("BEGIN:VEVENT\nSUMMARY:Reunió\nDTSTART:20261112T173000\nDTEND:20261112T190000\nEND:VEVENT")
         assertEquals("20261112T190000", event.eventEnd)
     }
 }
