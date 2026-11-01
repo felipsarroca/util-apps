@@ -33,10 +33,7 @@ jobs:
             adb shell dumpsys activity activities | grep 'cat.felipsarroca.lectorqr/.MainActivity'
             adb exec-out screencap -p > escaner.png
             bash QR/gradlew -p QR connectedDebugAndroidTest
-            for f in resultat-enllac resultat-wifi resultat-esdeveniment; do
-              adb pull "/sdcard/Pictures/LectorQR/$f.png" "$f.png"
-              test $(wc -c < "$f.png") -gt 1000
-            done
+            for f in resultat-enllac resultat-wifi resultat-esdeveniment; do adb pull "/sdcard/Pictures/LectorQR/$f.png" "$f.png" && test $(wc -c < "$f.png") -gt 1000 || exit 1; done
             if adb logcat -d -s AndroidRuntime:E | grep -q 'FATAL EXCEPTION'; then exit 1; fi
       - uses: actions/upload-artifact@v4
         if: always()
