@@ -4,9 +4,10 @@ import { useRef, useState } from 'react'
 import { setMail, useDemoState } from '../data/api'
 import { SCHOOL } from '../domain/catalog'
 import { DEFAULT_TEMPLATES, exampleVars, longDate, MAIL_FIELDS, MAIL_KINDS, MAIL_LIMITS, REMINDER_DAYS, renderMail, senderOf, TEACHER_SENDER, validateMail, cleanMail, type MailKind } from '../domain/mail'
-import { fetchReminders, postRemindNow, postRemindTest, useRemote } from '../data/remote'
+import { fetchReminders, postMailTest, postRemindNow, useRemote, type MailTestResult } from '../data/remote'
 import type { MailSettings, Session } from '../domain/types'
 import { Icon, useToast } from '../ui/common'
+import { MailAuthHelp } from './MailAuthHelp'
 import { PageHead } from './StaffApp'
 
 export function MailScreen({ session }: { session: Session }) {
@@ -14,6 +15,7 @@ export function MailScreen({ session }: { session: Session }) {
   const [draft, setDraft] = useState<MailSettings>(s.mail)
   const [kind, setKind] = useState<MailKind>('families')
   const [toast, showToast] = useToast()
+  const [help, setHelp] = useState(false)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const dirty = JSON.stringify(cleanMail(draft)) !== JSON.stringify(s.mail)
   const problem = validateMail(cleanMail(draft))
@@ -63,6 +65,20 @@ export function MailScreen({ session }: { session: Session }) {
       </div>
 
       <section className="card panel">
+        <div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <h2>Enviament dels correus</h2>
+          <button className="btn" onClick={() => setHelp(true)}>
+            <Icon name="info" /> Com s’autoritza l’enviament
+          </button>
+        </div>
+        <p className="muted">
+          Google ha de donar permís al servidor per enviar des dels comptes de l’escola. Es fa una sola vegada a la consola d’administració de Google Workspace i serveix per a tots els comptes
+          (usuaris amb bústia, no grups): no cal repetir-ho si es canvia el compte de les famílies.
+        </p>
+        {session.remote ? <SendingStatus dirty={dirty} /> : <p className="muted"><small>A la demostració no s’envia cap correu.</small></p>}
+      </section>
+
+      <section className="card panel">
         <h2>Remitent dels correus a les famílies</h2>
         <p className="muted">Els correus al professorat («Així et veiem») surten sempre de <b>{TEACHER_SENDER.email}</b>, en nom de l’Equip Directiu, i les respostes hi tornen.</p>
         <div className="mail-grid">
@@ -77,6 +93,7 @@ export function MailScreen({ session }: { session: Session }) {
             />
             <small className="muted">
               Recomanat: un compte de l’escola dedicat a l’app, no el d’una persona. Així els enviaments no depenen de qui hi ha al càrrec i queden tots junts a la safata d’enviats.
+              Després de desar-lo, fes «Envia’m una prova» per comprovar que Google en permet l’enviament.
             </small>
           </label>
           <label className="field">
@@ -127,7 +144,7 @@ export function MailScreen({ session }: { session: Session }) {
             <span>per tancar la recollida</span>
           </label>
         </div>
-        {session.remote ? <ReminderStatus dirty={dirty} /> : <p className="muted"><small>A la demostració no s’envia cap correu.</small></p>}
+        {session.remote && <ReminderStatus dirty={dirty} />}
       </section>
 
       <div className="tabs" role="tablist">
@@ -198,12 +215,71 @@ export function MailScreen({ session }: { session: Session }) {
           <div>{problem}</div>
         </div>
       )}
+      {help && <MailAuthHelp onClose={() => setHelp(false)} />}
       {toast}
     </>
   )
 }
 
-/** Mode connectat: si el servidor pot enviar, qui els rebria avui i què s'ha enviat. */
+/** Mode connectat: si el servidor té la clau, des de quins comptes envia i una prova de cadascun. */
+function SendingStatus({ dirty }: { dirty: boolean }) {
+  const st = useRemote(fetchReminders)
+  const [busy, setBusy] = useState(false)
+  const [test, setTest] = useState<MailTestResult | null>(null)
+  const [error, setError] = useState('')
+  const run = async () => {
+    setBusy(true)
+    setError('')
+    setTest(null)
+    try {
+      setTest(await postMailTest())
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (st.loading) return <p className="muted">Comprovant el servidor…</p>
+  if (st.error || !st.data) return <p className="notice bad">{st.error}</p>
+  const d = st.data
+  return (
+    <div className="reminder-status">
+      {d.configured ? (
+        <div className="notice ok">
+          <Icon name="check" />
+          <div>El servidor té la clau d’enviament. Fes una prova per comprovar que Google permet enviar des de cada compte.</div>
+        </div>
+      ) : (
+        <div className="notice warn">
+          <Icon name="alert" />
+          <div>El servidor encara no té la clau d’enviament: no surt cap correu. Segueix els passos de «Com s’autoritza l’enviament».</div>
+        </div>
+      )}
+      <h3>Comptes que envien</h3>
+      <ul>
+        {d.senders.map((x) => {
+          const r = test?.results.find((t) => t.email === x.email)
+          return (
+            <li key={x.email}>
+              <b>{x.email}</b> · {x.purpose}{' '}
+              {r && (r.ok ? <span className="badge ok">prova enviada</span> : <span className="badge bad" style={{ whiteSpace: 'normal' }}>{r.error}</span>)}
+            </li>
+          )
+        })}
+      </ul>
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+        <button className="btn" disabled={!d.configured || busy || dirty} onClick={run}>
+          <Icon name="mail" /> {busy ? 'Enviant…' : 'Envia’m una prova'}
+        </button>
+        {dirty && <small className="muted">Desa els canvis abans de provar.</small>}
+        {test && <small className="muted">Proves enviades a {test.to}: mira la safata d’entrada.</small>}
+      </div>
+      {error && <p className="notice bad">{error}</p>}
+    </div>
+  )
+}
+
+/** Mode connectat: qui rebria avui un recordatori i què s'ha enviat. */
 function ReminderStatus({ dirty }: { dirty: boolean }) {
   const st = useRemote(fetchReminders)
   const [busy, setBusy] = useState(false)
@@ -226,12 +302,6 @@ function ReminderStatus({ dirty }: { dirty: boolean }) {
   const who = (k: 'students' | 'teachers', n: number) => (k === 'students' ? `${n} ${n === 1 ? 'alumne' : 'alumnes'}` : `${n} ${n === 1 ? 'docent' : 'docents'}`)
   return (
     <div className="reminder-status">
-      {!d.configured && (
-        <div className="notice warn">
-          <Icon name="alert" />
-          <div>El servidor encara no té permís per enviar des de {d.sender}. Fins que l’Equip Directiu no autoritzi l’enviament a Google Workspace (vegeu el README), els recordatoris no surten.</div>
-        </div>
-      )}
       <h3>Avui ({longDate(d.today)}) els rebrien</h3>
       {d.pending.length ? (
         <ul>
@@ -257,9 +327,6 @@ function ReminderStatus({ dirty }: { dirty: boolean }) {
         </>
       )}
       <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-        <button className="btn" disabled={!d.configured || busy || dirty} onClick={() => run(async () => `Prova enviada a ${(await postRemindTest()).to}.`)}>
-          <Icon name="mail" /> Envia’m una prova
-        </button>
         <button className="btn" disabled={!d.configured || busy || dirty || !total} onClick={() => run(async () => {
           const r = await postRemindNow()
           return r.failed ? `${r.sent} enviats; ${r.failed} no s’han pogut enviar (es tornaran a provar).` : `${r.sent} recordatoris enviats.`

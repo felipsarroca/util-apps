@@ -3,8 +3,8 @@
 // scripts/desplega-servidor.sh; la que injecta Neon no porta contrasenya). Cada connexió passa al rol
 // latevaveu_app amb SET ROLE, de manera que el servidor només té els permisos de db/permisos.sql.
 // Variables pròpies: APP_DATABASE_URL, GOOGLE_CLIENT_ID, DRAFT_KEY, ACADEMIC_YEAR, ALLOWED_ORIGIN i SCHOOL_DOMAIN.
-// Opcional: GMAIL_SERVICE_ACCOUNT (clau JSON del compte de servei, en base64) per enviar els recordatoris
-// des de direccio@ramonpont.cat (vegeu server/gmail.ts i el README).
+// Opcional: GMAIL_SERVICE_ACCOUNT (clau JSON del compte de servei, en base64) per enviar correus des dels
+// comptes de l'escola (vegeu server/gmail.ts i el README).
 import pg from 'pg'
 import { buildApp } from './app'
 import { googleVerifier } from './auth'
@@ -12,7 +12,6 @@ import { draftKey } from './crypto'
 import { toFetch } from './fetch'
 import { pgDb } from './db'
 import { gmailMailer } from './gmail'
-import { TEACHER_SENDER } from '../src/domain/mail'
 
 const need = (k: string) => {
   const v = process.env[k]
@@ -33,7 +32,7 @@ const app = buildApp({
   yearId: need('ACADEMIC_YEAR'),
   allowedOrigin: process.env.ALLOWED_ORIGIN,
   logger: true,
-  mailer: process.env.GMAIL_SERVICE_ACCOUNT ? gmailMailer(process.env.GMAIL_SERVICE_ACCOUNT, TEACHER_SENDER.email) : undefined,
+  mailer: process.env.GMAIL_SERVICE_ACCOUNT ? gmailMailer(process.env.GMAIL_SERVICE_ACCOUNT, process.env.SCHOOL_DOMAIN ?? 'ramonpont.cat') : undefined,
   // Neon recull la sortida d'errors: així els errors inesperats queden als registres de la funció.
   onError: (e) => console.error('Error del servidor:', e instanceof Error ? `${e.message}
 ${e.stack}` : e),

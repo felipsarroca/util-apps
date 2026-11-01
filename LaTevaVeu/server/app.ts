@@ -163,7 +163,7 @@ export function buildApp(o: AppOptions) {
   // ---------- Centre: recordatoris ----------
   app.get('/api/centre/recordatoris', async (req) => reminders.reminderStatus(ctx, await actorOf(req), o.mailer))
   app.post('/api/centre/recordatoris/envia', async (req) => reminders.remindNow(ctx, await actorOf(req), o.mailer))
-  app.post('/api/centre/recordatoris/prova', async (req) => reminders.remindTest(ctx, await actorOf(req), o.mailer))
+  app.post('/api/centre/correu/prova', async (req) => reminders.mailTest(ctx, await actorOf(req), o.mailer))
 
   // ---------- Tasca diària (activador programat de Neon) ----------
   // Ruta pública: Neon hi afegeix la capçalera x-neon-trigger-invocation-id i treu la que envia qualsevol altre.

@@ -15,7 +15,7 @@ let db: Db
 let close: () => Promise<unknown>
 let app: ReturnType<typeof buildApp>
 const outbox: OutMail[] = []
-const fakeMailer: Mailer = { from: 'direccio@ramonpont.cat', send: async (m) => void outbox.push(m) }
+const fakeMailer: Mailer = { send: async (m) => void outbox.push(m) }
 
 const call = async (user: string, method: 'GET' | 'POST', url: string, payload?: object) => {
   const r = await app.inject({ method, url, payload, headers: { authorization: `Bearer ${mail(user)}` } })
@@ -117,7 +117,7 @@ describe('recordatoris', () => {
     expect(teachers.find((x) => x.email === mail('anna'))!.vars.etapes).toBe('cicle mitjà')
 
     // Sense permís: no s'envia res i no es marca res.
-    const broken: Mailer = { from: 'x', send: async () => Promise.reject(new Error('sense permís')) }
+    const broken: Mailer = { send: async () => Promise.reject(new Error('sense permís')) }
     expect(await sendReminders(db, broken, settings, list.slice(0, 2))).toEqual({ sent: 0, failed: 2 })
 
     outbox.length = 0
@@ -127,21 +127,36 @@ describe('recordatoris', () => {
     expect(m.text).toContain('Hola, Anna')
     expect(m.text).toContain('divendres 20 de novembre')
     expect(m.fromName).toBe('Equip Directiu · Escola Ramon Pont')
+    expect(m.from).toBe('direccio@ramonpont.cat')
     expect(m.replyTo).toBe('direccio@ramonpont.cat')
     expect(outbox.find((x) => x.to === mail('e01'))!.subject).toBe('Recordatori: «Em miro» es tanca el divendres 20 de novembre')
     // Ja s'han enviat: ningú no en rep cap més.
     expect(await pendingReminders(db, PROVA.year, '2026-11-19', 2)).toEqual([])
   })
 
-  it('la pantalla en mostra l’estat i la prova arriba a qui la demana; només l’administració', async () => {
+  it('la pantalla en mostra l’estat i la prova de cada compte arriba a qui la demana; només l’administració', async () => {
     expect((await call('marta', 'GET', '/api/centre/recordatoris')).status).toBe(403)
     const st = (await call('admin', 'GET', '/api/centre/recordatoris')).body
-    expect(st).toMatchObject({ configured: true, sender: 'direccio@ramonpont.cat', enabled: false, daysBefore: 2 })
+    expect(st).toMatchObject({ configured: true, senders: [{ email: 'direccio@ramonpont.cat', purpose: 'Professorat i recordatoris' }], enabled: false, daysBefore: 2 })
     expect(st.sent.map((x: { n: number }) => x.n).sort()).toEqual([15, 2])
     outbox.length = 0
-    expect((await call('admin', 'POST', '/api/centre/recordatoris/prova')).body).toEqual({ to: mail('admin') })
-    expect(outbox.map((x) => x.to)).toEqual([mail('admin'), mail('admin')])
+    expect((await call('marta', 'POST', '/api/centre/correu/prova')).status).toBe(403)
+    expect((await call('admin', 'POST', '/api/centre/correu/prova')).body).toEqual({ to: mail('admin'), results: [{ email: 'direccio@ramonpont.cat', ok: true }] })
+    expect(outbox.map((x) => [x.from, x.to])).toEqual([['direccio@ramonpont.cat', mail('admin')], ['direccio@ramonpont.cat', mail('admin')]])
     expect(outbox[0].subject).toMatch(/^\[Prova\] /)
+
+    // Amb un compte per a les famílies, també se’n prova l’enviament, des d’aquell compte.
+    await db.query("insert into app_settings values ('mail', '{\"sender\":\"latevaveu@ramonpont.cat\",\"senderName\":\"La teva veu\"}') on conflict (key) do update set value = excluded.value")
+    expect((await call('admin', 'GET', '/api/centre/recordatoris')).body.senders).toEqual([
+      { email: 'direccio@ramonpont.cat', purpose: 'Professorat i recordatoris' },
+      { email: 'latevaveu@ramonpont.cat', purpose: 'Famílies' },
+    ])
+    outbox.length = 0
+    const r = (await call('admin', 'POST', '/api/centre/correu/prova')).body
+    expect(r.results).toEqual([{ email: 'direccio@ramonpont.cat', ok: true }, { email: 'latevaveu@ramonpont.cat', ok: true }])
+    expect(outbox[2]).toMatchObject({ from: 'latevaveu@ramonpont.cat', fromName: 'La teva veu' })
+    expect(outbox[2].subject).toMatch(/^\[Prova\] «Així em veig»/)
+    await db.query("delete from app_settings where key = 'mail'")
   })
 
   it('la tasca diària només l’executa l’activador de Neon: una còpia al dia i recordatoris si estan activats', async () => {
@@ -165,14 +180,14 @@ describe('Gmail', () => {
     expect(h.split('\r\n ').every((w) => /^=\?UTF-8\?B\?[A-Za-z0-9+/=]+\?=$/.test(w) && w.length <= 75)).toBe(true)
     const decoded = h.split('\r\n ').map((w) => Buffer.from(w.slice(10, -2), 'base64').toString('utf8')).join('')
     expect(decoded).toBe('Recordatori: «Em miro» es tanca el divendres 20 de novembre')
-    const mime = buildMime('direccio@ramonpont.cat', { to: 'a@ramonpont.cat', subject: 'Prova', text: 'Hola, Àlex', html: '<p>Hola</p>', fromName: 'Equip Directiu', replyTo: 'direccio@ramonpont.cat' })
+    const mime = buildMime({ from: 'direccio@ramonpont.cat', to: 'a@ramonpont.cat', subject: 'Prova', text: 'Hola, Àlex', html: '<p>Hola</p>', fromName: 'Equip Directiu', replyTo: 'direccio@ramonpont.cat' })
     expect(mime).toContain('From: Equip Directiu <direccio@ramonpont.cat>')
     expect(mime).toContain('Reply-To: direccio@ramonpont.cat')
     expect(mime).toContain(Buffer.from('Hola, Àlex').toString('base64'))
     expect(mime).toMatch(/multipart\/alternative/)
   })
 
-  it('demana el permís a Google en nom de direcció (només gmail.send) i envia el missatge', async () => {
+  it('demana el permís a Google en nom de cada compte (només gmail.send) i envia el missatge', async () => {
     const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
     const sa = Buffer.from(JSON.stringify({ client_email: 'latevaveu@projecte.iam.gserviceaccount.com', private_key: privateKey.export({ type: 'pkcs8', format: 'pem' }) })).toString('base64')
     const calls: { url: string; body: string; auth?: string }[] = []
@@ -180,9 +195,9 @@ describe('Gmail', () => {
       calls.push({ url, body: String(init.body), auth: (init.headers as Record<string, string>).authorization })
       return new Response(JSON.stringify(url.includes('token') ? { access_token: 'tok', expires_in: 3600 } : { id: 'm1' }), { status: 200 })
     }) as unknown as typeof fetch
-    const mailer = gmailMailer(sa, 'direccio@ramonpont.cat', fake)
-    await mailer.send({ to: 'a@ramonpont.cat', subject: 'x', text: 'y', html: 'z', fromName: 'Equip Directiu' })
-    await mailer.send({ to: 'b@ramonpont.cat', subject: 'x', text: 'y', html: 'z', fromName: 'Equip Directiu' })
+    const mailer = gmailMailer(sa, 'ramonpont.cat', fake)
+    await mailer.send({ from: 'direccio@ramonpont.cat', to: 'a@ramonpont.cat', subject: 'x', text: 'y', html: 'z', fromName: 'Equip Directiu' })
+    await mailer.send({ from: 'direccio@ramonpont.cat', to: 'b@ramonpont.cat', subject: 'x', text: 'y', html: 'z', fromName: 'Equip Directiu' })
     // El testimoni es reaprofita.
     expect(calls.map((c) => c.url)).toEqual(['https://oauth2.googleapis.com/token', 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send', 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'])
     const jwt = new URLSearchParams(calls[0].body).get('assertion')!.split('.')
@@ -191,5 +206,10 @@ describe('Gmail', () => {
     expect(createVerify('RSA-SHA256').update(`${jwt[0]}.${jwt[1]}`).verify(publicKey, Buffer.from(jwt[2], 'base64url'))).toBe(true)
     expect(calls[1].auth).toBe('Bearer tok')
     expect(Buffer.from(JSON.parse(calls[1].body).raw, 'base64url').toString()).toContain('To: a@ramonpont.cat')
+    // Un altre compte de l'escola demana el seu propi permís; un de fora no s'accepta.
+    await mailer.send({ from: 'latevaveu@ramonpont.cat', to: 'c@exemple.cat', subject: 'x', text: 'y', html: 'z', fromName: 'La teva veu' })
+    expect(JSON.parse(Buffer.from(new URLSearchParams(calls[3].body).get('assertion')!.split('.')[1], 'base64url').toString()).sub).toBe('latevaveu@ramonpont.cat')
+    expect(Buffer.from(JSON.parse(calls[4].body).raw, 'base64url').toString()).toContain('From: La teva veu <latevaveu@ramonpont.cat>')
+    await expect(mailer.send({ from: 'algu@gmail.com', to: 'c@exemple.cat', subject: 'x', text: 'y', html: 'z', fromName: 'X' })).rejects.toThrow(/@ramonpont.cat/)
   })
 })

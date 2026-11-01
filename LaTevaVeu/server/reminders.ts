@@ -106,7 +106,8 @@ export async function sendReminders(q: Queryable, mailer: Mailer, settings: Mail
       const kind = TEMPLATE[r.kind]
       const m = renderMail(kind, settings, r.vars)
       try {
-        await mailer.send({ to: r.email, subject: m.subject, text: m.text, html: m.html, fromName: senderOf(kind, settings).name, replyTo: TEACHER_SENDER.email })
+        const from = senderOf(kind, settings)
+        await mailer.send({ from: from.email, fromName: from.name, to: r.email, subject: m.subject, text: m.text, html: m.html, replyTo: TEACHER_SENDER.email })
         await q.query('insert into reminders_sent (kind, campaign_id, recipient_id) values ($1, $2, $3) on conflict do nothing', [r.kind, r.campaignId, r.recipientId])
         sent++
       } catch (e) {
@@ -143,7 +144,7 @@ export async function reminderStatus(ctx: Ctx, actor: Actor, mailer: Mailer | un
   ).rows
   return {
     configured: !!mailer,
-    sender: mailer?.from ?? TEACHER_SENDER.email,
+    senders: sendersOf(settings),
     enabled: settings.reminders.enabled,
     daysBefore: settings.reminders.daysBefore,
     today,
@@ -162,18 +163,33 @@ export async function remindNow(ctx: Ctx, actor: Actor, mailer: Mailer | undefin
   return out
 }
 
-/** Prova: els dos recordatoris, amb dades d'exemple, a qui la demana. */
-export async function remindTest(ctx: Ctx, actor: Actor, mailer: Mailer | undefined) {
+/** Comptes que envien i per a què. El de les famílies només hi és si l'escola l'ha indicat. */
+export function sendersOf(settings: MailSettings): { email: string; purpose: string }[] {
+  const direction = TEACHER_SENDER.email
+  if (!settings.sender || settings.sender === direction) return [{ email: direction, purpose: settings.sender ? 'Famílies, professorat i recordatoris' : 'Professorat i recordatoris' }]
+  return [{ email: direction, purpose: 'Professorat i recordatoris' }, { email: settings.sender, purpose: 'Famílies' }]
+}
+
+/**
+ * Prova de cada compte que envia: a qui la demana, amb dades d'exemple. Des de direcció, els dos
+ * recordatoris; des del compte de les famílies, el correu a les famílies. Diu quins han funcionat.
+ */
+export async function mailTest(ctx: Ctx, actor: Actor, mailer: Mailer | undefined) {
   requireAdmin(actor)
   if (!mailer) throw conflict('L’enviament de correus encara no està configurat al servidor.')
   const settings = await mailSettings(ctx.db)
-  for (const kind of ['remindStudents', 'remindTeachers'] as const) {
+  const kinds: MailKind[] = ['remindStudents', 'remindTeachers', 'families']
+  const results = new Map<string, { email: string; ok: boolean; error?: string }>()
+  for (const kind of kinds) {
+    const from = senderOf(kind, settings)
+    if (!from.email || results.get(from.email)?.ok === false) continue
     const m = renderMail(kind, settings, exampleVars(kind))
     try {
-      await mailer.send({ to: actor.email, subject: `[Prova] ${m.subject}`, text: m.text, html: m.html, fromName: senderOf(kind, settings).name, replyTo: TEACHER_SENDER.email })
+      await mailer.send({ from: from.email, fromName: from.name, to: actor.email, subject: `[Prova] ${m.subject}`, text: m.text, html: m.html, replyTo: kind === 'families' ? undefined : TEACHER_SENDER.email })
+      results.set(from.email, { email: from.email, ok: true })
     } catch (e) {
-      throw conflict(e instanceof Error ? e.message : 'No s’ha pogut enviar la prova.')
+      results.set(from.email, { email: from.email, ok: false, error: e instanceof Error ? e.message : 'No s’ha pogut enviar.' })
     }
   }
-  return { to: actor.email }
+  return { to: actor.email, results: [...results.values()] }
 }

@@ -132,7 +132,8 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`). El 
 - **Correu**: text editable dels dos missatges, amb previsualització:
   - a les famílies, amb l'informe «Així em veig» adjunt (text basat en el de VeuAlumnat), des del compte que triï l'escola; les respostes van a la tutoria o a una adreça fixa;
   - al professorat, amb el seu informe «Així et veiem» adjunt, sempre des de **direccio@ramonpont.cat**;
-  - **recordatoris automàtics**, des de direccio@ramonpont.cat, uns dies abans que es tanqui una recollida (de 1 a 5, per defecte 2): a l'alumnat que no ha lliurat «Em miro» i al professorat que no ha lliurat l'autoavaluació d'«Et veig…». Un sol recordatori per persona i recollida. Botons «Envia'm una prova» i «Envia ara els pendents».
+  - **recordatoris automàtics**, des de direccio@ramonpont.cat, uns dies abans que es tanqui una recollida (de 1 a 5, per defecte 2): a l'alumnat que no ha lliurat «Em miro» i al professorat que no ha lliurat l'autoavaluació d'«Et veig…». Un sol recordatori per persona i recollida. Botó «Envia ara els pendents».
+  - a *Centre › Correu*, el botó **«Com s'autoritza l'enviament»** explica pas a pas el permís de Google Workspace, i **«Envia'm una prova»** envia un correu de prova des de cada compte (direccio@ramonpont.cat i el de les famílies) i diu si cadascun funciona.
 
 ### Guia del personal
 
@@ -251,9 +252,9 @@ Ho fa una vegada una persona administradora de Google Workspace. La clau no es p
 3. **Clau.** Al compte de servei, *Claus › Afegeix una clau › Crea una clau nova › JSON*. Desa el fitxer fora de Google Drive, per exemple a `C:\Users\<usuari>\claus\latevaveu-correu.json`. Si Google no deixa crear claus, a *IAM i administració › Polítiques de l'organització* desactiva temporalment `iam.disableServiceAccountKeyCreation` per a aquest projecte.
 4. **Delegació.** [Consola d'administració](https://admin.google.com) › *Seguretat › Accés i control de dades › Controls de l'API › Delegació a tot el domini › Afegeix-ne un de nou*: l'ID únic del pas 2 i l'abast `https://www.googleapis.com/auth/gmail.send`. Pot trigar uns minuts a fer efecte.
 5. **Servidor.** A l'ordinador que desplega, la variable d'usuari amb el camí del fitxer (PowerShell): `[Environment]::SetEnvironmentVariable('LATEVAVEU_GMAIL_SA_FILE', 'C:\Users\<usuari>\claus\latevaveu-correu.json', 'User')`. Obre un terminal nou i desplega (`bash scripts/desplega-servidor.sh`): la clau passa a la funció com a `GMAIL_SERVICE_ACCOUNT`.
-6. **Prova.** *Centre › Correu › Recordatoris automàtics › Envia'm una prova*. Si arriba, activa «Envia'ls automàticament» i desa.
+6. **Prova.** *Centre › Correu › Enviament dels correus › Envia'm una prova*: arriba un correu de prova de cada compte que envia. Si tots funcionen, activa «Envia'ls automàticament» i desa.
 
-`direccio@ramonpont.cat` ha de ser un usuari amb bústia de Gmail (no un grup).
+Els comptes que envien han de ser usuaris amb bústia de Gmail (no grups). La delegació és per a tot el domini: per fer servir un altre compte (per exemple, `latevaveu@ramonpont.cat` per a les famílies) no cal tornar a fer res a Google; n'hi ha prou d'escriure'l a *Compte que envia*, desar i fer la prova. Per retirar el permís, esborra l'ID de client de la delegació. Aquests passos també són a l'app (*Centre › Correu › Com s'autoritza l'enviament*).
 
 ## Pendent
 

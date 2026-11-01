@@ -256,7 +256,7 @@ export async function postRestore(id: number) {
 
 export interface RemoteReminders {
   configured: boolean
-  sender: string
+  senders: { email: string; purpose: string }[]
   enabled: boolean
   daysBefore: number
   today: string
@@ -265,4 +265,8 @@ export interface RemoteReminders {
 }
 export const fetchReminders = () => call<RemoteReminders>('GET', '/api/centre/recordatoris')
 export const postRemindNow = () => call<{ sent: number; failed: number }>('POST', '/api/centre/recordatoris/envia')
-export const postRemindTest = () => call<{ to: string }>('POST', '/api/centre/recordatoris/prova')
+export interface MailTestResult {
+  to: string
+  results: { email: string; ok: boolean; error?: string }[]
+}
+export const postMailTest = () => call<MailTestResult>('POST', '/api/centre/correu/prova')

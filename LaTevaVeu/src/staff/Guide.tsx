@@ -413,11 +413,12 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
           <h3>Apartats</h3>
           <p>Activa o desactiva temporalment Em miro o Et veig… Desactivar-lo l’amaga a l’alumnat sense esborrar cap dada; és útil, per exemple, si cal aturar una recollida per un problema.</p>
           <h3>Correu</h3>
-          <p><Where>Centre › Correu</Where> Només per a l’administració. Hi ha quatre decisions:</p>
+          <p><Where>Centre › Correu</Where> Només per a l’administració. Hi ha l’estat de l’enviament i quatre decisions:</p>
           <ul>
-            <li><b>Compte que envia.</b> Un compte de l’escola (@ramonpont.cat). És millor un compte dedicat a l’app que el d’una persona: no depèn de qui ocupa el càrrec i tots els enviaments queden junts.</li>
+            <li><b>Enviament dels correus.</b> Perquè surti cap correu, Google ha de donar permís al servidor. El botó <b>Com s’autoritza l’enviament</b> explica pas a pas què ha de fer, una sola vegada, una persona administradora de Google Workspace. El permís serveix per a qualsevol compte de l’escola amb bústia (no per a grups): si es canvia el compte de les famílies, no cal tornar-lo a demanar. <b>Envia’m una prova</b> t’envia un correu des de cada compte i diu si cadascun ha funcionat.</li>
+            <li><b>Compte que envia</b> (famílies). Un compte de l’escola (@ramonpont.cat). És millor un compte dedicat a l’app que el d’una persona: no depèn de qui ocupa el càrrec i tots els enviaments queden junts. Els correus al professorat i els recordatoris surten sempre de direccio@ramonpont.cat.</li>
             <li><b>On arriben les respostes.</b> Per defecte, al tutor o tutora del grup, que és qui coneix l’alumne. També es pot posar una adreça fixa, com la de secretaria.</li>
-            <li><b>Recordatoris automàtics.</b> Si els actives, uns dies abans que es tanqui una recollida (tu tries quants) l’alumnat que no ha lliurat «Em miro» i el professorat que no ha lliurat l’autoavaluació d’«Et veig…» reben un recordatori des de direccio@ramonpont.cat. Només un per persona i recollida. Amb <b>Envia’m una prova</b> reps els dos textos al teu correu, i <b>Envia ara els pendents</b> els envia sense esperar l’endemà.</li>
+            <li><b>Recordatoris automàtics.</b> Si els actives, uns dies abans que es tanqui una recollida (tu tries quants) l’alumnat que no ha lliurat «Em miro» i el professorat que no ha lliurat l’autoavaluació d’«Et veig…» reben un recordatori des de direccio@ramonpont.cat. Només un per persona i recollida. <b>Envia ara els pendents</b> els envia sense esperar l’endemà.</li>
             <li><b>Text dels missatges.</b> Quatre pestanyes: famílies (amb l’informe «Així em veig» adjunt), professorat (amb el seu informe «Així et veiem» adjunt, sempre des de direccio@ramonpont.cat) i els dos recordatoris. Els marcadors entre claus, com {'{alumne}'}, es canvien per les dades de cada destinatari. A la dreta es veu com quedarà.</li>
           </ul>
           <Tip>Si es toca el text i no convenç, <b>Recupera el text original</b> el torna a deixar com era.</Tip>
