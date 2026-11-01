@@ -22,7 +22,7 @@ ARGS=(
   --env ACADEMIC_YEAR=2026-2027 --env SCHOOL_DOMAIN=ramonpont.cat --env DB_NAME=
   --env ALLOWED_ORIGIN=https://felipsarroca.github.io
 )
-SA_FILE="${LATEVAVEU_GMAIL_SA_FILE:-$(powershell -NoProfile -Command "[Environment]::GetEnvironmentVariable('LATEVAVEU_GMAIL_SA_FILE','User')" | tr -d '\r\n')}"
+SA_FILE="${LATEVAVEU_GMAIL_SA_FILE:-$(powershell -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; [Environment]::GetEnvironmentVariable('LATEVAVEU_GMAIL_SA_FILE','User')" | tr -d '\r\n')}"
 if [ -n "$SA_FILE" ]; then
   command -v cygpath >/dev/null && SA_FILE="$(cygpath -u "$SA_FILE")"
   [ -f "$SA_FILE" ] || { echo "No es troba el fitxer de clau de Gmail: $SA_FILE" >&2; exit 1; }
