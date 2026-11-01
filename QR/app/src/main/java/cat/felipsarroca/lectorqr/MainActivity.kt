@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
     private var torch = false
     private var pickerOpen = false
     private var pendingRelease: Release? = null
+    private var cameraPermissionAtLastRender = false
     private lateinit var root: FrameLayout
     private lateinit var updateChecker: UpdateChecker
 
@@ -110,7 +111,13 @@ class MainActivity : ComponentActivity() {
         updateChecker.check(false, BuildConfig.VERSION_NAME) { response -> response.getOrNull()?.let { showUpdate(it) } }
     }
 
-    override fun onResume() { super.onResume(); if (result == null && !pickerOpen && ::root.isInitialized) scanning.set(true) }
+    override fun onResume() {
+        super.onResume()
+        if (result == null && !pickerOpen && ::root.isInitialized) {
+            val allowed = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            if (allowed != cameraPermissionAtLastRender) showScanner() else scanning.set(true)
+        }
+    }
     override fun onPause() { scanning.set(false); camera?.cameraControl?.enableTorch(false); torch = false; super.onPause() }
     override fun onDestroy() { provider?.unbindAll(); cameraExecutor.shutdown(); imageExecutor.shutdown(); super.onDestroy() }
 
@@ -125,6 +132,7 @@ class MainActivity : ComponentActivity() {
         val area = FrameLayout(this)
         main.addView(area, LinearLayout.LayoutParams(-1, 0, 1f))
         val cameraAllowed = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        cameraPermissionAtLastRender = cameraAllowed
         if (cameraAllowed) {
             val preview = PreviewView(this).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
             area.addView(preview, FrameLayout.LayoutParams(-1, -1))
