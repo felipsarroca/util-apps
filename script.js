@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             name: 'Lector QR',
-            path: 'https://ja.cat/QR-Cat?apk=3',
+            path: 'https://ja.cat/QR-Cat',
             icon: 'assets/lector-qr.svg',
             description: 'Escaneja codis QR amb el mòbil. Tocant la targeta es descarrega directament l’APK per instal·lar-lo.',
             category: 'Aplicacions mòbils',

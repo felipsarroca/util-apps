@@ -4,7 +4,7 @@ Aplicació gratuïta i de codi obert per llegir QR de manera immediata. En obrir
 
 ## Instal·lació
 
-**[Descarrega directament l'APK signat: ja.cat/QR-Cat](https://ja.cat/QR-Cat?apk=3).** L'enllaç curt apunta al fitxer de descàrrega fix [lector-qr.apk](https://github.com/felipsarroca/util-apps/releases/download/qr-apk-actual/lector-qr.apk) del repositori `util-apps`. El paràmetre `?apk=3` evita una redirecció antiga que el navegador pugui haver desat. Ara el fitxer és una versió de prova (`versionCode` 3). Encara cal validar-la en mòbils reals abans de publicar la primera versió estable. Obre l'APK al mòbil i confirma la instal·lació quan Android ho demani. Per actualitzar, instal·la l'APK nou sobre l'anterior: totes les versions conserven el mateix identificador i certificat. L'app també permet comprovar versions des del menú `⋮` quan existeixi una Release estable de Lector QR.
+**[Descarrega directament l'APK signat: ja.cat/QR-Cat](https://ja.cat/QR-Cat).** L'enllaç curt apunta al fitxer de descàrrega fix [lector-qr.apk](https://github.com/felipsarroca/util-apps/releases/download/qr-apk-actual/lector-qr.apk) del repositori `util-apps`. Ara el fitxer és una versió de prova (`versionCode` 3). Encara cal validar-la en mòbils reals abans de publicar la primera versió estable. Obre l'APK al mòbil i confirma la instal·lació quan Android ho demani. Per actualitzar, instal·la l'APK nou sobre l'anterior: totes les versions conserven el mateix identificador i certificat. L'app també permet comprovar versions des del menú `⋮` quan existeixi una Release estable de Lector QR.
 
 ## Compilació
 

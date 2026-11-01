@@ -15,7 +15,7 @@
 2. Actualitza `QR/NOTES.md`, executa `cd QR && ./gradlew testDebugUnitTest assembleDebug` i les proves manuals. Instal·la una compilació de producció de 1.0.1 sobre la de 1.0.0 i comprova que no cal desinstal·lar.
 3. Fes commit i push a `main`. Quan el workflow sigui verd, crea i publica l'etiqueta `qr-v1.0.1` sobre aquell commit.
 4. Comprova la Release, la signatura, el SHA-256 i la detecció de la nova versió dins l'app.
-5. Comprova que `ja.cat/QR-Cat` descarrega l'APK nou i que el SHA-256 coincideix amb el de la Release estable. Si un navegador conserva una redirecció 301 antiga, afegeix un paràmetre nou a l'enllaç curt (per exemple, `?apk=4`).
+5. Comprova que `ja.cat/QR-Cat` descarrega l'APK nou i que el SHA-256 coincideix amb el de la Release estable.
 
 No publiquis una etiqueta si manquen secrets o si la bateria de proves reals no ha passat. Abans de distribuir públicament, revisa les normes vigents de verificació de desenvolupadors d'Android.
 
