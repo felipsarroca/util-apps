@@ -11,6 +11,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.BitmapFactory
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -23,6 +24,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ScrollView
@@ -158,9 +160,15 @@ class MainActivity : ComponentActivity() {
             if (c?.cameraInfo?.hasFlashUnit() == true) { torch = !torch; c.cameraControl.enableTorch(torch) }
             else toast("Aquest dispositiu no té llanterna disponible")
         }, LinearLayout.LayoutParams(dp(72), dp(64)))
-        controls.addView(iconButton("▧", "Llegeix un QR d'una fotografia") {
+        controls.addView(ImageButton(this).apply {
+            setImageResource(android.R.drawable.ic_menu_gallery)
+            imageTintList = ColorStateList.valueOf(Color.WHITE)
+            contentDescription = "Llegeix un QR d'una fotografia"
+            setBackgroundColor(Color.TRANSPARENT)
+            setOnClickListener {
             pickerOpen = true; scanning.set(false)
             picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
         }, LinearLayout.LayoutParams(dp(72), dp(64)))
         pendingRelease?.let { release -> pendingRelease = null; showUpdate(release) }
     }
@@ -308,12 +316,14 @@ class MainActivity : ComponentActivity() {
 }
 
 private class CornerOverlay(context: Context) : View(context) {
+    private val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; strokeWidth = resources.displayMetrics.density * 8; style = Paint.Style.STROKE }
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; strokeWidth = resources.displayMetrics.density * 4; style = Paint.Style.STROKE }
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val size = minOf(width, height) * 0.64f; val left = (width - size) / 2; val top = (height - size) / 2; val end = size * 0.15f
         for (x in listOf(left, left + size)) for (y in listOf(top, top + size)) {
             val dx = if (x == left) end else -end; val dy = if (y == top) end else -end
+            canvas.drawLine(x, y, x + dx, y, outline); canvas.drawLine(x, y, x, y + dy, outline)
             canvas.drawLine(x, y, x + dx, y, paint); canvas.drawLine(x, y, x, y + dy, paint)
         }
     }
