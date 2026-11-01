@@ -68,7 +68,8 @@ jobs:
             --exclude _site \
             --exclude AvaluApp \
             --exclude LaTevaVeu \
-            --exclude MAvaluo
+            --exclude MAvaluo \
+            --exclude QR
           mkdir _site/AvaluApp _site/LaTevaVeu _site/MAvaluo
           cp -R AvaluApp/dist/. _site/AvaluApp/
           cp -R LaTevaVeu/dist/. _site/LaTevaVeu/

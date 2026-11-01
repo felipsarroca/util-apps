@@ -1,0 +1,45 @@
+name: Lector QR en emulador
+on: workflow_dispatch
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Activa KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Instal·la i obre Lector QR
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_4
+          script: |
+            bash QR/gradlew -p QR assembleDebug
+            adb install -r QR/app/build/outputs/apk/debug/app-debug.apk
+            adb shell pm grant cat.felipsarroca.lectorqr android.permission.CAMERA
+            adb shell am start -n cat.felipsarroca.lectorqr/.MainActivity
+            sleep 8
+            adb shell dumpsys activity activities | grep 'cat.felipsarroca.lectorqr/.MainActivity'
+            adb exec-out screencap -p > escaner.png
+            bash QR/gradlew -p QR connectedDebugAndroidTest
+            adb pull /sdcard/Pictures/LectorQR/resultat-enllac.png resultat-enllac.png
+            test $(wc -c < resultat-enllac.png) -gt 1000
+            if adb logcat -d -s AndroidRuntime:E | grep -q 'FATAL EXCEPTION'; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: captures-lector-qr
+          path: |
+            escaner.png
+            resultat-enllac.png
