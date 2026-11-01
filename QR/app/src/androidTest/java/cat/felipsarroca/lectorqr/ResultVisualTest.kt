@@ -1,11 +1,12 @@
 package cat.felipsarroca.lectorqr
 
 import android.content.Intent
+import android.content.ContentValues
 import android.graphics.Bitmap
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import java.io.File
-import java.io.FileOutputStream
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,10 +25,18 @@ class ResultVisualTest {
         }
         instrumentation.waitForIdleSync()
         val screenshot = instrumentation.uiAutomation.takeScreenshot()
-        val file = File(activity.filesDir, "resultat-enllac.png")
-        FileOutputStream(file).use { screenshot.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val resolver = instrumentation.targetContext.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "resultat-enllac.png")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/LectorQR")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)!!
+        resolver.openOutputStream(uri)!!.use { assertTrue(screenshot.compress(Bitmap.CompressFormat.PNG, 100, it)) }
+        values.clear(); values.put(MediaStore.Images.Media.IS_PENDING, 0)
+        resolver.update(uri, values, null, null)
         screenshot.recycle()
-        assertTrue(file.isFile && file.length() > 0)
         instrumentation.runOnMainSync { activity.finish() }
     }
 }

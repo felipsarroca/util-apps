@@ -36,7 +36,8 @@ jobs:
             sleep 2
             adb exec-out screencap -p > icona.png
             bash ./gradlew connectedDebugAndroidTest
-            adb exec-out run-as cat.felipsarroca.lectorqr cat files/resultat-enllac.png > resultat-enllac.png
+            adb pull /sdcard/Pictures/LectorQR/resultat-enllac.png resultat-enllac.png
+            test $(wc -c < resultat-enllac.png) -gt 1000
             if adb logcat -d -s AndroidRuntime:E | grep -q 'FATAL EXCEPTION'; then exit 1; fi
       - uses: actions/upload-artifact@v4
         if: always()
