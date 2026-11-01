@@ -13,6 +13,7 @@ Aplicació web de l'Escola Ramon Pont perquè l'alumnat de 3r de primària a 4t 
 | **Demostració** | <https://felipsarroca.github.io/util-apps/LaTevaVeu/demo/>, amb dades fictícies |
 | **Presentació del projecte** | [`#/projecte`](https://felipsarroca.github.io/util-apps/LaTevaVeu/#/projecte): sentit, marc normatiu, funcionament i beneficis |
 | **Guia del personal** | Dins de l'app, botó **Guia** (o `#/guia`): recorregut pas a pas per a la tutoria i per a l'administració |
+| **Llicència** | [CC BY-NC-SA 4.0](LICENSE): codi obert i públic; es pot copiar i adaptar citant l'autoria, sense finalitat comercial i amb la mateixa llicència |
 | **Fer-ne una còpia** | [Per a una altra escola](#fer-una-còpia-per-a-una-altra-escola): què cal canviar i en quin ordre (llicència CC BY-NC-SA 4.0) |
 | **Estat de la feina** | [SEGUIMENT.md](SEGUIMENT.md) |
 | **Pla** | [Pla mestre v2](La_teva_veu_pla_mestre_v2.md) (implementa les fases 1 i 2) |
@@ -263,11 +264,12 @@ La teva veu està feta per a l'Escola Ramon Pont i **només hi poden entrar els 
 
 ### Llicència
 
-[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca):
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca) (fitxer [LICENSE](LICENSE)):
 
 - **Reconeixement**: cal mantenir el crèdit a l'autor (Felip Sarroca, amb assistència de la IA) al peu de l'app i en aquest README.
 - **No comercial**: no es pot vendre ni fer servir amb finalitat comercial.
 - **Compartir igual**: la còpia s'ha de publicar amb la mateixa llicència.
+- El **logo de l'Escola Ramon Pont** no forma part de l'obra llicenciada: substitueix-lo pel de la teva escola.
 
 ### Què cal
 
