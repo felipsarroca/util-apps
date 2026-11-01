@@ -2,6 +2,7 @@
 
 android {
     namespace = "cat.felipsarroca.lectorqr"
+    buildFeatures { buildConfig = true }
     compileSdk = 36
     defaultConfig {
         applicationId = "cat.felipsarroca.lectorqr"

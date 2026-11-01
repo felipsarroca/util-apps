@@ -199,7 +199,7 @@ class MainActivity : ComponentActivity() {
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.rgb(250, 251, 249)) }
         root.addView(layout, FrameLayout.LayoutParams(-1, -1))
         layout.addView(label(item.title, 23f, Color.rgb(17, 43, 35)).apply { setTypeface(null, 1); setPadding(dp(24), dp(20), dp(24), dp(12)) })
-        val scroll = ScrollView(this).apply { fillViewport = true }
+        val scroll = ScrollView(this).apply { isFillViewport = true }
         layout.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(24), dp(12), dp(24), dp(16)) }
         scroll.addView(body)
