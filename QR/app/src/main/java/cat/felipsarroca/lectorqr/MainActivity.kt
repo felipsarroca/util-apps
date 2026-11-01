@@ -59,6 +59,7 @@ class MainActivity : ComponentActivity() {
     private var provider: ProcessCameraProvider? = null
     private var torch = false
     private var pickerOpen = false
+    private var pendingRelease: Release? = null
     private lateinit var root: FrameLayout
     private lateinit var updateChecker: UpdateChecker
 
@@ -153,6 +154,7 @@ class MainActivity : ComponentActivity() {
             pickerOpen = true; scanning.set(false)
             picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }, LinearLayout.LayoutParams(dp(72), dp(64)))
+        pendingRelease?.let { release -> pendingRelease = null; showUpdate(release) }
     }
 
     private fun startCamera(previewView: PreviewView) {
@@ -272,7 +274,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showUpdate(release: Release) {
-        if (result != null) return
+        if (result != null) { pendingRelease = release; return }
         val banner = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.rgb(225, 246, 235)); setPadding(dp(16), dp(8), dp(16), dp(8)) }
         banner.addView(label("Hi ha una versió nova disponible (${release.version})", 15f, Color.BLACK))
         val row = LinearLayout(this)
