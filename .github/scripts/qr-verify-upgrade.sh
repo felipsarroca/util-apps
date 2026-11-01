@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-curl --fail --location --retry 3 'https://github.com/felipsarroca/lector-qr-android/releases/download/test-1.0.0-rc4/app-release.apk' --output anterior.apk
+curl --fail --location --retry 3 'https://github.com/felipsarroca/util-apps/releases/download/qr-prova-1.0.0-rc4/app-release.apk' --output anterior.apk
 curl --fail --location --retry 3 'https://github.com/felipsarroca/util-apps/releases/download/qr-apk-actual/lector-qr.apk' --output actual.apk
 
 adb install anterior.apk
