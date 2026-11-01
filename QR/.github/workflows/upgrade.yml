@@ -1,0 +1,35 @@
+name: Instal·lació sobre la versió anterior
+on: workflow_dispatch
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Activa KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Instal·la i actualitza l'APK signat
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_4
+          script: |
+            curl --fail --location --retry 3 \
+              https://github.com/felipsarroca/lector-qr-android/releases/download/test-1.0.0-rc3/app-release.apk \
+              --output anterior.apk
+            curl --fail --location --retry 3 \
+              https://github.com/felipsarroca/lector-qr-android/releases/download/apk-actual/app-release.apk \
+              --output actual.apk
+            adb install anterior.apk
+            old_code=$(adb shell dumpsys package cat.felipsarroca.lectorqr | sed -n 's/.*versionCode=\([0-9]*\).*/\1/p' | head -1)
+            test "$old_code" -ge 1
+            adb install -r actual.apk
+            new_code=$(adb shell dumpsys package cat.felipsarroca.lectorqr | sed -n 's/.*versionCode=\([0-9]*\).*/\1/p' | head -1)
+            test "$new_code" -gt "$old_code"
+            adb shell am start -n cat.felipsarroca.lectorqr/.MainActivity
+            sleep 5
+            adb shell dumpsys activity activities | grep 'cat.felipsarroca.lectorqr/.MainActivity'
+            if adb logcat -d -s AndroidRuntime:E | grep -q 'FATAL EXCEPTION'; then exit 1; fi

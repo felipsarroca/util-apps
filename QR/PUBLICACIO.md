@@ -7,7 +7,7 @@
 3. Verifica que `versionName`, `versionCode` i `NOTES.md` coincideixen amb la versió. Executa les proves i comprova la càmera en dispositius reals.
 4. Crea i publica una etiqueta `v1.0.0`. El workflow signa l'APK, comprova la signatura i publica `app-release.apk` i `SHA256SUMS.txt`.
 5. Descarrega l'APK publicat i comprova el SHA-256 i el certificat amb `apksigner verify --print-certs app-release.apk`.
-6. Actualitza l'àlies `ja.cat/QR-Cat` perquè apunti directament a l'asset `app-release.apk` de la Release nova. Comprova que el fitxer descarregat des de l'enllaç curt té el SHA-256 publicat.
+6. El workflow substitueix `app-release.apk` de la Release tècnica `apk-actual` i comprova el SHA-256 de la descàrrega. L'àlies `ja.cat/QR-Cat` ja apunta a aquest fitxer fix i no s'ha de modificar.
 
 ## Exemple: de 1.0.0 a 1.0.1
 
@@ -15,7 +15,7 @@
 2. Actualitza `NOTES.md`, executa `./gradlew testDebugUnitTest assembleDebug` i les proves manuals. Instal·la una compilació de producció de 1.0.1 sobre la de 1.0.0 i comprova que no cal desinstal·lar.
 3. Fes commit i push a `main`. Quan el workflow sigui verd, crea i publica l'etiqueta `v1.0.1` sobre aquell commit.
 4. Comprova la Release, la signatura, el SHA-256 i la detecció de la nova versió dins l'app.
-5. Canvia la destinació de `ja.cat/QR-Cat` a `https://github.com/felipsarroca/lector-qr-android/releases/download/v1.0.1/app-release.apk` i verifica la descàrrega.
+5. Comprova que `ja.cat/QR-Cat` descarrega l'APK nou i que el SHA-256 coincideix amb el de la Release estable. Si un navegador conserva una redirecció 301 antiga, afegeix un paràmetre nou a l'enllaç curt (per exemple, `?apk=3`).
 
 No publiquis una etiqueta si manquen secrets o si la bateria de proves reals no ha passat. Abans de distribuir públicament, revisa les normes vigents de verificació de desenvolupadors d'Android.
 

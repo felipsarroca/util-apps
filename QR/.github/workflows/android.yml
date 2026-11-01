@@ -63,6 +63,21 @@ jobs:
             --title "Lector QR $GITHUB_REF_NAME" \
             --notes-file NOTES.md \
             --verify-tag
+      - name: Actualitza la descàrrega directa
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload apk-actual app-release.apk SHA256SUMS.txt --clobber
+          printf 'Descàrrega directa de la versió estable %s.\n' "$GITHUB_REF_NAME" > "$RUNNER_TEMP/notes-apk-actual.md"
+          gh release edit apk-actual --notes-file "$RUNNER_TEMP/notes-apk-actual.md"
+          mkdir -p "$RUNNER_TEMP/verifica-apk-actual"
+          curl --fail --location --retry 3 --retry-delay 2 \
+            "https://github.com/$GITHUB_REPOSITORY/releases/download/apk-actual/app-release.apk" \
+            --output "$RUNNER_TEMP/verifica-apk-actual/app-release.apk"
+          cp SHA256SUMS.txt "$RUNNER_TEMP/verifica-apk-actual/SHA256SUMS.txt"
+          cd "$RUNNER_TEMP/verifica-apk-actual"
+          sha256sum --check SHA256SUMS.txt
       - name: Elimina la clau temporal
         if: always()
         run: rm -f "$RUNNER_TEMP/lector-qr.jks"
