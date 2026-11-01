@@ -159,7 +159,7 @@ class MainActivity : ComponentActivity() {
                 })
         }
         val footer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setPadding(dp(16), dp(12), dp(16), dp(14)) }
-        main.addView(footer, LinearLayout.LayoutParams(-1, dp(148)))
+        main.addView(footer, LinearLayout.LayoutParams(-1, dp(174)))
         val instruction = label("Apunta la càmera a un codi QR", 15f, Color.WHITE).apply {
             gravity = Gravity.CENTER; setPadding(dp(16), dp(10), dp(16), dp(10)); background = rounded(Color.rgb(31, 76, 62), 18)
         }

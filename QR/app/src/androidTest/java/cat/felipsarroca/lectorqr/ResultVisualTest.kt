@@ -24,7 +24,7 @@ class ResultVisualTest {
         }
         instrumentation.waitForIdleSync()
         val screenshot = instrumentation.uiAutomation.takeScreenshot()
-        val file = File(instrumentation.targetContext.getExternalFilesDir(null), "resultat-enllac.png")
+        val file = File(activity.filesDir, "resultat-enllac.png")
         FileOutputStream(file).use { screenshot.compress(Bitmap.CompressFormat.PNG, 100, it) }
         screenshot.recycle()
         assertTrue(file.isFile && file.length() > 0)
