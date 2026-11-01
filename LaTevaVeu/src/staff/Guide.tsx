@@ -395,8 +395,8 @@ export function GuideScreen({ onClose }: { onClose: () => void }) {
             <li>També es pot fer servir un fitxer propi: clica <b>Importa des de CSV</b>. Un sol fitxer per a tots els cursos (de 3r de primària a 4t d’ESO) amb la columna <b>id_alumne</b> (o <b>correu_alumne</b>) i els correus de la família: una fila per responsable (<b>nom_responsable</b>, <b>correu_responsable</b>) o una fila per alumne amb diverses columnes (<b>correu_familia_1</b>, <b>correu_familia_2</b>…).</li>
             <li>Clica <b>Analitza</b>. L’app detecta alumnes que no són al cens, correus mal escrits, correus repetits i el correu del mateix alumne en lloc del de la família.</li>
             <li>Confirma amb <b>Importa N correus</b>. Per a cada alumne del fitxer, els correus nous <b>substitueixen</b> els anteriors i queden validats. Els alumnes que no surten al fitxer no canvien.</li>
-            <li>A la taula pots filtrar per curs, marcar un correu com a <b>Validat</b> o <b>Pendent</b> i treure’l.</li>
-            <li>Per corregir el nom o el correu d’un responsable, clica el <b>llapis</b>. Si un alumne no en té cap o en falta un (el pare o la mare), clica <b>Afegeix un responsable</b>. Marca <b>Validat</b> només si el correu l’ha confirmat la família.</li>
+            <li>A la taula pots filtrar per curs i per estat (amb correu validat, pendents de validar o sense correu); també clicant els comptadors de dalt. Pots marcar un correu com a <b>Validat</b> o <b>Pendent</b> i treure’l.</li>
+            <li>Per corregir el nom o el correu d’un responsable, clica el <b>llapis</b>. Si un alumne no en té cap o en falta un (el pare o la mare), clica el <b>+</b> de la seva fila. Marca <b>Validat</b> només si el correu l’ha confirmat la família.</li>
           </ol>
           <Tip>Només s’envia als correus validats. Els comptadors de dalt indiquen quants alumnes tenen correu validat, quants el tenen pendent i quants no en tenen (el seu informe es lliurarà en paper).</Tip>
           <h3>Incidències d’identitat</h3>

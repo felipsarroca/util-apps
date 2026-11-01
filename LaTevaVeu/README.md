@@ -126,7 +126,7 @@ Amb Google real, el botó demana el domini de l'escola (`hd=ramonpont.cat`). El 
   - cens amb optatives (CSV amb validació prèvia), accions en bloc (canviar de curs o de grup, donar de baixa) i **curs nou**, que copia grups, matèries i assignacions, passa l'alumnat de curs i respecta els repetidors;
   - grups amb el tutor o tutora de cada un;
   - matèries per curs, matèries noves i canvis de nom; la **Tutoria** és a tots els cursos i qui la fa veu l'«Em miro» del grup;
-  - correus de les famílies: el **llistat de pares i mares de Clickedu** tal com surt (amb ajuda pas a pas a la mateixa pantalla) o un CSV propi; també es poden **corregir a mà** el nom i el correu de cada responsable i **afegir-ne** quan no n'hi ha cap o en falta un;
+  - correus de les famílies: el **llistat de pares i mares de Clickedu** tal com surt (amb ajuda pas a pas a la mateixa pantalla) o un CSV propi; també es poden **corregir a mà** el nom i el correu de cada responsable i **afegir-ne** (botó +) quan no n'hi ha cap o en falta un, i filtrar per estat (validat, pendent, sense correu) amb el selector o clicant els comptadors;
   - incidències d'identitat, apartats actius i registre d'operacions inalterable;
   - **còpies de seguretat**: una còpia completa cada dia i abans de cada canvi gran (curs nou, importació de correus, restauració), i restauració amb un clic i confirmació escrita.
 - **Correu**: text editable dels dos missatges, amb previsualització:

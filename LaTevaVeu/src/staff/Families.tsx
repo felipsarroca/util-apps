@@ -29,20 +29,32 @@ async function readCsv(f: File): Promise<string> {
   }
 }
 
+type Status = '' | 'validat' | 'pendent' | 'sense'
+
+const STATUS: Record<Exclude<Status, ''>, { label: string; note: string }> = {
+  validat: { label: 'Amb correu validat', note: 'Rebran l’informe per correu' },
+  pendent: { label: 'Pendents de validar', note: 'Tenen correu, però no validat' },
+  sense: { label: 'Sense correu', note: 'L’informe es lliurarà en paper' },
+}
+
+/** Validat: almenys un correu validat. Pendent: té correus, però cap de validat. */
+const statusOf = (st: Student): Exclude<Status, ''> => (st.guardians.some((g) => g.validated) ? 'validat' : st.guardians.length ? 'pendent' : 'sense')
+
 export function FamiliesScreen({ session }: { session: Session }) {
   const s = useDemoState()
   const [grade, setGrade] = useState<GradeId | ''>('')
+  const [status, setStatus] = useState<Status>('')
   const [importing, setImporting] = useState(false)
   const [help, setHelp] = useState(false)
   // Responsable que s'edita (original: null quan se n'afegeix un).
   const [editing, setEditing] = useState<{ st: Student; original: Guardian | null } | null>(null)
   const [toast, showToast] = useToast()
-  const students = s.students
+  const inGrade = s.students
     .filter((x) => !grade || x.gradeId === grade)
     .sort((a, b) => GRADES.findIndex((g) => g.id === a.gradeId) - GRADES.findIndex((g) => g.id === b.gradeId) || a.group.localeCompare(b.group) || a.surname.localeCompare(b.surname))
-  const ok = students.filter((x) => x.guardians.some((g) => g.validated)).length
-  const pending = students.filter((x) => x.guardians.length && !x.guardians.some((g) => g.validated)).length
-  const none = students.filter((x) => !x.guardians.length).length
+  // Els comptadors són del curs triat; l'estat només filtra la taula.
+  const count = (k: Exclude<Status, ''>) => inGrade.filter((x) => statusOf(x) === k).length
+  const students = inGrade.filter((x) => !status || statusOf(x) === status)
   const act = (fn: () => void, msg: string) => {
     try {
       fn()
@@ -62,9 +74,19 @@ export function FamiliesScreen({ session }: { session: Session }) {
         </button>
       </PageHead>
       <div className="kpis">
-        <div className="card kpi"><span className="l">Amb correu validat</span><span className="v">{ok}</span><span className="s">Rebran l’informe per correu</span></div>
-        <div className="card kpi"><span className="l">Pendents de validar</span><span className="v">{pending}</span><span className="s">Tenen correu, però no validat</span></div>
-        <div className="card kpi"><span className="l">Sense correu</span><span className="v">{none}</span><span className="s">L’informe es lliurarà en paper</span></div>
+        {(Object.keys(STATUS) as Exclude<Status, ''>[]).map((k) => (
+          <button
+            key={k}
+            className={`card kpi kpi-btn ${k}`}
+            aria-pressed={status === k}
+            title={status === k ? 'Torna a mostrar-los tots' : `Mostra només: ${STATUS[k].label.toLowerCase()}`}
+            onClick={() => setStatus(status === k ? '' : k)}
+          >
+            <span className="l">{STATUS[k].label}</span>
+            <span className="v">{count(k)}</span>
+            <span className="s">{STATUS[k].note}</span>
+          </button>
+        ))}
       </div>
       <div className="notice">
         <Icon name="cloud" />
@@ -78,19 +100,35 @@ export function FamiliesScreen({ session }: { session: Session }) {
             {GRADES.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         </label>
+        <label className="field">
+          <span>Estat</span>
+          <select className="select" value={status} onChange={(e) => setStatus(e.target.value as Status)}>
+            <option value="">Tots</option>
+            {(Object.keys(STATUS) as Exclude<Status, ''>[]).map((k) => <option key={k} value={k}>{STATUS[k].label}</option>)}
+          </select>
+        </label>
+        <span className="muted toolbar-count">{students.length} {students.length === 1 ? 'alumne' : 'alumnes'}</span>
       </div>
       <div className="table-wrap">
         <table className="t">
           <thead><tr><th>Alumne</th><th>Grup</th><th>Responsables</th></tr></thead>
           <tbody>
+            {!students.length && (
+              <tr><td colSpan={3} className="muted">Cap alumne amb aquest estat{grade ? ' en aquest curs' : ''}.</td></tr>
+            )}
             {students.map((st) => (
               <tr key={st.id}>
                 <td className="student-cell"><b>{fullName(st)}</b><small>{st.id}</small></td>
                 <td>{groupName(st.gradeId, st.group)}</td>
                 <td>
-                  {!st.guardians.length && <span className="badge bad">Sense correu</span>}
                   <div className="fam-list">
-                    {st.guardians.map((g) => (
+                    {!st.guardians.length && (
+                      <div className="fam-row">
+                        <span><span className="badge bad">Sense correu</span></span>
+                        <AddButton st={st} onAdd={() => setEditing({ st, original: null })} />
+                      </div>
+                    )}
+                    {st.guardians.map((g, i) => (
                       <div key={g.email} className="fam-row">
                         <span><b>{g.name}</b> <span className="muted">{g.email}</span></span>
                         <label className="toggle" title="Correu comprovat amb la família">
@@ -100,17 +138,14 @@ export function FamiliesScreen({ session }: { session: Session }) {
                         <button className="btn icon small ghost" onClick={() => setEditing({ st, original: g })} aria-label={`Edita ${g.email}`} title="Edita el nom o el correu">
                           <Icon name="edit" />
                         </button>
-                        <button className="btn icon small ghost" onClick={() => act(() => removeGuardian(session, st.id, g.email), 'Correu eliminat.')} aria-label={`Treu ${g.email}`}>
+                        <button className="btn icon small ghost" onClick={() => act(() => removeGuardian(session, st.id, g.email), 'Correu eliminat.')} aria-label={`Treu ${g.email}`} title="Treu aquest correu">
                           <Icon name="trash" />
                         </button>
+                        {/* El botó d'afegir va a la darrera fila; a les altres, un espai igual perquè les icones quedin alineades. */}
+                        {i === st.guardians.length - 1 ? <AddButton st={st} onAdd={() => setEditing({ st, original: null })} /> : <span className="fam-gap" aria-hidden />}
                       </div>
                     ))}
                   </div>
-                  {st.guardians.length < 4 && (
-                    <button className="btn small ghost fam-add" onClick={() => setEditing({ st, original: null })}>
-                      <Icon name="plus" /> Afegeix {st.guardians.length ? 'un altre responsable' : 'un responsable'}
-                    </button>
-                  )}
                 </td>
               </tr>
             ))}
@@ -133,6 +168,17 @@ export function FamiliesScreen({ session }: { session: Session }) {
       )}
       {toast}
     </>
+  )
+}
+
+/** Afegir un responsable (com a màxim 4 per alumne). */
+function AddButton({ st, onAdd }: { st: Student; onAdd: () => void }) {
+  if (st.guardians.length >= 4) return <span className="fam-gap" aria-hidden />
+  const label = st.guardians.length ? 'Afegeix un altre responsable' : 'Afegeix un responsable'
+  return (
+    <button className="btn icon small ghost" onClick={onAdd} aria-label={`${label}: ${fullName(st)}`} title={label}>
+      <Icon name="plus" />
+    </button>
   )
 }
 
