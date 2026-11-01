@@ -41,5 +41,6 @@ dependencies {
     implementation("androidx.core:core-ktx:1.18.0")
     implementation("io.github.zxing-cpp:android:3.1.1")
     testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
 }
 
