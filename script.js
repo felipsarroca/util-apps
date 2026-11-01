@@ -113,6 +113,14 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Aplicacions mòbils'
         },
         {
+            name: 'Lector QR',
+            path: 'https://ja.cat/QR-Cat?apk=2',
+            icon: 'assets/lector-qr.svg',
+            description: 'Escaneja codis QR amb el mòbil. Tocant la targeta es descarrega directament l’APK per instal·lar-lo.',
+            category: 'Aplicacions mòbils',
+            download: true
+        },
+        {
             name: 'Rentabilitat Híbrid',
             path: 'RentabilitatHibrid/',
             description: 'Calculadora per comparar el cost entre combustible i electricitat.',
@@ -158,8 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const faviconSrc = app.icon || `${app.path}favicon.svg`;
             const fallbackIcon = `https://via.placeholder.com/64/005a9c/ffffff?text=${app.name.charAt(0)}`;
 
+            const externalTab = app.download ? '' : ' target="_blank" rel="noopener noreferrer"';
             col.innerHTML = `
-                <a href="${app.path}" class="card-link" target="_blank" rel="noopener noreferrer">
+                <a href="${app.path}" class="card-link"${externalTab}>
                     <div class="card h-100">
                         <img src="${faviconSrc}" class="card-img-top" alt="Icona de ${app.name}" onerror="this.onerror=null;this.src='${fallbackIcon}';">
                         <div class="card-body d-flex flex-column">
