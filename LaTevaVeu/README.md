@@ -13,10 +13,11 @@ Aplicació web de l'Escola Ramon Pont perquè l'alumnat de 3r de primària a 4t 
 | **Demostració** | <https://felipsarroca.github.io/util-apps/LaTevaVeu/demo/>, amb dades fictícies |
 | **Presentació del projecte** | [`#/projecte`](https://felipsarroca.github.io/util-apps/LaTevaVeu/#/projecte): sentit, marc normatiu, funcionament i beneficis |
 | **Guia del personal** | Dins de l'app, botó **Guia** (o `#/guia`): recorregut pas a pas per a la tutoria i per a l'administració |
+| **Fer-ne una còpia** | [Per a una altra escola](#fer-una-còpia-per-a-una-altra-escola): què cal canviar i en quin ordre (llicència CC BY-NC-SA 4.0) |
 | **Estat de la feina** | [SEGUIMENT.md](SEGUIMENT.md) |
 | **Pla** | [Pla mestre v2](La_teva_veu_pla_mestre_v2.md) (implementa les fases 1 i 2) |
 
-> **Estat (31 d'octubre de 2026).** L'app és **en funcionament** a l'adreça principal, amb entrada amb Google, servidor a Neon Functions (Frankfurt) i base de dades a la UE. Hi ha carregat el curs 2026-2027: 218 alumnes de 3r de primària a 4t d'ESO, el professorat, l'Equip Directiu i l'administració, les tutories, qui fa classe a qui i els correus de les famílies (217 de 218 alumnes, importats de Clickedu). Encara no s'ha obert cap recollida. **Falta l'enviament real dels correus**: de moment els informes es lliuren en PDF o en paper. La [demostració](https://felipsarroca.github.io/util-apps/LaTevaVeu/demo/) permet provar-ho tot amb dades fictícies.
+> **Estat (1 de novembre de 2026).** L'app és **en funcionament** a l'adreça principal, amb entrada amb Google, servidor a Neon Functions (Frankfurt) i base de dades a la UE. Hi ha carregat el curs 2026-2027: 218 alumnes de 3r de primària a 4t d'ESO, el professorat, l'Equip Directiu i l'administració, les tutories, qui fa classe a qui i els correus de les famílies (217 de 218 alumnes, importats de Clickedu). Encara no s'ha obert cap recollida. Els recordatoris surten per Gmail des de direccio@ramonpont.cat; **falta l'enviament dels informes per correu**: de moment es lliuren en PDF o en paper. La [demostració](https://felipsarroca.github.io/util-apps/LaTevaVeu/demo/) permet provar-ho tot amb dades fictícies.
 
 ## Com es veu
 
@@ -255,6 +256,57 @@ Ho fa una vegada una persona administradora de Google Workspace. La clau no es p
 6. **Prova.** *Centre › Correu › Enviament dels correus › Envia'm una prova*: arriba un correu de prova de cada compte que envia. Si tots funcionen, activa «Envia'ls automàticament» i desa.
 
 Els comptes que envien han de ser usuaris amb bústia de Gmail (no grups). La delegació és per a tot el domini: per fer servir un altre compte (per exemple, `latevaveu@ramonpont.cat` per a les famílies) no cal tornar a fer res a Google; n'hi ha prou d'escriure'l a *Compte que envia*, desar i fer la prova. Per retirar el permís, esborra l'ID de client de la delegació. Aquests passos també són a l'app (*Centre › Correu › Com s'autoritza l'enviament*).
+
+## Fer una còpia per a una altra escola
+
+La teva veu està feta per a l'Escola Ramon Pont i **només hi poden entrar els comptes @ramonpont.cat que són al cens**. Des de fora, només es pot provar la [demostració](https://felipsarroca.github.io/util-apps/LaTevaVeu/demo/). El codi és obert perquè una altra escola en pugui fer **la seva pròpia còpia**, amb la seva base de dades, el seu domini i els seus permisos. No es comparteix res amb la de Ramon Pont.
+
+### Llicència
+
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca):
+
+- **Reconeixement**: cal mantenir el crèdit a l'autor (Felip Sarroca, amb assistència de la IA) al peu de l'app i en aquest README.
+- **No comercial**: no es pot vendre ni fer servir amb finalitat comercial.
+- **Compartir igual**: la còpia s'ha de publicar amb la mateixa llicència.
+
+### Què cal
+
+- Un **Google Workspace** de l'escola, amb una persona superadministradora.
+- Un compte de **GitHub** (per publicar l'app a GitHub Pages) i un de **Neon** (base de dades i servidor; el pla gratuït n'hi ha prou).
+- **Node.js 22 o posterior** i la CLI de Neon (`npm i -g neonctl`, ordre `neon`) a l'ordinador que desplega.
+- Hores per adaptar textos i dades. Un assistent de programació (Codex, Claude Code…) ho fa molt més ràpid: dona-li aquest apartat com a llista de feina.
+
+### Què s'ha de canviar
+
+| # | Element | On | Què fer |
+| --- | --- | --- | --- |
+| 1 | **Base de dades nova** | [Neon](https://console.neon.tech) | Projecte nou a la UE (p. ex. Frankfurt), base de dades i branca `produccio`. Posa-la en marxa amb `scripts/inicia-produccio.ts`: crea l'esquema, els permisos i el primer administrador. Canvia l'identificador del projecte (`sparkling-field-60524633`) a `scripts/desplega-servidor.sh`. |
+| 2 | **Domini de l'escola** | `src/domain/catalog.ts` (`SCHOOL`), `db/schema.sql` (dues comprovacions `@ramonpont\.cat`), `server/seed.ts`, `scripts/desplega-servidor.sh` (`SCHOOL_DOMAIN`), `.env.example` | Posa el domini nou a tot arreu. Només hi podran entrar comptes d'aquest domini. Cerca'n la resta amb `grep -rn ramonpont src server db scripts`: la majoria són de les dades fictícies de la demostració i també convé canviar-les. |
+| 3 | **Entrada amb Google** | Google Cloud de l'escola | Projecte nou › *Pantalla de consentiment d'OAuth* (tipus intern) › *Credencials › Client OAuth › Aplicació web*, amb l'origen autoritzat de l'adreça publicada (p. ex. `https://<usuari>.github.io`). L'ID de client va a `GOOGLE_CLIENT_ID` (`scripts/desplega-servidor.sh`) i a la variable del repositori `LATEVAVEU_GOOGLE_CLIENT_ID`. |
+| 4 | **Enviament de correus** | Google Cloud i consola d'administració | Els passos de l'apartat [*Autoritzar l'enviament*](#autoritzar-lenviament-des-de-direccioramonpontcat), amb un compte de servei i una clau nous. El remitent del professorat i dels recordatoris és `direccio@<domini>` (`TEACHER_SENDER`, `src/domain/mail.ts`): ha de ser un usuari amb bústia. |
+| 5 | **Nom i logo** | `src/domain/catalog.ts` (`name`), `index.html` (títol i descripció), `src/App.tsx`, `public/assets/logo-escola-ramon-pont.png` | Canvia el nom de l'escola i el logo. Si canvies el nom del fitxer del logo, canvia'l també a `Login.tsx`, `About.tsx`, `report/Report.tsx` i `report/FeedbackReport.tsx`. |
+| 6 | **Idioma** (opcional) | Tots els textos de `src` i `server`, `index.html` (`lang`), les plantilles de correu (`src/domain/mail.ts`), els qüestionaris i els àudios | L'app està escrita en català, sense fitxers de traducció: cal traduir els textos al mateix codi. Els àudios de les preguntes es tornen a generar amb `npm run audios` canviant la veu (`VEU`) a `scripts/genera-audios.ts`. |
+| 7 | **Cursos, matèries i qüestionaris** | `src/domain/catalog.ts` i *Centre* dins l'app | Etapes, cursos i matèries; les preguntes es poden editar a l'app. El mínim de 15 respostes perquè un docent rebi l'informe d'«Et veig…» és `THRESHOLD` (`src/domain/feedback.ts`). |
+| 8 | **Curs escolar** | `scripts/desplega-servidor.sh` (`ACADEMIC_YEAR`) | El curs inicial; els següents es creen a *Centre › Grups › Curs nou*. |
+| 9 | **Adreça publicada** | `.github/workflows/deploy-pages.yml` (a l'arrel del repositori `util-apps`), `ALLOWED_ORIGIN` (`scripts/desplega-servidor.sh`) | L'origen de GitHub Pages del teu compte. Si copies només la carpeta `LaTevaVeu`, fes-te una acció com aquesta amb només els passos de La teva veu. Les variables del repositori `LATEVAVEU_API_URL` (adreça de la funció de Neon) i `LATEVAVEU_GOOGLE_CLIENT_ID` fan que la compilació es connecti al servidor; sense, només es publica la demostració. |
+| 10 | **Textos de l'escola** | `src/About.tsx` (presentació del projecte), `src/staff/Guide.tsx` (guia), `docs/` (privacitat, textos informatius) | Revisa'ls i adapta'ls. Els documents de privacitat els ha de validar la persona delegada de protecció de dades de la teva escola. |
+
+### Ordre de posada en marxa
+
+1. **Còpia del codi.** Fes un *fork* del repositori o copia la carpeta `LaTevaVeu` a un repositori teu. Treballa fora de Google Drive: `npm ci`.
+2. **Adaptació.** Fes els canvis de la taula. Comprova-ho amb `npx tsc -b && npm run lint && npm test` i prova la demostració amb `npm run dev`.
+3. **Base de dades.** Al projecte nou de Neon, crea el rol de l'app (`npx neonctl roles create --name latevaveu_app --branch produccio --project-id <projecte>`) i posa-la en marxa:
+   ```bash
+   DATABASE_URL="$(neon connection-string produccio --project-id <projecte> --database-name <base> --role-name <propietari>)" \
+     npx vite-node scripts/inicia-produccio.ts -- <el-teu-correu@domini> "<El teu nom>" 2026-2027 2026-09-01 2027-06-30
+   ```
+4. **Servidor.** Desa la clau d'API de Neon a la variable d'usuari `NEON_API_KEY` i desplega **el primer cop** amb `bash scripts/desplega-servidor.sh --clau-nova`, que crea la clau de xifratge dels esborranys. Els cops següents, sense `--clau-nova`: si no, els esborranys ja desats no es podrien llegir.
+5. **Tasca diària.** A Neon, crea un activador programat de la funció (`0 6 * * *`) que cridi `POST /api/tasques/diaries`: còpia de seguretat diària i recordatoris.
+6. **Publicació.** Posa les variables del repositori `LATEVAVEU_API_URL` i `LATEVAVEU_GOOGLE_CLIENT_ID` i activa GitHub Pages. Cada canvi a `main` torna a publicar l'app i la demostració.
+7. **Dades.** Entra amb el compte administrador i carrega, des de *Centre*, l'alumnat, el professorat, les tutories, qui fa classe a qui i els correus de les famílies (CSV o el llistat de Clickedu).
+8. **Correu.** Autoritza l'enviament (punt 4 de la taula) i fes la prova a *Centre › Correu*.
+
+Mai no escriguis claus, contrasenyes ni cadenes de connexió als fitxers del repositori: es llegeixen de l'entorn o de Neon. El fitxer `.env.example` explica cada variable.
 
 ## Pendent
 
