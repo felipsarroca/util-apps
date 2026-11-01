@@ -14,6 +14,10 @@ data class QrContent(
     val wifiSsid: String? = null,
     val wifiPassword: String? = null,
     val wifiSecurity: String? = null,
+    val contactPhone: String? = null,
+    val contactEmail: String? = null,
+    val eventStart: String? = null,
+    val eventLocation: String? = null,
 )
 
 /** Pure interpretation of known QR formats. Never follows or executes encoded content. */
@@ -70,7 +74,8 @@ object QrContentParser {
         }.toMap()
         val name = fields["FN"] ?: fields["N"] ?: return QrContent(raw, QrKind.TEXT, "Text", raw)
         val detail = listOfNotNull(fields["TEL"], fields["EMAIL"], fields["ORG"]).joinToString("\n")
-        return QrContent(raw, QrKind.CONTACT, "Contacte", name.replace(',', ' ').trim(), detail)
+        return QrContent(raw, QrKind.CONTACT, "Contacte", name.replace(',', ' ').trim(), detail,
+            contactPhone = fields["TEL"], contactEmail = fields["EMAIL"])
     }
 
     private fun event(raw: String, value: String): QrContent {
@@ -79,7 +84,8 @@ object QrContentParser {
         }.toMap()
         val title = fields["SUMMARY"] ?: return QrContent(raw, QrKind.TEXT, "Text", raw)
         return QrContent(raw, QrKind.EVENT, "Esdeveniment", title,
-            listOfNotNull(fields["DTSTART"], fields["LOCATION"]).joinToString("\n"))
+            listOfNotNull(fields["DTSTART"], fields["LOCATION"]).joinToString("\n"),
+            eventStart = fields["DTSTART"], eventLocation = fields["LOCATION"])
     }
 
     private fun splitEscaped(value: String, separator: Char): List<String> {

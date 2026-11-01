@@ -38,6 +38,8 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import zxingcpp.BarcodeReader
@@ -92,8 +94,8 @@ class MainActivity : ComponentActivity() {
         updateChecker = UpdateChecker(this)
         root = FrameLayout(this)
         root.setBackgroundColor(Color.rgb(17, 26, 24))
-        root.setOnApplyWindowInsetsListener { view, insets ->
-            val bars = insets.getInsets(android.view.WindowInsets.Type.systemBars())
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
         }
@@ -229,9 +231,18 @@ class MainActivity : ComponentActivity() {
         QrKind.WIFI -> "Obre els ajustaments Wi-Fi" to Intent(if (Build.VERSION.SDK_INT >= 29) Settings.Panel.ACTION_WIFI else Settings.ACTION_WIFI_SETTINGS)
         QrKind.CONTACT -> "Afegeix a contactes" to Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI).apply {
             putExtra(ContactsContract.Intents.Insert.NAME, item.display)
+            item.contactPhone?.let { putExtra(ContactsContract.Intents.Insert.PHONE, it) }
+            item.contactEmail?.let { putExtra(ContactsContract.Intents.Insert.EMAIL, it) }
         }
         QrKind.EVENT -> "Afegeix al calendari" to Intent(Intent.ACTION_INSERT, CalendarContract.Events.CONTENT_URI).apply {
             putExtra(CalendarContract.Events.TITLE, item.display)
+            item.eventLocation?.let { putExtra(CalendarContract.Events.EVENT_LOCATION, it) }
+            item.eventStart?.let { value ->
+                runCatching {
+                    val parsed = java.time.LocalDateTime.parse(value, java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"))
+                    putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, parsed.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())
+                }
+            }
         }
         QrKind.TEXT -> null
     }

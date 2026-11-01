@@ -37,10 +37,10 @@ class UpdateChecker(private val context: Context) {
                     if (connection.responseCode != 200) error("HTTP ${connection.responseCode}")
                     val body = connection.inputStream.bufferedReader().use { it.readText() }
                     val json = JSONObject(body)
-                    if (json.optBoolean("draft") || json.optBoolean("prerelease")) return@runCatching null
+                    if (json.optBoolean("draft") || json.optBoolean("prerelease")) error("No stable release")
                     val version = json.optString("tag_name")
                     val expected = "https://github.com/felipsarroca/lector-qr-android/releases/tag/$version"
-                    if (json.optString("html_url") != expected || Versions.compare(version, current) == null) return@runCatching null
+                    if (json.optString("html_url") != expected || Versions.compare(version, current) == null) error("Invalid release")
                     preferences.edit().putLong("lastSuccess", System.currentTimeMillis()).apply()
                     if (Versions.compare(version, current)!! <= 0 || (!manual && preferences.getString("dismissed", "") == version)) null
                     else Release(version, expected)
