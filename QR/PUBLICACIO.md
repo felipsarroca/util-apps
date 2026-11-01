@@ -16,3 +16,5 @@
 4. Comprova la Release, la signatura, el SHA-256 i la detecció de la nova versió dins l'app.
 
 No publiquis una etiqueta si manquen secrets o si la bateria de proves reals no ha passat. Abans de distribuir públicament, revisa les normes vigents de verificació de desenvolupadors d'Android.
+
+Empremta SHA-256 del certificat de producció: `24:1D:42:28:B6:30:E4:EF:EE:22:BC:65:F0:4F:07:0A:A6:2F:04:B2:3F:E0:D3:4C:87:B0:E6:27:C2:9B:BC:C7`.
