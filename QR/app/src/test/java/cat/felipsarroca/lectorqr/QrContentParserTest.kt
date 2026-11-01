@@ -27,4 +27,27 @@ class QrContentParserTest {
         assertEquals("clau:123", parsed.wifiPassword)
         assertEquals("à è í ò ú ç l·l 😀", QrContentParser.parse("à è í ò ú ç l·l 😀").display)
     }
+
+    @Test fun describesEventDatesInCatalan() {
+        val zone = java.time.ZoneId.of("Europe/Madrid")
+        val event = EventDates.describe("20261112T173000", "20261112T190000", zone)!!
+        assertTrue(event.dateLine, event.dateLine.startsWith("Dijous"))
+        assertTrue(event.dateLine, event.dateLine.contains("12") && event.dateLine.contains("novembre") && event.dateLine.contains("2026"))
+        assertEquals("17:30 – 19:00", event.timeLine)
+        assertEquals("Tot el dia", EventDates.describe("20261112", null, zone)!!.timeLine)
+        assertEquals("18:30", EventDates.describe("20261112T173000Z", null, zone)!!.timeLine)
+        assertNull(EventDates.describe("dimarts", null, zone))
+    }
+
+    @Test fun readsWifiExtrasAndEventEnd() {
+        val wifi = QrContentParser.parse("WIFI:T:WPA;S:Amagada;P:clau1234;H:true;;")
+        assertTrue(wifi.wifiHidden)
+        assertNull(QrContentParser.parse("WIFI:T:nopass;S:Oberta;P:;;").wifiPassword)
+        val event = QrContentParser.parse("BEGIN:VEVENT
+SUMMARY:Reunió
+DTSTART:20261112T173000
+DTEND:20261112T190000
+END:VEVENT")
+        assertEquals("20261112T190000", event.eventEnd)
+    }
 }

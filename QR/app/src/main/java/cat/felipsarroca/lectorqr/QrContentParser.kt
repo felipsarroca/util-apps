@@ -1,6 +1,14 @@
 package cat.felipsarroca.lectorqr
 
 import java.net.URI
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 enum class QrKind { WEB, TEXT, WIFI, CONTACT, PHONE, EMAIL, SMS, GEO, EVENT }
 
@@ -14,9 +22,11 @@ data class QrContent(
     val wifiSsid: String? = null,
     val wifiPassword: String? = null,
     val wifiSecurity: String? = null,
+    val wifiHidden: Boolean = false,
     val contactPhone: String? = null,
     val contactEmail: String? = null,
     val eventStart: String? = null,
+    val eventEnd: String? = null,
     val eventLocation: String? = null,
 )
 
@@ -64,7 +74,8 @@ object QrContentParser {
         val security = fields["T"]?.uppercase() ?: "NOPASS"
         if (security !in setOf("WPA", "WEP", "NOPASS", "SAE")) return QrContent(raw, QrKind.TEXT, "Text", raw)
         return QrContent(raw, QrKind.WIFI, "Xarxa Wi-Fi", ssid, "Contrasenya oculta", wifiSsid = ssid,
-            wifiPassword = fields["P"], wifiSecurity = security)
+            wifiPassword = fields["P"]?.takeIf { it.isNotEmpty() }, wifiSecurity = security,
+            wifiHidden = fields["H"].equals("true", ignoreCase = true))
     }
 
     private fun contact(raw: String, value: String): QrContent {
@@ -85,7 +96,7 @@ object QrContentParser {
         val title = fields["SUMMARY"] ?: return QrContent(raw, QrKind.TEXT, "Text", raw)
         return QrContent(raw, QrKind.EVENT, "Esdeveniment", title,
             listOfNotNull(fields["DTSTART"], fields["LOCATION"]).joinToString("\n"),
-            eventStart = fields["DTSTART"], eventLocation = fields["LOCATION"])
+            eventStart = fields["DTSTART"], eventEnd = fields["DTEND"], eventLocation = fields["LOCATION"])
     }
 
     private fun splitEscaped(value: String, separator: Char): List<String> {
@@ -100,4 +111,40 @@ object QrContentParser {
     }
 
     private fun unescape(value: String): String = value.replace(Regex("\\\\([;,:\\\\])"), "$1")
+}
+
+/** When an event happens, ready to show in Catalan and to pass to the calendar. */
+data class EventWhen(val dateLine: String, val timeLine: String?, val beginMillis: Long, val endMillis: Long?, val allDay: Boolean)
+
+object EventDates {
+    private val catalan: Locale = Locale.forLanguageTag("ca")
+    private val dateTime = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
+    private val dateOnly = DateTimeFormatter.ofPattern("yyyyMMdd")
+    private val time = DateTimeFormatter.ofPattern("HH:mm")
+
+    private fun parse(value: String?, zone: ZoneId): Pair<ZonedDateTime, Boolean>? {
+        val v = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        return runCatching {
+            when {
+                v.length == 8 -> LocalDate.parse(v, dateOnly).atStartOfDay(zone) to true
+                v.endsWith("Z", true) -> LocalDateTime.parse(v.dropLast(1), dateTime).atZone(ZoneOffset.UTC).withZoneSameInstant(zone) to false
+                else -> LocalDateTime.parse(v, dateTime).atZone(zone) to false
+            }
+        }.getOrNull()
+    }
+
+    private fun longDate(d: ZonedDateTime) = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(catalan).format(d)
+        .replaceFirstChar { it.titlecase(catalan) }
+
+    fun describe(start: String?, end: String?, zone: ZoneId = ZoneId.systemDefault()): EventWhen? {
+        val (begin, allDay) = parse(start, zone) ?: return null
+        val finish = parse(end, zone)?.first?.takeIf { it.isAfter(begin) }
+        val timeLine = when {
+            allDay -> "Tot el dia"
+            finish == null -> time.format(begin)
+            finish.toLocalDate() == begin.toLocalDate() -> "${time.format(begin)} – ${time.format(finish)}"
+            else -> "${time.format(begin)} – ${DateTimeFormatter.ofPattern("d MMM", catalan).format(finish)}, ${time.format(finish)}"
+        }
+        return EventWhen(longDate(begin), timeLine, begin.toInstant().toEpochMilli(), finish?.toInstant()?.toEpochMilli(), allDay)
+    }
 }
