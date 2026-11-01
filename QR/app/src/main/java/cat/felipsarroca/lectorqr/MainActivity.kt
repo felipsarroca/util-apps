@@ -6,12 +6,15 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.BitmapFactory
 import android.content.res.ColorStateList
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -40,6 +43,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import java.util.concurrent.Executors
@@ -47,6 +51,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import zxingcpp.BarcodeReader
 
 class MainActivity : ComponentActivity() {
+    private val dark = Color.rgb(15, 47, 40)
+    private val mint = Color.rgb(102, 224, 180)
+    private val page = Color.rgb(246, 249, 247)
+    private val muted = Color.rgb(93, 111, 103)
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private val imageExecutor = Executors.newSingleThreadExecutor()
     private val reader by lazy {
@@ -125,12 +133,12 @@ class MainActivity : ComponentActivity() {
 
     private fun showScanner() {
         result = null; camera = null; root.removeAllViews()
-        val main = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.rgb(17, 26, 24)) }
+        val main = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(dark) }
         root.addView(main, FrameLayout.LayoutParams(-1, -1))
-        val top = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(20), 0, dp(8), 0) }
-        main.addView(top, LinearLayout.LayoutParams(-1, dp(60)))
-        top.addView(label("Lector QR", 21f, Color.WHITE).apply { setTypeface(null, 1) }, LinearLayout.LayoutParams(0, -2, 1f))
-        top.addView(iconButton("⋮", "Menú") { anchor -> menu(anchor) }, LinearLayout.LayoutParams(dp(52), dp(52)))
+        val top = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(24), 0, dp(14), 0) }
+        main.addView(top, LinearLayout.LayoutParams(-1, dp(64)))
+        top.addView(label("Lector QR", 22f, Color.WHITE).apply { typeface = Typeface.DEFAULT_BOLD }, LinearLayout.LayoutParams(0, -2, 1f))
+        top.addView(iconButton("⋮", "Menú") { anchor -> menu(anchor) }, LinearLayout.LayoutParams(dp(48), dp(48)))
         val area = FrameLayout(this)
         main.addView(area, LinearLayout.LayoutParams(-1, 0, 1f))
         val cameraAllowed = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
@@ -138,38 +146,39 @@ class MainActivity : ComponentActivity() {
         if (cameraAllowed) {
             val preview = PreviewView(this).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
             area.addView(preview, FrameLayout.LayoutParams(-1, -1))
-            area.addView(CornerOverlay(this), FrameLayout.LayoutParams(-1, -1))
+            area.addView(ScannerOverlay(this), FrameLayout.LayoutParams(-1, -1))
             startCamera(preview)
         } else {
             val message = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setPadding(dp(30), 0, dp(30), 0) }
             area.addView(message, FrameLayout.LayoutParams(-1, -1))
             message.addView(label("Cal permetre l'accés a la càmera per escanejar codis QR. També pots llegir una fotografia.", 18f, Color.WHITE))
-            message.addView(actionButton("Permet accedir a la càmera") { permission.launch(Manifest.permission.CAMERA) })
+            message.addView(styledButton("Permet accedir a la càmera", R.drawable.ic_ui_scan, true) { permission.launch(Manifest.permission.CAMERA) })
             if (!shouldShowRequestPermissionRationale(Manifest.permission.CAMERA))
-                message.addView(actionButton("Obre els ajustaments d'Android") {
+                message.addView(styledButton("Obre els ajustaments d'Android", null, false) {
                     safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
                 })
         }
-        val footer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(12)) }
-        main.addView(footer, LinearLayout.LayoutParams(-1, dp(120)))
-        footer.addView(label("Apunta la càmera a un codi QR", 16f, Color.WHITE).apply { gravity = Gravity.CENTER })
-        val controls = LinearLayout(this).apply { gravity = Gravity.CENTER }
+        val footer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setPadding(dp(16), dp(12), dp(16), dp(14)) }
+        main.addView(footer, LinearLayout.LayoutParams(-1, dp(148)))
+        val instruction = label("Apunta la càmera a un codi QR", 15f, Color.WHITE).apply {
+            gravity = Gravity.CENTER; setPadding(dp(16), dp(10), dp(16), dp(10)); background = rounded(Color.rgb(31, 76, 62), 18)
+        }
+        footer.addView(instruction)
+        val controls = LinearLayout(this).apply { gravity = Gravity.CENTER; setPadding(0, dp(12), 0, 0) }
         footer.addView(controls)
-        controls.addView(iconButton("⚡", "Activa o desactiva la llanterna") {
+        controls.addView(scannerControl(R.drawable.ic_ui_flash, "Llanterna", "Activa o desactiva la llanterna") { button ->
             val c = camera
-            if (c?.cameraInfo?.hasFlashUnit() == true) { torch = !torch; c.cameraControl.enableTorch(torch) }
+            if (c?.cameraInfo?.hasFlashUnit() == true) {
+                torch = !torch; c.cameraControl.enableTorch(torch)
+                button.background = rounded(if (torch) mint else Color.rgb(34, 85, 68), 18)
+                button.imageTintList = ColorStateList.valueOf(if (torch) dark else Color.WHITE)
+            }
             else toast("Aquest dispositiu no té llanterna disponible")
-        }, LinearLayout.LayoutParams(dp(72), dp(64)))
-        controls.addView(ImageButton(this).apply {
-            setImageResource(android.R.drawable.ic_menu_gallery)
-            imageTintList = ColorStateList.valueOf(Color.WHITE)
-            contentDescription = "Llegeix un QR d'una fotografia"
-            setBackgroundColor(Color.TRANSPARENT)
-            setOnClickListener {
+        }, LinearLayout.LayoutParams(dp(100), -2))
+        controls.addView(scannerControl(R.drawable.ic_ui_photo, "Fotografia", "Llegeix un QR d'una fotografia") {
             pickerOpen = true; scanning.set(false)
             picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }
-        }, LinearLayout.LayoutParams(dp(72), dp(64)))
+        }, LinearLayout.LayoutParams(dp(100), -2))
         pendingRelease?.let { release -> pendingRelease = null; showUpdate(release) }
     }
 
@@ -214,30 +223,81 @@ class MainActivity : ComponentActivity() {
         if (result != null) return
         val item = QrContentParser.parse(raw); result = item; scanning.set(false); provider?.unbindAll(); camera = null
         root.removeAllViews()
-        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.rgb(250, 251, 249)) }
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(page) }
         root.addView(layout, FrameLayout.LayoutParams(-1, -1))
-        layout.addView(label(item.title, 23f, Color.rgb(17, 43, 35)).apply { setTypeface(null, 1); setPadding(dp(24), dp(20), dp(24), dp(12)) })
-        val scroll = ScrollView(this).apply { isFillViewport = true }
+        val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(14), 0, dp(22), 0) }
+        layout.addView(header, LinearLayout.LayoutParams(-1, dp(64)))
+        header.addView(ImageButton(this).apply {
+            setImageResource(R.drawable.ic_ui_back)
+            imageTintList = ColorStateList.valueOf(dark)
+            contentDescription = "Torna a escanejar"
+            background = rounded(Color.TRANSPARENT, 16)
+            setOnClickListener { showScanner() }
+        }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        header.addView(label("Resultat", 18f, dark).apply { typeface = Typeface.DEFAULT_BOLD; setPadding(dp(8), 0, 0, 0) })
+        val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false }
         layout.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(24), dp(12), dp(24), dp(16)) }
+        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(22), dp(14), dp(22), dp(24)) }
         scroll.addView(body)
-        body.addView(label(item.display, 21f, Color.BLACK).apply { setTextIsSelectable(true) })
-        item.detail?.takeIf { it.isNotBlank() }?.let { body.addView(label(it, 16f, Color.DKGRAY).apply { setPadding(0, dp(12), 0, 0); setTextIsSelectable(true) }) }
-        if (item.kind == QrKind.WIFI && item.wifiPassword != null) {
-            val password = label("Contrasenya: ••••••••", 16f, Color.DKGRAY)
-            body.addView(password)
-            body.addView(actionButton("Mostra la contrasenya") { password.text = "Contrasenya: ${item.wifiPassword}" })
+        val identity = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        body.addView(identity, LinearLayout.LayoutParams(-1, dp(64)))
+        val symbol = when (item.kind) {
+            QrKind.WEB -> "↗"; QrKind.TEXT -> "Aa"; QrKind.WIFI -> "⌁"; QrKind.CONTACT -> "◉"
+            QrKind.PHONE -> "☎"; QrKind.EMAIL, QrKind.SMS -> "✉"; QrKind.GEO -> "⌖"; QrKind.EVENT -> "▣"
         }
-        val actions = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(24), dp(8), dp(24), dp(16)) }
-        layout.addView(actions)
-        primaryAction(item)?.let { (name, intent) -> actions.addView(actionButton(name) { safeStart(intent) }) }
-        if (item.kind in setOf(QrKind.WEB, QrKind.TEXT, QrKind.CONTACT, QrKind.EVENT))
-            actions.addView(actionButton("Comparteix") { share(item.raw) })
-        actions.addView(actionButton("Copia") {
-            (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Codi QR", item.raw))
-            toast("Contingut copiat")
+        identity.addView(label(symbol, 25f, dark).apply {
+            gravity = Gravity.CENTER; typeface = Typeface.DEFAULT_BOLD
+            background = rounded(Color.rgb(219, 244, 231), 17)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LinearLayout.LayoutParams(dp(56), dp(56)))
+        identity.addView(label(item.title, 28f, dark).apply { typeface = Typeface.DEFAULT_BOLD; setPadding(dp(16), 0, 0, 0) })
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; setPadding(dp(22), dp(22), dp(22), dp(22))
+            background = rounded(Color.WHITE, 24); elevation = dp(2).toFloat()
+        }
+        body.addView(card, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(22) })
+        val isWeb = item.kind == QrKind.WEB
+        card.addView(label(if (isWeb) "DOMINI" else "CONTINGUT", 12f, muted).apply { typeface = Typeface.DEFAULT_BOLD; letterSpacing = 0.09f })
+        card.addView(label(item.display, if (isWeb) 25f else 20f, dark).apply {
+            typeface = if (isWeb) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+            setPadding(0, dp(9), 0, 0); setTextIsSelectable(true)
         })
-        actions.addView(actionButton("Escaneja un altre QR") { showScanner() })
+        if (isWeb) {
+            card.addView(View(this).apply { setBackgroundColor(Color.rgb(229, 235, 231)) }, LinearLayout.LayoutParams(-1, dp(1)).apply { topMargin = dp(22); bottomMargin = dp(18) })
+            card.addView(label("ADREÇA COMPLETA", 12f, muted).apply { typeface = Typeface.DEFAULT_BOLD; letterSpacing = 0.09f })
+            card.addView(label(item.detail ?: item.raw, 16f, Color.rgb(42, 70, 59)).apply {
+                setPadding(0, dp(9), 0, 0); setTextIsSelectable(true); breakStrategy = android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
+            })
+        } else {
+            item.detail?.takeIf { it.isNotBlank() && item.kind != QrKind.WIFI }?.let {
+                card.addView(label(it, 16f, muted).apply { setPadding(0, dp(16), 0, 0); setTextIsSelectable(true) })
+            }
+        }
+        if (item.kind == QrKind.WIFI && item.wifiPassword != null) {
+            val password = label("Contrasenya: ••••••••", 16f, muted).apply { setPadding(0, dp(18), 0, 0) }
+            card.addView(password)
+            card.addView(styledButton("Mostra la contrasenya", null, false) { password.text = "Contrasenya: ${item.wifiPassword}" }, LinearLayout.LayoutParams(-1, dp(50)).apply { topMargin = dp(14) })
+        }
+        val actions = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; setPadding(dp(22), dp(16), dp(22), dp(16))
+            setBackgroundColor(Color.WHITE); elevation = dp(8).toFloat()
+        }
+        layout.addView(actions)
+        val primary = primaryAction(item)
+        if (primary != null) actions.addView(styledButton(primary.first, R.drawable.ic_ui_open, true) { safeStart(primary.second) }, LinearLayout.LayoutParams(-1, dp(54)))
+        else actions.addView(styledButton("Copia el contingut", R.drawable.ic_ui_copy, true) { copy(item.raw) }, LinearLayout.LayoutParams(-1, dp(54)))
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        actions.addView(row, LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(10) })
+        if (primary != null) row.addView(styledButton("Copia", R.drawable.ic_ui_copy, false) { copy(item.raw) }, LinearLayout.LayoutParams(0, -1, 1f))
+        val canShare = item.kind in setOf(QrKind.WEB, QrKind.TEXT, QrKind.CONTACT, QrKind.EVENT)
+        if (canShare) row.addView(styledButton("Comparteix", R.drawable.ic_ui_share, false) { share(item.raw) }, LinearLayout.LayoutParams(0, -1, 1f).apply { if (primary != null) leftMargin = dp(10) })
+        if (row.childCount == 0) row.visibility = View.GONE
+        actions.addView(styledButton("Escaneja un altre QR", R.drawable.ic_ui_scan, false) { showScanner() }, LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(10) })
+    }
+
+    private fun copy(raw: String) {
+        (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Codi QR", raw))
+        toast("Contingut copiat")
     }
 
     private fun primaryAction(item: QrContent): Pair<String, Intent>? = when (item.kind) {
@@ -306,25 +366,70 @@ class MainActivity : ComponentActivity() {
     private fun toast(message: String) { Toast.makeText(this, message, Toast.LENGTH_LONG).show() }
     private fun label(text: String, sp: Float, color: Int) = TextView(this).apply { this.text = text; textSize = sp; setTextColor(color) }
     private fun actionButton(text: String, click: () -> Unit) = Button(this).apply { this.text = text; minHeight = dp(48); setOnClickListener { click() } }
+    private fun rounded(color: Int, radius: Int, border: Int? = null) = GradientDrawable().apply {
+        setColor(color); cornerRadius = dp(radius).toFloat()
+        border?.let { setStroke(dp(1), it) }
+    }
+    private fun styledButton(text: String, icon: Int?, primary: Boolean, click: () -> Unit) = Button(this).apply {
+        this.text = text; isAllCaps = false; textSize = 15f; typeface = Typeface.DEFAULT_BOLD
+        minHeight = dp(48); gravity = Gravity.CENTER; setPadding(dp(14), 0, dp(14), 0)
+        setTextColor(if (primary) Color.WHITE else dark)
+        backgroundTintList = null
+        background = rounded(if (primary) Color.rgb(21, 113, 81) else Color.WHITE, 16,
+            if (primary) null else Color.rgb(207, 222, 213))
+        icon?.let { res ->
+            ContextCompat.getDrawable(this@MainActivity, res)?.mutate()?.let { drawable ->
+                DrawableCompat.setTint(drawable, if (primary) Color.WHITE else dark)
+                setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
+                compoundDrawablePadding = dp(9)
+            }
+        }
+        setOnClickListener { click() }
+    }
+    private fun scannerControl(icon: Int, text: String, description: String, click: (ImageButton) -> Unit) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
+        val button = ImageButton(this@MainActivity).apply {
+            setImageResource(icon); imageTintList = ColorStateList.valueOf(Color.WHITE)
+            contentDescription = description; background = rounded(Color.rgb(34, 85, 68), 18)
+            setOnClickListener { click(this) }
+        }
+        addView(button, LinearLayout.LayoutParams(dp(56), dp(56)))
+        addView(label(text, 12f, Color.WHITE).apply { gravity = Gravity.CENTER; setPadding(0, dp(5), 0, 0) })
+    }
     private fun iconButton(symbol: String, description: String, click: (View) -> Unit) = Button(this).apply {
         text = symbol; textSize = 25f; contentDescription = description; minWidth = dp(48); minHeight = dp(48); setTextColor(Color.WHITE)
-        setBackgroundColor(Color.TRANSPARENT); setOnClickListener { click(this) }
+        backgroundTintList = null; background = rounded(Color.TRANSPARENT, 16); setOnClickListener { click(this) }
     }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
     @Deprecated("Android back navigation")
     override fun onBackPressed() { if (result != null) showScanner() else super.onBackPressed() }
 }
 
-private class CornerOverlay(context: Context) : View(context) {
-    private val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; strokeWidth = resources.displayMetrics.density * 8; style = Paint.Style.STROKE }
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; strokeWidth = resources.displayMetrics.density * 4; style = Paint.Style.STROKE }
+private class ScannerOverlay(context: Context) : View(context) {
+    private val density = resources.displayMetrics.density
+    private val shade = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(135, 9, 32, 26) }
+    private val frame = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(170, 255, 255, 255); strokeWidth = density * 1.5f; style = Paint.Style.STROKE }
+    private val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(180, 8, 37, 29); strokeWidth = density * 7; style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
+    private val corners = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(102, 224, 180); strokeWidth = density * 4; style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
+    private val lineOutline = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(180, 8, 37, 29); strokeWidth = density * 6; strokeCap = Paint.Cap.ROUND }
+    private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(255, 117, 106); strokeWidth = density * 2.5f; strokeCap = Paint.Cap.ROUND }
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val size = minOf(width, height) * 0.64f; val left = (width - size) / 2; val top = (height - size) / 2; val end = size * 0.15f
-        for (x in listOf(left, left + size)) for (y in listOf(top, top + size)) {
-            val dx = if (x == left) end else -end; val dy = if (y == top) end else -end
+        val side = minOf(width * 0.76f, height * 0.64f, density * 340)
+        val box = RectF((width - side) / 2, (height - side) / 2, (width + side) / 2, (height + side) / 2)
+        canvas.drawRect(0f, 0f, width.toFloat(), box.top, shade)
+        canvas.drawRect(0f, box.bottom, width.toFloat(), height.toFloat(), shade)
+        canvas.drawRect(0f, box.top, box.left, box.bottom, shade)
+        canvas.drawRect(box.right, box.top, width.toFloat(), box.bottom, shade)
+        canvas.drawRoundRect(box, density * 22, density * 22, frame)
+        val end = side * 0.14f
+        for (x in listOf(box.left, box.right)) for (y in listOf(box.top, box.bottom)) {
+            val dx = if (x == box.left) end else -end; val dy = if (y == box.top) end else -end
             canvas.drawLine(x, y, x + dx, y, outline); canvas.drawLine(x, y, x, y + dy, outline)
-            canvas.drawLine(x, y, x + dx, y, paint); canvas.drawLine(x, y, x, y + dy, paint)
+            canvas.drawLine(x, y, x + dx, y, corners); canvas.drawLine(x, y, x, y + dy, corners)
         }
+        val y = box.centerY()
+        canvas.drawLine(box.left + side * 0.16f, y, box.right - side * 0.16f, y, lineOutline)
+        canvas.drawLine(box.left + side * 0.16f, y, box.right - side * 0.16f, y, line)
     }
 }
