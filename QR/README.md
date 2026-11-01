@@ -4,13 +4,13 @@ Aplicació gratuïta i de codi obert per llegir QR de manera immediata. En obrir
 
 ## Instal·lació
 
-**[Descarrega directament l'APK signat: ja.cat/QR-Cat](https://ja.cat/QR-Cat).** Ara l'enllaç apunta a la [versió de prova amb icona pròpia](https://github.com/felipsarroca/lector-qr-android/releases/tag/test-1.0.0-rc3). Encara cal validar-la en mòbils reals abans de publicar la primera versió estable. Obre l'APK al mòbil i confirma la instal·lació quan Android ho demani. Per actualitzar, instal·la l'APK nou sobre l'anterior: totes les versions han de conservar el mateix identificador i certificat. L'app també permet comprovar versions des del menú `⋮` quan existeixi una Release estable.
+**[Descarrega directament l'APK signat: ja.cat/QR-Cat](https://ja.cat/QR-Cat).** Ara l'enllaç apunta a la [versió de prova amb la interfície renovada](https://github.com/felipsarroca/lector-qr-android/releases/tag/test-1.0.0-rc4). Encara cal validar-la en mòbils reals abans de publicar la primera versió estable. Obre l'APK al mòbil i confirma la instal·lació quan Android ho demani. Per actualitzar, instal·la l'APK nou sobre l'anterior: totes les versions han de conservar el mateix identificador i certificat. L'app també permet comprovar versions des del menú `⋮` quan existeixi una Release estable.
 
 ## Compilació
 
 Obre aquest directori amb Android Studio (JDK 17, SDK 36) o executa `./gradlew testDebugUnitTest assembleDebug`. El projecte utilitza Kotlin, CameraX i ZXing-C++ 3.1.1. El lector funciona sense connexió; l'única consulta de xarxa de l'app és l'API pública de GitHub per cercar actualitzacions.
 
-La versió mínima és Android 8 (API 26). La versió 1.0.0 té `versionCode = 1` i `applicationId = cat.felipsarroca.lectorqr`.
+La versió mínima és Android 8 (API 26). La versió de prova actual té `versionCode = 2` i `applicationId = cat.felipsarroca.lectorqr`.
 
 ## Publicació de versions
 

@@ -46,6 +46,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import zxingcpp.BarcodeReader
@@ -133,6 +134,11 @@ class MainActivity : ComponentActivity() {
 
     private fun showScanner() {
         result = null; camera = null; root.removeAllViews()
+        root.setBackgroundColor(dark)
+        window.statusBarColor = dark; window.navigationBarColor = dark
+        WindowInsetsControllerCompat(window, root).apply {
+            isAppearanceLightStatusBars = false; isAppearanceLightNavigationBars = false
+        }
         val main = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(dark) }
         root.addView(main, FrameLayout.LayoutParams(-1, -1))
         val top = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(24), 0, dp(14), 0) }
@@ -223,6 +229,11 @@ class MainActivity : ComponentActivity() {
         if (result != null) return
         val item = QrContentParser.parse(raw); result = item; scanning.set(false); provider?.unbindAll(); camera = null
         root.removeAllViews()
+        root.setBackgroundColor(page)
+        window.statusBarColor = page; window.navigationBarColor = page
+        WindowInsetsControllerCompat(window, root).apply {
+            isAppearanceLightStatusBars = true; isAppearanceLightNavigationBars = true
+        }
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(page) }
         root.addView(layout, FrameLayout.LayoutParams(-1, -1))
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(14), 0, dp(22), 0) }

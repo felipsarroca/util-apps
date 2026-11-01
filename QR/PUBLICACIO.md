@@ -11,7 +11,7 @@
 
 ## Exemple: de 1.0.0 a 1.0.1
 
-1. Canvia `versionName` a `1.0.1` i incrementa `versionCode` a `2` a `app/build.gradle.kts`. Mantén l'`applicationId` i la clau de signatura.
+1. Canvia `versionName` a `1.0.1` i incrementa `versionCode` a `3` o superior a `app/build.gradle.kts`. Mantén l'`applicationId` i la clau de signatura.
 2. Actualitza `NOTES.md`, executa `./gradlew testDebugUnitTest assembleDebug` i les proves manuals. Instal·la una compilació de producció de 1.0.1 sobre la de 1.0.0 i comprova que no cal desinstal·lar.
 3. Fes commit i push a `main`. Quan el workflow sigui verd, crea i publica l'etiqueta `v1.0.1` sobre aquell commit.
 4. Comprova la Release, la signatura, el SHA-256 i la detecció de la nova versió dins l'app.
