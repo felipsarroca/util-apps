@@ -25,8 +25,13 @@ class ResultVisualTest {
         "BEGIN:VEVENT\nSUMMARY:Reunió de famílies de 2n d'ESO\nDTSTART:20261112T173000\nDTEND:20261112T190000\nLOCATION:Sala d'actes\nEND:VEVENT",
         "Afegeix al calendari")
 
-    private fun capture(name: String, raw: String, expected: String) {
+    @Test fun capturesUnsafeLinkResult() = capture("resultat-avis.png",
+        "http://аpple.com/inici-de-sessio", "Connexió no xifrada (http)")
+
+    private fun capture(base: String, raw: String, expected: String) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
+        // The workflow runs the tests again with large text and in landscape, adding a suffix to each file.
+        val name = base.replace(".png", (InstrumentationRegistry.getArguments().getString("sufix") ?: "") + ".png")
         // CLEAR_TASK: a fresh activity in front, never an older scanner left by another launch.
         val intent = Intent(instrumentation.targetContext, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)

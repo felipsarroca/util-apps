@@ -1,5 +1,6 @@
 package cat.felipsarroca.lectorqr
 
+import java.net.IDN
 import java.net.URI
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -28,6 +29,10 @@ data class QrContent(
     val eventStart: String? = null,
     val eventEnd: String? = null,
     val eventLocation: String? = null,
+    /** Plain http: the page travels without encryption. */
+    val webInsecure: Boolean = false,
+    /** The domain as written in the QR when it uses non-Latin characters; [display] then holds its real form. */
+    val webUnicodeHost: String? = null,
 )
 
 /** Pure interpretation of known QR formats. Never follows or executes encoded content. */
@@ -58,12 +63,30 @@ object QrContentParser {
         }
         try {
             val uri = URI(value)
-            if (uri.scheme?.lowercase() in listOf("http", "https") && !uri.host.isNullOrBlank() && uri.userInfo == null) {
-                val host = uri.host.lowercase()
-                return QrContent(raw, QrKind.WEB, "Enllaç", host, value, value)
+            val scheme = uri.scheme?.lowercase()
+            if (scheme in listOf("http", "https") && uri.userInfo == null) {
+                webHost(uri)?.let { (ascii, unicode) ->
+                    return QrContent(raw, QrKind.WEB, "Enllaç", ascii, value, value,
+                        webInsecure = scheme == "http", webUnicodeHost = unicode)
+                }
             }
         } catch (_: Exception) { }
         return QrContent(raw, QrKind.TEXT, "Text", raw)
+    }
+
+    /**
+     * The real (ASCII) domain, plus the written form when it differs. java.net.URI leaves the host
+     * empty for internationalised names, so they are read from the authority and converted with IDN:
+     * "аpple.com" with a Cyrillic "а" becomes "xn--pple-43d.com" and cannot pass for apple.com.
+     */
+    private fun webHost(uri: URI): Pair<String, String?>? {
+        uri.host?.takeIf { it.isNotBlank() }?.let { return it.lowercase() to null }
+        val authority = uri.authority?.takeIf { it.isNotBlank() && '@' !in it } ?: return null
+        val host = authority.replace(Regex(":\\d{1,5}$"), "").trimEnd('.')
+        if (host.isBlank() || host.any { it.isWhitespace() || it in "/\\?#[]" }) return null
+        val ascii = runCatching { IDN.toASCII(host, IDN.USE_STD3_ASCII_RULES).lowercase() }.getOrNull() ?: return null
+        if (ascii.isBlank() || ascii == host.lowercase()) return null
+        return ascii to host
     }
 
     private fun wifi(raw: String, value: String): QrContent {

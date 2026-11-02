@@ -39,6 +39,21 @@ class QrContentParserTest {
         assertNull(EventDates.describe("dimarts", null, zone))
     }
 
+    @Test fun flagsPlainHttpAndLookalikeDomains() {
+        val plain = QrContentParser.parse("http://exemple.cat/fitxa")
+        assertEquals(QrKind.WEB, plain.kind)
+        assertTrue(plain.webInsecure)
+        assertNull(plain.webUnicodeHost)
+        assertFalse(QrContentParser.parse("https://exemple.cat").webInsecure)
+        // A Cyrillic "а" posing as the Latin letter.
+        val lookalike = QrContentParser.parse("https://аpple.com/login")
+        assertEquals(QrKind.WEB, lookalike.kind)
+        assertTrue(lookalike.display, lookalike.display.startsWith("xn--"))
+        assertEquals("аpple.com", lookalike.webUnicodeHost)
+        assertEquals("xn--llaollaa-j3a.cat", QrContentParser.parse("https://llaollaña.cat:8080/").display)
+        assertEquals(QrKind.TEXT, QrContentParser.parse("https://usér@аpple.com").kind)
+    }
+
     @Test fun readsWifiExtrasAndEventEnd() {
         val wifi = QrContentParser.parse("WIFI:T:WPA;S:Amagada;P:clau1234;H:true;;")
         assertTrue(wifi.wifiHidden)

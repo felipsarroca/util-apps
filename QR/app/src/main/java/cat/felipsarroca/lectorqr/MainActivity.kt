@@ -26,8 +26,11 @@ import android.os.PersistableBundle
 import android.provider.CalendarContract
 import android.provider.ContactsContract
 import android.provider.Settings
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
@@ -43,6 +46,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -56,6 +60,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import java.util.Locale
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import zxingcpp.BarcodeReader
 
@@ -69,6 +74,8 @@ class MainActivity : ComponentActivity() {
     private val badge = Color.rgb(219, 244, 231)
     private val line = Color.rgb(229, 235, 231)
     private val border = Color.rgb(207, 222, 213)
+    private val warnInk = Color.rgb(138, 74, 0)
+    private val warnFill = Color.rgb(255, 241, 219)
     private val catalan: Locale = Locale.forLanguageTag("ca")
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private val imageExecutor = Executors.newSingleThreadExecutor()
@@ -86,6 +93,7 @@ class MainActivity : ComponentActivity() {
     private var pickerOpen = false
     private var pendingRelease: Release? = null
     private var cameraPermissionAtLastRender = false
+    private var cameraFailed = false
     private var bars: Insets = Insets.NONE
     private var scannerTop: View? = null
     private var scannerBottom: View? = null
@@ -134,7 +142,9 @@ class MainActivity : ComponentActivity() {
             insets
         }
         setContentView(root)
-        showScanner()
+        // Turning the phone must not throw away a result that is on screen.
+        val shown = savedInstanceState?.getString("result")
+        if (shown != null) displayResult(shown) else showScanner()
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED &&
             !getPreferences(MODE_PRIVATE).getBoolean("cameraAsked", false)) {
             getPreferences(MODE_PRIVATE).edit().putBoolean("cameraAsked", true).apply()
@@ -150,6 +160,10 @@ class MainActivity : ComponentActivity() {
             if (allowed != cameraPermissionAtLastRender) showScanner() else scanning.set(true)
         }
     }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        result?.let { outState.putString("result", it.raw) }
+    }
     override fun onPause() { scanning.set(false); camera?.cameraControl?.enableTorch(false); torch = false; super.onPause() }
     override fun onDestroy() { provider?.unbindAll(); cameraExecutor.shutdown(); imageExecutor.shutdown(); super.onDestroy() }
 
@@ -158,7 +172,8 @@ class MainActivity : ComponentActivity() {
         if (result == null) {
             root.setPadding(0, 0, 0, 0)
             scannerTop?.setPadding(bars.left + dp(24), bars.top + dp(6), bars.right + dp(10), dp(36))
-            scannerBottom?.setPadding(bars.left + dp(16), dp(56), bars.right + dp(16), bars.bottom + dp(28))
+            val short = resources.configuration.screenHeightDp < 520
+            scannerBottom?.setPadding(bars.left + dp(16), dp(if (short) 28 else 56), bars.right + dp(16), bars.bottom + dp(if (short) 12 else 28))
         } else root.setPadding(bars.left, bars.top, bars.right, bars.bottom)
         banner?.let { view ->
             (view.layoutParams as? FrameLayout.LayoutParams)?.let { it.topMargin = (if (result == null) bars.top else 0) + dp(70); view.layoutParams = it }
@@ -175,24 +190,39 @@ class MainActivity : ComponentActivity() {
         result = null; camera = null; torch = false; banner = null; root.removeAllViews()
         root.setBackgroundColor(dark)
         setLightBars(false)
-        val cameraAllowed = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-        cameraPermissionAtLastRender = cameraAllowed
+        val permitted = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        cameraPermissionAtLastRender = permitted
+        val cameraAllowed = permitted && !cameraFailed
         overlay = null
         if (cameraAllowed) {
             val preview = PreviewView(this).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
             root.addView(preview, FrameLayout.LayoutParams(-1, -1))
-            overlay = ScannerOverlay(this).also { root.addView(it, FrameLayout.LayoutParams(-1, -1)) }
+            val frame = ScannerOverlay(this)
+            root.addView(frame, FrameLayout.LayoutParams(-1, -1))
+            overlay = frame
+            enableTouchControls(preview, frame)
             startCamera(preview)
         } else {
-            val message = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setPadding(dp(30), dp(80), dp(30), dp(200)) }
-            root.addView(message, FrameLayout.LayoutParams(-1, -1))
-            message.addView(label("Cal permetre l'accés a la càmera per escanejar codis QR. També pots llegir una fotografia.", 18f, Color.WHITE).apply { gravity = Gravity.CENTER })
-            message.addView(styledButton("Permet accedir a la càmera", R.drawable.ic_ui_scan, Style.PRIMARY) { permission.launch(Manifest.permission.CAMERA) },
-                LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(22) })
-            if (!shouldShowRequestPermissionRationale(Manifest.permission.CAMERA))
-                message.addView(styledButton("Obre els ajustaments d'Android", null, Style.TONAL) {
-                    safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
-                }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) })
+            val message = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setPadding(dp(30), dp(96), dp(30), dp(if (permitted) 48 else 200)) }
+            root.addView(ScrollView(this).apply { isFillViewport = true; addView(message) }, FrameLayout.LayoutParams(-1, -1))
+            if (permitted) {
+                message.addView(label("No s'ha pogut obrir la càmera", 22f, Color.WHITE).apply { gravity = Gravity.CENTER; typeface = Typeface.DEFAULT_BOLD })
+                message.addView(label("Potser l'està fent servir una altra aplicació. Pots llegir el QR d'una fotografia o tornar-ho a provar.", 16f, Color.argb(210, 255, 255, 255)).apply {
+                    gravity = Gravity.CENTER; setPadding(0, dp(10), 0, 0); setLineSpacing(0f, 1.15f)
+                })
+                message.addView(styledButton("Llegeix una fotografia", R.drawable.ic_ui_photo, Style.PRIMARY) { pickPhoto() },
+                    LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(26) })
+                message.addView(styledButton("Torna-ho a provar", R.drawable.ic_ui_scan, Style.TONAL) { cameraFailed = false; showScanner() },
+                    LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) })
+            } else {
+                message.addView(label("Cal permetre l'accés a la càmera per escanejar codis QR. També pots llegir una fotografia.", 18f, Color.WHITE).apply { gravity = Gravity.CENTER })
+                message.addView(styledButton("Permet accedir a la càmera", R.drawable.ic_ui_scan, Style.PRIMARY) { permission.launch(Manifest.permission.CAMERA) },
+                    LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(22) })
+                if (!shouldShowRequestPermissionRationale(Manifest.permission.CAMERA))
+                    message.addView(styledButton("Obre els ajustaments d'Android", null, Style.TONAL) {
+                        safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+                    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) })
+            }
         }
 
         val top = LinearLayout(this).apply {
@@ -212,10 +242,16 @@ class MainActivity : ComponentActivity() {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL
             background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(Color.argb(0, 15, 47, 40), Color.argb(242, 15, 47, 40)))
         }
-        if (cameraAllowed) bottom.addView(label("Apunta la càmera a un codi QR", 16f, Color.WHITE).apply {
-            gravity = Gravity.CENTER; setShadowLayer(dp(4).toFloat(), 0f, dp(1).toFloat(), Color.argb(150, 0, 0, 0))
-        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(26) })
+        if (cameraAllowed) {
+            bottom.addView(label("Apunta la càmera a un codi QR", 16f, Color.WHITE).apply {
+                gravity = Gravity.CENTER; setShadowLayer(dp(4).toFloat(), 0f, dp(1).toFloat(), Color.argb(150, 0, 0, 0))
+            }, LinearLayout.LayoutParams(-1, -2))
+            bottom.addView(label("Pessiga per apropar · toca per enfocar", 13f, Color.argb(200, 255, 255, 255)).apply {
+                gravity = Gravity.CENTER; setShadowLayer(dp(4).toFloat(), 0f, dp(1).toFloat(), Color.argb(150, 0, 0, 0))
+            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4); bottomMargin = dp(22) })
+        }
         val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
+        if (cameraFailed && permitted) controls.visibility = View.GONE
         bottom.addView(controls)
         if (cameraAllowed) controls.addView(scannerControl(R.drawable.ic_ui_flash, "Llanterna", "Activa o desactiva la llanterna") { button ->
             val c = camera
@@ -224,13 +260,15 @@ class MainActivity : ComponentActivity() {
                 button.background = circle(if (torch) mint else Color.argb(31, 255, 255, 255), torch)
                 button.imageTintList = ColorStateList.valueOf(if (torch) dark else Color.WHITE)
             } else toast("Aquest dispositiu no té llanterna disponible")
-        }, LinearLayout.LayoutParams(dp(112), -2))
-        controls.addView(scannerControl(R.drawable.ic_ui_photo, "Fotografia", "Llegeix un QR d'una fotografia") {
-            pickerOpen = true; scanning.set(false)
-            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        }, LinearLayout.LayoutParams(dp(112), -2))
+        }, LinearLayout.LayoutParams(-2, -2))
+        controls.addView(scannerControl(R.drawable.ic_ui_photo, "Fotografia", "Llegeix un QR d'una fotografia") { pickPhoto() }, LinearLayout.LayoutParams(-2, -2))
         root.addView(bottom, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
         scannerBottom = bottom
+        // The reading frame sits centred in the space the two bars leave free, in any orientation.
+        val reserve = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            overlay?.setFreeArea(top.bottom.toFloat(), (bottom.top + bottom.paddingTop).toFloat())
+        }
+        top.addOnLayoutChangeListener(reserve); bottom.addOnLayoutChangeListener(reserve)
 
         applyInsets(); ViewCompat.requestApplyInsets(root)
         pendingRelease?.let { release -> pendingRelease = null; showUpdate(release) }
@@ -253,7 +291,8 @@ class MainActivity : ComponentActivity() {
                     } catch (_: Exception) { /* A malformed frame must not stop the camera. */ }
                     finally { image.close() }
                 }
-                camera = p.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
+                val selector = if (p.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) CameraSelector.DEFAULT_BACK_CAMERA else CameraSelector.DEFAULT_FRONT_CAMERA
+                camera = p.bindToLifecycle(this, selector, preview, analysis)
                 scanning.set(true)
             } catch (_: Exception) { showCameraError() }
         }, ContextCompat.getMainExecutor(this))
@@ -276,14 +315,54 @@ class MainActivity : ComponentActivity() {
         root.postDelayed({ if (!isFinishing && result == null) displayResult(value) }, if (overlay != null) 240L else 0L)
     }
 
+    /** A clear message in the middle of the screen instead of a black preview. */
     private fun showCameraError() {
-        scanning.set(false)
-        toast("No s'ha pogut obrir la càmera. Pots llegir un QR d'una fotografia.")
+        scanning.set(false); provider?.unbindAll(); camera = null
+        if (result != null || isFinishing) return
+        cameraFailed = true
+        showScanner()
+    }
+
+    private fun pickPhoto() {
+        pickerOpen = true; scanning.set(false)
+        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+
+    /** Pinch to zoom and tap to focus: QR codes projected on a whiteboard are often far away. */
+    private fun enableTouchControls(preview: PreviewView, frame: ScannerOverlay) {
+        val scale = ScaleGestureDetector(this, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                val c = camera ?: return false
+                val state = c.cameraInfo.zoomState.value ?: return false
+                val ratio = (state.zoomRatio * detector.scaleFactor).coerceIn(state.minZoomRatio, state.maxZoomRatio)
+                c.cameraControl.setZoomRatio(ratio)
+                frame.showZoom(ratio)
+                return true
+            }
+        })
+        val taps = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent) = true
+            override fun onSingleTapUp(e: MotionEvent): Boolean {
+                val c = camera ?: return false
+                val point = preview.meteringPointFactory.createPoint(e.x, e.y)
+                val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE)
+                    .setAutoCancelDuration(4, TimeUnit.SECONDS).build()
+                runCatching { c.cameraControl.startFocusAndMetering(action) }
+                frame.showFocus(e.x, e.y)
+                return true
+            }
+        })
+        frame.setOnTouchListener { view, event ->
+            scale.onTouchEvent(event)
+            if (!scale.isInProgress) taps.onTouchEvent(event)
+            if (event.actionMasked == MotionEvent.ACTION_UP) view.performClick()
+            true
+        }
     }
 
     private fun displayResult(raw: String) {
         if (result != null) return
-        val item = QrContentParser.parse(raw); result = item; scanning.set(false); provider?.unbindAll(); camera = null
+        val item = QrContentParser.parse(raw); result = item; scanning.set(false); provider?.unbindAll(); camera = null; cameraFailed = false
         overlay = null; scannerTop = null; scannerBottom = null; banner = null
         root.removeAllViews()
         root.setBackgroundColor(page)
@@ -291,7 +370,8 @@ class MainActivity : ComponentActivity() {
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(page) }
         root.addView(layout, FrameLayout.LayoutParams(-1, -1))
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(12), 0, dp(22), 0) }
-        layout.addView(header, LinearLayout.LayoutParams(-1, dp(64)))
+        header.minimumHeight = dp(64)
+        layout.addView(header, LinearLayout.LayoutParams(-1, -2))
         header.addView(ImageButton(this).apply {
             setImageResource(R.drawable.ic_ui_back)
             imageTintList = ColorStateList.valueOf(dark)
@@ -326,6 +406,10 @@ class MainActivity : ComponentActivity() {
             QrKind.WEB -> {
                 card.addView(headline(item.display, 30f))
                 card.addView(label("Domini real de l'enllaç", 14f, muted).apply { setPadding(0, dp(6), 0, 0) })
+                item.webUnicodeHost?.let {
+                    card.addView(warning("Usa lletres d'un altre alfabet: s'escriu «$it», però el domini real és el de dalt"), warningParams())
+                }
+                if (item.webInsecure) card.addView(warning("Connexió no xifrada (http)"), warningParams())
                 card.addView(divider(), dividerParams())
                 card.addView(caption("ADREÇA COMPLETA"))
                 card.addView(label(item.detail ?: item.raw, 16f, Color.rgb(42, 70, 59)).apply {
@@ -351,7 +435,7 @@ class MainActivity : ComponentActivity() {
                             value.letterSpacing = if (showing) 0.12f else 0f
                             text = if (showing) "Mostra" else "Amaga"
                         }
-                    }, LinearLayout.LayoutParams(-2, dp(44)))
+                    }, LinearLayout.LayoutParams(-2, -2))
                 }
             }
             QrKind.EVENT -> {
@@ -374,7 +458,13 @@ class MainActivity : ComponentActivity() {
             orientation = LinearLayout.VERTICAL; setPadding(dp(22), dp(16), dp(22), dp(16))
             setBackgroundColor(Color.WHITE); elevation = dp(8).toFloat()
         }
-        layout.addView(actions)
+        // On short screens (landscape) or with large system text, the buttons scroll with the content,
+        // so the result itself is never squeezed out of view.
+        val roomy = resources.configuration.screenHeightDp >= 560 && resources.configuration.fontScale <= 1.3f
+        if (roomy) layout.addView(actions) else {
+            actions.setPadding(0, dp(20), 0, 0); actions.setBackgroundColor(Color.TRANSPARENT); actions.elevation = 0f
+            body.addView(actions)
+        }
         val primary = primaryAction(item)
         if (primary != null) actions.addView(styledButton(primary.first, primaryIcon(item.kind), Style.PRIMARY) { primary.second() }, LinearLayout.LayoutParams(-1, -2))
         else actions.addView(styledButton("Copia el contingut", R.drawable.ic_ui_copy, Style.PRIMARY) { copy(item.raw) }, LinearLayout.LayoutParams(-1, -2))
@@ -423,7 +513,7 @@ class MainActivity : ComponentActivity() {
         fun open(intent: Intent): () -> Unit = { safeStart(intent) }
         return when (item.kind) {
             QrKind.WEB -> "Obre l'enllaç" to open(Intent(Intent.ACTION_VIEW, Uri.parse(item.actionData)))
-            QrKind.PHONE -> "Obre el marcador" to open(Intent(Intent.ACTION_DIAL, Uri.parse(item.actionData)))
+            QrKind.PHONE -> "Truca" to open(Intent(Intent.ACTION_DIAL, Uri.parse(item.actionData)))
             QrKind.EMAIL -> "Prepara un correu" to open(Intent(Intent.ACTION_SENDTO, Uri.parse(item.actionData)))
             QrKind.SMS -> "Prepara un SMS" to open(Intent(Intent.ACTION_SENDTO, Uri.parse(item.actionData)))
             QrKind.GEO -> "Obre al mapa" to open(Intent(Intent.ACTION_VIEW, Uri.parse(item.actionData)))
@@ -523,6 +613,11 @@ class MainActivity : ComponentActivity() {
     }
     private fun caption(text: String) = label(text, 12f, muted).apply { typeface = Typeface.DEFAULT_BOLD; letterSpacing = 0.09f }
     private fun divider() = View(this).apply { setBackgroundColor(line) }
+    private fun warning(text: String) = label(text, 14f, warnInk).apply {
+        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL); background = rounded(warnFill, 10)
+        setPadding(dp(12), dp(8), dp(12), dp(8)); setLineSpacing(0f, 1.1f)
+    }
+    private fun warningParams() = LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(12) }
     private fun dividerParams() = LinearLayout.LayoutParams(-1, dp(1)).apply { topMargin = dp(18); bottomMargin = dp(14) }
     private fun infoRow(icon: Int, main: String, secondary: String?) = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL; setPadding(0, dp(18), 0, 0)
@@ -571,6 +666,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun scannerControl(icon: Int, text: String, description: String, click: (ImageButton) -> Unit) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
+        minimumWidth = dp(112); setPadding(dp(8), 0, dp(8), 0)
         val button = ImageButton(this@MainActivity).apply {
             setImageResource(icon); imageTintList = ColorStateList.valueOf(Color.WHITE)
             contentDescription = description; background = circle(Color.argb(31, 255, 255, 255), false)
@@ -594,8 +690,40 @@ private class ScannerOverlay(context: Context) : View(context) {
     private val corners = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND }
     private val path = Path()
     private var flash = 0f
+    private var areaTop = -1f
+    private var areaBottom = -1f
+    private var focusX = 0f
+    private var focusY = 0f
+    private var focusAlpha = 0f
+    private var zoomText: String? = null
+    private val hideZoom = Runnable { zoomText = null; invalidate() }
+    private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = Color.WHITE }
+    private val pill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(160, 15, 47, 40) }
+    private val zoomPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; textAlign = Paint.Align.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD
+        textSize = 15 * resources.displayMetrics.scaledDensity
+    }
 
     init { importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO }
+
+    /** The part of the screen not covered by the top and bottom bars. */
+    fun setFreeArea(top: Float, bottom: Float) {
+        if (top != areaTop || bottom != areaBottom) { areaTop = top; areaBottom = bottom; invalidate() }
+    }
+
+    fun showZoom(ratio: Float) {
+        zoomText = String.format(java.util.Locale.forLanguageTag("ca"), "%.1f×", ratio)
+        removeCallbacks(hideZoom); postDelayed(hideZoom, 1200); invalidate()
+    }
+
+    fun showFocus(x: Float, y: Float) {
+        focusX = x; focusY = y
+        ValueAnimator.ofFloat(1f, 0f).apply {
+            duration = 900
+            addUpdateListener { focusAlpha = it.animatedValue as Float; invalidate() }
+            start()
+        }
+    }
 
     fun confirm() {
         ValueAnimator.ofFloat(0f, 1f, 0f).apply {
@@ -607,8 +735,11 @@ private class ScannerOverlay(context: Context) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val side = minOf(width * 0.68f, height * 0.42f, density * 280) * (1f - 0.04f * flash)
-        val cx = width / 2f; val cy = height * 0.44f
+        val free = areaTop >= 0 && areaBottom - areaTop > density * 120
+        val top = if (free) areaTop else 0f
+        val bottom = if (free) areaBottom else height.toFloat()
+        val side = minOf(width * 0.68f, (bottom - top) * 0.86f, density * 280) * (1f - 0.04f * flash)
+        val cx = width / 2f; val cy = if (free) (top + bottom) / 2 else height * 0.44f
         val box = RectF(cx - side / 2, cy - side / 2, cx + side / 2, cy + side / 2)
         val r = density * 24; val len = side * 0.19f
         path.reset()
@@ -626,6 +757,16 @@ private class ScannerOverlay(context: Context) : View(context) {
         corners.color = blend(mint, Color.WHITE, flash)
         canvas.drawPath(path, shadow)
         canvas.drawPath(path, corners)
+        if (focusAlpha > 0f) {
+            ring.alpha = (255 * focusAlpha).toInt(); ring.strokeWidth = density * 2
+            canvas.drawCircle(focusX, focusY, density * (30 + 8 * focusAlpha), ring)
+        }
+        zoomText?.let { text ->
+            val w = zoomPaint.measureText(text) + density * 24; val h = density * 34
+            val y = box.bottom + density * 18
+            canvas.drawRoundRect(RectF(cx - w / 2, y, cx + w / 2, y + h), h / 2, h / 2, pill)
+            canvas.drawText(text, cx, y + h / 2 - (zoomPaint.descent() + zoomPaint.ascent()) / 2, zoomPaint)
+        }
     }
 
     private fun blend(a: Int, b: Int, t: Float) = Color.rgb(

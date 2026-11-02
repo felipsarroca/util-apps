@@ -10,7 +10,7 @@ Aplicació gratuïta i de codi obert per llegir QR de manera immediata. En obrir
 
 Obre aquest directori amb Android Studio (JDK 17, SDK 36) o executa `./gradlew testDebugUnitTest assembleDebug`. El projecte utilitza Kotlin, CameraX i ZXing-C++ 3.1.1. El lector funciona sense connexió; l'única consulta de xarxa de l'app és l'API pública de GitHub per cercar actualitzacions.
 
-La versió mínima és Android 8 (API 26). La versió de prova actual té `versionCode = 4` i `applicationId = cat.felipsarroca.lectorqr`.
+La versió mínima és Android 8 (API 26). La versió de prova actual té `versionCode = 5` i `applicationId = cat.felipsarroca.lectorqr`.
 
 ## Publicació de versions
 
