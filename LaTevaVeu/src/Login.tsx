@@ -74,7 +74,9 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
             setError(tryLogin(p.email, { name: p.name, picture: p.picture }, res.credential))
           },
         })
-        window.google!.accounts.id.renderButton(gRef.current, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', locale: 'ca', width: 320 })
+        // Google limita l'amplada del botó a 400 px: l'ajustem a l'amplada del quadre (com les targetes de sota).
+        const w = Math.min(400, Math.max(200, Math.floor(gRef.current.clientWidth)))
+        window.google!.accounts.id.renderButton(gRef.current, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'continue_with', locale: 'ca', width: w })
       })
       .catch((e: Error) => setError(e.message))
     return () => {
@@ -119,12 +121,16 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
             </div>
 
             {GOOGLE_CLIENT_ID ? (
-              <div ref={gRef} style={{ minHeight: 44 }} />
+              <div className="g-box">
+                <div ref={gRef} className="g-slot" />
+              </div>
             ) : (
               <>
-                <button className="google-btn" disabled aria-describedby="g-note">
-                  <GoogleLogo /> Continua amb Google
-                </button>
+                <div className="g-box">
+                  <button className="google-btn" disabled aria-describedby="g-note">
+                    <GoogleLogo /> Continua amb Google
+                  </button>
+                </div>
                 <p id="g-note" className="muted" style={{ fontSize: '.85rem' }}>
                   L’inici de sessió amb Google s’activarà quan l’escola autoritzi l’aplicació.
                 </p>
