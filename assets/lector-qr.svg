@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Icona original del projecte Lector QR. © Felip Sarroca, 2026. Llicència CC BY-NC-SA 4.0: https://creativecommons.org/licenses/by-nc-sa/4.0/ -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72" role="img" aria-labelledby="title desc">
   <title id="title">Icona del Lector QR</title>
   <desc id="desc">Codi QR blanc emmarcat per quatre cantonades de lectura de color menta sobre fons verd fosc.</desc>
-  <rect width="108" height="108" rx="24" fill="#10332B"/>
+  <!-- Mateix enquadrament que la icona adaptativa d'Android: només la zona visible de 72 × 72. -->
+  <rect x="18" y="18" width="72" height="72" rx="16" fill="#10332B"/>
   <g fill="none" stroke="#66E0B4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
     <path d="M40 31H31V40 M68 31H77V40 M31 68V77H40 M77 68V77H68"/>
   </g>
