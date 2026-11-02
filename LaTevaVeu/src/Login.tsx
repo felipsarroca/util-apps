@@ -74,9 +74,10 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
             setError(tryLogin(p.email, { name: p.name, picture: p.picture }, res.credential))
           },
         })
-        // Google limita l'amplada del botó a 400 px: l'ajustem a l'amplada del quadre (com les targetes de sota).
-        const w = Math.min(400, Math.max(200, Math.floor(gRef.current.clientWidth)))
-        window.google!.accounts.id.renderButton(gRef.current, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'continue_with', locale: 'ca', width: w })
+        // El botó de Google fa 40 px d'alçada com a màxim: el pintem més estret i l'ampliem amb CSS
+        // (escala G_SCALE) perquè, proporcionat, ocupi tota l'amplada com les targetes de sota.
+        const w = Math.min(400, Math.max(200, Math.floor(gRef.current.clientWidth / G_SCALE)))
+        window.google!.accounts.id.renderButton(gRef.current, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', locale: 'ca', width: w })
       })
       .catch((e: Error) => setError(e.message))
     return () => {
@@ -121,16 +122,12 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
             </div>
 
             {GOOGLE_CLIENT_ID ? (
-              <div className="g-box">
-                <div ref={gRef} className="g-slot" />
-              </div>
+              <div ref={gRef} className="g-slot" />
             ) : (
               <>
-                <div className="g-box">
-                  <button className="google-btn" disabled aria-describedby="g-note">
-                    <GoogleLogo /> Continua amb Google
-                  </button>
-                </div>
+                <button className="google-btn" disabled aria-describedby="g-note">
+                  <GoogleLogo /> Continua amb Google
+                </button>
                 <p id="g-note" className="muted" style={{ fontSize: '.85rem' }}>
                   L’inici de sessió amb Google s’activarà quan l’escola autoritzi l’aplicació.
                 </p>
@@ -181,6 +178,9 @@ export function Login({ onLogin }: { onLogin: (s: Session) => void }) {
 }
 
 /** Tria de perfil per provar l'app amb dades fictícies desades només en aquest navegador. */
+/** Ampliació del botó de Google (40 px → 52 px d'alçada); ha de coincidir amb .g-slot a styles.css. */
+const G_SCALE = 1.3
+
 function DemoDialog({ onClose, tryLogin }: { onClose: () => void; tryLogin: (email: string, profile?: undefined, token?: string) => string | null }) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
