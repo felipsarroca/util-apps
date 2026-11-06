@@ -4,9 +4,27 @@ AvaluApp és una aplicació web per analitzar les qualificacions d'un grup a
 partir d'un fitxer Excel amb dades de la primera, la segona i/o la tercera
 avaluació.
 
-L'aplicació detecta automàticament l'alumnat, les matèries i les avaluacions,
-genera indicadors i gràfiques, permet consultar cada alumne i ofereix
-exportacions en PNG i PDF. Tot el processament es fa localment al navegador.
+Està pensada per a dos moments de la feina del tutor o tutora:
+
+1. **Preparar la junta d'avaluació**: graella de notes amb indicadors de
+   seguiment, resum automàtic per a l'acta, anotació d'acords i exportació de
+   l'acta (PDF) i de la graella (Excel).
+2. **Informar l'alumnat i les famílies**: un informe A4 per alumne, en
+   llenguatge planer, amb el nivell d'assoliment, la tendència, els punts
+   forts, el que cal reforçar i un missatge personal del tutor o tutora.
+
+Tot el processament es fa localment al navegador.
+
+## Flux de treball recomanat
+
+1. Carrega l'Excel (o prova l'app amb **dades d'exemple**).
+2. **Grup**: revisa la visió global i els nivells d'assoliment per matèria.
+3. **Junta**: filtra l'alumnat que necessita seguiment, copia el resum per a
+   l'acta i anota els acords de cada alumne.
+4. **Alumnat**: recorre les fitxes amb les fletxes ← → del teclat i escriu el
+   missatge per a cada família.
+5. **Descàrregues**: baixa l'acta, la graella en Excel i els informes per a les
+   famílies.
 
 ## Funcionalitats
 
@@ -20,7 +38,25 @@ exportacions en PNG i PDF. Tot el processament es fa localment al navegador.
 - Canvis individuals respecte de l'avaluació anterior seleccionada.
 - Gràfiques generals equivalents als informes de referència.
 
+### Junta d'avaluació
+
+- Graella alumnat × matèries amb colors per nivell (NA, AS, AN, AE) i fletxes
+  quan una matèria puja o baixa de nivell respecte de l'avaluació anterior.
+- Mitjana, variació i nombre de suspensos de cada alumne; mitjana i suspensos
+  de cada matèria al peu.
+- Indicadors automàtics: 3 o més suspensos, suspensos repetits, nous
+  suspensos, baixada o millora de la mitjana (±0,25), matèries recuperades,
+  rendiment excel·lent (sense suspensos i mitjana d'AE, ≥ 3,8) i notes pendents.
+- Filtres (necessiten seguiment, milloren, excel·lents, sense suspensos),
+  cerca i ordenació.
+- Resum en text per a l'acta, amb botó per copiar-lo.
+- Camp d'acords per alumne. Fent clic en un nom s'obre la seva fitxa.
+
 ### Anàlisi individual
+
+- Navegació entre alumnes amb botons o amb les fletxes del teclat.
+- Indicadors de seguiment de l'alumne.
+- Acords de la junta (interns) i missatge per a la família.
 
 - Selector d'alumne i d'avaluacions.
 - Mitjana, suspensos i variació respecte de l'avaluació anterior.
@@ -30,22 +66,30 @@ exportacions en PNG i PDF. Tot el processament es fa localment al navegador.
 - Evolució específica de cada matèria.
 - Detall de totes les qualificacions disponibles.
 
+### Informe per a la família
+
+Una pàgina A4 per alumne amb:
+
+- Capçalera amb el centre, el grup, el curs i l'avaluació.
+- Mitjana i resum en llenguatge planer.
+- Qualificació i nivell d'assoliment de cada matèria a totes les avaluacions
+  fins a la seleccionada, tendència i (opcionalment) mitjana del grup.
+- Punts forts i matèries que cal reforçar.
+- Gràfic d'evolució (o perfil per matèries si només hi ha una avaluació).
+- Missatge del tutor o tutora (o línies en blanc per escriure-hi a mà).
+- Llegenda dels nivells i, opcionalment, espai per a signatures.
+
+No hi apareix cap dada d'altres alumnes. Les dades de capçalera (centre, grup,
+tutor/a i curs) es recorden al navegador; els noms i les notes, no.
+
 ### Descàrregues
 
-El centre de descàrregues permet generar:
-
-1. Resum general del grup.
-2. Mitjanes per matèria.
-3. Suspensos per matèria.
-4. Mitjanes individuals.
-5. Suspensos individuals.
-6. Comparativa entre avaluacions.
-7. Informe complet del grup.
-8. Dossier de radars, amb una pàgina per alumne.
-9. Dossier d'evolució, amb una pàgina per alumne.
-
-Cada gràfic també es pot descarregar individualment en format PNG. Les vistes
-de grup i d'alumne es poden exportar en PDF.
+- Acta de la junta (PDF apaïsat: graella, indicadors, resum i acords).
+- Graella de la junta (Excel amb tres pestanyes: alumnat, matèries i resum).
+- Informe gràfic del grup (PDF).
+- Informes per a les famílies: de tot el grup o d'un sol alumne (PDF).
+- Gràfiques del grup en PNG, inclosa la distribució per nivells d'assoliment.
+- Dossiers de radars i d'evolució, amb una pàgina per alumne.
 
 ## Preparació del fitxer Excel
 
@@ -64,11 +108,15 @@ S'admeten fitxers `.xlsx` i `.xls`.
 
 ## Estructura esperada
 
+S'utilitza el primer full del llibre que tingui una columna `Alumne`. Des de
+l'ajuda de la pantalla inicial es pot baixar una plantilla.
+
 El full ha de contenir:
 
 - Una columna titulada exactament `Alumne`.
-- Just a la dreta, una columna amb l'avaluació: `1a`, `2a` o `3a`.
-- A continuació, una columna per cada matèria.
+- Una columna amb l'avaluació (`1a`, `2a` o `3a`). Si es titula `Avaluació`
+  pot estar a qualsevol lloc; si no, ha d'estar just a la dreta d'`Alumne`.
+- Una columna per cada matèria.
 
 Exemple:
 
@@ -92,7 +140,11 @@ AvaluApp manté aquest nom per a les files següents fins que en troba un de nou
 
 ## Criteris de càlcul
 
-- Una qualificació inferior a `2` es considera suspesa.
+- Nivells d'assoliment: NA (menys de 1,96), AS (de 1,96 a 2,95), AN (de 2,96
+  a 3,79) i AE (de 3,8 a 4).
+- Una qualificació inferior a `1,96` (NA) es considera suspesa.
+- Les comparacions de la junta i dels informes per a les famílies es fan amb
+  l'avaluació immediatament anterior disponible.
 - Les mitjanes només inclouen les cel·les amb una qualificació vàlida.
 - Una avaluació només apareix als selectors si conté dades.
 - Les comparatives utilitzen exclusivament les avaluacions seleccionades.
@@ -104,6 +156,9 @@ AvaluApp funciona íntegrament al navegador:
 
 - L'Excel no s'envia a cap servidor.
 - No s'emmagatzemen noms ni qualificacions.
+- Els acords i els missatges només es mantenen mentre la pestanya és oberta;
+  l'app avisa abans de tancar-la. Per conservar-los, baixa la graella en
+  Excel.
 - No hi ha base de dades ni sistema d'usuaris.
 - Els hipervincles i identificadors interns de l'Excel s'ignoren.
 
@@ -119,6 +174,15 @@ fitxer, especialment si l'aplicació s'utilitza en un ordinador compartit.
 - `html2canvas` per generar imatges
 - `jsPDF` per crear els documents PDF
 - CSS propi, sense cap biblioteca visual externa
+
+## Adaptació a la pantalla
+
+En ordinadors amb ratolí la interfície s'escala uniformement (fins al 75 %)
+quan l'espai útil és inferior a 1440 × 800 px, com a edu-apps/Equacions, de
+manera que un portàtil de 1366 × 768 (també amb escalat del 125 % o 150 %)
+manté la disposició d'escriptori. En mòbils, tauletes i finestres de menys de
+1000 px s'aplica la disposició responsiva. Les exportacions no depenen de
+l'escala de la pantalla.
 
 ## Desenvolupament local
 
@@ -161,10 +225,16 @@ AvaluApp/
 ├── public/
 ├── src/
 │   ├── assets/
-│   ├── App.css
-│   ├── App.tsx
-│   ├── data.ts
-│   ├── export.ts
+│   ├── App.css / features.css
+│   ├── App.tsx          (navegació, vistes de grup i d'alumne, descàrregues)
+│   ├── JuntaView.tsx    (graella de la junta i acta en PDF)
+│   ├── FamilyReport.tsx (informe A4 per a la família)
+│   ├── charts.tsx       (gràfiques)
+│   ├── icons.tsx
+│   ├── data.ts          (lectura de l'Excel, càlculs i indicadors)
+│   ├── junta.ts         (exportació a Excel)
+│   ├── settings.ts      (anotacions i dades de l'informe)
+│   ├── export.ts        (PNG, PDF i XLSX)
 │   └── main.tsx
 ├── index.html
 ├── package.json
@@ -173,8 +243,8 @@ AvaluApp/
 
 ## Limitacions actuals
 
-- Només es llegeix el primer full del llibre Excel.
-- La columna d'avaluació ha d'estar immediatament a la dreta d'`Alumne`.
+- Només es llegeix un full del llibre Excel.
+- Els acords i missatges no es poden tornar a carregar des de l'Excel exportat.
 - L'escala de qualificacions és de 0 a 4.
 - S'admeten com a màxim tres avaluacions.
 - La qualitat i l'estructura dels informes depenen que els noms de les

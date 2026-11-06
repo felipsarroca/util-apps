@@ -86,3 +86,12 @@ h3 {
   white-space: nowrap;
   border: 0;
 }
+
+/* Escala global en portàtils petits (la calcula useFitScale; 1 = sense escalar). */
+html {
+  zoom: var(--ui-zoom, 1);
+}
+
+html.exporting {
+  zoom: 1;
+}

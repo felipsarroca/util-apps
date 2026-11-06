@@ -6,6 +6,16 @@ const safeName = (name: string) =>
     .replace(/^-+|-+$/g, '')
     .toLowerCase()
 
+/**
+ * La interfície es pot escalar amb `zoom` en portàtils petits. html2canvas
+ * treballa sobre una còpia del document: s'hi desactiva el zoom perquè les
+ * imatges i els PDF tinguin sempre la mateixa mida, sense que la pantalla canviï.
+ */
+const resetZoom = (doc: Document) => {
+  doc.documentElement.style.setProperty('--ui-zoom', '1')
+  doc.documentElement.classList.add('exporting')
+}
+
 const capture = async (element: HTMLElement, scale = 2) => {
   const { default: html2canvas } = await import('html2canvas')
   return html2canvas(element, {
@@ -14,6 +24,7 @@ const capture = async (element: HTMLElement, scale = 2) => {
     scale,
     useCORS: true,
     windowWidth: Math.max(element.scrollWidth, 1200),
+    onclone: resetZoom,
   })
 }
 
@@ -40,29 +51,47 @@ export async function downloadElementPng(
   }
 }
 
+export interface PdfOptions {
+  orientation?: 'portrait' | 'landscape'
+  /** Escala de captura. Per defecte depèn del nombre de pàgines. */
+  scale?: number
+  quality?: number
+  margin?: number
+  onProgress?: (done: number, total: number) => void
+}
+
 export async function downloadElementsPdf(
   elements: HTMLElement[],
   fileName: string,
+  options: PdfOptions = {},
 ) {
   if (elements.length === 0) return
+  await buildElementsPdf(elements, fileName, options)
+}
 
+async function buildElementsPdf(
+  elements: HTMLElement[],
+  fileName: string,
+  options: PdfOptions,
+) {
   const { jsPDF } = await import('jspdf')
   const pdf = new jsPDF({
-    orientation: 'portrait',
+    orientation: options.orientation ?? 'portrait',
     unit: 'mm',
     format: 'a4',
   })
   const isBatch = elements.length > 10
-  const captureScale = isBatch ? 0.72 : 1.25
-  const imageQuality = isBatch ? 0.76 : 0.88
+  const captureScale = options.scale ?? (isBatch ? 0.72 : 1.25)
+  const imageQuality = options.quality ?? (isBatch ? 0.76 : 0.88)
 
   for (let index = 0; index < elements.length; index += 1) {
     if (index > 0) pdf.addPage()
+    options.onProgress?.(index, elements.length)
     const canvas = await capture(elements[index], captureScale)
     const image = canvas.toDataURL('image/jpeg', imageQuality)
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
-    const margin = 8
+    const margin = options.margin ?? 8
     const availableWidth = pageWidth - margin * 2
     const availableHeight = pageHeight - margin * 2
     const ratio = Math.min(
@@ -83,7 +112,23 @@ export async function downloadElementsPdf(
     )
   }
 
+  options.onProgress?.(elements.length, elements.length)
   pdf.save(`${safeName(fileName)}.pdf`)
+}
+
+/** Desa un full de càlcul amb una o més pestanyes. */
+export async function downloadWorkbook(
+  sheets: Array<{ name: string; rows: Array<Array<string | number | null>>; widths?: number[] }>,
+  fileName: string,
+) {
+  const XLSX = await import('xlsx')
+  const workbook = XLSX.utils.book_new()
+  sheets.forEach((sheet) => {
+    const worksheet = XLSX.utils.aoa_to_sheet(sheet.rows)
+    if (sheet.widths) worksheet['!cols'] = sheet.widths.map((wch) => ({ wch }))
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheet.name.slice(0, 31))
+  })
+  XLSX.writeFile(workbook, `${safeName(fileName)}.xlsx`)
 }
 
 const svgToPng = async (svg: SVGSVGElement) => {
