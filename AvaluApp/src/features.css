@@ -1393,3 +1393,17 @@
     font-size: 0.7rem;
   }
 }
+
+/* Pantalla inicial: el cercle de l'escut és un <span> i la regla
+   «.privacy-note span { display: block }» li treia el centrat. */
+.privacy-note .privacy-icon {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  color: var(--forest);
+  line-height: 0;
+}
+
+.privacy-note .privacy-icon .icon {
+  display: block;
+}

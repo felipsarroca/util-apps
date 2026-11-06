@@ -684,9 +684,9 @@ function Dashboard({
     group: ['Visió general del grup', `${data.students.length} alumnes · ${data.subjects.length} matèries · ${data.evaluations.length} avaluacions`],
     junta: ["Preparació de la junta d'avaluació", previous ? `${evaluationLabel(evaluation)} avaluació comparada amb la ${evaluationLabel(previous)}` : `${evaluationLabel(evaluation)} avaluació`],
     student: ['Fitxa individual', `Alumne ${studentIndex + 1} de ${data.students.length} · usa les fletxes ← → del teclat per canviar d'alumne`],
-    downloads: ['Centre de descàrregues', "Acta i graella de la junta, informes per a les famílies i gràfiques del grup."],
+    downloads: ['Centre de descàrregues', "Marca una avaluació o fes una comparativa. L'acta, els informes i les gràfiques d'una sola avaluació utilitzen l'última avaluació marcada."],
   }
-  const singleEvaluation = view === 'junta' || view === 'downloads'
+  const singleEvaluation = view === 'junta'
 
   return (
     <section className="dashboard">
@@ -1043,7 +1043,7 @@ function DownloadCenter({
         <header>
           <div className="download-center-icon"><FileIcon /></div>
           <div>
-            <span>Per a la sessió</span>
+            <span>Per a la sessió · {label} avaluació</span>
             <h2>Junta d'avaluació</h2>
             <p>
               Inclouen la graella de notes, els indicadors de seguiment i els acords anotats
@@ -1083,7 +1083,7 @@ function DownloadCenter({
         <header>
           <div className="download-center-icon"><UserShieldIcon /></div>
           <div>
-            <span>Per a l'alumnat i les famílies</span>
+            <span>Per a l'alumnat i les famílies · {label} avaluació</span>
             <h2>Informes individuals</h2>
             <p>
               Una pàgina A4 per alumne amb les qualificacions i el nivell d'assoliment, la
@@ -1131,8 +1131,8 @@ function DownloadCenter({
             <h2>Gràfiques del grup</h2>
             <p>
               {comparison
-                ? 'Les comparatives utilitzen les avaluacions seleccionades a la vista Grup.'
-                : 'Per activar les comparatives, selecciona dues o tres avaluacions a la vista Grup.'}
+                ? `Comparatives de ${selectedEvaluations.map((item) => `la ${evaluationLabel(item)}`).join(', ').replace(/, ([^,]*)$/, ' i $1')} avaluació. Les gràfiques d'una sola avaluació són de la ${label}.`
+                : 'Per activar les comparatives (2 i 4), marca dues o tres avaluacions a dalt amb «Comparativa».'}
             </p>
           </div>
         </header>
