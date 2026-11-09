@@ -4,5 +4,5 @@ window.VALORACIO = {
   api: 'https://script.google.com/macros/s/AKfycbzERbkL1jKSQA3ub5PvpKTkCC0Kmbe2wHWCOV-1XyQ5as3n-oBDnsMO0ARd49kX-kwqgw/exec',
   // Identificador de client OAuth de Google per a l'accés a les estadístiques (és públic).
   // Si és buit, el botó d'estadístiques no es mostra.
-  clientId: ''
+  clientId: '357232439610-4d718jqq40o0c3hmnka540vdtu90gbcb.apps.googleusercontent.com'
 };

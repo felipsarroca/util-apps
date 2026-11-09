@@ -49,7 +49,7 @@ const URL_APP = 'https://felipsarroca.github.io/util-apps/ValoracioEscola/';
  * Identificador de client OAuth de Google (és públic, no és cap secret).
  * Ha de coincidir amb el de config.js de l'app web.
  */
-const CLIENT_ID = '';
+const CLIENT_ID = '357232439610-4d718jqq40o0c3hmnka540vdtu90gbcb.apps.googleusercontent.com';
 
 /** L'URL antic de l'script porta a l'app nova. */
 function doGet() {
