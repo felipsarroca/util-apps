@@ -10,7 +10,7 @@ Qüestionari web per conèixer la valoració de les famílies de l'Escola Ramon 
 
 ## Què demana
 
-1. Per quins motius van triar l'escola (fins a 3 respostes, més «Una altra raó»).
+1. Per quins motius van triar l'escola (fins a 3 respostes, «Una altra raó» inclosa).
 2. Què és el que més valoren després dels primers mesos (diverses respostes).
 3. Com recomanarien l'escola en una sola frase (opcional i en qualsevol llengua).
 4. De l'1 al 10, amb quina probabilitat recomanarien l'escola.

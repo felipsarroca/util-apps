@@ -1,3 +1,0 @@
-[    2036ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ about:blank:0
-[   81171ms] [INFO] Net state changed from IDLE to BUSY @ https://script.google.com/static/macros/client/js/273905933-warden_bin_i18n_warden__es.js:180
-[   83749ms] [INFO] Net state changed from BUSY to IDLE @ https://script.google.com/static/macros/client/js/273905933-warden_bin_i18n_warden__es.js:180
