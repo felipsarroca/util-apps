@@ -284,7 +284,8 @@ function configura() {
     ss = SpreadsheetApp.create(NOM_FULL);
     props.setProperty('FULL_ID', ss.getId());
   }
-  // Les fórmules s'escriuen amb sintaxi anglesa (comes); després el full passa al català.
+  // El full es manté amb configuració regional anglesa perquè les fórmules (amb comes)
+  // funcionin sempre; els formats de data i de nombres es fixen explícitament.
   ss.setSpreadsheetLocale('en_US');
   ss.setSpreadsheetTimeZone('Europe/Madrid');
   SpreadsheetApp.flush();
@@ -306,7 +307,6 @@ function configura() {
     if (!Object.values(PESTANYA).includes(s.getName())) ss.deleteSheet(s);
   });
   SpreadsheetApp.flush();
-  ss.setSpreadsheetLocale('ca_ES');
   Logger.log('Full preparat: ' + ss.getUrl());
   return ss.getUrl();
 }
@@ -402,7 +402,7 @@ function preparaResum_(ss) {
   // Targetes de xifres clau
   const targetes = [
     ['B', 'Respostes rebudes', '=COUNTIF(' + R + '!B2:B,' + CURS + ')', '0'],
-    ['C', 'Nota mitjana', '=IFERROR(ROUND(AVERAGEIF(' + R + '!B2:B,' + CURS + ',' + R + '!J2:J),1),"—")', '0.0'],
+    ['C', 'Nota mitjana', '=IFERROR(SUBSTITUTE(TEXT(AVERAGEIF(' + R + '!B2:B,' + CURS + ',' + R + '!J2:J),"0.0"),".",","),"—")', '@'],
     ['D', 'Recomanen molt (9-10)', '=IFERROR(COUNTIFS(' + R + '!B2:B,' + CURS + ',' + R + '!J2:J,">=9")/' + TOTAL + ',"—")', '0%'],
     ['E', 'Idioma: català · castellà · darija', '=COUNTIFS(' + R + '!B2:B,' + CURS + ',' + R + '!C2:C,"Català")&"  ·  "&COUNTIFS(' + R + '!B2:B,' + CURS + ',' + R + '!C2:C,"Castellà")&"  ·  "&COUNTIFS(' + R + '!B2:B,' + CURS + ',' + R + '!C2:C,"Darija")', '@']
   ];
