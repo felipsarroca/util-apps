@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ca" dir="ltr">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La vostra opinió · Escola Ramon Pont</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&family=Noto+Sans+Arabic:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --granat:#8B1E14; --granat-fosc:#6E160F; --granat-clar:#F7E8E5;
+  --or:#C9971C; --or-clar:#FCF3DA;
+  --fons:#FFF9F0; --carta:#FFFFFF; --text:#2B2220; --suau:#6D625E; --linia:#EADFD3;
+  --verd:#2E7D32; --vermell:#C62828;
+  --ombra:0 6px 20px rgba(110,22,15,.10);
+  --radi:1.1rem;
+  --peu:46px; --nav:5.2rem;
+}
+*{box-sizing:border-box}
+html{font-size:clamp(15px, min(1.15vw, 2.2vh), 21px)}
+body{
+  margin:0; min-height:100dvh; background:var(--fons); color:var(--text);
+  font-family:'Nunito',system-ui,sans-serif; line-height:1.35;
+  -webkit-tap-highlight-color:transparent;
+}
+html[dir=rtl] body{font-family:'Noto Sans Arabic','Nunito',system-ui,sans-serif; line-height:1.6}
+button{font:inherit; color:inherit; cursor:pointer}
+.amaga{display:none !important}
+
+/* Capçalera */
+.capcalera{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:.7rem;
+  padding:.6rem clamp(16px,3vw,32px); background:rgba(255,249,240,.95); backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--linia);
+}
+.capcalera img,.benvinguda img{mix-blend-mode:multiply}
+.capcalera img{width:2.4rem; height:2.4rem}
+.capcalera .escola{font-weight:900; color:var(--granat); font-size:1.05rem; flex:1}
+.boto-idioma{
+  display:flex; align-items:center; gap:.4rem; border:2px solid var(--linia); background:#fff;
+  border-radius:999px; padding:.35rem .8rem; font-weight:800; font-size:.95rem;
+}
+.progres{display:flex; gap:.4rem; justify-content:center; padding:.8rem 16px 0}
+.progres span{
+  width:2.6rem; height:2.6rem; border-radius:50%; display:grid; place-items:center;
+  background:#fff; border:2px solid var(--linia); font-weight:900; color:var(--suau); transition:.25s;
+}
+.progres span.fet{background:var(--or-clar); border-color:var(--or); color:var(--granat)}
+.progres span.actual{background:var(--granat); border-color:var(--granat); color:#fff; transform:scale(1.12)}
+
+main{max-width:46rem; margin:0 auto; padding:1rem clamp(16px,3vw,32px) 1.5rem}
+.pantalla{animation:entra .35s ease}
+@keyframes entra{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+
+/* Pantalla d'idioma */
+.benvinguda{text-align:center; padding-top:1rem}
+.benvinguda img{width:7.5rem; height:7.5rem}
+.salutacio{font-size:1.6rem; font-weight:900; color:var(--granat); margin:.6rem 0 .2rem}
+.salutacio .ar{font-family:'Noto Sans Arabic',sans-serif}
+.idiomes{display:grid; gap:.9rem; margin-top:1.4rem}
+.idioma{
+  display:flex; align-items:center; gap:1rem; padding:1.1rem 1.3rem; border-radius:var(--radi);
+  border:3px solid var(--linia); background:var(--carta); box-shadow:var(--ombra); text-align:start;
+  font-size:1.4rem; font-weight:900; transition:.15s;
+}
+.idioma:hover,.idioma:focus-visible{border-color:var(--or); transform:translateY(-2px)}
+.idioma .bombolla{width:3.2rem; height:3.2rem; border-radius:50%; display:grid; place-items:center; font-size:1.6rem; background:var(--or-clar); flex:none}
+.idioma .ar{font-family:'Noto Sans Arabic',sans-serif; font-size:1.55rem}
+.idioma small{display:block; font-size:.85rem; font-weight:700; color:var(--suau)}
+
+/* Inici */
+.titol{font-size:1.75rem; font-weight:900; color:var(--granat); margin:.4rem 0 .3rem; line-height:1.2}
+.subtitol{font-size:1.1rem; color:var(--suau); font-weight:700; margin:0 0 1rem}
+.fila-titol{display:flex; align-items:flex-start; gap:.6rem}
+.fila-titol .titol{flex:1}
+.escolta{
+  flex:none; width:3rem; height:3rem; border-radius:50%; border:2px solid var(--linia); background:#fff;
+  font-size:1.35rem; display:grid; place-items:center; margin-top:.3rem;
+}
+.escolta.parla{background:var(--or-clar); border-color:var(--or)}
+.xips{display:grid; gap:.8rem; margin:1.2rem 0}
+.xip{display:flex; align-items:center; gap:1rem; background:#fff; border-radius:var(--radi); padding:1rem 1.2rem; box-shadow:var(--ombra); font-size:1.15rem; font-weight:800}
+.xip .ic{font-size:1.9rem; width:3rem; text-align:center}
+
+/* Targetes d'opció */
+.opcions{display:grid; grid-template-columns:repeat(2,1fr); gap:.8rem}
+.opcio{
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:.5rem;
+  min-height:9.5rem; padding:1rem .7rem .9rem; border-radius:var(--radi); border:3px solid var(--linia);
+  background:var(--carta); box-shadow:var(--ombra); text-align:center; font-size:1.02rem; font-weight:800; line-height:1.25;
+  transition:transform .12s, border-color .15s, background .15s;
+}
+.opcio .ic{font-size:2.6rem; width:4.2rem; height:4.2rem; border-radius:50%; display:grid; place-items:center; background:var(--fons)}
+.opcio:active{transform:scale(.97)}
+.opcio[aria-pressed=true]{border-color:var(--granat); background:var(--granat-clar)}
+.opcio[aria-pressed=true] .ic{background:#fff}
+.opcio .marca{
+  position:absolute; top:.5rem; inset-inline-end:.5rem; width:1.9rem; height:1.9rem; border-radius:50%;
+  display:grid; place-items:center; background:var(--granat); color:#fff; font-size:1.1rem; font-weight:900;
+  transform:scale(0); transition:transform .18s;
+}
+.opcio[aria-pressed=true] .marca{transform:scale(1)}
+.opcio.no{animation:sacseja .35s}
+@keyframes sacseja{25%{transform:translateX(-6px)} 50%{transform:translateX(6px)} 75%{transform:translateX(-3px)}}
+.comptador{display:flex; align-items:center; gap:.5rem; margin:-.3rem 0 1rem; font-weight:800; color:var(--suau)}
+.comptador i{width:1.1rem; height:1.1rem; border-radius:50%; border:2px solid var(--or); display:inline-block}
+.comptador i.ple{background:var(--or)}
+.avis{margin:.8rem 0 0; padding:.8rem 1rem; border-radius:.8rem; background:var(--or-clar); color:#6B4E00; font-weight:800}
+.camp{
+  width:100%; margin-top:.8rem; padding:1rem; border-radius:var(--radi); border:3px solid var(--or);
+  background:#fff; font:inherit; font-size:1.1rem; resize:vertical;
+}
+.camp:focus{outline:none; border-color:var(--granat)}
+textarea.gran{min-height:9rem; border-color:var(--linia)}
+.ajuda{color:var(--suau); font-weight:700; font-size:.95rem; margin-top:.5rem}
+
+/* Escala 1-10 */
+.cara{font-size:4.5rem; text-align:center; height:5.5rem; line-height:5.5rem; transition:.2s}
+.escala{display:grid; grid-template-columns:repeat(5,1fr); gap:.6rem}
+.nota{
+  aspect-ratio:1; border-radius:1rem; border:3px solid transparent; font-size:1.6rem; font-weight:900; color:#fff;
+  box-shadow:var(--ombra); transition:transform .12s;
+}
+.nota[aria-pressed=true]{transform:scale(1.12); border-color:var(--text); box-shadow:0 0 0 4px #fff, 0 0 0 7px var(--text)}
+.extrems{display:flex; justify-content:space-between; margin-top:.9rem; font-weight:800; color:var(--suau); gap:1rem}
+.extrems span{display:flex; align-items:center; gap:.4rem; direction:ltr; unicode-bidi:isolate}
+.extrems b{font-size:1.5rem}
+
+/* Gràcies */
+.final{text-align:center; padding-top:2rem}
+.final .gran-ic{font-size:6rem; animation:batec 1.2s ease infinite}
+@keyframes batec{50%{transform:scale(1.1)}}
+.secundari{margin-top:1.5rem; background:none; border:none; color:var(--granat); font-weight:800; text-decoration:underline}
+
+/* Navegació inferior */
+.navegacio{
+  position:fixed; inset-inline:0; bottom:calc(var(--peu) + env(safe-area-inset-bottom)); z-index:9;
+  display:flex; gap:.8rem; padding:.8rem clamp(16px,3vw,32px); background:rgba(255,249,240,.96);
+  border-top:1px solid var(--linia); justify-content:center;
+}
+.navegacio .dins{display:flex; gap:.8rem; width:100%; max-width:46rem}
+.boto{
+  flex:1; min-height:3.6rem; border-radius:999px; border:none; font-weight:900; font-size:1.2rem;
+  display:flex; align-items:center; justify-content:center; gap:.6rem; padding:0 1.2rem;
+}
+.boto.primari{background:var(--granat); color:#fff; box-shadow:0 6px 16px rgba(139,30,20,.3)}
+.boto.primari:disabled{background:#D7C9C3; box-shadow:none; cursor:not-allowed}
+.boto.enrere{flex:0 0 auto; background:#fff; border:2px solid var(--linia); color:var(--suau)}
+.boto.enviar{background:var(--verd); box-shadow:0 6px 16px rgba(46,125,50,.3)}
+html[dir=rtl] .fletxa:not(.sense-gir){transform:scaleX(-1)}
+.fletxa{display:inline-block}
+
+/* Peu */
+body{padding-bottom:calc(var(--peu) + var(--nav))}
+.felip-app-footer{
+  position:fixed; right:0; bottom:0; left:0; z-index:10; height:var(--peu);
+  display:flex; align-items:center; justify-content:flex-start; gap:8px; direction:ltr;
+  padding:4px clamp(16px,3vw,38px) calc(4px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--linia); background:rgba(250,244,236,.97); backdrop-filter:blur(8px);
+  color:#7A6B65; font-family:'Nunito',sans-serif; font-size:12px; line-height:1.22; text-align:left;
+}
+.felip-license-image-link{display:block; line-height:0}
+.felip-license-image{display:block; width:70px; height:auto}
+.felip-footer-text{display:flex; flex-direction:column; align-items:flex-start; gap:2px}
+.felip-footer-text p{margin:0}
+.felip-footer-text a{color:var(--granat); font-weight:700; text-decoration:none}
+.felip-footer-text a:focus-visible,.felip-license-image-link:focus-visible{outline:2px solid var(--granat); outline-offset:2px}
+
+@media (min-width:720px){
+  .opcions{grid-template-columns:repeat(3,1fr)}
+  .escala{grid-template-columns:repeat(10,1fr)}
+  .nota{font-size:1.4rem}
+}
+@media (min-width:1000px){
+  main{max-width:58rem}
+  .navegacio .dins{max-width:58rem}
+  .opcions{grid-template-columns:repeat(4,1fr)}
+  .opcio{min-height:8.6rem}
+}
+@media (max-width:380px){
+  .opcio{min-height:8.5rem; font-size:.95rem}
+  .opcio .ic{font-size:2.2rem; width:3.6rem; height:3.6rem}
+  .felip-app-footer{font-size:10.5px}
+  .felip-license-image{width:58px}
+}
+@media (max-height:700px) and (min-width:720px){
+  .opcio{min-height:8rem}
+  .benvinguda img{width:5.5rem; height:5.5rem}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+</style>
+</head>
+<body>
+
+<header class="capcalera">
+  <img src="<?!= include('Logo') ?>" alt="">
+  <div class="escola">Escola Ramon Pont</div>
+  <button class="boto-idioma amaga" id="canviaIdioma" type="button" aria-label="Idioma"><span aria-hidden="true">🌐</span><span id="nomIdioma"></span></button>
+</header>
+
+<div class="progres amaga" id="progres" aria-hidden="true"></div>
+
+<main id="app" aria-live="polite"></main>
+
+<nav class="navegacio amaga" id="navegacio">
+  <div class="dins">
+    <button class="boto enrere" id="enrere" type="button"><span class="fletxa">←</span><span id="txtEnrere"></span></button>
+    <button class="boto primari" id="seguent" type="button"><span id="txtSeguent"></span><span class="fletxa">→</span></button>
+  </div>
+</nav>
+
+<footer class="felip-app-footer">
+  <a class="felip-license-image-link" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+    <img class="felip-license-image" src="<?!= include('Llicencia') ?>" alt="Creative Commons BY-NC-SA">
+  </a>
+  <div class="felip-footer-text">
+    <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+    <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+  </div>
+</footer>
+
+<script>
+const LOGO = document.querySelector('.capcalera img').src;
+
+const MOTIUS = [
+  ['projecte','📚'], ['proximitat','🏠'], ['tracte','🤗'],
+  ['reputacio','⭐'], ['installacions','🏫'], ['serveis','🍽️']
+];
+const VALORS = [['adaptacio','😊'], ['atencio','👩‍🏫'], ['comunicacio','💬'], ['clima','🤝']];
+
+const T = {
+  ca: {
+    nom:'Català', veu:'ca',
+    hola:'La vostra opinió ens importa',
+    info:['Són 4 preguntes', 'Trigareu uns 2 minuts', 'És anònim: no cal posar el nom'],
+    comencar:'Començar', seguent:'Següent', enrere:'Enrere', enviar:'Enviar', enviant:'Enviant…',
+    p1:'Per què vau triar la nostra escola?', p1s:'Trieu fins a 3 respostes',
+    motius:{projecte:'Projecte educatiu i metodologia', proximitat:'A prop de casa o de la feina', tracte:'Tracte familiar, proper i acollidor', reputacio:"Bona fama / Ens la van recomanar altres famílies", installacions:'Instal·lacions, patis i aules', serveis:"Serveis d'acollida, menjador o extraescolars"},
+    altreMotiu:'Una altra raó', escriviu:'Escriviu-la aquí',
+    max:'Ja n\'heu triat 3. Traieu-ne una per triar-ne una altra.',
+    p2:'Després d\'aquests primers mesos, què és el que més valoreu?', p2s:'Podeu triar-ne més d\'una',
+    valors:{adaptacio:"L'adaptació i el benestar del meu fill o filla", atencio:"L'atenció i l'acompanyament de les mestres", comunicacio:'La comunicació i la relació amb la meva família', clima:'La convivència i el bon ambient de l\'escola'},
+    altreValor:'Una altra cosa',
+    p3:'Si haguéssiu de recomanar la nostra escola a una família nova, què li diríeu en una sola frase?',
+    p3s:'Podeu escriure en la llengua que vulgueu', p3ph:'Escriviu aquí la vostra frase…',
+    p3opc:'Si no voleu escriure, podeu passar a la pregunta següent.',
+    p4:'De l\'1 al 10, recomanaríeu la nostra escola a altres famílies?',
+    p4baix:'Gens probable', p4alt:'Molt probable',
+    gracies:'Moltes gràcies!', graciesTxt:'Les vostres respostes ens ajuden a millorar i a donar a conèixer l\'escola.',
+    jaFet:'Ja heu respost aquest curs. Moltes gràcies!', altraVegada:'Respondre una altra vegada',
+    error:'No s\'ha pogut enviar. Comproveu la connexió i torneu-ho a provar.'
+  },
+  es: {
+    nom:'Español', veu:'es',
+    hola:'Vuestra opinión es muy importante para nosotros',
+    info:['Son 4 preguntas', 'Tardaréis unos 2 minutos', 'Es anónimo: no hace falta poner el nombre'],
+    comencar:'Empezar', seguent:'Siguiente', enrere:'Atrás', enviar:'Enviar', enviant:'Enviando…',
+    p1:'¿Por qué elegisteis nuestra escuela?', p1s:'Elegid hasta 3 respuestas',
+    motius:{projecte:'El proyecto educativo y la forma de enseñar', proximitat:'Está cerca de casa o del trabajo', tracte:'Trato familiar, cercano y acogedor', reputacio:'Buena fama / Nos la recomendaron otras familias', installacions:'Instalaciones, patios y aulas', serveis:'Servicio de acogida, comedor o extraescolares'},
+    altreMotiu:'Otro motivo', escriviu:'Escribidlo aquí',
+    max:'Ya habéis elegido 3. Quitad una para elegir otra.',
+    p2:'Después de estos primeros meses, ¿qué es lo que más valoráis?', p2s:'Podéis elegir más de una',
+    valors:{adaptacio:'La adaptación y el bienestar de mi hijo o hija', atencio:'La atención y el acompañamiento de las maestras', comunicacio:'La comunicación y la relación con mi familia', clima:'La convivencia y el buen ambiente de la escuela'},
+    altreValor:'Otra cosa',
+    p3:'Si tuvierais que recomendar nuestra escuela a una familia nueva, ¿qué le diríais en una sola frase?',
+    p3s:'Podéis escribir en el idioma que queráis', p3ph:'Escribid aquí vuestra frase…',
+    p3opc:'Si no queréis escribir, podéis pasar a la siguiente pregunta.',
+    p4:'Del 1 al 10, ¿recomendaríais nuestra escuela a otras familias?',
+    p4baix:'Nada probable', p4alt:'Muy probable',
+    gracies:'¡Muchas gracias!', graciesTxt:'Vuestras respuestas nos ayudan a mejorar y a dar a conocer la escuela.',
+    jaFet:'Ya habéis respondido este curso. ¡Muchas gracias!', altraVegada:'Responder otra vez',
+    error:'No se ha podido enviar. Comprobad la conexión y volved a intentarlo.'
+  },
+  ar: {
+    nom:'الدارجة', veu:'ar',
+    hola:'الرأي ديالكم مهم بزاف عندنا',
+    info:['كاينين 4 ديال الأسئلة', 'غادي تاخد ليكم شي دقيقتين', 'ما خاصكمش تكتبو السمية ديالكم'],
+    comencar:'يلاه نبداو', seguent:'اللي من بعد', enrere:'رجع', enviar:'صيفط', enviant:'كنصيفطو…',
+    p1:'علاش ختاريتو المدرسة ديالنا؟', p1s:'ختارو حتى 3 ديال الأجوبة',
+    motius:{projecte:'المشروع التربوي وطريقة التعليم', proximitat:'قريبة من الدار ولا من الخدمة', tracte:'المعاملة زوينة وقريبة بحال العائلة', reputacio:'سمعتها مزيانة / نصحونا بيها عائلات أخرين', installacions:'البناية، الساحات والأقسام', serveis:'الاستقبال فالصباح، المطعم ولا الأنشطة من بعد القراية'},
+    altreMotiu:'سبب آخر', escriviu:'كتبوه هنا',
+    max:'ختاريتو 3 ديجا. حيدو وحدة باش تختارو وحدة أخرى.',
+    p2:'من بعد هاد الشهور الأولى، شنو اللي عجبكم كثر؟', p2s:'تقدرو تختارو كثر من وحدة',
+    valors:{adaptacio:'ولدي ولا بنتي تأقلم ومرتاح فالمدرسة', atencio:'الاهتمام والمرافقة ديال المعلمات', comunicacio:'التواصل والعلاقة مع العائلة ديالي', clima:'الجو المزيان والتعايش فالمدرسة'},
+    altreValor:'حاجة أخرى',
+    p3:'إلا بغيتو تنصحو عائلة جديدة بالمدرسة ديالنا، شنو غادي تقولو ليها فجملة وحدة؟',
+    p3s:'تقدرو تكتبو باللغة اللي بغيتو', p3ph:'كتبو الجملة ديالكم هنا…',
+    p3opc:'إلا ما بغيتوش تكتبو، دوزو للسؤال اللي من بعد.',
+    p4:'من 1 حتى 10، واش غادي تنصحو عائلات أخرين بالمدرسة ديالنا؟',
+    p4baix:'لا، ما غاديش', p4alt:'إيه، بزاف',
+    gracies:'شكرا بزاف!', graciesTxt:'الأجوبة ديالكم كتعاونا باش نتحسنو ونعرّفو الناس بالمدرسة.',
+    jaFet:'ديجا جاوبتو هاد العام. شكرا بزاف!', altraVegada:'جاوب مرة أخرى',
+    error:'ما تصيفطش. شوفو الإنترنت وعاودو جربو.'
+  }
+};
+
+const COLORS_NOTA = ['#C62828','#D84315','#E65100','#EF6C00','#F57C00','#F9A825','#C0A000','#9E9D24','#558B2F','#2E7D32'];
+const CARES = ['😞','😞','🙁','🙁','😐','😐','🙂','🙂','😃','😍'];
+
+const estat = {
+  idioma:null, pas:'idioma',
+  motius:[], altreMotiuOn:false, altreMotiu:'',
+  valors:[], altreValorOn:false, altreValor:'',
+  frase:'', nota:null
+};
+const PASSOS = ['inici','p1','p2','p3','p4'];
+const app = document.getElementById('app');
+const t = () => T[estat.idioma || 'ca'];
+
+function cursEscolar(d){ const a=d.getFullYear(); return d.getMonth()>=8 ? a+'-'+(a+1) : (a-1)+'-'+a; }
+const CURS = cursEscolar(new Date());
+const CLAU = 'valoracio-escola-enviada';
+function llegeix(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function desa(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* Lectura en veu alta, només si el dispositiu té una veu de l'idioma */
+function veuPer(lang){
+  if(!('speechSynthesis' in window)) return null;
+  const veus = speechSynthesis.getVoices();
+  return veus.find(v => v.lang.toLowerCase().startsWith(lang+'-ma')) ||
+         veus.find(v => v.lang.toLowerCase().startsWith(lang)) || null;
+}
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => { if(estat.pas!=='idioma') pinta(); };
+function botoEscolta(text){
+  if(!veuPer(t().veu)) return '';
+  return `<button class="escolta" type="button" aria-label="🔊" data-diu="${esc(text)}">🔊</button>`;
+}
+function parla(boto){
+  speechSynthesis.cancel();
+  if(boto.classList.contains('parla')){ boto.classList.remove('parla'); return; }
+  const u = new SpeechSynthesisUtterance(boto.dataset.diu);
+  const v = veuPer(t().veu); if(v){ u.voice=v; u.lang=v.lang; }
+  u.rate = .92;
+  u.onend = u.onerror = () => boto.classList.remove('parla');
+  document.querySelectorAll('.escolta.parla').forEach(b=>b.classList.remove('parla'));
+  boto.classList.add('parla');
+  speechSynthesis.speak(u);
+}
+
+function posaIdioma(codi){
+  estat.idioma = codi;
+  document.documentElement.lang = codi==='ar' ? 'ary' : codi;
+  document.documentElement.dir = codi==='ar' ? 'rtl' : 'ltr';
+  document.getElementById('nomIdioma').textContent = T[codi].nom;
+  document.getElementById('canviaIdioma').classList.remove('amaga');
+}
+
+function vesA(pas){
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+  estat.pas = pas;
+  pinta();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function pinta(){
+  const p = estat.pas, tx = t();
+  const enQuestio = /^p\d$/.test(p);
+  document.getElementById('progres').classList.toggle('amaga', !enQuestio);
+  document.getElementById('navegacio').classList.toggle('amaga', !(enQuestio || p==='inici'));
+  if(enQuestio){
+    const n = +p[1];
+    document.getElementById('progres').innerHTML = [1,2,3,4].map(i =>
+      `<span class="${i<n?'fet':i===n?'actual':''}">${i<n?'✓':i}</span>`).join('');
+  }
+  const html = { idioma:pIdioma, inici:pInici, p1:pP1, p2:pP2, p3:pP3, p4:pP4, gracies:pGracies, jaFet:pJaFet }[p]();
+  app.innerHTML = `<section class="pantalla">${html}</section>`;
+  actualitzaNav();
+}
+
+function actualitzaNav(){
+  const p = estat.pas, tx = t();
+  const seg = document.getElementById('seguent');
+  document.getElementById('txtEnrere').textContent = tx.enrere;
+  document.getElementById('enrere').classList.toggle('amaga', p==='inici');
+  seg.classList.toggle('enviar', p==='p4');
+  document.getElementById('txtSeguent').textContent = p==='inici' ? tx.comencar : p==='p4' ? tx.enviar : tx.seguent;
+  const fl = seg.querySelector('.fletxa');
+  fl.textContent = p==='p4' ? '✓' : '→';
+  fl.classList.toggle('sense-gir', p==='p4');
+  seg.disabled = !valid(p);
+}
+
+function valid(p){
+  if(p==='p1') return estat.motius.length>0 || (estat.altreMotiuOn && estat.altreMotiu.trim());
+  if(p==='p2') return estat.valors.length>0 || (estat.altreValorOn && estat.altreValor.trim());
+  if(p==='p4') return estat.nota!==null;
+  return true;
+}
+
+/* ---- Pantalles ---- */
+function pIdioma(){
+  return `<div class="benvinguda">
+    <img src="${LOGO}" alt="Escola Ramon Pont">
+    <div class="salutacio">Benvinguts · Bienvenidos<br><span class="ar" dir="rtl">مرحبا بيكم</span></div>
+    <div class="idiomes">
+      <button class="idioma" data-idioma="es" type="button"><span class="bombolla">👋</span><span>Español<small>Castellano</small></span></button>
+      <button class="idioma" data-idioma="ar" type="button"><span class="bombolla">👋</span><span class="ar" dir="rtl">الدارجة<small>Darija · العربية المغربية</small></span></button>
+      <button class="idioma" data-idioma="ca" type="button"><span class="bombolla">👋</span><span>Català<small>Catalan</small></span></button>
+    </div>
+  </div>`;
+}
+function pInici(){
+  const tx=t(), ics=['❓','⏱️','🔒'];
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.hola)}</h1>${botoEscolta(tx.hola+'. '+tx.info.join('. '))}</div>
+    <div class="xips">${tx.info.map((s,i)=>`<div class="xip"><span class="ic">${ics[i]}</span>${esc(s)}</div>`).join('')}</div>`;
+}
+function targeta(clau, ic, text, premut){
+  return `<button class="opcio" type="button" data-clau="${clau}" aria-pressed="${premut}">
+    <span class="marca" aria-hidden="true">✓</span><span class="ic" aria-hidden="true">${ic}</span><span>${esc(text)}</span></button>`;
+}
+function pP1(){
+  const tx=t(), n = estat.motius.length + (estat.altreMotiuOn?1:0);
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p1)}</h1>${botoEscolta(tx.p1+' '+tx.p1s+'. '+MOTIUS.map(m=>tx.motius[m[0]]).join('. '))}</div>
+    <div class="comptador">${[0,1,2].map(i=>`<i class="${i<n?'ple':''}"></i>`).join('')} <span>${esc(tx.p1s)}</span></div>
+    <div class="avis amaga" id="avisMax" style="margin:0 0 1rem">✋ ${esc(tx.max)}</div>
+    <div class="opcions">${MOTIUS.map(([k,ic])=>targeta(k,ic,tx.motius[k],estat.motius.includes(k))).join('')}
+      ${targeta('altre','✏️',tx.altreMotiu,estat.altreMotiuOn)}</div>
+    ${estat.altreMotiuOn?`<input class="camp" id="altre" maxlength="300" placeholder="${esc(tx.escriviu)}" value="${esc(estat.altreMotiu)}">`:''}`;
+}
+function pP2(){
+  const tx=t();
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p2)}</h1>${botoEscolta(tx.p2+' '+tx.p2s+'. '+VALORS.map(m=>tx.valors[m[0]]).join('. '))}</div>
+    <p class="subtitol">${esc(tx.p2s)}</p>
+    <div class="opcions">${VALORS.map(([k,ic])=>targeta(k,ic,tx.valors[k],estat.valors.includes(k))).join('')}
+      ${targeta('altre','✏️',tx.altreValor,estat.altreValorOn)}</div>
+    ${estat.altreValorOn?`<input class="camp" id="altre" maxlength="300" placeholder="${esc(tx.escriviu)}" value="${esc(estat.altreValor)}">`:''}`;
+}
+function pP3(){
+  const tx=t();
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p3)}</h1>${botoEscolta(tx.p3+' '+tx.p3s)}</div>
+    <p class="subtitol">💬 ${esc(tx.p3s)}</p>
+    <textarea class="camp gran" id="frase" maxlength="600" placeholder="${esc(tx.p3ph)}">${esc(estat.frase)}</textarea>
+    <p class="ajuda">${esc(tx.p3opc)}</p>`;
+}
+function pP4(){
+  const tx=t(), n=estat.nota;
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p4)}</h1>${botoEscolta(tx.p4+' 1: '+tx.p4baix+'. 10: '+tx.p4alt)}</div>
+    <div class="cara" aria-hidden="true">${n?CARES[n-1]:'🤔'}</div>
+    <div class="escala" dir="ltr">${[1,2,3,4,5,6,7,8,9,10].map(i=>
+      `<button class="nota" type="button" data-nota="${i}" aria-pressed="${n===i}" style="background:${COLORS_NOTA[i-1]}">${i}</button>`).join('')}</div>
+    <div class="extrems" dir="ltr"><span><b>1</b> <bdi>${esc(tx.p4baix)}</bdi></span><span><bdi>${esc(tx.p4alt)}</bdi> <b>10</b></span></div>
+    <div class="avis amaga" id="avisError"></div>`;
+}
+function pGracies(){
+  const tx=t();
+  return `<div class="final"><div class="gran-ic">💛</div><h1 class="titol">${esc(tx.gracies)}</h1>
+    <p class="subtitol">${esc(tx.graciesTxt)}</p></div>`;
+}
+function pJaFet(){
+  const tx=t();
+  return `<div class="final"><div class="gran-ic">💛</div><h1 class="titol">${esc(tx.jaFet)}</h1>
+    <button class="secundari" id="tornar" type="button">${esc(tx.altraVegada)}</button></div>`;
+}
+
+/* ---- Interacció ---- */
+app.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.classList.contains('escolta')) return parla(b);
+  if(b.dataset.idioma){
+    posaIdioma(b.dataset.idioma);
+    return vesA(llegeix(CLAU)===CURS ? 'jaFet' : 'inici');
+  }
+  if(b.id==='tornar') return vesA('inici');
+  if(b.dataset.nota){ estat.nota=+b.dataset.nota; return pinta(); }
+  if(b.dataset.clau){
+    const k=b.dataset.clau;
+    if(estat.pas==='p1'){
+      const n = estat.motius.length + (estat.altreMotiuOn?1:0);
+      const actiu = k==='altre' ? estat.altreMotiuOn : estat.motius.includes(k);
+      if(!actiu && n>=3){
+        b.classList.remove('no'); void b.offsetWidth; b.classList.add('no');
+        document.getElementById('avisMax').classList.remove('amaga');
+        return;
+      }
+      if(k==='altre') estat.altreMotiuOn=!actiu;
+      else estat.motius = actiu ? estat.motius.filter(x=>x!==k) : estat.motius.concat(k);
+    } else {
+      const actiu = k==='altre' ? estat.altreValorOn : estat.valors.includes(k);
+      if(k==='altre') estat.altreValorOn=!actiu;
+      else estat.valors = actiu ? estat.valors.filter(x=>x!==k) : estat.valors.concat(k);
+    }
+    pinta();
+    if(k==='altre'){ const c=document.getElementById('altre'); if(c) c.focus(); }
+  }
+});
+app.addEventListener('input', e => {
+  if(e.target.id==='altre'){ estat.pas==='p1' ? estat.altreMotiu=e.target.value : estat.altreValor=e.target.value; }
+  if(e.target.id==='frase') estat.frase=e.target.value;
+  document.getElementById('seguent').disabled = !valid(estat.pas);
+});
+
+document.getElementById('enrere').addEventListener('click', () => {
+  const i = PASSOS.indexOf(estat.pas); if(i>0) vesA(PASSOS[i-1]);
+});
+document.getElementById('seguent').addEventListener('click', () => {
+  if(!valid(estat.pas)) return;
+  if(estat.pas==='p4') return envia();
+  vesA(PASSOS[PASSOS.indexOf(estat.pas)+1]);
+});
+document.getElementById('canviaIdioma').addEventListener('click', () => vesA('idioma'));
+
+function envia(){
+  const seg = document.getElementById('seguent'), tx=t();
+  seg.disabled = true;
+  document.getElementById('txtSeguent').textContent = tx.enviant;
+  const dades = {
+    idioma: estat.idioma,
+    motius: estat.motius, altreMotiu: estat.altreMotiuOn ? estat.altreMotiu : '',
+    valors: estat.valors, altreValor: estat.altreValorOn ? estat.altreValor : '',
+    frase: estat.frase, nota: estat.nota
+  };
+  google.script.run
+    .withSuccessHandler(() => {
+      desa(CLAU, CURS);
+      Object.assign(estat, {motius:[], altreMotiuOn:false, altreMotiu:'', valors:[], altreValorOn:false, altreValor:'', frase:'', nota:null});
+      vesA('gracies');
+    })
+    .withFailureHandler(() => {
+      const a = document.getElementById('avisError');
+      a.textContent = '⚠️ ' + tx.error; a.classList.remove('amaga');
+      actualitzaNav();
+    })
+    .desaResposta(dades);
+}
+
+pinta();
+</script>
+</body>
+</html>

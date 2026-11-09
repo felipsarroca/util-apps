@@ -57,6 +57,13 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Gestió de centre'
         },
         {
+            name: 'La vostra opinió',
+            path: 'https://ja.cat/valorans',
+            icon: 'ValoracioEscola/favicon.svg',
+            description: 'Qüestionari visual per a les famílies en català, castellà i darija, amb resum per curs escolar a Google Sheets.',
+            category: 'Gestió de centre'
+        },
+        {
             name: 'La teva veu',
             path: 'https://ja.cat/tensveu',
             icon: 'LaTevaVeu/favicon.svg',

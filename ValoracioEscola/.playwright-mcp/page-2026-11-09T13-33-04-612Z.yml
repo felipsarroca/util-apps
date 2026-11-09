@@ -1,0 +1,37 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e2]:
+    - generic [ref=f3e3]: Escola Ramon Pont
+  - main [ref=f3e4]:
+    - generic [ref=f3e6]:
+      - img "Escola Ramon Pont" [ref=f3e7]
+      - generic [ref=f3e8]: Benvinguts · Bienvenidosمرحبا بيكم
+      - generic [ref=f3e9]:
+        - button "👋 Español Castellano" [ref=f3e10] [cursor=pointer]:
+          - generic [ref=f3e11]: 👋
+          - generic [ref=f3e12]:
+            - text: Español
+            - generic [ref=f3e13]: Castellano
+        - button "👋 الدارجة Darija · العربية المغربية" [ref=f3e14] [cursor=pointer]:
+          - generic [ref=f3e15]: 👋
+          - generic [ref=f3e16]:
+            - text: الدارجة
+            - generic [ref=f3e17]: Darija · العربية المغربية
+        - button "👋 Català Catalan" [ref=f3e18] [cursor=pointer]:
+          - generic [ref=f3e19]: 👋
+          - generic [ref=f3e20]:
+            - text: Català
+            - generic [ref=f3e21]: Catalan
+  - contentinfo [ref=f3e22]:
+    - link "Llicència Creative Commons BY-NC-SA 4.0" [ref=f3e23] [cursor=pointer]:
+      - /url: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca
+      - img "Creative Commons BY-NC-SA" [ref=f3e24]
+    - generic [ref=f3e25]:
+      - paragraph [ref=f3e26]:
+        - text: Aplicació creada per
+        - link "Felip Sarroca" [ref=f3e27] [cursor=pointer]:
+          - /url: https://ja.cat/felipsarroca
+        - text: amb assistència de la IA
+      - paragraph [ref=f3e28]:
+        - text: Obra sota llicència
+        - link "CC BY-NC-SA 4.0" [ref=f3e29] [cursor=pointer]:
+          - /url: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca

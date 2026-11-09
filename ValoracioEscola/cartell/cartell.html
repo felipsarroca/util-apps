@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<title>Cartell · La vostra opinió</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Noto+Sans+Arabic:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+@page{size:A4; margin:0}
+*{box-sizing:border-box}
+html,body{margin:0; padding:0}
+body{font-family:'Nunito',sans-serif; color:#2B2220; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.full{width:210mm; height:297mm; position:relative; overflow:hidden; background:#FFF9F0; display:flex; flex-direction:column}
+.ar{font-family:'Noto Sans Arabic',sans-serif; direction:rtl}
+
+/* Capçalera */
+.cap{background:#8B1E14; color:#fff; padding:8mm 14mm 15mm; position:relative}
+.cap::after{content:""; position:absolute; left:0; right:0; bottom:-1px; height:12mm;
+  background:#FFF9F0; border-radius:50% 50% 0 0 / 100% 100% 0 0}
+.marca{display:flex; align-items:center; gap:4mm}
+.logo{width:20mm; height:20mm; background:#fff; border-radius:50%; display:grid; place-items:center; overflow:hidden}
+.logo img{width:15mm; height:15mm; mix-blend-mode:multiply}
+.escola{font-size:13pt; font-weight:800; letter-spacing:.5pt; text-transform:uppercase; opacity:.92}
+.titols{margin-top:6mm; text-align:center}
+.t1{font-size:33pt; font-weight:900; line-height:1.05}
+.t2{font-size:21pt; font-weight:800; color:#F6D77A; margin-top:2mm}
+.t3{font-size:23pt; font-weight:800; color:#F6D77A; margin-top:1mm; line-height:1.3}
+
+/* Cos */
+.cos{flex:1; display:flex; flex-direction:column; align-items:center; padding:2mm 14mm 0}
+.qr-marc{position:relative; padding:7mm; background:#fff; border-radius:9mm; border:2.2mm solid #C9971C;
+  box-shadow:0 3mm 8mm rgba(110,22,15,.15)}
+.qr-marc img{display:block; width:70mm; height:70mm}
+.cantonada{position:absolute; width:14mm; height:14mm; border:2.2mm solid #8B1E14}
+.c1{top:-6mm; left:-6mm; border-right:none; border-bottom:none; border-radius:6mm 0 0 0}
+.c2{top:-6mm; right:-6mm; border-left:none; border-bottom:none; border-radius:0 6mm 0 0}
+.c3{bottom:-6mm; left:-6mm; border-right:none; border-top:none; border-radius:0 0 0 6mm}
+.c4{bottom:-6mm; right:-6mm; border-left:none; border-top:none; border-radius:0 0 6mm 0}
+.mobil{position:absolute; right:-25mm; top:50%; transform:translateY(-50%) rotate(-10deg); font-size:36pt}
+
+.enllac{margin-top:8mm; text-align:center}
+.enllac .o{font-size:11.5pt; font-weight:800; color:#6D625E}
+.enllac .o .ar{font-size:12.5pt}
+.url{display:inline-block; margin-top:2.5mm; padding:3mm 9mm; border-radius:99mm; background:#8B1E14; color:#fff;
+  font-size:30pt; font-weight:900; letter-spacing:.3pt}
+.url span{color:#F6D77A}
+
+.passos{display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; width:100%; margin-top:10mm}
+.pas{background:#fff; border-radius:5mm; padding:4mm 3.5mm 4.5mm; text-align:center; border:.6mm solid #EADFD3}
+.pas .num{width:9mm; height:9mm; margin:-8.5mm auto 1.5mm; border-radius:50%; background:#C9971C; color:#fff;
+  font-weight:900; font-size:13pt; display:grid; place-items:center; border:1mm solid #FFF9F0}
+.pas .ic{font-size:22pt; line-height:1.1}
+.pas p{margin:1.2mm 0 0; font-size:10.5pt; font-weight:800; line-height:1.2}
+.pas p.es{color:#6D625E; font-weight:700}
+.pas p.ar{font-size:11pt; color:#8B1E14; line-height:1.45}
+
+.xips{display:flex; justify-content:center; gap:4mm; margin-top:6mm}
+.xip{display:flex; align-items:center; gap:2.5mm; background:#FCF3DA; border-radius:99mm; padding:2mm 5mm 2mm 3mm}
+.xip b{font-size:16pt}
+.xip span{font-size:9.5pt; font-weight:800; line-height:1.15}
+.xip .ar{font-size:10pt; display:block}
+
+.peu{margin-top:auto; padding:4mm 14mm 6mm; display:flex; align-items:center; justify-content:space-between; gap:6mm}
+.gracies{font-size:13pt; font-weight:900; color:#8B1E14}
+.gracies .ar{margin-inline-start:2mm}
+.credit{display:flex; align-items:center; gap:2.5mm; font-size:7pt; color:#8A7D78; line-height:1.25}
+.credit img{width:16mm}
+</style>
+</head>
+<body>
+<div class="full">
+  <header class="cap">
+    <div class="marca">
+      <div class="logo"><img src="logo.png" alt=""></div>
+      <div class="escola">Escola Ramon Pont</div>
+    </div>
+    <div class="titols">
+      <div class="t1">La vostra opinió ens importa</div>
+      <div class="t2">¡Vuestra opinión nos importa!</div>
+      <div class="t3 ar">الرأي ديالكم مهم بزاف عندنا</div>
+    </div>
+  </header>
+
+  <main class="cos">
+    <div class="qr-marc">
+      <span class="cantonada c1"></span><span class="cantonada c2"></span>
+      <span class="cantonada c3"></span><span class="cantonada c4"></span>
+      <img src="qr-valorans.svg" alt="Codi QR cap a ja.cat/valorans">
+      <span class="mobil">📱</span>
+    </div>
+
+    <div class="enllac">
+      <div class="o">O escriviu · O escribid · <span class="ar">ولا كتبو</span></div>
+      <div class="url">ja.cat/<span>valorans</span></div>
+    </div>
+
+    <div class="passos">
+      <div class="pas"><div class="num">1</div><div class="ic">📷</div>
+        <p>Obriu la càmera del mòbil</p><p class="es">Abrid la cámara del móvil</p><p class="ar">حلّو الكاميرا ديال التيليفون</p></div>
+      <div class="pas"><div class="num">2</div><div class="ic">🔍</div>
+        <p>Enfoqueu el codi QR</p><p class="es">Enfocad el código QR</p><p class="ar">وجّهو الكاميرا للكود</p></div>
+      <div class="pas"><div class="num">3</div><div class="ic">👆</div>
+        <p>Toqueu l'enllaç i responeu</p><p class="es">Tocad el enlace y responded</p><p class="ar">كليكيو على الرابط وجاوبو</p></div>
+    </div>
+
+    <div class="xips">
+      <div class="xip"><b>❓</b><span>4 preguntes · 4 preguntas<span class="ar">4 ديال الأسئلة</span></span></div>
+      <div class="xip"><b>⏱️</b><span>2 minuts · 2 minutos<span class="ar">دقيقتين</span></span></div>
+      <div class="xip"><b>🔒</b><span>Anònim · Anónimo<span class="ar">بلا سمية</span></span></div>
+    </div>
+  </main>
+
+  <footer class="peu">
+    <div class="gracies">Gràcies! · ¡Gracias! · <span class="ar">شكرا!</span> 💛</div>
+    <div class="credit"><img src="cc.png" alt="CC BY-NC-SA">
+      <div>Aplicació creada per Felip Sarroca<br>amb assistència de la IA · CC BY-NC-SA 4.0</div></div>
+  </footer>
+</div>
+</body>
+</html>

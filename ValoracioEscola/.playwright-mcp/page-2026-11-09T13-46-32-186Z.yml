@@ -1,0 +1,17 @@
+- table [ref=f6e2]:
+  - rowgroup [ref=f6e3]:
+    - row [ref=f6e4]:
+      - cell [ref=f6e5]:
+        - banner [ref=f6e6]:
+          - generic [ref=f6e7]:
+            - alert [ref=f6e12]: Esta aplicación la ha creado un usuario de Google Apps Script
+            - generic [ref=f6e13]:
+              - link "Denunciar abuso" [ref=f6e14] [cursor=pointer]:
+                - /url: https://drive.google.com/abuse?id=AFS7AdtzIo1zHVLzk0tmISyU-L-EKZs3ioaEYlSaKIwcKVv_A_bJnwG03W-cdGkssIb_59gpxpl62QC8L3_QLYt_csac5nCXHbCPCu1l%3A0&docurl=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbzERbkL1jKSQA3ub5PvpKTkCC0Kmbe2wHWCOV-1XyQ5as3n-oBDnsMO0ARd49kX-kwqgw%2Fexec
+              - link "Más información" [ref=f6e15] [cursor=pointer]:
+                - /url: https://developers.google.com/apps-script
+          - button "Cerrar" [ref=f6e16]
+    - row [ref=f6e19]:
+      - cell [ref=f6e20]:
+        - iframe [ref=f6e21]:
+          - iframe [ref=f7e2]
