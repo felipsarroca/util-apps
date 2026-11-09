@@ -51,16 +51,49 @@ const URL_APP = 'https://felipsarroca.github.io/util-apps/ValoracioEscola/';
  */
 const CLIENT_ID = '357232439610-4d718jqq40o0c3hmnka540vdtu90gbcb.apps.googleusercontent.com';
 
-/** L'URL antic de l'script porta a l'app nova. */
+/**
+ * L'URL antic de l'script (o un enllaç ja.cat desat al navegador abans del canvi).
+ * Google no deixa saltar sol a una altra web, així que es mostra un botó gran.
+ */
 function doGet() {
-  const url = JSON.stringify(URL_APP);
+  const url = URL_APP;
   return HtmlService.createHtmlOutput(
-    '<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<script>window.top.location.replace(' + url + ');</script>' +
-    '<p style="font:18px system-ui;text-align:center;margin-top:3rem">' +
-    '<a href=' + url + ' target="_top">La vostra opinió · Escola Ramon Pont →</a></p>')
+    '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#FFF9F0;' +
+    'font-family:system-ui,sans-serif;text-align:center;color:#2B2220;padding:16px;box-sizing:border-box}' +
+    'h1{color:#8B1E14;font-size:26px;margin:0 0 6px}p{margin:0 0 26px;color:#6D625E;font-size:17px;line-height:1.5}' +
+    'a{display:inline-block;background:#8B1E14;color:#fff;text-decoration:none;font-weight:800;font-size:22px;' +
+    'padding:18px 34px;border-radius:999px;box-shadow:0 6px 16px rgba(139,30,20,.3)}</style></head><body><div>' +
+    '<h1>La vostra opinió · Escola Ramon Pont</h1>' +
+    '<p>Premeu el botó · Pulsad el botón<br><span dir="rtl">ضغطو على الزر</span></p>' +
+    '<a href="' + url + '" target="_top">Començar · Empezar · <span dir="rtl">يلاه نبداو</span> →</a>' +
+    '</div></body></html>')
     .setTitle('La vostra opinió · Escola Ramon Pont')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * Executeu-la des de l'editor: escriu al registre totes les cel·les amb error
+ * de les pestanyes del full, amb la fórmula i el missatge d'error.
+ */
+function diagnostica() {
+  const ss = obreFull_();
+  Logger.log('Configuració regional: ' + ss.getSpreadsheetLocale());
+  const errors = [];
+  ss.getSheets().forEach(sh => {
+    const rang = sh.getDataRange();
+    const valors = rang.getDisplayValues();
+    const formules = rang.getFormulas();
+    valors.forEach((fila, i) => fila.forEach((v, j) => {
+      if (/^#/.test(v) && /^#(ERROR|REF|N\/A|VALUE|NAME|DIV\/0|NUM|NULL)/.test(v)) {
+        const cel = sh.getRange(i + 1, j + 1);
+        errors.push(sh.getName() + '!' + cel.getA1Notation() + ' → ' + v + ' · ' + formules[i][j]);
+      }
+    }));
+  });
+  Logger.log(errors.length ? errors.slice(0, 40).join('\n') : 'Cap error trobat');
+  Logger.log('Total de cel·les amb error: ' + errors.length);
 }
 
 /**
