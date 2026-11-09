@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ca" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La vostra opinió · Escola Ramon Pont</title>
+<meta name="description" content="Qüestionari de valoració per a les famílies de l'Escola Ramon Pont en castellà, darija i català.">
+<meta name="theme-color" content="#8B1E14">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&family=Noto+Sans+Arabic:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estils.css">
+</head>
+<body>
+
+<header class="capcalera">
+  <img src="logo.png" alt="">
+  <div class="escola">Escola Ramon Pont</div>
+  <button class="boto-idioma amaga" id="canviaIdioma" type="button" aria-label="Idioma"><span aria-hidden="true">🌐</span><span id="nomIdioma"></span></button>
+</header>
+
+<div class="progres amaga" id="progres" aria-hidden="true"></div>
+
+<main id="app" aria-live="polite"></main>
+
+<nav class="navegacio amaga" id="navegacio">
+  <div class="dins">
+    <button class="boto enrere" id="enrere" type="button"><span class="fletxa">←</span><span id="txtEnrere"></span></button>
+    <button class="boto primari" id="seguent" type="button"><span id="txtSeguent"></span><span class="fletxa">→</span></button>
+  </div>
+</nav>
+
+<!-- Estadístiques: només per als comptes amb accés al full de càlcul -->
+<div class="porta amaga" id="porta" role="dialog" aria-modal="true" aria-labelledby="portaTitol" dir="ltr" lang="ca">
+  <div class="porta-caixa">
+    <button class="tanca" id="portaTanca" type="button" aria-label="Tanca">✕</button>
+    <div class="porta-ic" aria-hidden="true">📊</div>
+    <h2 id="portaTitol">Estadístiques</h2>
+    <p>Accés reservat a l'equip directiu. Entreu amb el compte de Google que té accés al full de respostes.</p>
+    <div id="botoGoogle" class="boto-google"></div>
+    <p class="porta-estat" id="portaEstat" aria-live="polite"></p>
+  </div>
+</div>
+
+<section class="tauler amaga" id="tauler" dir="ltr" lang="ca" aria-label="Estadístiques"></section>
+
+<div class="avis-flotant amaga" id="avisFlotant" role="status" dir="ltr" lang="ca"></div>
+
+<footer class="felip-app-footer">
+  <a class="felip-license-image-link" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+    <img class="felip-license-image" src="llicencia.png" alt="Creative Commons BY-NC-SA">
+  </a>
+  <div class="felip-footer-text">
+    <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+    <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script src="estadistiques.js"></script>
+</body>
+</html>

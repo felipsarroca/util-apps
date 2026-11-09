@@ -1,228 +1,4 @@
-<!DOCTYPE html>
-<html lang="ca" dir="ltr">
-<head>
-<base target="_top">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>La vostra opinió · Escola Ramon Pont</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&family=Noto+Sans+Arabic:wght@500;700;800&display=swap" rel="stylesheet">
-<style>
-:root{
-  --granat:#8B1E14; --granat-fosc:#6E160F; --granat-clar:#F7E8E5;
-  --or:#C9971C; --or-clar:#FCF3DA;
-  --fons:#FFF9F0; --carta:#FFFFFF; --text:#2B2220; --suau:#6D625E; --linia:#EADFD3;
-  --verd:#2E7D32; --vermell:#C62828;
-  --ombra:0 6px 20px rgba(110,22,15,.10);
-  --radi:1.1rem;
-  --peu:46px; --nav:5.2rem;
-}
-*{box-sizing:border-box}
-html{font-size:clamp(15px, min(1.15vw, 2.2vh), 21px)}
-body{
-  margin:0; min-height:100dvh; background:var(--fons); color:var(--text);
-  font-family:'Nunito',system-ui,sans-serif; line-height:1.35;
-  -webkit-tap-highlight-color:transparent;
-}
-html[dir=rtl] body{font-family:'Noto Sans Arabic','Nunito',system-ui,sans-serif; line-height:1.6}
-button{font:inherit; color:inherit; cursor:pointer}
-.amaga{display:none !important}
-
-/* Capçalera */
-.capcalera{
-  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:.7rem;
-  padding:.6rem clamp(16px,3vw,32px); background:rgba(255,249,240,.95); backdrop-filter:blur(6px);
-  border-bottom:1px solid var(--linia);
-}
-.capcalera img,.benvinguda img{mix-blend-mode:multiply}
-.capcalera img{width:2.4rem; height:2.4rem}
-.capcalera .escola{font-weight:900; color:var(--granat); font-size:1.05rem; flex:1}
-.boto-idioma{
-  display:flex; align-items:center; gap:.4rem; border:2px solid var(--linia); background:#fff;
-  border-radius:999px; padding:.35rem .8rem; font-weight:800; font-size:.95rem;
-}
-.progres{display:flex; gap:.4rem; justify-content:center; padding:.8rem 16px 0}
-.progres span{
-  width:2.6rem; height:2.6rem; border-radius:50%; display:grid; place-items:center;
-  background:#fff; border:2px solid var(--linia); font-weight:900; color:var(--suau); transition:.25s;
-}
-.progres span.fet{background:var(--or-clar); border-color:var(--or); color:var(--granat)}
-.progres span.actual{background:var(--granat); border-color:var(--granat); color:#fff; transform:scale(1.12)}
-
-main{max-width:46rem; margin:0 auto; padding:1rem clamp(16px,3vw,32px) 1.5rem}
-.pantalla{animation:entra .35s ease}
-@keyframes entra{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
-
-/* Pantalla d'idioma */
-.benvinguda{text-align:center; padding-top:1rem}
-.benvinguda img{width:7.5rem; height:7.5rem}
-.salutacio{font-size:1.6rem; font-weight:900; color:var(--granat); margin:.6rem 0 .2rem}
-.salutacio .ar{font-family:'Noto Sans Arabic',sans-serif}
-.idiomes{display:grid; gap:.9rem; margin-top:1.4rem}
-.idioma{
-  display:flex; align-items:center; gap:1rem; padding:1.1rem 1.3rem; border-radius:var(--radi);
-  border:3px solid var(--linia); background:var(--carta); box-shadow:var(--ombra); text-align:start;
-  font-size:1.4rem; font-weight:900; transition:.15s;
-}
-.idioma:hover,.idioma:focus-visible{border-color:var(--or); transform:translateY(-2px)}
-.idioma .bombolla{width:3.2rem; height:3.2rem; border-radius:50%; display:grid; place-items:center; font-size:1.6rem; background:var(--or-clar); flex:none}
-.idioma .ar{font-family:'Noto Sans Arabic',sans-serif; font-size:1.55rem}
-.idioma small{display:block; font-size:.85rem; font-weight:700; color:var(--suau)}
-
-/* Inici */
-.titol{font-size:1.75rem; font-weight:900; color:var(--granat); margin:.4rem 0 .3rem; line-height:1.2}
-.subtitol{font-size:1.1rem; color:var(--suau); font-weight:700; margin:0 0 1rem}
-.fila-titol{display:flex; align-items:flex-start; gap:.6rem}
-.fila-titol .titol{flex:1}
-.escolta{
-  flex:none; width:3rem; height:3rem; border-radius:50%; border:2px solid var(--linia); background:#fff;
-  font-size:1.35rem; display:grid; place-items:center; margin-top:.3rem;
-}
-.escolta.parla{background:var(--or-clar); border-color:var(--or)}
-.xips{display:grid; gap:.8rem; margin:1.2rem 0}
-.xip{display:flex; align-items:center; gap:1rem; background:#fff; border-radius:var(--radi); padding:1rem 1.2rem; box-shadow:var(--ombra); font-size:1.15rem; font-weight:800}
-.xip .ic{font-size:1.9rem; width:3rem; text-align:center}
-
-/* Targetes d'opció */
-.opcions{display:grid; grid-template-columns:repeat(2,1fr); gap:.8rem}
-.opcio{
-  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:.5rem;
-  min-height:9.5rem; padding:1rem .7rem .9rem; border-radius:var(--radi); border:3px solid var(--linia);
-  background:var(--carta); box-shadow:var(--ombra); text-align:center; font-size:1.02rem; font-weight:800; line-height:1.25;
-  transition:transform .12s, border-color .15s, background .15s;
-}
-.opcio .ic{font-size:2.6rem; width:4.2rem; height:4.2rem; border-radius:50%; display:grid; place-items:center; background:var(--fons)}
-.opcio:active{transform:scale(.97)}
-.opcio[aria-pressed=true]{border-color:var(--granat); background:var(--granat-clar)}
-.opcio[aria-pressed=true] .ic{background:#fff}
-.opcio .marca{
-  position:absolute; top:.5rem; inset-inline-end:.5rem; width:1.9rem; height:1.9rem; border-radius:50%;
-  display:grid; place-items:center; background:var(--granat); color:#fff; font-size:1.1rem; font-weight:900;
-  transform:scale(0); transition:transform .18s;
-}
-.opcio[aria-pressed=true] .marca{transform:scale(1)}
-.opcio.no{animation:sacseja .35s}
-@keyframes sacseja{25%{transform:translateX(-6px)} 50%{transform:translateX(6px)} 75%{transform:translateX(-3px)}}
-.comptador{display:flex; align-items:center; gap:.5rem; margin:-.3rem 0 1rem; font-weight:800; color:var(--suau)}
-.comptador i{width:1.1rem; height:1.1rem; border-radius:50%; border:2px solid var(--or); display:inline-block}
-.comptador i.ple{background:var(--or)}
-.avis{margin:.8rem 0 0; padding:.8rem 1rem; border-radius:.8rem; background:var(--or-clar); color:#6B4E00; font-weight:800}
-.camp{
-  width:100%; margin-top:.8rem; padding:1rem; border-radius:var(--radi); border:3px solid var(--or);
-  background:#fff; font:inherit; font-size:1.1rem; resize:vertical;
-}
-.camp:focus{outline:none; border-color:var(--granat)}
-textarea.gran{min-height:9rem; border-color:var(--linia)}
-.ajuda{color:var(--suau); font-weight:700; font-size:.95rem; margin-top:.5rem}
-
-/* Escala 1-10 */
-.cara{font-size:4.5rem; text-align:center; height:5.5rem; line-height:5.5rem; transition:.2s}
-.escala{display:grid; grid-template-columns:repeat(5,1fr); gap:.6rem}
-.nota{
-  aspect-ratio:1; border-radius:1rem; border:3px solid transparent; font-size:1.6rem; font-weight:900; color:#fff;
-  box-shadow:var(--ombra); transition:transform .12s;
-}
-.nota[aria-pressed=true]{transform:scale(1.12); border-color:var(--text); box-shadow:0 0 0 4px #fff, 0 0 0 7px var(--text)}
-.extrems{display:flex; justify-content:space-between; margin-top:.9rem; font-weight:800; color:var(--suau); gap:1rem}
-.extrems span{display:flex; align-items:center; gap:.4rem; direction:ltr; unicode-bidi:isolate}
-.extrems b{font-size:1.5rem}
-
-/* Gràcies */
-.final{text-align:center; padding-top:2rem}
-.final .gran-ic{font-size:6rem; animation:batec 1.2s ease infinite}
-@keyframes batec{50%{transform:scale(1.1)}}
-.secundari{margin-top:1.5rem; background:none; border:none; color:var(--granat); font-weight:800; text-decoration:underline}
-
-/* Navegació inferior */
-.navegacio{
-  position:fixed; inset-inline:0; bottom:calc(var(--peu) + env(safe-area-inset-bottom)); z-index:9;
-  display:flex; gap:.8rem; padding:.8rem clamp(16px,3vw,32px); background:rgba(255,249,240,.96);
-  border-top:1px solid var(--linia); justify-content:center;
-}
-.navegacio .dins{display:flex; gap:.8rem; width:100%; max-width:46rem}
-.boto{
-  flex:1; min-height:3.6rem; border-radius:999px; border:none; font-weight:900; font-size:1.2rem;
-  display:flex; align-items:center; justify-content:center; gap:.6rem; padding:0 1.2rem;
-}
-.boto.primari{background:var(--granat); color:#fff; box-shadow:0 6px 16px rgba(139,30,20,.3)}
-.boto.primari:disabled{background:#D7C9C3; box-shadow:none; cursor:not-allowed}
-.boto.enrere{flex:0 0 auto; background:#fff; border:2px solid var(--linia); color:var(--suau)}
-.boto.enviar{background:var(--verd); box-shadow:0 6px 16px rgba(46,125,50,.3)}
-html[dir=rtl] .fletxa:not(.sense-gir){transform:scaleX(-1)}
-.fletxa{display:inline-block}
-
-/* Peu */
-body{padding-bottom:calc(var(--peu) + var(--nav))}
-.felip-app-footer{
-  position:fixed; right:0; bottom:0; left:0; z-index:10; height:var(--peu);
-  display:flex; align-items:center; justify-content:flex-start; gap:8px; direction:ltr;
-  padding:4px clamp(16px,3vw,38px) calc(4px + env(safe-area-inset-bottom));
-  border-top:1px solid var(--linia); background:rgba(250,244,236,.97); backdrop-filter:blur(8px);
-  color:#7A6B65; font-family:'Nunito',sans-serif; font-size:12px; line-height:1.22; text-align:left;
-}
-.felip-license-image-link{display:block; line-height:0}
-.felip-license-image{display:block; width:70px; height:auto}
-.felip-footer-text{display:flex; flex-direction:column; align-items:flex-start; gap:2px}
-.felip-footer-text p{margin:0}
-.felip-footer-text a{color:var(--granat); font-weight:700; text-decoration:none}
-.felip-footer-text a:focus-visible,.felip-license-image-link:focus-visible{outline:2px solid var(--granat); outline-offset:2px}
-
-@media (min-width:720px){
-  .opcions{grid-template-columns:repeat(3,1fr)}
-  .escala{grid-template-columns:repeat(10,1fr)}
-  .nota{font-size:1.4rem}
-}
-@media (min-width:1000px){
-  main{max-width:58rem}
-  .navegacio .dins{max-width:58rem}
-  .opcions{grid-template-columns:repeat(4,1fr)}
-  .opcio{min-height:8.6rem}
-}
-@media (max-width:380px){
-  .opcio{min-height:8.5rem; font-size:.95rem}
-  .opcio .ic{font-size:2.2rem; width:3.6rem; height:3.6rem}
-  .felip-app-footer{font-size:10.5px}
-  .felip-license-image{width:58px}
-}
-@media (max-height:700px) and (min-width:720px){
-  .opcio{min-height:8rem}
-  .benvinguda img{width:5.5rem; height:5.5rem}
-}
-@media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
-</style>
-</head>
-<body>
-
-<header class="capcalera">
-  <img src="<?!= include('Logo') ?>" alt="">
-  <div class="escola">Escola Ramon Pont</div>
-  <button class="boto-idioma amaga" id="canviaIdioma" type="button" aria-label="Idioma"><span aria-hidden="true">🌐</span><span id="nomIdioma"></span></button>
-</header>
-
-<div class="progres amaga" id="progres" aria-hidden="true"></div>
-
-<main id="app" aria-live="polite"></main>
-
-<nav class="navegacio amaga" id="navegacio">
-  <div class="dins">
-    <button class="boto enrere" id="enrere" type="button"><span class="fletxa">←</span><span id="txtEnrere"></span></button>
-    <button class="boto primari" id="seguent" type="button"><span id="txtSeguent"></span><span class="fletxa">→</span></button>
-  </div>
-</nav>
-
-<footer class="felip-app-footer">
-  <a class="felip-license-image-link" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0">
-    <img class="felip-license-image" src="<?!= include('Llicencia') ?>" alt="Creative Commons BY-NC-SA">
-  </a>
-  <div class="felip-footer-text">
-    <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
-    <p>Obra sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a></p>
-  </div>
-</footer>
-
-<script>
-const LOGO = document.querySelector('.capcalera img').src;
+const LOGO = 'logo.png';
 
 const MOTIUS = [
   ['projecte','📚'], ['proximitat','🏠'], ['tracte','🤗'],
@@ -401,6 +177,7 @@ function pIdioma(){
       <button class="idioma" data-idioma="ar" type="button"><span class="bombolla">👋</span><span class="ar" dir="rtl">الدارجة<small>Darija · العربية المغربية</small></span></button>
       <button class="idioma" data-idioma="ca" type="button"><span class="bombolla">👋</span><span>Català<small>Catalan</small></span></button>
     </div>
+    ${window.VALORACIO && VALORACIO.clientId ? '<button class="boto-estadistiques" id="obreEstadistiques" type="button" lang="ca">📊 Estadístiques</button>' : ''}
   </div>`;
 }
 function pInici(){
@@ -465,6 +242,7 @@ app.addEventListener('click', e => {
     return vesA(llegeix(CLAU)===CURS ? 'jaFet' : 'inici');
   }
   if(b.id==='tornar') return vesA('inici');
+  if(b.id==='obreEstadistiques') return window.Estadistiques && Estadistiques.obre();
   if(b.dataset.nota){ estat.nota=+b.dataset.nota; return pinta(); }
   if(b.dataset.clau){
     const k=b.dataset.clau;
@@ -513,21 +291,32 @@ function envia(){
     valors: estat.valors, altreValor: estat.altreValorOn ? estat.altreValor : '',
     frase: estat.frase, nota: estat.nota
   };
-  google.script.run
-    .withSuccessHandler(() => {
+  crida({accio:'resposta', resposta:dades})
+    .then(r => {
+      if(!r || !r.ok) throw new Error(r && r.error);
       desa(CLAU, CURS);
       Object.assign(estat, {motius:[], altreMotiuOn:false, altreMotiu:'', valors:[], altreValorOn:false, altreValor:'', frase:'', nota:null});
       vesA('gracies');
     })
-    .withFailureHandler(() => {
+    .catch(() => {
       const a = document.getElementById('avisError');
+      if(!a) return;
       a.textContent = '⚠️ ' + tx.error; a.classList.remove('amaga');
       actualitzaNav();
-    })
-    .desaResposta(dades);
+    });
 }
 
+/* Crida al servidor d'Apps Script. El text pla evita la petició prèvia CORS. */
+function crida(cos, ms){
+  const ctrl = new AbortController();
+  const temps = setTimeout(() => ctrl.abort(), ms || 30000);
+  return fetch(VALORACIO.api, {
+    method:'POST', body:JSON.stringify(cos), signal:ctrl.signal,
+    headers:{'Content-Type':'text/plain;charset=utf-8'}
+  }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .finally(() => clearTimeout(temps));
+}
+
+window.ValoracioApp = { crida, vesA, esc };
+
 pinta();
-</script>
-</body>
-</html>

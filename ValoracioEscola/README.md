@@ -1,6 +1,6 @@
 # La vostra opinió
 
-Qüestionari web per conèixer la valoració de les famílies de l'Escola Ramon Pont. L'han pensat per a famílies amb pocs coneixements de català i poca experiència digital, i es fa servir sobretot amb el mòbil. Està en **castellà**, **darija** (de dreta a esquerra) i **català**. Les respostes es desen en un full de càlcul de Google amb un resum visual per curs escolar.
+Qüestionari web (pàgina estàtica) per conèixer la valoració de les famílies de l'Escola Ramon Pont. L'han pensat per a famílies amb pocs coneixements de català i poca experiència digital, i es fa servir sobretot amb el mòbil. Està en **castellà**, **darija** (de dreta a esquerra) i **català**. Les respostes es desen en un full de càlcul de Google amb un resum visual per curs escolar.
 
 **Enllaç per a les famílies:** [ja.cat/valorans](https://ja.cat/valorans)
 
@@ -41,22 +41,47 @@ La carpeta `cartell/` conté el cartell A4 amb el codi QR i l'enllaç en els tre
 - `Cartell QR valoració famílies.pdf`: per imprimir.
 - `cartell.html`: font editable. Es converteix a PDF amb Chrome.
 
-## Instal·lació i manteniment
+## Estadístiques per a l'equip directiu
 
-Projecte de Google Apps Script gestionat amb `clasp` amb el compte de l'escola (`clasp --user ramonpont`). El fitxer `.clasp.json` és local i no es versiona.
+A la pantalla d'inici hi ha un botó discret **📊 Estadístiques**. En clicar-hi, es demana entrar amb un compte de Google:
+
+- Si el compte té accés al full de càlcul (propietari, editor o lector), es mostra un tauler amb les xifres clau, els motius de tria, el que més valoren, la distribució de notes, les frases (amb traducció), les altres respostes escrites i l'evolució per cursos.
+- Si no hi té accés, es torna a l'app amb un avís breu i no es mostra res.
+
+Per donar accés a algú, només cal compartir-li el full de càlcul. Els accessos per grup de Google o per domini sencer no es detecten: cal compartir-lo amb cada persona.
+
+## Arquitectura
+
+| Part | On és | Funció |
+|---|---|---|
+| App de les famílies | GitHub Pages: `util-apps/ValoracioEscola/` | Web estàtica: s'obre sempre, sense iniciar sessió |
+| Servidor | Apps Script (`Codi.gs`), compte de l'escola | Rep les respostes (`doPost`), les desa al full i serveix les estadístiques als comptes autoritzats |
+| Dades i resum | Full de càlcul de l'escola | Respostes, resum visual i frases, només per a qui hi tingui accés |
 
 | Fitxer | Funció |
 |---|---|
-| `Codi.gs` | Web (`doGet`), desament validat (`desaResposta`), curs escolar i creació del full (`configura`) |
-| `Index.html` | Interfície en tres idiomes |
-| `Logo.html`, `Llicencia.html` | Imatges incrustades en base64 |
-| `appsscript.json` | Aplicació web anònima executada com a propietari |
+| `index.html`, `estils.css`, `app.js` | Qüestionari en tres idiomes |
+| `estadistiques.js` | Inici de sessió amb Google i tauler d'estadístiques |
+| `config.js` | URL del servidor i identificador de client OAuth (públic) |
+| `Codi.gs`, `appsscript.json` | Servidor d'Apps Script |
+| `logo.png`, `llicencia.png`, `favicon.svg` | Imatges |
+
+L'URL antic de l'script redirigeix a l'app nova.
+
+## Instal·lació i manteniment
+
+Projecte d'Apps Script gestionat amb `clasp` amb el compte de l'escola (`clasp --user ramonpont`). Només es pugen `Codi.gs` i `appsscript.json` (vegeu `.claspignore`).
 
 1. `clasp --user ramonpont push --force`
-2. Primera vegada: a l'editor d'Apps Script, executeu **`configura`**. Crea el full i en desa l'identificador. Es pot tornar a executar per refer el format sense perdre les respostes.
+2. Primera vegada: a l'editor d'Apps Script, executeu **`configura`** (crea el full) i **`autoritza`** (accepta el permís per comprovar l'inici de sessió).
 3. Per publicar canvis sense canviar l'URL: `clasp --user ramonpont update-deployment AKfycbzERbkL1jKSQA3ub5PvpKTkCC0Kmbe2wHWCOV-1XyQ5as3n-oBDnsMO0ARd49kX-kwqgw`
+4. L'app web es publica en fer push a `main` del repositori `util-apps`.
 
-Seguretat: el servidor valida les opcions amb una llista tancada, limita la llargada dels textos, neutralitza els textos que comencen amb `=`, `+`, `-` o `@` i no permet executar `configura` des de la web pública.
+### Client OAuth per a les estadístiques
+
+Es crea una sola vegada a [Google Cloud Console](https://console.cloud.google.com/) amb el compte de l'escola: pantalla de consentiment de tipus **Intern** i client de tipus **Aplicació web** amb l'origen `https://felipsarroca.github.io`. L'identificador es posa a `config.js` (`clientId`) i a `Codi.gs` (`CLIENT_ID`). Si és buit, el botó d'estadístiques no apareix.
+
+Seguretat: el servidor valida les opcions amb una llista tancada, limita la llargada dels textos, neutralitza els textos que comencen amb `=`, `+`, `-` o `@` i no permet executar `configura` des de la web. Les estadístiques només es retornen si Google confirma la identitat (credencial verificada, adreçada a aquest client i no caducada) i el compte té el full compartit.
 
 ---
 

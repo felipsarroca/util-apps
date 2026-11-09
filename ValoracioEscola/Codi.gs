@@ -1,7 +1,8 @@
 /**
  * La vostra opinió · Valoració de les famílies (Escola Ramon Pont)
- * Formulari web en català, castellà i darija que desa les respostes
- * en un full de càlcul de Google amb resum visual per curs escolar.
+ * Servidor de l'app web (GitHub Pages): desa les respostes de les famílies
+ * en un full de càlcul de Google amb resum visual per curs escolar i
+ * ofereix les estadístiques als comptes que tenen accés al full.
  */
 
 const NOM_FULL = 'Valoració de les famílies · Escola Ramon Pont';
@@ -41,16 +42,105 @@ const COLOR = {
 
 /* ---------- Web ---------- */
 
+/** Adreça de l'app de les famílies (web estàtica a GitHub Pages). */
+const URL_APP = 'https://felipsarroca.github.io/util-apps/ValoracioEscola/';
+
+/**
+ * Identificador de client OAuth de Google (és públic, no és cap secret).
+ * Ha de coincidir amb el de config.js de l'app web.
+ */
+const CLIENT_ID = '';
+
+/** L'URL antic de l'script porta a l'app nova. */
 function doGet() {
-  return HtmlService.createTemplateFromFile('Index')
-    .evaluate()
+  const url = JSON.stringify(URL_APP);
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<script>window.top.location.replace(' + url + ');</script>' +
+    '<p style="font:18px system-ui;text-align:center;margin-top:3rem">' +
+    '<a href=' + url + ' target="_top">La vostra opinió · Escola Ramon Pont →</a></p>')
     .setTitle('La vostra opinió · Escola Ramon Pont')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function include(nom) {
-  return HtmlService.createHtmlOutputFromFile(nom).getContent();
+/**
+ * API de l'app web. Rep JSON en text pla (sense preflight CORS):
+ *  { accio: 'resposta', resposta: {...} }  → desa una resposta
+ *  { accio: 'estadistiques', credencial }  → dades per a l'equip directiu
+ *  { accio: 'ping' }                       → comprova la connexió sense desar res
+ */
+function doPost(e) {
+  let sortida;
+  try {
+    const cos = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (cos.accio === 'resposta') sortida = desaResposta(cos.resposta);
+    else if (cos.accio === 'estadistiques') sortida = estadistiques_(cos.credencial);
+    else if (cos.accio === 'ping') sortida = { ok: true, curs: cursActual() };
+    else sortida = { ok: false, error: 'accio' };
+  } catch (err) {
+    sortida = { ok: false, error: String(err && err.message || err).slice(0, 120) };
+  }
+  return ContentService.createTextOutput(JSON.stringify(sortida))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Executeu-la una vegada des de l'editor per autoritzar els permisos nous. */
+function autoritza() {
+  UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=x', { muteHttpExceptions: true });
+  Logger.log('Full: ' + obreFull_().getName() + ' · permisos correctes');
+}
+
+/* ---------- Estadístiques (equip directiu) ---------- */
+
+/** Comprova la credencial de Google i que el compte tingui accés al full. */
+function compteAutoritzat_(credencial, ss) {
+  if (!CLIENT_ID) throw new Error('Inici de sessió no configurat');
+  if (!credencial || typeof credencial !== 'string' || credencial.length > 4096) return '';
+  const res = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credencial),
+    { muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) return '';
+  const t = JSON.parse(res.getContentText());
+  const valid = t.aud === CLIENT_ID && String(t.email_verified) === 'true' &&
+    /^(https:\/\/)?accounts\.google\.com$/.test(t.iss) && Number(t.exp) * 1000 > Date.now();
+  if (!valid) return '';
+  const correu = String(t.email).toLowerCase();
+  const ambAcces = [ss.getOwner()].concat(ss.getEditors(), ss.getViewers())
+    .filter(Boolean).map(u => String(u.getEmail()).toLowerCase());
+  return ambAcces.indexOf(correu) >= 0 ? correu : '';
+}
+
+/** Retorna les respostes (anònimes) només si el compte té accés al full. */
+function estadistiques_(credencial) {
+  const ss = obreFull_();
+  const correu = compteAutoritzat_(credencial, ss);
+  if (!correu) return { ok: false, error: 'acces' };
+  const full = ss.getSheetByName(PESTANYA.respostes);
+  const n = full.getLastRow() - 1;
+  const valors = n > 0 ? full.getRange(2, 1, n, CAPCALERES.length).getValues() : [];
+  const perEtiqueta = cataleg => {
+    const inv = {};
+    Object.keys(cataleg).forEach(k => { inv[cataleg[k]] = k; });
+    return cel => String(cel || '').split('\n').map(s => inv[s.trim()]).filter(Boolean);
+  };
+  const motiu = perEtiqueta(MOTIUS), valor = perEtiqueta(VALORS);
+  const idioma = {};
+  Object.keys(IDIOMES).forEach(k => { idioma[IDIOMES[k]] = k; });
+  const files = valors.filter(f => f[1] && f[9]).map(f => ({
+    data: f[0] instanceof Date ? Utilities.formatDate(f[0], 'Europe/Madrid', 'yyyy-MM-dd') : '',
+    curs: String(f[1]),
+    idioma: idioma[f[2]] || 'ca',
+    motius: motiu(f[3]),
+    altreMotiu: String(f[4] || ''),
+    valors: valor(f[5]),
+    altreValor: String(f[6] || ''),
+    frase: String(f[7] || '').replace(/^'/, ''),
+    fraseCa: String(f[8] || '').replace(/^'/, ''),
+    nota: Number(f[9])
+  }));
+  return {
+    ok: true, correu: correu, cursActual: cursActual(), full: ss.getUrl(),
+    motius: MOTIUS, valors: VALORS, files: files
+  };
 }
 
 /** Curs escolar de setembre a juny: de setembre en endavant comença el curs nou. */
