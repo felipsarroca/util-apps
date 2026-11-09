@@ -118,7 +118,12 @@ textarea.gran{min-height:9rem; border-color:var(--linia)}
 .extrems b{font-size:1.5rem}
 
 /* Gràcies */
-.final{text-align:center; padding-top:2rem}
+.final{
+  text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:calc(100dvh - 3.8rem - 2.5rem - var(--peu) - env(safe-area-inset-bottom));
+}
+.final .titol{margin-top:.8rem}
+body:has(.navegacio.amaga){padding-bottom:calc(var(--peu) + env(safe-area-inset-bottom))}
 .final .gran-ic{font-size:6rem; animation:batec 1.2s ease infinite}
 @keyframes batec{50%{transform:scale(1.1)}}
 .secundari{margin-top:1.5rem; background:none; border:none; color:var(--granat); font-weight:800; text-decoration:underline}
@@ -168,8 +173,20 @@ body{padding-bottom:calc(var(--peu) + var(--nav))}
   .opcions{grid-template-columns:repeat(4,1fr)}
   .opcio{min-height:8.6rem}
 }
+/* Mòbil: tot una mica més compacte perquè hi càpiga més contingut */
+@media (max-width:600px){
+  html{font-size:13.5px}
+  :root{--nav:4.6rem}
+  .opcio{min-height:8.2rem; padding:.8rem .6rem .75rem}
+  .opcio .ic{font-size:2.2rem; width:3.6rem; height:3.6rem}
+  .xip{padding:.8rem 1rem}
+  .idioma{padding:.9rem 1.1rem}
+  .boto{min-height:3.2rem}
+  .benvinguda img{width:6.2rem; height:6.2rem}
+  .final .gran-ic{font-size:5rem}
+}
 @media (max-width:380px){
-  .opcio{min-height:8.5rem; font-size:.95rem}
+  .opcio{min-height:7.8rem; font-size:.95rem}
   .opcio .ic{font-size:2.2rem; width:3.6rem; height:3.6rem}
   .felip-app-footer{font-size:10.5px}
   .felip-license-image{width:58px}

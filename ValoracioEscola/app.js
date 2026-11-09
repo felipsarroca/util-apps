@@ -101,18 +101,36 @@ function veuPer(lang){
          veus.find(v => v.lang.toLowerCase().startsWith(lang)) || null;
 }
 if('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => { if(estat.pas!=='idioma') pinta(); };
-function botoEscolta(text){
+/* En darija hi ha àudios gravats (audio/ar-*.mp3): sonen a tots els dispositius. */
+const AUDIOS_AR = ['inici','p1','p2','p3','p4'];
+let audioActual = null;
+function botoEscolta(text, clau){
+  if(estat.idioma==='ar' && AUDIOS_AR.includes(clau))
+    return `<button class="escolta" type="button" aria-label="🔊" data-audio="audio/ar-${clau}.mp3">🔊</button>`;
   if(!veuPer(t().veu)) return '';
   return `<button class="escolta" type="button" aria-label="🔊" data-diu="${esc(text)}">🔊</button>`;
 }
+function aturaAudio(){
+  if(audioActual){ audioActual.pause(); audioActual = null; }
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+}
 function parla(boto){
-  speechSynthesis.cancel();
-  if(boto.classList.contains('parla')){ boto.classList.remove('parla'); return; }
+  const sonava = boto.classList.contains('parla');
+  aturaAudio();
+  document.querySelectorAll('.escolta.parla').forEach(b=>b.classList.remove('parla'));
+  if(sonava) return;
+  if(boto.dataset.audio){
+    const a = new Audio(boto.dataset.audio);
+    audioActual = a;
+    a.onended = a.onerror = () => { boto.classList.remove('parla'); if(audioActual===a) audioActual=null; };
+    boto.classList.add('parla');
+    a.play().catch(() => boto.classList.remove('parla'));
+    return;
+  }
   const u = new SpeechSynthesisUtterance(boto.dataset.diu);
   const v = veuPer(t().veu); if(v){ u.voice=v; u.lang=v.lang; }
   u.rate = .92;
   u.onend = u.onerror = () => boto.classList.remove('parla');
-  document.querySelectorAll('.escolta.parla').forEach(b=>b.classList.remove('parla'));
   boto.classList.add('parla');
   speechSynthesis.speak(u);
 }
@@ -126,7 +144,7 @@ function posaIdioma(codi){
 }
 
 function vesA(pas){
-  if('speechSynthesis' in window) speechSynthesis.cancel();
+  aturaAudio();
   estat.pas = pas;
   pinta();
   window.scrollTo({top:0, behavior:'smooth'});
@@ -182,7 +200,7 @@ function pIdioma(){
 }
 function pInici(){
   const tx=t(), ics=['❓','⏱️','🔒'];
-  return `<div class="fila-titol"><h1 class="titol">${esc(tx.hola)}</h1>${botoEscolta(tx.hola+'. '+tx.info.join('. '))}</div>
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.hola)}</h1>${botoEscolta(tx.hola+'. '+tx.info.join('. '),'inici')}</div>
     <div class="xips">${tx.info.map((s,i)=>`<div class="xip"><span class="ic">${ics[i]}</span>${esc(s)}</div>`).join('')}</div>`;
 }
 function targeta(clau, ic, text, premut){
@@ -191,7 +209,7 @@ function targeta(clau, ic, text, premut){
 }
 function pP1(){
   const tx=t(), n = estat.motius.length + (estat.altreMotiuOn?1:0);
-  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p1)}</h1>${botoEscolta(tx.p1+' '+tx.p1s+'. '+MOTIUS.map(m=>tx.motius[m[0]]).join('. '))}</div>
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p1)}</h1>${botoEscolta(tx.p1+' '+tx.p1s+'. '+MOTIUS.map(m=>tx.motius[m[0]]).join('. '),'p1')}</div>
     <div class="comptador">${[0,1,2].map(i=>`<i class="${i<n?'ple':''}"></i>`).join('')} <span>${esc(tx.p1s)}</span></div>
     <div class="avis amaga" id="avisMax" style="margin:0 0 1rem">✋ ${esc(tx.max)}</div>
     <div class="opcions">${MOTIUS.map(([k,ic])=>targeta(k,ic,tx.motius[k],estat.motius.includes(k))).join('')}
@@ -200,7 +218,7 @@ function pP1(){
 }
 function pP2(){
   const tx=t();
-  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p2)}</h1>${botoEscolta(tx.p2+' '+tx.p2s+'. '+VALORS.map(m=>tx.valors[m[0]]).join('. '))}</div>
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p2)}</h1>${botoEscolta(tx.p2+' '+tx.p2s+'. '+VALORS.map(m=>tx.valors[m[0]]).join('. '),'p2')}</div>
     <p class="subtitol">${esc(tx.p2s)}</p>
     <div class="opcions">${VALORS.map(([k,ic])=>targeta(k,ic,tx.valors[k],estat.valors.includes(k))).join('')}
       ${targeta('altre','✏️',tx.altreValor,estat.altreValorOn)}</div>
@@ -208,14 +226,14 @@ function pP2(){
 }
 function pP3(){
   const tx=t();
-  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p3)}</h1>${botoEscolta(tx.p3+' '+tx.p3s)}</div>
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p3)}</h1>${botoEscolta(tx.p3+' '+tx.p3s,'p3')}</div>
     <p class="subtitol">💬 ${esc(tx.p3s)}</p>
     <textarea class="camp gran" id="frase" maxlength="600" placeholder="${esc(tx.p3ph)}">${esc(estat.frase)}</textarea>
     <p class="ajuda">${esc(tx.p3opc)}</p>`;
 }
 function pP4(){
   const tx=t(), n=estat.nota;
-  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p4)}</h1>${botoEscolta(tx.p4+' 1: '+tx.p4baix+'. 10: '+tx.p4alt)}</div>
+  return `<div class="fila-titol"><h1 class="titol">${esc(tx.p4)}</h1>${botoEscolta(tx.p4+' 1: '+tx.p4baix+'. 10: '+tx.p4alt,'p4')}</div>
     <div class="cara" aria-hidden="true">${n?CARES[n-1]:'🤔'}</div>
     <div class="escala" dir="ltr">${[1,2,3,4,5,6,7,8,9,10].map(i=>
       `<button class="nota" type="button" data-nota="${i}" aria-pressed="${n===i}" style="background:${COLORS_NOTA[i-1]}">${i}</button>`).join('')}</div>

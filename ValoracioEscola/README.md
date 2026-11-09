@@ -18,7 +18,7 @@ Qüestionari web (pàgina estàtica) per conèixer la valoració de les famílie
 Característiques:
 
 - Una pregunta per pantalla, amb icones grans i botons fàcils de tocar.
-- Botó 🔊 per escoltar la pregunta quan el dispositiu té veu en aquell idioma.
+- Botó 🔊 per escoltar la pregunta. En darija hi ha àudios gravats (`audio/ar-*.mp3`, veu generada amb ElevenLabs), que sonen a tots els dispositius; en castellà i català s'usa la veu del dispositiu si en té.
 - És anònim. El mòbil recorda que ja s'ha respost, però permet tornar a respondre.
 - La interfície s'adapta al mòbil, al portàtil (1366×740) i a les pantalles grans.
 
