@@ -1,7 +1,9 @@
 (function () {
   const config = window.BIBLIOTECA_SOL_CONFIG || {};
   const TOKEN_KEY = "bibliotecaSol.supabaseAccessToken";
+  const REFRESH_KEY = "bibliotecaSol.supabaseRefreshToken";
   let accessToken = sessionStorage.getItem(TOKEN_KEY) || "";
+  let refreshPromise = null;
   const SESSION_EXPIRED_MESSAGE = "No s'ha pogut desar el canvi. Tanca la sessió i torna a entrar com a gestor.";
 
   function getHeaders(prefer) {
@@ -14,18 +16,48 @@
     return headers;
   }
 
+  function storeSession(session) {
+    accessToken = (session && session.access_token) || "";
+    if (accessToken) sessionStorage.setItem(TOKEN_KEY, accessToken);
+    if (session && session.refresh_token) sessionStorage.setItem(REFRESH_KEY, session.refresh_token);
+  }
+
+  async function refreshSession() {
+    const refreshToken = sessionStorage.getItem(REFRESH_KEY);
+    if (!refreshToken) return false;
+    if (!refreshPromise) {
+      refreshPromise = fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+        method: "POST",
+        headers: { apikey: config.supabaseAnonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      })
+        .then(async (response) => {
+          if (!response.ok) return false;
+          storeSession(await response.json());
+          return Boolean(accessToken);
+        })
+        .catch(() => false)
+        .finally(() => {
+          refreshPromise = null;
+        });
+    }
+    return refreshPromise;
+  }
+
+  async function authorizedFetch(url, options) {
+    let response = await fetch(url, { ...options, headers: { ...getHeaders(options.prefer), ...(options.headers || {}) } });
+    if (response.status === 401 && accessToken && await refreshSession()) {
+      response = await fetch(url, { ...options, headers: { ...getHeaders(options.prefer), ...(options.headers || {}) } });
+    }
+    return response;
+  }
+
   async function request(path, options = {}) {
     if (!window.BibliotecaSolSupabase.isConfigured()) {
       throw new Error("Supabase no esta configurat.");
     }
 
-    const response = await fetch(`${config.supabaseUrl}${path}`, {
-      ...options,
-      headers: {
-        ...getHeaders(options.prefer),
-        ...(options.headers || {})
-      }
-    });
+    const response = await authorizedFetch(`${config.supabaseUrl}${path}`, options);
 
     if (!response.ok) {
       let message = `Error de Supabase (${response.status})`;
@@ -46,9 +78,8 @@
   async function invokeFunction(name, body) {
     if (!window.BibliotecaSolSupabase.isConfigured()) return null;
 
-    const response = await fetch(`${config.supabaseUrl}/functions/v1/${name}`, {
+    const response = await authorizedFetch(`${config.supabaseUrl}/functions/v1/${name}`, {
       method: "POST",
-      headers: getHeaders(),
       body: JSON.stringify(body || {})
     });
 
@@ -245,13 +276,13 @@
         method: "POST",
         body: JSON.stringify({ email, password })
       });
-      accessToken = session.access_token || "";
-      if (accessToken) sessionStorage.setItem(TOKEN_KEY, accessToken);
+      storeSession(session);
       return session;
     },
     signOut() {
       accessToken = "";
       sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(REFRESH_KEY);
     },
     async reserveBook(bookId, email, note) {
       const reservation = await request("/rest/v1/rpc/reserve_book", {

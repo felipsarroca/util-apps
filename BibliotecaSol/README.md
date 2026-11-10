@@ -200,13 +200,13 @@ Per publicar canvis del frontend n'hi ha prou amb fer *commit* i *push* a `main`
 
 - La clau `anon` de `js/config.js` és pública per disseny; la seguretat depèn de les regles RLS.
 - La clau `service_role` i la de Google Books només són a Supabase, mai al navegador.
+- El gestor s'autentica només amb Supabase Auth: el codi no conté cap contrasenya. La sessió es renova automàticament amb el testimoni de renovació.
+- Les taules amb dades personals (`app_users`, `access_logs`, `reservations`, `loans`, `returns` i `email_notifications`) només les pot llegir el gestor autenticat. Els lectors creen sol·licituds a través de la funció `reserve_book`.
 - La validació del domini `@ramonpont.cat` es fa al navegador i també a la funció `register_access`.
 - Les dades personals que es guarden són el correu del centre, els accessos i l'historial de préstecs.
 
 ### Pendents
 
-- Reforçar l'accés del gestor perquè depengui només de Supabase Auth.
-- Restringir la lectura de `app_users`, `reservations`, `loans` i `returns` al gestor.
 - Configurar l'enviament de correus (Apps Script de Google o domini verificat a Resend).
 
 ## Historial de canvis
@@ -214,6 +214,7 @@ Per publicar canvis del frontend n'hi ha prou amb fer *commit* i *push* a `main`
 | Data | Canvis |
 |---|---|
 | Maig de 2026 | Primera versió: catàleg, accés per correu, gestió, sol·licituds, préstecs, devolucions i avisos. |
+| 10/11/2026 (2) | Seguretat: el gestor entra només amb Supabase Auth, fora la contrasenya i el botó de prova del codi, sessió que es renova sola, i lectura de les dades personals restringida al gestor. |
 | 10/11/2026 | Col·lecció, número de col·lecció i pàgines a la fitxa. Edat «14-16 anys» (substitueix «15-16») i gènere «Conte». Cerca per ISBN amb Open Library i Google Books. Botons per a edat, gènere i temàtica. Descatalogar i les opcions noves es desen a Supabase. Edats ordenades de petites a grans. Eliminats els 30 llibres de mostra. Ajuda integrada per al gestor. |
 
 ---

@@ -7,9 +7,6 @@
 
     readerForm.addEventListener("submit", handleReaderLogin);
     editorForm.addEventListener("submit", handleEditorLogin);
-    document.querySelectorAll("[data-demo-login]").forEach((button) => {
-      button.addEventListener("click", () => loginDemo(button.dataset.demoLogin));
-    });
     logoutButton.addEventListener("click", () => {
       window.BibliotecaSol.clearSession();
       showMessage("reader-login-message", "Sessio tancada.", "success");
@@ -40,23 +37,6 @@
 
     const result = await window.BibliotecaSol.loginWithCredentials(data.email, data.password);
     showMessage("editor-login-message", result.message, result.ok ? "success" : "error");
-    if (result.ok) {
-      window.BibliotecaSol.goToPostLoginPage();
-    }
-  }
-
-  async function loginDemo(email) {
-    if (email === "biblioteca@ramonpont.cat") {
-      const editorEmail = document.querySelector('#editor-login-form input[name="email"]');
-      const editorPassword = document.querySelector('#editor-login-form input[name="password"]');
-      if (editorEmail) editorEmail.value = "biblioteca@ramonpont.cat";
-      if (editorPassword) editorPassword.value = "bibliotecasol";
-      showMessage("editor-login-message", "Contrasenya de prova preparada.", "success");
-      return;
-    }
-
-    const result = await window.BibliotecaSol.loginWithCredentials(email, "");
-    showMessage("reader-login-message", result.message, result.ok ? "success" : "error");
     if (result.ok) {
       window.BibliotecaSol.goToPostLoginPage();
     }

@@ -21,7 +21,6 @@
       nom: "Biblioteca",
       cognoms: "Escola Ramon Pont",
       email: "biblioteca@ramonpont.cat",
-      password: "bibliotecasol",
       rol: "editor",
       created_at: "2026-05-06"
     }
@@ -70,6 +69,12 @@
         changed = true;
       } else {
         users[index] = { ...users[index], ...seedUser };
+        changed = true;
+      }
+    });
+    users.forEach((user) => {
+      if ("password" in user) {
+        delete user.password;
         changed = true;
       }
     });
@@ -258,22 +263,26 @@
     }
 
     if (isManagerEmail(cleanEmail)) {
-      const user = findUser(cleanEmail);
       if (!password) {
         return { ok: false, type: "password", message: "Introdueix la contrasenya de gestor." };
       }
-      if (!user || user.rol !== "editor" || user.password !== password) {
+      if (!window.BibliotecaSolSupabase || !window.BibliotecaSolSupabase.isConfigured()) {
+        return { ok: false, type: "error", message: "No hi ha connexió amb la base de dades. Torna-ho a provar d'aquí a una estona." };
+      }
+      try {
+        await window.BibliotecaSolSupabase.signInWithPassword(cleanEmail, password);
+      } catch (error) {
         return { ok: false, type: "error", message: "Correu de gestor o contrasenya incorrectes." };
       }
-      if (dataSource === "supabase" && window.BibliotecaSolSupabase) {
-        try {
-          await window.BibliotecaSolSupabase.signInWithPassword(cleanEmail, password);
-        } catch (error) {
-          return { ok: false, type: "error", message: "No s'ha pogut autenticar el gestor a Supabase." };
-        }
-      }
       await registerRemoteAccess(cleanEmail);
-      setSessionFromUser(user);
+      const user = findUser(cleanEmail) || {
+        id: "usuari-biblioteca",
+        nom: "Biblioteca",
+        cognoms: "",
+        email: cleanEmail,
+        rol: "editor"
+      };
+      setSessionFromUser({ ...user, email: cleanEmail, rol: "editor" });
       return { ok: true, role: "editor", message: "Has iniciat sessió com a gestor." };
     }
 

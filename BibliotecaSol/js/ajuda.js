@@ -348,7 +348,7 @@
         <div class="help-faq">
           <details open>
             <summary>Surt «No s'ha pogut desar el canvi. Tanca la sessió i torna a entrar com a gestor».</summary>
-            <p>Per seguretat, la sessió de gestor caduca al cap d'una hora aproximadament. Fes clic al teu nom (a dalt a la dreta, <em>· Sortir</em>), torna a entrar amb el correu de la biblioteca i la contrasenya, i repeteix l'últim canvi.</p>
+            <p>La sessió de gestor es renova sola mentre la pestanya del navegador és oberta. Si tanques el navegador o passa molt de temps, pot caducar. Fes clic al teu nom (a dalt a la dreta, <em>· Sortir</em>), torna a entrar amb el correu de la biblioteca i la contrasenya, i repeteix l'últim canvi.</p>
           </details>
           <details>
             <summary>L'ISBN surt com a «no vàlid».</summary>

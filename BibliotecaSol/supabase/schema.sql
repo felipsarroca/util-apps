@@ -394,25 +394,25 @@ create policy "Es poden registrar usuaris del centre"
 on public.app_users for insert
 with check (lower(email) like '%@ramonpont.cat');
 
-create policy "Cada usuari pot consultar el seu registre basic"
+create policy "Gestor autenticat pot consultar usuaris"
 on public.app_users for select
-using (true);
+using ((auth.jwt() ->> 'email') = 'biblioteca@ramonpont.cat');
 
 create policy "Es poden crear reserves"
 on public.reservations for insert
 with check (lower(user_email) like '%@ramonpont.cat');
 
-create policy "Es poden consultar reserves"
+create policy "Gestor autenticat pot consultar reserves"
 on public.reservations for select
-using (true);
+using ((auth.jwt() ->> 'email') = 'biblioteca@ramonpont.cat');
 
-create policy "Es poden consultar prestecs"
+create policy "Gestor autenticat pot consultar prestecs"
 on public.loans for select
-using (true);
+using ((auth.jwt() ->> 'email') = 'biblioteca@ramonpont.cat');
 
-create policy "Es poden consultar devolucions"
+create policy "Gestor autenticat pot consultar devolucions"
 on public.returns for select
-using (true);
+using ((auth.jwt() ->> 'email') = 'biblioteca@ramonpont.cat');
 
 -- Quan activem Supabase Auth, aquestes politiques permetran gestio real
 -- nomes amb un usuari autenticat amb email biblioteca@ramonpont.cat.
