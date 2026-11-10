@@ -98,6 +98,18 @@
                 <input name="isbn" type="text">
               </label>
               <label>
+                Col·lecció
+                <input name="coleccio" type="text" list="coleccio-options" placeholder="Nom de la col·lecció">
+              </label>
+              <label>
+                Número de col·lecció
+                <input name="numero_coleccio" type="text" placeholder="Ex.: 12">
+              </label>
+              <label>
+                Nombre de pàgines
+                <input name="pagines" type="number" min="1" max="5000" placeholder="Ex.: 96">
+              </label>
+              <label>
                 Any de publicació
                 <input name="any_publicacio" type="number" min="1400" max="2100">
               </label>
@@ -107,7 +119,7 @@
               </label>
               <label>
                 Edat
-                <input name="nivell_recomanat" type="text" list="edat-options" placeholder="6-8 anys, 1r ESO...">
+                <input name="nivell_recomanat" type="text" list="edat-options" placeholder="6-8 anys, 14-16 anys...">
               </label>
               <label>
                 Temàtica
@@ -143,6 +155,7 @@
             <datalist id="tematica-options"></datalist>
             <datalist id="genere-options"></datalist>
             <datalist id="ubicacio-options"></datalist>
+            <datalist id="coleccio-options"></datalist>
           </form>
           </section>
 

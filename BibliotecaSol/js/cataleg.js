@@ -123,6 +123,7 @@
           book.autor,
           book.editorial,
           book.isbn,
+          book.coleccio,
           book.nivell_recomanat,
           book.tematica,
           book.genere,

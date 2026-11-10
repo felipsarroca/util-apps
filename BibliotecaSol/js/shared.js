@@ -28,9 +28,9 @@
   ];
 
   const seedOptions = {
-    nivell_recomanat: ["3-5 anys", "6-8 anys", "9-11 anys", "12-14 anys", "15-16 anys", "Mestres"],
+    nivell_recomanat: ["3-5 anys", "6-8 anys", "9-11 anys", "12-14 anys", "14-16 anys", "15-16 anys", "Mestres"],
     tematica: ["Aventura", "Ciència", "Coneixements", "Convivència", "Emocions", "Fantasia", "Història", "Misteri", "Natura"],
-    genere: ["Àlbum il·lustrat", "Còmic", "Divulgació", "Narrativa", "Novel·la curta", "Poesia", "Teatre"],
+    genere: ["Àlbum il·lustrat", "Còmic", "Conte", "Divulgació", "Narrativa", "Novel·la curta", "Poesia", "Teatre"],
     ubicacio: ["Biblioteca central", "Prestatgeria A1", "Prestatgeria A2", "Prestatgeria B1", "Prestatgeria B2", "Prestatgeria C1", "Prestatgeria C2", "Racó infantil", "Zona ESO"]
   };
 
@@ -875,6 +875,7 @@
       <div class="book-main">
         <h3>${escapeHtml(book.titol)}</h3>
         <span class="book-kicker">${escapeHtml(book.editorial || "Editorial pendent")}${book.isbn ? ` · ISBN ${escapeHtml(book.isbn)}` : ""}</span>
+        ${formatCollection(book) ? `<span class="book-kicker">${escapeHtml(formatCollection(book))}</span>` : ""}
       </div>
       <p class="book-author">${escapeHtml(book.autor)}</p>
       <span class="compact-cell">${escapeHtml(book.nivell_recomanat || "Pendent")}</span>
@@ -890,6 +891,16 @@
       </div>
     `;
     return article;
+  }
+
+  function formatCollection(book) {
+    const parts = [];
+    const collection = String(book.coleccio || "").trim();
+    const number = String(book.numero_coleccio || "").trim();
+    if (collection) parts.push(`Col·lecció ${collection}${number ? `, núm. ${number}` : ""}`);
+    else if (number) parts.push(`Núm. ${number}`);
+    if (Number(book.pagines) > 0) parts.push(`${Number(book.pagines)} pàg.`);
+    return parts.join(" · ");
   }
 
   function escapeHtml(value) {

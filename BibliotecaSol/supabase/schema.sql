@@ -55,6 +55,9 @@ create table public.books (
   genre text,
   summary text,
   location text,
+  collection text,
+  collection_number text,
+  page_count integer check (page_count is null or page_count > 0),
   total_copies integer not null default 1 check (total_copies >= 0),
   available_copies integer not null default 1 check (available_copies >= 0),
   active boolean not null default true,
@@ -183,7 +186,10 @@ select
   available_copies,
   active,
   created_at,
-  updated_at
+  updated_at,
+  collection,
+  collection_number,
+  page_count
 from public.books
 where active = true;
 
@@ -447,6 +453,7 @@ insert into public.book_options (field_name, value) values
   ('recommended_level', '6-8 anys'),
   ('recommended_level', '9-11 anys'),
   ('recommended_level', '12-14 anys'),
+  ('recommended_level', '14-16 anys'),
   ('recommended_level', '15-16 anys'),
   ('recommended_level', 'Mestres'),
   ('topic', 'Aventura'),
@@ -462,6 +469,7 @@ insert into public.book_options (field_name, value) values
   ('genre', 'Còmic'),
   ('genre', 'Divulgació'),
   ('genre', 'Narrativa'),
+  ('genre', 'Conte'),
   ('genre', 'Novel·la curta'),
   ('genre', 'Poesia'),
   ('genre', 'Teatre'),

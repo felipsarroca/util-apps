@@ -72,6 +72,9 @@
       autor: data.autor.trim(),
       editorial: data.editorial.trim(),
       isbn: data.isbn.trim(),
+      coleccio: (data.coleccio || "").trim(),
+      numero_coleccio: (data.numero_coleccio || "").trim(),
+      pagines: data.pagines ? Math.max(1, Math.round(Number(data.pagines))) : "",
       any_publicacio: data.any_publicacio ? Number(data.any_publicacio) : "",
       llengua: data.llengua.trim(),
       nivell_recomanat: data.nivell_recomanat.trim(),
@@ -147,6 +150,23 @@
         list.appendChild(option);
       });
     });
+
+    const collectionList = document.getElementById("coleccio-options");
+    if (collectionList) {
+      const collections = new Map();
+      window.BibliotecaSol.getBooks().forEach((book) => {
+        const value = String(book.coleccio || "").trim();
+        if (value) collections.set(window.BibliotecaSol.normalize(value), value);
+      });
+      collectionList.innerHTML = "";
+      Array.from(collections.values())
+        .sort((a, b) => a.localeCompare(b, "ca"))
+        .forEach((value) => {
+          const option = document.createElement("option");
+          option.value = value;
+          collectionList.appendChild(option);
+        });
+    }
   }
 
   function renderEditorList() {
@@ -461,6 +481,7 @@
       book.autor,
       book.editorial,
       book.isbn,
+      book.coleccio,
       book.nivell_recomanat,
       book.tematica,
       book.genere,
