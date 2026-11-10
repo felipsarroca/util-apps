@@ -74,3 +74,10 @@ El fitxer `scheduled_reminders.sql` documenta aquesta configuració.
 - La gestió real de llibres, préstecs i devolucions queda preparada per a Supabase Auth amb `biblioteca@ramonpont.cat`.
 
 No convé permetre que la gestió depengui només d'una contrasenya guardada al JavaScript del navegador, perquè es podria inspeccionar. Per això l'esquema ja preveu el pas segur: autenticar el compte de biblioteca amb Supabase Auth abans d'escriure dades de gestió.
+
+## Cerca per ISBN (Google Books)
+
+- La funció `isbn-lookup` consulta Google Books des del servidor perquè la clau no quedi exposada al navegador.
+- La clau és el secret `GOOGLE_BOOKS_API_KEY` de Supabase. Es va crear al projecte de Google Cloud `biblioteca-sol-ramonpont` (compte felip.sarroca@gmail.com), limitada a l'API de Google Books.
+- Per canviar-la: `supabase secrets set GOOGLE_BOOKS_API_KEY=...` des d'aquesta carpeta.
+- Open Library es consulta directament des del navegador; no necessita clau.

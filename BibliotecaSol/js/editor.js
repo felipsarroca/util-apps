@@ -372,7 +372,7 @@
     return {
       titol: [info.title, info.subtitle].filter(Boolean).join(". "),
       autor: (info.authors || []).join(", "),
-      editorial: info.publisher || "",
+      editorial: cleanPublisher(info.publisher),
       any_publicacio: extractYear(info.publishedDate),
       pagines: Number(info.pageCount) > 0 ? Number(info.pageCount) : "",
       resum: stripHtml(info.description),
@@ -390,6 +390,13 @@
     pt: "Portuguès",
     ar: "Àrab"
   };
+
+  function cleanPublisher(value) {
+    return String(value || "")
+      .replace(/[,\s]+(S\.?\s?A\.?\s?U?\.?|S\.?\s?L\.?\s?U?\.?)$/i, "")
+      .replace(/\s+Editorial$/i, "")
+      .trim();
+  }
 
   function stripHtml(value) {
     const element = document.createElement("div");
