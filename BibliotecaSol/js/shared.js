@@ -410,8 +410,47 @@
     });
   }
 
+  function updateHelpButton(canEdit) {
+    const nav = document.querySelector(".main-nav");
+    let button = document.getElementById("help-button");
+    if (!canEdit || !nav || document.body.classList.contains("catalog-public-mode")) {
+      if (button) button.remove();
+      return;
+    }
+    if (button) return;
+    button = document.createElement("button");
+    button.id = "help-button";
+    button.type = "button";
+    button.className = "help-button";
+    button.textContent = "?";
+    button.title = "Ajuda";
+    button.setAttribute("aria-label", "Obrir l'ajuda de la gestió");
+    button.addEventListener("click", openHelp);
+    const sessionLink = nav.querySelector('a[href="login.html"]');
+    nav.insertBefore(button, sessionLink || null);
+  }
+
+  let helpScript = null;
+  function openHelp() {
+    if (window.BibliotecaSolAjuda) {
+      window.BibliotecaSolAjuda.open();
+      return;
+    }
+    if (!helpScript) {
+      helpScript = document.createElement("script");
+      helpScript.src = "js/ajuda.js";
+      helpScript.addEventListener("load", () => window.BibliotecaSolAjuda && window.BibliotecaSolAjuda.open());
+      helpScript.addEventListener("error", () => {
+        helpScript.remove();
+        helpScript = null;
+      });
+      document.head.appendChild(helpScript);
+    }
+  }
+
   function updateRoleVisibility() {
     const canEdit = canManageCatalog(getSession());
+    updateHelpButton(canEdit);
     document.querySelectorAll("[data-editor-only]").forEach((element) => {
       element.hidden = !canEdit;
     });
