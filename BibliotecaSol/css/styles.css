@@ -1614,6 +1614,29 @@ main h3 {
   gap: 6px;
 }
 
+/* La targeta s'adapta a l'espai real que té (pestanya o mostra de l'ajuda). */
+.circulation-list,
+.help-mock {
+  container-type: inline-size;
+}
+
+@container (max-width: 860px) {
+  .circulation-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+  }
+
+  .circulation-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@container (max-width: 480px) {
+  .circulation-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .status-pill {
   width: fit-content;
   min-height: 24px;
