@@ -366,8 +366,8 @@
   }
 
   async function fetchGoogleBooks(isbn) {
-    const payload = await fetchJson(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
-    const info = payload && payload.items && payload.items[0] && payload.items[0].volumeInfo;
+    if (!window.BibliotecaSolSupabase || !window.BibliotecaSolSupabase.isConfigured()) return null;
+    const info = await window.BibliotecaSolSupabase.lookupGoogleBooks(isbn);
     if (!info) return null;
     return {
       titol: [info.title, info.subtitle].filter(Boolean).join(". "),
@@ -375,8 +375,26 @@
       editorial: info.publisher || "",
       any_publicacio: extractYear(info.publishedDate),
       pagines: Number(info.pageCount) > 0 ? Number(info.pageCount) : "",
-      resum: info.description || ""
+      resum: stripHtml(info.description),
+      llengua: LANGUAGE_NAMES[String(info.language || "").toLowerCase()] || ""
     };
+  }
+
+  const LANGUAGE_NAMES = {
+    ca: "Català",
+    es: "Castellà",
+    en: "Anglès",
+    fr: "Francès",
+    it: "Italià",
+    de: "Alemany",
+    pt: "Portuguès",
+    ar: "Àrab"
+  };
+
+  function stripHtml(value) {
+    const element = document.createElement("div");
+    element.innerHTML = String(value || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n");
+    return (element.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
   }
 
   function applyLookup(data) {
@@ -396,12 +414,23 @@
       const element = form.elements[field];
       const value = data[field];
       if (!element || !value || String(element.value).trim()) return;
+      markFilled(element);
       element.value = value;
-      element.classList.add("autofilled");
-      setTimeout(() => element.classList.remove("autofilled"), 2600);
       filled.push(label);
     });
+
+    const language = form.elements.llengua;
+    if (data.llengua && language && ["", "català"].includes(String(language.value).trim().toLowerCase()) && data.llengua !== language.value) {
+      language.value = data.llengua;
+      markFilled(language);
+      filled.push("llengua");
+    }
     return filled;
+  }
+
+  function markFilled(element) {
+    element.classList.add("autofilled");
+    setTimeout(() => element.classList.remove("autofilled"), 2600);
   }
 
   function parseSeries(series) {

@@ -296,6 +296,10 @@
       });
       if (!rows || !rows.length) throw new Error(SESSION_EXPIRED_MESSAGE);
     },
+    async lookupGoogleBooks(isbn) {
+      const result = await invokeFunction("isbn-lookup", { isbn });
+      return result && result.found ? result : null;
+    },
     async saveOption(field, value) {
       const dbField = Object.keys(optionFieldMap).find((key) => optionFieldMap[key] === field);
       const cleanValue = String(value || "").trim();
