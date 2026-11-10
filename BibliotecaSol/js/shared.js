@@ -6,6 +6,7 @@
   let booksCache = null;
   let optionsCache = null;
   let dataSource = "local";
+  let dataError = false;
 
   const seedUsers = [
     {
@@ -252,7 +253,8 @@
       window.dispatchEvent(new CustomEvent("bibliotecaSol:dataready"));
     } catch (error) {
       dataSource = "local";
-      console.warn("No s'han pogut carregar les dades de Supabase. Es fa servir localStorage.", error);
+      dataError = true;
+      console.warn("No s'han pogut carregar les dades de la base de dades. Es fa servir la còpia desada al navegador.", error);
     }
   }
 
@@ -293,7 +295,7 @@
 
     const remoteUser = await registerRemoteAccess(cleanEmail);
     setSessionFromUser(remoteUser || existingUser || createReader(cleanEmail));
-    return { ok: true, role: "lector", message: "Has iniciat sessió com a usuari." };
+    return { ok: true, role: "lector", message: "Has entrat al catàleg." };
   }
 
   async function registerRemoteAccess(email) {
@@ -301,7 +303,7 @@
     try {
       return await window.BibliotecaSolSupabase.registerAccess(email);
     } catch (error) {
-      console.warn("No s'ha pogut registrar l'acces a Supabase.", error);
+      console.warn("No s'ha pogut registrar l'accés.", error);
       return null;
     }
   }
@@ -314,15 +316,30 @@
       return { ok: false, message: "Cal entrar amb un correu @ramonpont.cat per fer reserves." };
     }
     if (dataSource !== "supabase" || !window.BibliotecaSolSupabase) {
-      return { ok: false, type: "local", message: "Supabase encara no esta configurat. De moment envia la sol·licitud per correu." };
+      return { ok: false, type: "local", message: "Ara no hi ha connexió amb la base de dades. Envia la sol·licitud per correu." };
     }
 
-    try {
-      await Promise.all(bookIds.map((bookId) => window.BibliotecaSolSupabase.reserveBook(bookId, email)));
-      return { ok: true, message: "Reserva registrada correctament." };
-    } catch (error) {
-      return { ok: false, message: error.message || "No s'ha pogut registrar la reserva." };
+    const done = [];
+    const failed = [];
+    for (const bookId of bookIds) {
+      try {
+        await window.BibliotecaSolSupabase.reserveBook(bookId, email);
+        done.push(bookId);
+      } catch (error) {
+        failed.push({ bookId, message: error.message || "No s'ha pogut registrar la sol·licitud." });
+      }
     }
+    if (!failed.length) {
+      return { ok: true, done, failed, message: done.length === 1 ? "Sol·licitud enviada. La biblioteca te l'avisarà quan el llibre estigui a punt." : `Sol·licitud de ${done.length} llibres enviada. La biblioteca t'avisarà quan estiguin a punt.` };
+    }
+    return {
+      ok: done.length > 0,
+      done,
+      failed,
+      message: done.length
+        ? `S'han sol·licitat ${done.length} llibres. No s'ha pogut amb ${failed.length}: ${failed[0].message}`
+        : failed[0].message
+    };
   }
 
   function getPostLoginUrl(session) {
@@ -347,35 +364,6 @@
     );
   }
 
-  function createBookCard(book) {
-    const available = Number(book.disponibles || 0);
-    const total = Number(book.exemplars || 0);
-    const statusClass = available > 0 ? "available" : "unavailable";
-    const statusText = available > 0 ? `${available} disponibles` : "No disponible";
-    const article = document.createElement("article");
-    article.className = "book-row";
-    article.innerHTML = `
-      <div class="book-main">
-        <h3>${escapeHtml(book.titol)}</h3>
-        <span class="book-kicker">${escapeHtml(book.editorial || "Editorial pendent")}${book.isbn ? ` · ISBN ${escapeHtml(book.isbn)}` : ""}</span>
-        ${formatCollection(book) ? `<span class="book-kicker">${escapeHtml(formatCollection(book))}</span>` : ""}
-      </div>
-      <p class="book-author">${escapeHtml(book.autor)}</p>
-      <span class="compact-cell">${escapeHtml(book.nivell_recomanat || "Pendent")}</span>
-      <span class="compact-cell">${escapeHtml(book.tematica || "Pendent")}</span>
-      <span class="compact-cell">${escapeHtml(book.genere || "Pendent")}</span>
-      <div class="availability compact ${statusClass}">
-        <span class="availability-dot"></span>
-        <span>${escapeHtml(available > 0 ? `${available}/${total}` : "No")}</span>
-      </div>
-      <div class="location-stack">
-        <span class="book-location">${escapeHtml(book.ubicacio || "Ubicació pendent")}</span>
-        <span class="book-year">${escapeHtml(book.any_publicacio || "")}</span>
-      </div>
-    `;
-    return article;
-  }
-
   function formatCollection(book) {
     const parts = [];
     const collection = String(book.coleccio || "").trim();
@@ -386,8 +374,98 @@
     return parts.join(" · ");
   }
 
+  function getDataStatus() {
+    return { source: dataSource, error: dataError };
+  }
+
+  const COVER_COLORS = ["#2f4858", "#5a5a40", "#7c4d3a", "#3d5a80", "#6b4e71", "#2a6f6a", "#8a5a1f", "#4a4e69", "#7a3b4f", "#3f6e4a"];
+
+  function bookColor(book) {
+    const text = `${book.titol || ""}${book.autor || ""}`;
+    let hash = 0;
+    for (let index = 0; index < text.length; index += 1) hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
+    return COVER_COLORS[hash % COVER_COLORS.length];
+  }
+
+  // Només es fa servir la portada desada a la fitxa (la troba la cerca per ISBN en donar d'alta el llibre).
+  function coverUrl(book) {
+    return /^https:\/\//.test(book.portada || "") ? book.portada : "";
+  }
+
+  // Portada del llibre: la imatge real si n'hi ha i, si no, una coberta de color amb el títol.
+  function createCover(book, size) {
+    const cover = document.createElement("div");
+    cover.className = `cover cover-${size || "md"}`;
+    cover.style.setProperty("--cover", bookColor(book));
+    cover.innerHTML = `
+      <div class="cover-art" aria-hidden="true">
+        <span class="cover-title">${escapeHtml(book.titol)}</span>
+        <span class="cover-author">${escapeHtml(book.autor)}</span>
+      </div>
+    `;
+    const url = coverUrl(book);
+    if (url) {
+      const image = document.createElement("img");
+      image.alt = "";
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.referrerPolicy = "no-referrer";
+      image.addEventListener("load", () => {
+        if (image.naturalWidth > 20) cover.classList.add("has-image");
+        else image.remove();
+      });
+      image.addEventListener("error", () => image.remove());
+      image.src = url;
+      cover.appendChild(image);
+    }
+    return cover;
+  }
+
+  // Finestra de confirmació pròpia (substitueix el confirm() del navegador).
+  function confirmAction(options) {
+    const settings = { title: "Confirmar", message: "", confirmLabel: "D'acord", cancelLabel: "Cancel·lar", danger: false, ...options };
+    return new Promise((resolve) => {
+      const dialog = document.createElement("dialog");
+      dialog.className = "confirm-dialog";
+      dialog.innerHTML = `
+        <form method="dialog" class="confirm-card">
+          <h2>${escapeHtml(settings.title)}</h2>
+          <p>${escapeHtml(settings.message)}</p>
+          <div class="confirm-actions">
+            <button class="button button-secondary" value="cancel" type="submit">${escapeHtml(settings.cancelLabel)}</button>
+            <button class="button ${settings.danger ? "button-danger" : ""}" value="ok" type="submit">${escapeHtml(settings.confirmLabel)}</button>
+          </div>
+        </form>
+      `;
+      document.body.appendChild(dialog);
+      dialog.addEventListener("close", () => {
+        resolve(dialog.returnValue === "ok");
+        dialog.remove();
+      });
+      dialog.showModal();
+      dialog.querySelector('[value="cancel"]').focus();
+    });
+  }
+
+  let toastTimer = null;
+  function showToast(text, type) {
+    let toast = document.getElementById("app-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "app-toast";
+      toast.className = "toast";
+      toast.setAttribute("role", "status");
+      toast.setAttribute("aria-live", "polite");
+      document.body.appendChild(toast);
+    }
+    toast.textContent = text;
+    toast.className = `toast ${type || ""} visible`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("visible"), type === "error" ? 7000 : 4000);
+  }
+
   function escapeHtml(value) {
-    return String(value || "")
+    return String(value ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -447,7 +525,7 @@
     }
     if (!helpScript) {
       helpScript = document.createElement("script");
-      helpScript.src = "js/ajuda.js";
+      helpScript.src = "js/ajuda.js?v=1.1";
       helpScript.addEventListener("load", () => window.BibliotecaSolAjuda && window.BibliotecaSolAjuda.open());
       helpScript.addEventListener("error", () => {
         helpScript.remove();
@@ -632,7 +710,12 @@
     openAccessDialog,
     isAllowedEmail,
     getBookStats,
-    createBookCard,
+    createCover,
+    formatCollection,
+    confirmAction,
+    showToast,
+    getDataStatus,
+    bookColor,
     escapeHtml
   };
 })();

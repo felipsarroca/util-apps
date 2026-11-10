@@ -58,6 +58,7 @@ create table public.books (
   collection text,
   collection_number text,
   page_count integer check (page_count is null or page_count > 0),
+  cover_url text,
   total_copies integer not null default 1 check (total_copies >= 0),
   available_copies integer not null default 1 check (available_copies >= 0),
   active boolean not null default true,
@@ -168,6 +169,29 @@ create trigger loans_set_updated_at
 before update on public.loans
 for each row execute function public.set_updated_at();
 
+-- Els exemplars disponibles es calculen sols: tots en donar d'alta un llibre i,
+-- si canvia el total, el total menys els préstecs actius.
+create or replace function public.books_sync_available_copies()
+returns trigger
+language plpgsql
+set search_path to 'public'
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.available_copies := new.total_copies;
+  elsif new.total_copies is distinct from old.total_copies then
+    new.available_copies := greatest(0, new.total_copies - (
+      select count(*) from public.loans where book_id = new.id and status = 'actiu'
+    ));
+  end if;
+  return new;
+end;
+$$;
+
+create trigger books_sync_available_copies
+before insert or update of total_copies on public.books
+for each row execute function public.books_sync_available_copies();
+
 create or replace view public.catalog_books as
 select
   id,
@@ -189,7 +213,8 @@ select
   updated_at,
   collection,
   collection_number,
-  page_count
+  page_count,
+  cover_url
 from public.books
 where active = true;
 
@@ -225,12 +250,12 @@ begin
 end;
 $$;
 
-create or replace function public.reserve_book(target_book_id uuid, input_user_email text, note text default null)
-returns public.reservations
-language plpgsql
-security definer
-set search_path = public
-as $$
+CREATE OR REPLACE FUNCTION public.reserve_book(target_book_id uuid, input_user_email text, note text DEFAULT NULL::text)
+ RETURNS reservations
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
 declare
   user_row public.app_users;
   reservation_row public.reservations;
@@ -244,7 +269,7 @@ begin
       and lower(reservations.user_email) = lower(trim(input_user_email))
       and status in ('pendent', 'acceptada')
   ) then
-    raise exception 'Aquest usuari ja te una reserva activa per aquest llibre';
+    raise exception 'Ja tens una sol·licitud activa d''aquest llibre.';
   end if;
 
   insert into public.reservations (book_id, user_id, user_email, notes)
@@ -253,14 +278,15 @@ begin
 
   return reservation_row;
 end;
-$$;
+$function$
+;
 
-create or replace function public.register_loan(target_book_id uuid, target_user_email text, manager_email text, target_reservation_id uuid default null, due_date date default null)
-returns public.loans
-language plpgsql
-security definer
-set search_path = public
-as $$
+CREATE OR REPLACE FUNCTION public.register_loan(target_book_id uuid, target_user_email text, manager_email text, target_reservation_id uuid DEFAULT NULL::uuid, due_date date DEFAULT NULL::date)
+ RETURNS loans
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
 declare
   manager_row public.app_users;
   user_row public.app_users;
@@ -268,12 +294,12 @@ declare
   updated_book_id uuid;
 begin
   if coalesce(auth.jwt() ->> 'email', '') <> 'biblioteca@ramonpont.cat' then
-    raise exception 'Nomes biblioteca@ramonpont.cat pot registrar prestecs';
+    raise exception 'Només biblioteca@ramonpont.cat pot registrar préstecs.';
   end if;
 
   manager_row := public.register_access(manager_email, null);
   if manager_row.role not in ('gestor', 'administrador') then
-    raise exception 'Nomes un gestor pot registrar prestecs';
+    raise exception 'Només un gestor pot registrar préstecs.';
   end if;
 
   select *
@@ -294,7 +320,7 @@ begin
   returning id into updated_book_id;
 
   if updated_book_id is null then
-    raise exception 'No hi ha exemplars disponibles';
+    raise exception 'No queda cap exemplar disponible d''aquest llibre.';
   end if;
 
   insert into public.loans (book_id, user_id, reservation_id, user_email, loaned_by, due_at)
@@ -311,26 +337,27 @@ begin
 
   return loan_row;
 end;
-$$;
+$function$
+;
 
-create or replace function public.register_return(target_loan_id uuid, manager_email text, condition_note text default null)
-returns public.returns
-language plpgsql
-security definer
-set search_path = public
-as $$
+CREATE OR REPLACE FUNCTION public.register_return(target_loan_id uuid, manager_email text, condition_note text DEFAULT NULL::text)
+ RETURNS returns
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
 declare
   manager_row public.app_users;
   loan_row public.loans;
   return_row public.returns;
 begin
   if coalesce(auth.jwt() ->> 'email', '') <> 'biblioteca@ramonpont.cat' then
-    raise exception 'Nomes biblioteca@ramonpont.cat pot registrar devolucions';
+    raise exception 'Només biblioteca@ramonpont.cat pot registrar devolucions.';
   end if;
 
   manager_row := public.register_access(manager_email, null);
   if manager_row.role not in ('gestor', 'administrador') then
-    raise exception 'Nomes un gestor pot registrar devolucions';
+    raise exception 'Només un gestor pot registrar devolucions.';
   end if;
 
   select *
@@ -341,7 +368,7 @@ begin
   for update;
 
   if loan_row.id is null then
-    raise exception 'Aquest prestec no existeix o ja esta retornat';
+    raise exception 'Aquest préstec no existeix o ja s''ha retornat.';
   end if;
 
   update public.loans
@@ -361,7 +388,8 @@ begin
 
   return return_row;
 end;
-$$;
+$function$
+;
 
 revoke execute on function public.register_access(text, text) from public;
 revoke execute on function public.reserve_book(uuid, text, text) from public;

@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Catàleg - Biblioteca de la Sol</title>
     <link rel="icon" href="assets/logo-sol.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="js/config.js" defer></script>
-    <script src="js/supabaseClient.js" defer></script>
-    <script src="js/shared.js" defer></script>
-    <script src="js/cataleg.js" defer></script>
+    <link rel="stylesheet" href="css/styles.css?v=1.1">
+    <script src="js/config.js?v=1.1" defer></script>
+    <script src="js/supabaseClient.js?v=1.1" defer></script>
+    <script src="js/shared.js?v=1.1" defer></script>
+    <script src="js/cataleg.js?v=1.1" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -27,104 +27,82 @@
       </nav>
     </header>
 
-    <main class="page-shell">
-      <section class="toolbar page-intro">
-        <div>
+    <main class="page-shell catalog-page">
+      <section class="catalog-hero">
+        <div class="catalog-hero-text">
           <h1>Catàleg de llibres</h1>
-          <p>Consulta ràpida del fons disponible.</p>
+          <p id="catalog-intro">Busca per títol, autor o tema i obre qualsevol llibre per veure'n la fitxa.</p>
         </div>
-        <div class="toolbar-actions">
-          <a class="button button-secondary icon-add" href="editor.html" data-editor-only hidden>Afegir llibre</a>
-        </div>
-      </section>
-
-      <section class="filters catalog-filters compact-catalog-filters" aria-label="Filtres del catàleg">
-        <label>
-          Cerca
-          <input id="catalog-search" type="search" placeholder="Títol, autor, ISBN, tema...">
-        </label>
-        <div class="filter-actions">
-          <button id="toggle-filters" class="button button-secondary icon-filter" type="button" aria-expanded="false" aria-controls="advanced-filters">Filtres</button>
-          <button id="clear-filters" class="button button-secondary button-warning icon-clear" type="button">Netejar filtres</button>
-          <button id="download-pdf" class="button button-secondary button-pdf icon-pdf" type="button">Descarregar PDF</button>
-        </div>
-      </section>
-
-      <section id="advanced-filters" class="advanced-filters" aria-label="Filtres avançats" hidden>
-        <label>
-          Edat
-          <select id="age-filter">
-            <option value="">Totes</option>
-          </select>
-        </label>
-        <label>
-          Temàtica
-          <select id="topic-filter">
-            <option value="">Totes</option>
-          </select>
-        </label>
-        <label>
-          Gènere
-          <select id="genre-filter">
-            <option value="">Tots</option>
-          </select>
-        </label>
-        <label>
-          Disponibilitat
-          <select id="availability-filter">
-            <option value="">Tots</option>
-            <option value="available">Disponibles</option>
-            <option value="unavailable">No disponibles</option>
-          </select>
+        <label class="catalog-search">
+          <span class="visually-hidden">Cerca al catàleg</span>
+          <input id="catalog-search" type="search" autocomplete="off" placeholder="Títol, autor, col·lecció, tema...">
         </label>
       </section>
 
-      <section id="request-panel" class="request-panel" hidden>
-        <div>
-          <h2>Sol·licitud de llibres</h2>
-          <p id="request-summary">No has seleccionat cap llibre.</p>
-        </div>
-        <div class="toolbar-actions">
-          <button id="clear-selection" class="button button-secondary button-warning icon-clear" type="button">Buidar selecció</button>
-          <a id="send-request" class="button icon-reserve" href="mailto:biblioteca@ramonpont.cat?subject=Reserva%20de%20llibre">Enviar sol·licitud</a>
-        </div>
-      </section>
-
-      <section>
-        <div class="section-heading compact">
-          <h2>Resultats</h2>
-          <div class="result-tools">
-            <p id="catalog-count">0 llibres</p>
-            <label class="sort-control">
-              Ordena per
-              <select id="sort-field">
-                <option value="titol">Nom</option>
-                <option value="autor">Autor</option>
-                <option value="nivell_recomanat">Edat</option>
-                <option value="tematica">Temàtica</option>
-                <option value="genere">Gènere</option>
-                <option value="disponibles">Disponibilitat</option>
-                <option value="any_publicacio">Any</option>
-              </select>
-            </label>
-            <button id="sort-direction" class="button button-secondary icon-sort-asc" type="button" data-direction="asc">Ascendent</button>
+      <div class="catalog-layout">
+        <aside id="catalog-filters" class="catalog-filters" aria-label="Filtres del catàleg">
+          <div class="filters-head">
+            <h2>Filtres</h2>
+            <button id="clear-filters" class="text-button" type="button" hidden>Esborrar-los</button>
+            <button id="close-filters" class="dialog-close filters-close icon-clear" type="button" aria-label="Tancar els filtres"></button>
           </div>
+          <label class="switch-row">
+            <input id="available-only" type="checkbox">
+            <span class="switch" aria-hidden="true"></span>
+            <span>Només disponibles</span>
+          </label>
+          <div id="facet-groups" class="facet-groups"></div>
+          <button id="apply-filters" class="button filters-apply" type="button">Veure els llibres</button>
+        </aside>
+
+        <section class="catalog-results" aria-labelledby="results-title">
+          <div class="results-bar">
+            <div class="results-summary">
+              <h2 id="results-title" class="visually-hidden">Resultats</h2>
+              <p id="catalog-count" class="catalog-count" role="status">Carregant el catàleg...</p>
+              <div id="active-filters" class="active-filters"></div>
+            </div>
+            <div class="results-tools">
+              <button id="open-filters" class="button button-secondary icon-filter filters-open" type="button" aria-controls="catalog-filters" aria-expanded="false">Filtres</button>
+              <label class="sort-control">
+                <span class="visually-hidden">Ordena per</span>
+                <select id="sort-field" aria-label="Ordena per">
+                  <option value="titol">Títol</option>
+                  <option value="autor">Autor</option>
+                  <option value="nivell_recomanat">Edat</option>
+                  <option value="recents">Novetats</option>
+                  <option value="any_publicacio">Any d'edició</option>
+                  <option value="disponibles">Disponibles</option>
+                </select>
+              </label>
+              <div class="view-switch" role="group" aria-label="Vista">
+                <button type="button" data-view="grid" aria-pressed="true" title="Portades"><span class="view-icon view-grid" aria-hidden="true"></span><span class="view-label">Portades</span></button>
+                <button type="button" data-view="list" aria-pressed="false" title="Llista"><span class="view-icon view-list" aria-hidden="true"></span><span class="view-label">Llista</span></button>
+              </div>
+              <button id="download-pdf" class="button button-secondary icon-pdf button-icon-only" type="button" title="Descarregar en PDF els llibres que es veuen" aria-label="Descarregar en PDF"><span class="button-text">PDF</span></button>
+            </div>
+          </div>
+
+          <div id="catalog-list" class="catalog-grid" aria-live="polite" aria-busy="true">
+            <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+          </div>
+        </section>
+      </div>
+
+      <section id="request-panel" class="request-bar" aria-live="polite" hidden>
+        <div>
+          <strong id="request-summary">Cap llibre triat</strong>
+          <span id="request-detail">Tria els llibres que vols i envia la sol·licitud.</span>
         </div>
-        <div class="catalog-table-head" aria-hidden="true">
-          <span>Llibre</span>
-          <span>Autor</span>
-          <span>Edat</span>
-          <span>Temàtica</span>
-          <span>Gènere</span>
-          <span>Disp.</span>
-          <span>Ubicació</span>
+        <div class="request-actions">
+          <button id="clear-selection" class="button button-secondary icon-clear" type="button">Buidar</button>
+          <button id="send-request" class="button icon-reserve" type="button">Enviar sol·licitud</button>
         </div>
-        <div id="catalog-list" class="catalog-list" aria-live="polite"></div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.0</p>
+      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.1</p>
       <p>Codi: <a href="https://github.com/felipsarroca/util-apps/blob/main/BibliotecaSol/LICENSE.txt" rel="noopener">AGPLv3</a> · Continguts: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" rel="noopener">CC BY-NC-SA 4.0</a> · © 2026 · <a href="https://github.com/felipsarroca/util-apps/issues/new?template=biblioteca-sol.yml" rel="noopener">Suggeriments i errors</a></p>
     </footer>
   </body>

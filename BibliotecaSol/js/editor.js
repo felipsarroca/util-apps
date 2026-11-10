@@ -32,13 +32,18 @@
     initIsbnLookup(form);
     initManagerTabs();
     form.addEventListener("submit", handleSave);
+    form.elements.exemplars.addEventListener("input", updateCopiesStatus);
     resetButton.addEventListener("click", resetForm);
     search.addEventListener("input", () => {
       currentQuery = window.BibliotecaSol.normalize(search.value);
       renderEditorList();
     });
+    initLoanDialog();
     renderEditorList();
     loadCirculation();
+
+    const toEdit = new URLSearchParams(window.location.search).get("editar");
+    if (toEdit) fillForm(toEdit);
   }
 
   function initManagerTabs() {
@@ -67,7 +72,9 @@
     const data = Object.fromEntries(new FormData(form));
     const books = window.BibliotecaSol.getBooks();
     const exemplars = Math.max(1, Number(data.exemplars || 1));
-    const disponibles = Math.min(exemplars, Math.max(0, Number(data.disponibles || 0)));
+    // Els disponibles no s'editen a mà: són els exemplars menys els que són en préstec.
+    const onLoan = existingOnLoan(data.id);
+    const disponibles = Math.max(0, exemplars - onLoan);
     const existingIndex = books.findIndex((book) => book.id === data.id);
     const existing = existingIndex >= 0 ? books[existingIndex] : null;
     const session = window.BibliotecaSol.getSession();
@@ -81,6 +88,7 @@
       coleccio: (data.coleccio || "").trim(),
       numero_coleccio: (data.numero_coleccio || "").trim(),
       pagines: data.pagines ? Math.max(1, Math.round(Number(data.pagines))) : "",
+      portada: (data.portada || "").trim(),
       any_publicacio: data.any_publicacio ? Number(data.any_publicacio) : "",
       llengua: data.llengua.trim(),
       nivell_recomanat: data.nivell_recomanat.trim(),
@@ -107,13 +115,13 @@
           books.unshift(savedBook);
         }
         window.BibliotecaSol.saveBooks(books);
-        showMessage(existing ? "Llibre actualitzat a Supabase." : "Llibre afegit a Supabase.", "success");
+        showMessage(existing ? `S'ha desat «${savedBook.titol}».` : `«${savedBook.titol}» ja és al catàleg.`, "success");
         populateOptionLists();
         resetForm();
         renderEditorList();
         return;
       } catch (error) {
-        showMessage(`${error.message}. Si Supabase esta configurat, cal entrar amb autenticacio real de gestor.`, "error");
+        showMessage(error.message || "No s'ha pogut desar el llibre.", "error");
         return;
       }
     }
@@ -130,6 +138,29 @@
     populateOptionLists();
     resetForm();
     renderEditorList();
+  }
+
+  function existingOnLoan(bookId) {
+    if (!bookId) return 0;
+    const book = window.BibliotecaSol.getBooks().find((item) => item.id === bookId);
+    if (!book) return 0;
+    return Math.max(0, Number(book.exemplars || 0) - Number(book.disponibles || 0));
+  }
+
+  function updateCopiesStatus() {
+    const form = document.getElementById("book-form");
+    const status = document.getElementById("copies-status");
+    if (!form || !status) return;
+    const total = Math.max(1, Number(form.elements.exemplars.value || 1));
+    const onLoan = existingOnLoan(form.elements.id.value);
+    const available = Math.max(0, total - onLoan);
+    form.elements.disponibles.value = available;
+    if (!form.elements.id.value) {
+      status.textContent = `${total} (el llibre és nou)`;
+    } else {
+      status.textContent = onLoan ? `${available} de ${total} · ${onLoan} en préstec` : `${available} de ${total}`;
+    }
+    status.classList.toggle("is-warning", available === 0);
   }
 
   async function saveFieldOptions(book) {
@@ -305,8 +336,9 @@
       }
       const merged = { ...(googleBooks || {}) };
       Object.entries(openLibrary || {}).forEach(([key, value]) => {
-        if (value) merged[key] = value;
+        if (value && key !== "portada") merged[key] = value;
       });
+      if (!merged.portada && openLibrary && openLibrary.portada) merged.portada = openLibrary.portada;
       const sources = [openLibrary && "Open Library", googleBooks && "Google Books"].filter(Boolean).join(" i ");
       const filled = applyLookup(merged);
       setIsbnStatus(
@@ -360,6 +392,7 @@
       editorial: uniqueText(details.publishers || [])[0] || "",
       any_publicacio: extractYear(details.publish_date),
       pagines: Number(details.number_of_pages) > 0 ? Number(details.number_of_pages) : "",
+      portada: entry.thumbnail_url ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg?default=false` : "",
       coleccio: collection,
       numero_coleccio: collectionNumber
     };
@@ -376,6 +409,7 @@
       any_publicacio: extractYear(info.publishedDate),
       pagines: Number(info.pageCount) > 0 ? Number(info.pageCount) : "",
       resum: stripHtml(info.description),
+      portada: String(info.thumbnail || "").replace(/^http:/, "https:").replace("&edge=curl", ""),
       llengua: LANGUAGE_NAMES[String(info.language || "").toLowerCase()] || ""
     };
   }
@@ -425,6 +459,11 @@
       element.value = value;
       filled.push(label);
     });
+
+    if (data.portada && !form.elements.portada.value) {
+      form.elements.portada.value = data.portada;
+      filled.push("portada");
+    }
 
     const language = form.elements.llengua;
     if (data.llengua && language && ["", "català"].includes(String(language.value).trim().toLowerCase()) && data.llengua !== language.value) {
@@ -512,22 +551,23 @@
       const exemplars = Number(book.exemplars || 0);
       const item = document.createElement("article");
       item.className = "editor-item";
+      if (document.getElementById("book-form").elements.id.value === book.id) item.classList.add("is-editing");
       item.innerHTML = `
         <button class="editor-item-main" type="button" data-action="edit" data-id="${book.id}">
-          <span>
+          <span class="editor-item-cover"></span>
+          <span class="editor-item-text">
             <strong>${window.BibliotecaSol.escapeHtml(book.titol)}</strong>
-            <small>${window.BibliotecaSol.escapeHtml(book.autor)} - ${window.BibliotecaSol.escapeHtml(book.ubicacio || "Ubicació pendent")}</small>
+            <small>${window.BibliotecaSol.escapeHtml(book.autor)} · ${window.BibliotecaSol.escapeHtml(book.ubicacio || "sense ubicació")}</small>
           </span>
-          <span class="availability compact ${disponibles > 0 ? "available" : "unavailable"}">
-            <span class="availability-dot"></span>
-            <span>${disponibles}/${exemplars}</span>
-          </span>
+          <span class="status-badge ${disponibles > 0 ? "is-available" : "is-out"}" title="Disponibles / exemplars">${disponibles}/${exemplars}</span>
         </button>
         <div class="editor-item-actions">
-          <button class="link-button icon-edit" type="button" data-action="edit" data-id="${book.id}">Editar</button>
-          <button class="link-button link-danger icon-archive" type="button" data-action="archive" data-id="${book.id}">Descatalogar</button>
+          <button class="mini-button" type="button" data-action="edit" data-id="${book.id}">Editar</button>
+          <button class="mini-button" type="button" data-action="loan" data-id="${book.id}" ${disponibles > 0 ? "" : "disabled"}>Prestar</button>
+          <button class="mini-button mini-danger" type="button" data-action="archive" data-id="${book.id}">Descatalogar</button>
         </div>
       `;
+      item.querySelector(".editor-item-cover").appendChild(window.BibliotecaSol.createCover(book, "xs"));
       list.appendChild(item);
     });
 
@@ -536,6 +576,7 @@
         const action = button.dataset.action;
         const id = button.dataset.id;
         if (action === "edit") fillForm(id);
+        if (action === "loan") openLoanDialog(id);
         if (action === "archive") archiveBook(id);
       });
     });
@@ -596,6 +637,8 @@
     setText("summary-pending", pending);
     setText("summary-active-loans", circulation.loans.length);
     setText("summary-overdue", overdue);
+    const overdueCard = document.querySelector(".summary-overdue");
+    if (overdueCard) overdueCard.classList.toggle("has-overdue", overdue > 0);
     setText("summary-available-books", stats.available);
   }
 
@@ -734,6 +777,138 @@
     });
   }
 
+  let knownUsers = [];
+
+  function initLoanDialog() {
+    const dialog = document.getElementById("loan-dialog");
+    const form = document.getElementById("loan-form");
+    if (!dialog || !form) return;
+    document.querySelectorAll("[data-open-loan]").forEach((button) => {
+      button.addEventListener("click", () => openLoanDialog());
+    });
+    dialog.querySelectorAll("[data-close-loan]").forEach((button) => {
+      button.addEventListener("click", () => dialog.close());
+    });
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    form.elements.book.addEventListener("input", updateLoanPreview);
+    form.addEventListener("submit", submitLoan);
+  }
+
+  function loanOptionLabel(book) {
+    return `${book.titol} — ${book.autor}`;
+  }
+
+  function availableBooksForLoan() {
+    return window.BibliotecaSol.getBooks()
+      .filter((book) => Number(book.disponibles || 0) > 0)
+      .sort((a, b) => a.titol.localeCompare(b.titol, "ca"));
+  }
+
+  function findLoanBook(value) {
+    const clean = window.BibliotecaSol.normalize(value);
+    if (!clean) return null;
+    const books = availableBooksForLoan();
+    return books.find((book) => window.BibliotecaSol.normalize(loanOptionLabel(book)) === clean)
+      || books.find((book) => window.BibliotecaSol.normalize(book.titol) === clean)
+      || null;
+  }
+
+  function updateLoanPreview() {
+    const form = document.getElementById("loan-form");
+    const preview = document.getElementById("loan-book-preview");
+    const book = findLoanBook(form.elements.book.value);
+    preview.hidden = !book;
+    if (!book) return;
+    preview.innerHTML = "";
+    preview.appendChild(window.BibliotecaSol.createCover(book, "xs"));
+    const text = document.createElement("span");
+    text.innerHTML = `<strong>${window.BibliotecaSol.escapeHtml(book.titol)}</strong><small>${window.BibliotecaSol.escapeHtml(book.ubicacio || "Sense ubicació")} · ${Number(book.disponibles)} de ${Number(book.exemplars)} disponibles</small>`;
+    preview.appendChild(text);
+  }
+
+  async function openLoanDialog(bookId) {
+    if (!requireManager()) return;
+    const dialog = document.getElementById("loan-dialog");
+    const form = document.getElementById("loan-form");
+    const bookOptions = document.getElementById("loan-book-options");
+    bookOptions.innerHTML = "";
+    availableBooksForLoan().forEach((book) => {
+      const option = document.createElement("option");
+      option.value = loanOptionLabel(book);
+      bookOptions.appendChild(option);
+    });
+    form.reset();
+    form.elements.due.value = addDays(new Date(), 15);
+    form.elements.due.min = localDate(new Date());
+    const preset = bookId && window.BibliotecaSol.getBooks().find((book) => book.id === bookId);
+    if (preset) form.elements.book.value = loanOptionLabel(preset);
+    updateLoanPreview();
+    setLoanMessage("", "");
+    dialog.showModal();
+    (preset ? form.elements.email : form.elements.book).focus();
+
+    if (!knownUsers.length && window.BibliotecaSolSupabase && window.BibliotecaSolSupabase.listUsers) {
+      try {
+        knownUsers = await window.BibliotecaSolSupabase.listUsers();
+        const userOptions = document.getElementById("loan-user-options");
+        userOptions.innerHTML = "";
+        knownUsers.forEach((user) => {
+          const option = document.createElement("option");
+          option.value = user.email;
+          if (user.nom) option.label = user.nom;
+          userOptions.appendChild(option);
+        });
+      } catch (error) {
+        console.warn("No s'han pogut carregar els lectors.", error);
+      }
+    }
+  }
+
+  function setLoanMessage(text, type) {
+    const element = document.getElementById("loan-message");
+    if (!element) return;
+    element.textContent = text;
+    element.className = `form-message ${type || ""}`.trim();
+  }
+
+  async function submitLoan(event) {
+    event.preventDefault();
+    if (!requireManager()) return;
+    const form = event.currentTarget;
+    const book = findLoanBook(form.elements.book.value);
+    const email = String(form.elements.email.value || "").trim().toLowerCase();
+    const due = form.elements.due.value;
+    if (!book) {
+      setLoanMessage("Tria un llibre de la llista. Només hi surten els que tenen algun exemplar disponible.", "error");
+      form.elements.book.focus();
+      return;
+    }
+    if (!/^[^@\s]+@ramonpont\.cat$/.test(email)) {
+      setLoanMessage("Escriu un correu acabat en @ramonpont.cat.", "error");
+      form.elements.email.focus();
+      return;
+    }
+    if (!due) {
+      setLoanMessage("Indica la data de retorn.", "error");
+      return;
+    }
+    const submit = form.querySelector('[type="submit"]');
+    submit.disabled = true;
+    try {
+      await window.BibliotecaSolSupabase.registerLoan(book.id, email, window.BibliotecaSol.getSession().email, null, due);
+      document.getElementById("loan-dialog").close();
+      showMessage(`Préstec registrat: «${book.titol}» fins al ${formatDate(`${due}T12:00:00`)}.`, "success");
+      await refreshBooks();
+      await loadCirculation();
+    } catch (error) {
+      setLoanMessage(error.message || "No s'ha pogut registrar el préstec.", "error");
+    } finally {
+      submit.disabled = false;
+    }
+  }
+
   async function convertReservationToLoan(reservationId) {
     if (!requireManager()) return;
     const reservation = circulation.reservations.find((item) => item.id === reservationId);
@@ -746,7 +921,7 @@
         reservation.id,
         addDays(new Date(), 15)
       );
-      showMessage("Préstec registrat. Retorn previst en 15 dies.", "success");
+      showMessage(`Préstec registrat. S'ha de tornar el ${formatDate(`${addDays(new Date(), 15)}T12:00:00`)}.`, "success");
       await refreshBooks();
       await loadCirculation();
     } catch (error) {
@@ -756,9 +931,19 @@
 
   async function updateReservation(reservationId, status) {
     if (!requireManager()) return;
+    const reservation = circulation.reservations.find((item) => item.id === reservationId);
+    if (status === "rebutjada" && reservation) {
+      const confirmed = await window.BibliotecaSol.confirmAction({
+        title: "Rebutjar la sol·licitud?",
+        message: `${reservation.userEmail} ha demanat «${reservation.book.titol}». Si la rebutges, desapareixerà de la llista. Si vols, després li pots escriure amb «Contactar».`,
+        confirmLabel: "Rebutjar",
+        danger: true
+      });
+      if (!confirmed) return;
+    }
     try {
       await window.BibliotecaSolSupabase.updateReservationStatus(reservationId, status);
-      showMessage("Sol·licitud actualitzada.", "success");
+      showMessage("Sol·licitud rebutjada.", "success");
       await loadCirculation();
     } catch (error) {
       showMessage(error.message || "No s'ha pogut actualitzar la sol·licitud.", "error");
@@ -767,6 +952,15 @@
 
   async function registerReturn(loanId) {
     if (!requireManager()) return;
+    const loan = circulation.loans.find((item) => item.id === loanId);
+    if (loan) {
+      const confirmed = await window.BibliotecaSol.confirmAction({
+        title: "Registrar la devolució?",
+        message: `«${loan.book.titol}», prestat a ${loan.userEmail}. L'exemplar tornarà a estar disponible.`,
+        confirmLabel: "Registrar la devolució"
+      });
+      if (!confirmed) return;
+    }
     try {
       await window.BibliotecaSolSupabase.registerReturn(loanId, window.BibliotecaSol.getSession().email);
       showMessage("Devolució registrada.", "success");
@@ -784,7 +978,7 @@
     const baseDate = loan.dueAt && new Date(loan.dueAt) > new Date() ? new Date(loan.dueAt) : new Date();
     try {
       await window.BibliotecaSolSupabase.renewLoan(loanId, addDays(baseDate, 15), "Renovat 15 dies");
-      showMessage("Préstec renovat 15 dies.", "success");
+      showMessage(`Préstec renovat fins al ${formatDate(`${addDays(baseDate, 15)}T12:00:00`)}.`, "success");
       await loadCirculation();
     } catch (error) {
       showMessage(error.message || "No s'ha pogut renovar el préstec.", "error");
@@ -796,6 +990,7 @@
     const books = await window.BibliotecaSolSupabase.listBooks();
     window.BibliotecaSol.saveBooks(books);
     renderEditorList();
+    updateManagerSummary();
   }
 
   function matchesSearch(book) {
@@ -827,13 +1022,30 @@
     });
     lastLookupIsbn = cleanIsbn(book.isbn);
     renderChipFields();
+    updateCopiesStatus();
+    renderEditorList();
+    const list = document.getElementById("editor-list");
+    const editing = list && list.querySelector(".editor-item.is-editing");
+    if (editing) list.scrollTop = Math.max(0, editing.offsetTop - list.clientHeight / 2);
     document.getElementById("form-title").textContent = "Editar llibre";
-    document.getElementById("form-mode").textContent = "Modificació del registre seleccionat.";
+    document.getElementById("form-mode").textContent = `Estàs modificant «${book.titol}». Desa els canvis o tria «Nou llibre» per començar-ne un altre.`;
     form.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   async function archiveBook(id) {
     if (!requireManager()) return;
+    const target = window.BibliotecaSol.getBooks().find((book) => book.id === id);
+    if (!target) return;
+    const onLoan = circulation.loans.filter((loan) => loan.bookId === id).length;
+    const confirmed = await window.BibliotecaSol.confirmAction({
+      title: "Descatalogar aquest llibre?",
+      message: onLoan
+        ? `«${target.titol}» té ${onLoan === 1 ? "un exemplar" : `${onLoan} exemplars`} en préstec. Si el descataloges, deixarà de sortir al catàleg, però el préstec continuarà obert fins que el tornin.`
+        : `«${target.titol}» deixarà de sortir al catàleg. Les dades no s'esborren.`,
+      confirmLabel: "Descatalogar",
+      danger: true
+    });
+    if (!confirmed) return;
     if (window.BibliotecaSolSupabase && window.BibliotecaSolSupabase.isConfigured()) {
       try {
         await window.BibliotecaSolSupabase.archiveBook(id);
@@ -849,7 +1061,8 @@
       return book;
     });
     window.BibliotecaSol.saveBooks(books);
-    showMessage("Llibre descatalogat.", "success");
+    showMessage(`«${target.titol}» s'ha descatalogat.`, "success");
+    if (document.getElementById("book-form").elements.id.value === id) resetForm();
     renderEditorList();
   }
 
@@ -861,6 +1074,7 @@
     form.elements.llengua.value = "Català";
     form.elements.exemplars.value = 1;
     form.elements.disponibles.value = 1;
+    form.elements.portada.value = "";
     CHIP_FIELDS.forEach((field) => {
       form.elements[field].value = "";
     });
@@ -868,14 +1082,14 @@
     renderChipFields();
     setIsbnStatus("Amb l'ISBN, l'app intenta omplir la fitxa automàticament.", "");
     document.getElementById("form-title").textContent = "Introduir nous llibres";
-    document.getElementById("form-mode").textContent = "Alta de llibres al catàleg.";
+    document.getElementById("form-mode").textContent = "Comença per l'ISBN: l'app intentarà omplir la fitxa.";
+    updateCopiesStatus();
+    document.querySelectorAll(".editor-item.is-editing").forEach((item) => item.classList.remove("is-editing"));
   }
 
+  // Els avisos surten flotant a baix de la pantalla, sigui quina sigui la pestanya oberta.
   function showMessage(text, type) {
-    const element = document.getElementById("editor-message");
-    if (!element) return;
-    element.textContent = text;
-    element.className = `form-message ${type || ""}`.trim();
+    window.BibliotecaSol.showToast(text, type);
   }
 
   function setText(id, value) {
@@ -895,7 +1109,12 @@
   function addDays(date, days) {
     const copy = new Date(date);
     copy.setDate(copy.getDate() + days);
-    return copy.toISOString().slice(0, 10);
+    return localDate(copy);
+  }
+
+  function localDate(date) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   }
 
   function isOverdue(loan) {

@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gestió - Biblioteca de la Sol</title>
     <link rel="icon" href="assets/logo-sol.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="js/config.js" defer></script>
-    <script src="js/supabaseClient.js" defer></script>
-    <script src="js/shared.js" defer></script>
-    <script src="js/editor.js" defer></script>
+    <link rel="stylesheet" href="css/styles.css?v=1.1">
+    <script src="js/config.js?v=1.1" defer></script>
+    <script src="js/supabaseClient.js?v=1.1" defer></script>
+    <script src="js/shared.js?v=1.1" defer></script>
+    <script src="js/editor.js?v=1.1" defer></script>
   </head>
   <body data-requires-manager="true">
     <header class="site-header">
@@ -33,7 +33,10 @@
           <h1>Gestió del catàleg</h1>
           <p>Alta, edició, préstecs i retorns dels llibres registrats.</p>
         </div>
-        <a class="button button-secondary icon-catalog" href="cataleg.html">Veure catàleg</a>
+        <div class="toolbar-actions">
+          <a class="button button-secondary icon-catalog" href="cataleg.html">Veure catàleg</a>
+          <button class="button icon-user" type="button" data-open-loan>Préstec ràpid</button>
+        </div>
       </section>
 
       <section id="editor-gate" class="notice" hidden>
@@ -45,20 +48,20 @@
       <section id="editor-app" class="manager-shell" hidden>
         <section class="manager-summary" aria-label="Resum de circulació">
           <div>
-            <strong id="summary-pending">0</strong>
-            <span>Sol·licituds pendents</span>
+            <strong id="summary-pending">–</strong>
+            <span>Sol·licituds</span>
           </div>
           <div>
-            <strong id="summary-active-loans">0</strong>
-            <span>Préstecs actius</span>
+            <strong id="summary-active-loans">–</strong>
+            <span>Préstecs</span>
           </div>
-          <div>
-            <strong id="summary-overdue">0</strong>
+          <div class="summary-overdue">
+            <strong id="summary-overdue">–</strong>
             <span>Retards</span>
           </div>
           <div>
-            <strong id="summary-available-books">0</strong>
-            <span>Exemplars disponibles</span>
+            <strong id="summary-available-books">–</strong>
+            <span>Disponibles</span>
           </div>
         </section>
 
@@ -75,7 +78,7 @@
           <div class="section-heading compact">
             <div>
               <h2 id="form-title">Introduir nous llibres</h2>
-              <p id="form-mode">Alta de llibres al catàleg.</p>
+              <p id="form-mode">Comença per l'ISBN: l'app intentarà omplir la fitxa.</p>
             </div>
           </div>
           <form id="book-form" class="editor-form">
@@ -126,13 +129,15 @@
                 <input name="ubicacio" type="text" list="ubicacio-options" placeholder="Prestatgeria, aula, zona...">
               </label>
               <label>
-                Exemplars totals
-                <input name="exemplars" type="number" min="1" value="1" required>
+                Exemplars
+                <input name="exemplars" type="number" min="1" max="200" value="1" required>
               </label>
-              <label>
-                Exemplars disponibles
-                <input name="disponibles" type="number" min="0" value="1" required>
-              </label>
+              <div class="copies-status">
+                <span class="copies-label">Disponibles ara</span>
+                <span id="copies-status" class="copies-value">Tots, en donar-lo d'alta</span>
+                <input type="hidden" name="disponibles" value="1">
+                <input type="hidden" name="portada" value="">
+              </div>
             </div>
             <div class="chip-fields">
               <div class="chip-field" data-chip-field="nivell_recomanat">
@@ -198,9 +203,12 @@
             <div class="section-heading compact">
               <div>
                 <h2>Préstecs actius</h2>
-                <p>Control de qui té cada llibre i data prevista de retorn.</p>
+                <p>Qui té cada llibre i quan l'ha de tornar.</p>
               </div>
-              <button class="button button-secondary icon-sort-asc" type="button" data-refresh-circulation>Actualitzar</button>
+              <div class="toolbar-actions">
+                <button class="button button-secondary icon-sort-asc" type="button" data-refresh-circulation>Actualitzar</button>
+                <button class="button icon-user" type="button" data-open-loan>Préstec ràpid</button>
+              </div>
             </div>
             <div id="loans-list" class="circulation-list"></div>
           </section>
@@ -234,8 +242,36 @@
       </section>
     </main>
 
+    <dialog id="loan-dialog" class="loan-dialog" aria-labelledby="loan-dialog-title">
+      <form id="loan-form" class="confirm-card loan-card" method="dialog" novalidate>
+        <button class="dialog-close icon-clear" type="button" data-close-loan aria-label="Tancar"></button>
+        <h2 id="loan-dialog-title">Préstec ràpid</h2>
+        <p>Per quan algú s'endú un llibre directament del prestatge, sense haver-lo sol·licitat abans.</p>
+        <label>
+          Llibre
+          <input id="loan-book" name="book" type="text" list="loan-book-options" autocomplete="off" placeholder="Escriu el títol o l'autor" required>
+        </label>
+        <div id="loan-book-preview" class="loan-book-preview" hidden></div>
+        <label>
+          Correu de qui se l'endú
+          <input id="loan-email" name="email" type="email" list="loan-user-options" autocomplete="off" placeholder="nom@ramonpont.cat" required>
+        </label>
+        <label>
+          Data de retorn
+          <input id="loan-due" name="due" type="date" required>
+        </label>
+        <p id="loan-message" class="form-message" role="status"></p>
+        <div class="confirm-actions">
+          <button class="button button-secondary" type="button" data-close-loan>Cancel·lar</button>
+          <button class="button button-save" type="submit">Registrar el préstec</button>
+        </div>
+        <datalist id="loan-book-options"></datalist>
+        <datalist id="loan-user-options"></datalist>
+      </form>
+    </dialog>
+
     <footer class="site-footer">
-      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.0</p>
+      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.1</p>
       <p>Codi: <a href="https://github.com/felipsarroca/util-apps/blob/main/BibliotecaSol/LICENSE.txt" rel="noopener">AGPLv3</a> · Continguts: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" rel="noopener">CC BY-NC-SA 4.0</a> · © 2026 · <a href="https://github.com/felipsarroca/util-apps/issues/new?template=biblioteca-sol.yml" rel="noopener">Suggeriments i errors</a></p>
     </footer>
   </body>

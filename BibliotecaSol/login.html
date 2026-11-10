@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Accés - Biblioteca de la Sol</title>
     <link rel="icon" href="assets/logo-sol.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="js/config.js" defer></script>
-    <script src="js/supabaseClient.js" defer></script>
-    <script src="js/shared.js" defer></script>
-    <script src="js/auth.js" defer></script>
+    <link rel="stylesheet" href="css/styles.css?v=1.1">
+    <script src="js/config.js?v=1.1" defer></script>
+    <script src="js/supabaseClient.js?v=1.1" defer></script>
+    <script src="js/shared.js?v=1.1" defer></script>
+    <script src="js/auth.js?v=1.1" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -33,16 +33,16 @@
           <img src="assets/logo-sol.svg" alt="" width="64" height="64">
         </div>
         <div class="auth-heading">
-          <h1>Registrar-se com a usuari</h1>
-          <p>Identifica't amb el correu del centre. Aquest perfil serveix per consultar i, quan s'activi, fer reserves. No dona accés a la gestió de llibres.</p>
+          <h1>Entrar com a lector</h1>
+          <p>Entra amb el correu del centre per triar llibres i enviar-ne la sol·licitud a la biblioteca. No cal contrasenya.</p>
         </div>
 
         <form id="reader-login-form" class="stacked-form">
           <label>
             Correu institucional
-            <input name="email" type="email" autocomplete="email" required placeholder="alumnat@ramonpont.cat">
+            <input name="email" type="email" autocomplete="email" required placeholder="nom@ramonpont.cat">
           </label>
-          <button class="button icon-user" type="submit">Registrar-me com a usuari</button>
+          <button class="button icon-user" type="submit">Entrar</button>
           <p id="reader-login-message" class="form-message" role="status"></p>
         </form>
       </section>
@@ -73,7 +73,7 @@
     </main>
 
     <footer class="site-footer">
-      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.0</p>
+      <p><a href="https://ja.cat/felipsarroca">Felip Sarroca</a> - Biblioteca de la Sol v1.1</p>
       <p>Codi: <a href="https://github.com/felipsarroca/util-apps/blob/main/BibliotecaSol/LICENSE.txt" rel="noopener">AGPLv3</a> · Continguts: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" rel="noopener">CC BY-NC-SA 4.0</a> · © 2026 · <a href="https://github.com/felipsarroca/util-apps/issues/new?template=biblioteca-sol.yml" rel="noopener">Suggeriments i errors</a></p>
     </footer>
   </body>

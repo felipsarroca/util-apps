@@ -54,18 +54,19 @@
 
   async function request(path, options = {}) {
     if (!window.BibliotecaSolSupabase.isConfigured()) {
-      throw new Error("Supabase no esta configurat.");
+      throw new Error("La base de dades no està configurada.");
     }
 
     const response = await authorizedFetch(`${config.supabaseUrl}${path}`, options);
 
     if (!response.ok) {
-      let message = `Error de Supabase (${response.status})`;
+      let message = `Error de la base de dades (${response.status})`;
+      const raw = await response.text().catch(() => "");
       try {
-        const payload = await response.json();
+        const payload = JSON.parse(raw);
         message = payload.message || payload.error || message;
       } catch (error) {
-        message = await response.text();
+        if (raw) message = raw;
       }
       throw new Error(message);
     }
@@ -84,12 +85,13 @@
     });
 
     if (!response.ok) {
-      let message = `Error de funcio Supabase (${response.status})`;
+      let message = `Error del servei (${response.status})`;
+      const raw = await response.text().catch(() => "");
       try {
-        const payload = await response.json();
+        const payload = JSON.parse(raw);
         message = payload.error || payload.message || message;
       } catch (error) {
-        message = await response.text();
+        if (raw) message = raw;
       }
       throw new Error(message);
     }
@@ -113,6 +115,7 @@
       coleccio: book.collection || "",
       numero_coleccio: book.collection_number || "",
       pagines: book.page_count || "",
+      portada: book.cover_url || "",
       resum: book.summary || "",
       ubicacio: book.location || "",
       exemplars: Number(book.total_copies || 0),
@@ -137,6 +140,7 @@
       collection: book.coleccio || null,
       collection_number: book.numero_coleccio || null,
       page_count: book.pagines ? Number(book.pagines) : null,
+      cover_url: book.portada || null,
       summary: book.resum || null,
       location: book.ubicacio || null,
       total_copies: Number(book.exemplars || 0),
@@ -295,7 +299,7 @@
       });
       if (reservation && reservation.id) {
         invokeFunction("notify-reservation", { reservation_id: reservation.id }).catch((error) => {
-          console.warn("No s'ha pogut enviar l'avis de reserva.", error);
+          console.warn("No s'ha pogut enviar l'avís de la sol·licitud.", error);
         });
       }
       return reservation;
@@ -303,6 +307,8 @@
     async saveBook(book) {
       const payload = appBookToDb(book);
       if (book.id && /^[0-9a-f-]{36}$/i.test(book.id)) {
+        // Els disponibles els calcula la base de dades a partir dels préstecs actius.
+        delete payload.available_copies;
         const rows = await request(`/rest/v1/books?id=eq.${encodeURIComponent(book.id)}&select=*`, {
           method: "PATCH",
           prefer: "return=representation",
@@ -360,6 +366,10 @@
       const filter = status ? `&status=eq.${encodeURIComponent(status)}` : "";
       const rows = await request(`/rest/v1/loans?select=*,books(*)&order=loaned_at.desc${filter}`);
       return rows.map(dbLoanToApp);
+    },
+    async listUsers() {
+      const rows = await request("/rest/v1/app_users?select=email,display_name,role&order=email.asc");
+      return (rows || []).filter((row) => row.role === "lector").map((row) => ({ email: row.email, nom: row.display_name || "" }));
     },
     async listReturns() {
       const rows = await request("/rest/v1/returns?select=*,books(*)&order=returned_at.desc&limit=80");

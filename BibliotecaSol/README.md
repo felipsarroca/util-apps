@@ -6,11 +6,15 @@ Aplicació web per gestionar i consultar el catàleg de la biblioteca escolar de
 
 | Portada | Catàleg |
 |---|---|
-| ![Portada amb l'accés amb el correu del centre](captures/portada.png) | ![Catàleg amb cerca, filtres i disponibilitat](captures/cataleg.png) |
+| ![Portada amb cercador, accés amb el correu del centre i darreres incorporacions](captures/portada.png) | ![Catàleg amb portades, filtres amb recompte i ordenació](captures/cataleg.png) |
 
-| Gestió: alta d'un llibre per ISBN | Ajuda integrada per al gestor |
+| Fitxa d'un llibre | Catàleg al mòbil |
 |---|---|
-| ![Formulari de gestió amb les dades trobades per ISBN](captures/gestio.png) | ![Finestra d'ajuda amb l'índex d'apartats](captures/ajuda.png) |
+| ![Fitxa amb portada, resum, dades i disponibilitat](captures/fitxa.png) | ![Catàleg en una pantalla de mòbil](captures/mobil.png) |
+
+| Gestió: alta, llista d'edició i préstec ràpid | Ajuda integrada per al gestor |
+|---|---|
+| ![Pantalla de gestió amb el formulari i la llista de llibres](captures/gestio.png) | ![Finestra d'ajuda amb l'índex d'apartats](captures/ajuda.png) |
 
 ---
 
@@ -36,7 +40,7 @@ L'app té tres maneres d'accedir-hi:
 
 | Perfil | Com hi entra | Què pot fer |
 |---|---|---|
-| **Visitant** | Enllaç *Consultar el catàleg sense entrar* de la portada | Consultar el catàleg, cercar, filtrar i descarregar la llista en PDF. No pot demanar llibres. |
+| **Visitant** | Cercador o botó *Veure tot el catàleg* de la portada | Consultar el catàleg, cercar, filtrar, obrir les fitxes i descarregar la llista en PDF. No pot demanar llibres. |
 | **Lector** (alumnat i professorat) | Escriu el seu correu `@ramonpont.cat` a la portada. No cal contrasenya. | Tot el que fa el visitant i, a més, triar llibres i enviar-ne la sol·licitud de préstec. |
 | **Gestor** (biblioteca) | Correu `biblioteca@ramonpont.cat` i contrasenya | Pantalla de **Gestió**: alta, edició i baixa de llibres, sol·licituds, préstecs, retards, historial i ajuda integrada. |
 
@@ -44,30 +48,35 @@ L'app té tres maneres d'accedir-hi:
 
 ### Catàleg (tots els perfils)
 
+- **Portada** amb un cercador, els comptadors de llibres, exemplars i disponibles, i les **darreres incorporacions**.
 - **Cerca** simultània en el títol, l'autor, l'editorial, l'ISBN, la col·lecció, l'edat, la temàtica, el gènere, la ubicació i el resum.
-- **Filtres combinables** per edat, temàtica, gènere i disponibilitat.
-- **Ordenació** per nom, autor, edat (de petites a grans), temàtica, gènere, disponibilitat o any, en ordre ascendent o descendent.
+- **Filtres sempre visibles** (en un panell lateral, o en una safata al mòbil) per edat, gènere, llengua i temàtica, amb el nombre de llibres de cada opció, i l'interruptor *Només disponibles*. Els filtres actius es veuen com a etiquetes que es poden treure d'una en una.
+- **Dues vistes:** *Portades* (quadrícula) i *Llista* (taula compacta amb edat, gènere, llengua, estat i ubicació). L'app recorda la darrera triada.
+- **Portades:** la real, si s'ha trobat per ISBN; si no, una portada de color generada amb el títol i l'autor.
+- **Fitxa del llibre** en una finestra: portada, resum, etiquetes, estat, editorial, col·lecció i número, pàgines, any, llengua, ISBN i ubicació. Es pot enllaçar directament amb `cataleg.html?mode=public&llibre=ID`.
+- **Ordenació** per títol, autor, edat (de petites a grans), novetats, any d'edició o disponibles.
 - **Descàrrega en PDF** de la llista que es veu en pantalla, amb els filtres aplicats.
-- Cada fila mostra el títol, l'editorial, l'ISBN, la col·lecció i el número, les pàgines, l'autor, l'edat, la temàtica, el gènere, la disponibilitat (*disponibles/totals*), la ubicació i l'any.
 
 ### Sol·licituds de préstec (lectors)
 
 1. El lector entra amb el correu del centre.
-2. Al catàleg, cada llibre té el botó **Triar**. En pot triar diversos.
-3. Al requadre *Sol·licitud de llibres* prem **Enviar sol·licitud**.
+2. Al catàleg, cada llibre té el botó **Triar** (i, dins la fitxa, *Afegir a la sol·licitud*). En pot triar diversos.
+3. A la barra que apareix a baix de la pantalla prem **Enviar sol·licitud**. Si algun llibre falla, la resta s'envia igualment i s'indica quin no.
 4. La sol·licitud apareix a la pestanya *Sol·licituds* del gestor i la biblioteca en rep un avís per correu (si el correu està configurat).
 
 ### Gestió (gestor)
 
-- **Resum superior** amb quatre comptadors: sol·licituds pendents, préstecs actius, retards i exemplars disponibles.
+- **Resum superior** amb quatre comptadors: sol·licituds pendents, préstecs actius, retards (en vermell si n'hi ha) i exemplars disponibles.
+- **Préstec ràpid** per a qui s'endú un llibre del prestatge sense sol·licitud: llibre (només els disponibles), correu `@ramonpont.cat` (amb suggeriments dels lectors coneguts) i data de retorn.
 - **Alta de llibres per ISBN.** En escriure, enganxar o escanejar l'ISBN (també amb lector de codis de barres USB):
   - es valida la xifra de control (ISBN-10 i ISBN-13);
   - s'avisa si el llibre ja és al catàleg i s'ofereix obrir-ne la fitxa;
-  - es consulten alhora **Open Library** i **Google Books** i s'omplen només els camps buits (títol, autor, editorial, col·lecció, número, pàgines, any, resum i llengua), que s'il·luminen un moment;
+  - es consulten alhora **Open Library** i **Google Books** i s'omplen només els camps buits (títol, autor, editorial, col·lecció, número, pàgines, any, resum, llengua i portada), que s'il·luminen un moment;
   - si no es troba, es pot omplir la fitxa a mà.
-- **Camps de la fitxa:** títol, autor, editorial, ISBN, col·lecció, número de col·lecció, nombre de pàgines, any, llengua, edat, gènere, temàtica, ubicació, exemplars totals i disponibles, i resum.
+- **Camps de la fitxa:** títol, autor, editorial, ISBN, col·lecció, número de col·lecció, nombre de pàgines, any, llengua, edat, gènere, temàtica, ubicació, exemplars i resum. Els **disponibles es calculen sols** a la base de dades a partir dels préstecs oberts.
 - **Edat, gènere i temàtica amb botons.** Un clic tria i un altre desfà. El botó *+ Altre* hi afegeix un valor nou, que es desa a la base de dades i queda disponible per a tothom.
-- **Edició i baixa.** Llista cercable de tots els llibres amb els botons *Editar* i *Descatalogar*. Descatalogar amaga el llibre del catàleg sense esborrar-lo.
+- **Edició i baixa.** Llista cercable i compacta (amb desplaçament propi) de tots els llibres amb els botons *Editar*, *Prestar* i *Descatalogar*. Descatalogar demana confirmació, avisa si hi ha préstecs oberts i amaga el llibre del catàleg sense esborrar-lo.
+- **Confirmacions i avisos.** Descatalogar, rebutjar i registrar devolucions demanen confirmació en una finestra pròpia; el resultat de cada acció apareix en un avís breu a baix de la pantalla.
 - **Sol·licituds**, ordenades per ubicació per recollir els llibres d'una sola passada: *Fer préstec* (15 dies), *Rebutjar* i *Contactar* (correu).
 - **Préstecs**, ordenats per data de retorn: *Registrar devolució*, *Renovar 15 dies* i *Contactar*.
 - **Retards**: préstecs vençuts, ordenats pels dies de retard.
@@ -110,14 +119,14 @@ Tots els correus surten del compte **biblioteca@ramonpont.cat** mitjançant l'Ap
 
 | Fitxer o carpeta | Funció |
 |---|---|
-| `index.html` | Portada: accés amb el correu del centre, enllaç al catàleg públic i comptadors. |
-| `cataleg.html` | Catàleg amb cerca, filtres, ordenació, PDF i selecció de llibres. |
-| `editor.html` | Gestió: formulari d'alta, llista d'edició i pestanyes de circulació. |
+| `index.html` | Portada: cercador, accés amb el correu del centre, comptadors i darreres incorporacions. |
+| `cataleg.html` | Catàleg amb cerca, filtres, vistes de portades i llista, fitxa, ordenació, PDF i selecció de llibres. |
+| `editor.html` | Gestió: formulari d'alta, llista d'edició, préstec ràpid i pestanyes de circulació. |
 | `login.html` | Pàgina d'accés alternativa (lector i gestor). |
 | `css/styles.css` | Tots els estils, inclosos els de la finestra d'ajuda. |
 | `js/config.js` | Domini permès, URL i clau pública (anon) de Supabase i versió. |
 | `js/supabaseClient.js` | Totes les crides a Supabase (REST, RPC, Auth i Edge Functions) i la conversió entre els noms de la base de dades i els de l'app. |
-| `js/shared.js` | Dades compartides, sessió, accés, opcions (ordenació de les edats), targetes de llibre i botó d'ajuda. |
+| `js/shared.js` | Dades compartides, sessió, accés, opcions (ordenació de les edats), portades, finestra de confirmació, avisos breus i botó d'ajuda. |
 | `js/cataleg.js` | Lògica del catàleg i de la portada. |
 | `js/editor.js` | Lògica de la gestió: formulari, cerca per ISBN, botons de classificació i circulació. |
 | `js/ajuda.js` | Contingut i funcionament de la finestra d'ajuda (es carrega només quan s'obre). |
@@ -140,7 +149,7 @@ Tots els correus surten del compte **biblioteca@ramonpont.cat** mitjançant l'Ap
 
 | Taula | Contingut | Camps principals |
 |---|---|---|
-| `books` | Catàleg | `title`, `author`, `publisher`, `isbn`, `collection`, `collection_number`, `page_count`, `publication_year`, `language`, `recommended_level`, `topic`, `genre`, `summary`, `location`, `total_copies`, `available_copies`, `active` |
+| `books` | Catàleg | `title`, `author`, `publisher`, `isbn`, `collection`, `collection_number`, `page_count`, `publication_year`, `language`, `recommended_level`, `topic`, `genre`, `summary`, `location`, `cover_url`, `total_copies`, `available_copies`, `active` |
 | `book_options` | Valors dels botons i suggeriments | `field_name` (`recommended_level`, `topic`, `genre`, `location`), `value` |
 | `app_users` | Persones que han entrat a l'app | `email`, `display_name`, `role` (`lector` o `gestor`), `access_count`, `last_seen_at` |
 | `access_logs` | Registre d'accessos | `email`, `role`, `accessed_at`, `user_agent` |
@@ -151,13 +160,15 @@ Tots els correus surten del compte **biblioteca@ramonpont.cat** mitjançant l'Ap
 
 La vista `catalog_books` mostra els llibres actius.
 
+El disparador `books_sync_available_copies` calcula `available_copies`: en donar d'alta un llibre, tots els exemplars són disponibles; si es canvia `total_copies`, els disponibles passen a ser els totals menys els préstecs actius. L'app no envia mai els disponibles en desar una fitxa.
+
 ### Funcions SQL (RPC)
 
 | Funció | Qui la fa servir | Què fa |
 |---|---|---|
 | `register_access(user_email, user_agent_text)` | Tothom en entrar | Valida el domini, crea o actualitza l'usuari i registra l'accés. |
 | `reserve_book(target_book_id, input_user_email, note)` | Lectors | Crea una sol·licitud i evita duplicar-ne una d'activa per al mateix llibre. |
-| `register_loan(...)` | Gestor | Crea el préstec, descompta un exemplar disponible i tanca la sol·licitud. |
+| `register_loan(...)` | Gestor | Crea el préstec, descompta un exemplar disponible i, si n'hi ha, tanca la sol·licitud. Amb la sol·licitud nul·la serveix per al préstec ràpid. |
 | `register_return(...)` | Gestor | Tanca el préstec, registra la devolució i suma un exemplar disponible. |
 
 ### Regles d'accés (RLS)
@@ -206,6 +217,8 @@ supabase db query --linked "update books set active = true where title = 'Títol
 
 Per publicar canvis del frontend n'hi ha prou amb fer *commit* i *push* a `main` del repositori `util-apps`. GitHub Pages es reconstrueix en uns minuts.
 
+**Cada vegada que es modifiqui un fitxer CSS o JS**, cal augmentar el paràmetre `?v=` de les etiquetes `<link>` i `<script>` de tots els HTML (i el de `js/ajuda.js` a `js/shared.js`), i també `appVersion` a `js/config.js` i el número de versió del peu. Així els navegadors descarreguen la versió nova en lloc de fer servir la que tenen desada.
+
 ## Seguretat i privacitat
 
 - La clau `anon` de `js/config.js` és pública per disseny; la seguretat depèn de les regles RLS.
@@ -224,6 +237,7 @@ Per publicar canvis del frontend n'hi ha prou amb fer *commit* i *push* a `main`
 | Data | Canvis |
 |---|---|
 | Maig de 2026 | Primera versió: catàleg, accés per correu, gestió, sol·licituds, préstecs, devolucions i avisos. |
+| 10/11/2026 (4) · v1.1 | Nou disseny del catàleg: portades, vista de llista alineada, fitxa del llibre, filtres laterals amb recompte (també per llengua), etiquetes de filtres actius i safata de filtres al mòbil. Portada amb cercador i darreres incorporacions. Gestió: préstec ràpid, botó *Prestar*, llista compacta, disponibles calculats a la base de dades (`cover_url` i disparador a `supabase/2026-11-10_portades_i_disponibles.sql`), confirmacions i avisos breus. Textos amb accents també als missatges de la base de dades. Revisió de les dades del catàleg (faltes, editorials, llengües i portades). Versions als fitxers per evitar memòries cau antigues. |
 | 10/11/2026 (3) | Correus operatius des de biblioteca@ramonpont.cat amb un Apps Script propi. Funcions de correu tornades a publicar. |
 | 10/11/2026 (2) | Seguretat: el gestor entra només amb Supabase Auth, fora la contrasenya i el botó de prova del codi, sessió que es renova sola, i lectura de les dades personals restringida al gestor. |
 | 10/11/2026 | Col·lecció, número de col·lecció i pàgines a la fitxa. Edat «14-16 anys» (substitueix «15-16») i gènere «Conte». Cerca per ISBN amb Open Library i Google Books. Botons per a edat, gènere i temàtica. Descatalogar i les opcions noves es desen a Supabase. Edats ordenades de petites a grans. Eliminats els 30 llibres de mostra. Ajuda integrada per al gestor. |

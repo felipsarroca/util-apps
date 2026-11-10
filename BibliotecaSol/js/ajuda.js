@@ -15,18 +15,22 @@
         <p>En entrar a Gestió veuràs quatre comptadors que t'indiquen d'un cop d'ull si hi ha feina pendent:</p>
         <div class="help-mock" aria-hidden="true">
           <section class="manager-summary">
-            <div><strong>2</strong><span>Sol·licituds pendents</span></div>
-            <div><strong>5</strong><span>Préstecs actius</span></div>
-            <div><strong>1</strong><span>Retards</span></div>
-            <div><strong>118</strong><span>Exemplars disponibles</span></div>
+            <div><strong>2</strong><span>Sol·licituds</span></div>
+            <div><strong>5</strong><span>Préstecs</span></div>
+            <div class="summary-overdue has-overdue"><strong>1</strong><span>Retards</span></div>
+            <div><strong>118</strong><span>Disponibles</span></div>
           </section>
         </div>
         <ul class="help-list">
           <li><strong>Sol·licituds pendents:</strong> llibres que algú ha demanat i que encara no has prestat ni rebutjat.</li>
           <li><strong>Préstecs actius:</strong> llibres que ara mateix són fora de la biblioteca.</li>
-          <li><strong>Retards:</strong> préstecs que ja han passat la data de retorn.</li>
-          <li><strong>Exemplars disponibles:</strong> còpies que hi ha a la biblioteca per deixar.</li>
+          <li><strong>Retards:</strong> préstecs que ja han passat la data de retorn. Si n'hi ha algun, el requadre es posa vermell.</li>
+          <li><strong>Disponibles:</strong> exemplars que hi ha a la biblioteca per deixar.</li>
         </ul>
+        <h4>Préstec ràpid</h4>
+        <p>El botó <strong>Préstec ràpid</strong>, a dalt de tot i a la pestanya Préstecs, et permet deixar un llibre a algú que és davant teu sense que hagi fet cap sol·licitud. Ho trobaràs explicat a <a href="#" data-help-go="prestecs">Préstecs i devolucions</a>.</p>
+        <h4>Avisos i confirmacions</h4>
+        <p>Quan desis, prestis o retornis un llibre, a baix de la pantalla apareix un avís breu que confirma que s'ha fet. Les accions que no es poden desfer amb un clic (descatalogar, rebutjar una sol·licitud o registrar una devolució) et demanen confirmació abans.</p>
         <h4>Les pestanyes</h4>
         <div class="help-mock" aria-hidden="true">
           <nav class="manager-tabs">
@@ -63,7 +67,7 @@
           </li>
           <li>
             <strong>Espera un segon o prem «Cercar dades».</strong>
-            <span>L'app busca el llibre a Open Library i a Google Books i omple els camps que estiguin buits. Els camps omplerts s'il·luminen un moment en groc. Mai no esborra res que ja hagis escrit.</span>
+            <span>L'app busca el llibre a Open Library i a Google Books i omple els camps que estiguin buits. Els camps omplerts s'il·luminen un moment en groc. Mai no esborra res que ja hagis escrit. Si troba la portada, la desa i la mostrarà al catàleg; si no, el catàleg en dibuixa una de color amb el títol i l'autor.</span>
           </li>
           <li>
             <strong>Revisa les dades.</strong>
@@ -74,11 +78,11 @@
           </li>
           <li>
             <strong>Indica la ubicació i els exemplars.</strong>
-            <span>La ubicació et suggereix les que ja existeixen (prestatgeries, zones...). <em>Exemplars totals</em> és el nombre de còpies que té la biblioteca; <em>Exemplars disponibles</em>, les que hi ha ara mateix a la prestatgeria.</span>
+            <span>La ubicació et suggereix les que ja existeixen (prestatgeries, zones...). A <em>Exemplars</em> posa quantes còpies té la biblioteca. Els <em>disponibles</em> els calcula l'app sola: en donar d'alta un llibre, ho són tots, i després baixen i pugen amb cada préstec i devolució.</span>
           </li>
           <li>
             <strong>Prem «Desar llibre».</strong>
-            <span>Si tot va bé, veuràs «Llibre afegit a Supabase» i el formulari queda net per al següent llibre.</span>
+            <span>Si tot va bé, a baix de la pantalla veuràs l'avís «Llibre afegit correctament» i el formulari queda net per al següent llibre.</span>
             <div class="help-mock" aria-hidden="true">
               <div class="form-actions">
                 <span class="button button-save icon-save">Desar llibre</span>
@@ -101,7 +105,7 @@
               <tr><td>Any de publicació</td><td>L'any de l'edició que teniu.</td><td>2009</td></tr>
               <tr><td>Llengua</td><td>Per defecte, Català. Google Books la canvia si el llibre és en una altra llengua.</td><td>Castellà</td></tr>
               <tr><td>Ubicació</td><td>On és físicament el llibre.</td><td>Prestatgeria B1</td></tr>
-              <tr><td>Exemplars totals / disponibles</td><td>Còpies que té la biblioteca / que hi ha ara.</td><td>3 / 2</td></tr>
+              <tr><td>Exemplars</td><td>Còpies que té la biblioteca. Els disponibles es calculen sols.</td><td>3</td></tr>
               <tr><td>Resum breu</td><td>Dues o tres frases que ajudin a triar el llibre.</td><td>—</td></tr>
             </tbody>
           </table>
@@ -153,12 +157,14 @@
           <div class="list-panel help-mock-list">
             <article class="editor-item">
               <div class="editor-item-main">
-                <span><strong>Flanagan Blues Band</strong><small>Andreu Martín, Jaume Ribera - Zona ESO</small></span>
+                <span class="cover cover-xs" style="--cover:#2f6f8f"><span class="cover-art"><span class="cover-title">Flanagan Blues Band</span></span></span>
+                <span class="editor-item-text"><strong>Flanagan Blues Band</strong><small>Andreu Martín, Jaume Ribera · Zona ESO</small></span>
                 <span class="availability compact available"><span class="availability-dot"></span><span>2/2</span></span>
               </div>
               <div class="editor-item-actions">
-                <span class="link-button icon-edit">Editar</span>
-                <span class="link-button link-danger icon-archive">Descatalogar</span>
+                <span class="mini-button">Editar</span>
+                <span class="mini-button">Prestar</span>
+                <span class="mini-button mini-danger">Descatalogar</span>
               </div>
             </article>
           </div>
@@ -166,10 +172,13 @@
         <ul class="help-list">
           <li><strong>Cercar:</strong> escriu una part del títol, l'autor, l'ISBN, la col·lecció o la ubicació.</li>
           <li><strong>Disponibilitat:</strong> el requadre de color indica <em>disponibles/totals</em>. Verd vol dir que n'hi ha algun a la biblioteca; vermell, que tots són en préstec.</li>
-          <li><strong>Editar:</strong> carrega el llibre al formulari de l'esquerra (el títol canvia a «Editar llibre»). Fes els canvis i prem <em>Desar llibre</em>.</li>
+          <li><strong>Editar</strong> (o un clic al llibre): el carrega al formulari de l'esquerra i el marca a la llista. Fes els canvis i prem <em>Desar llibre</em>.</li>
+          <li><strong>Prestar:</strong> obre el préstec ràpid amb aquest llibre ja triat. Només s'activa si en queda algun exemplar.</li>
           <li><strong>Nou llibre:</strong> buida el formulari si vols deixar l'edició i començar un llibre nou.</li>
-          <li><strong>Descatalogar:</strong> treu el llibre del catàleg (perquè s'ha perdut, s'ha fet malbé o s'ha donat de baixa). No demana confirmació, així que vés amb compte.</li>
+          <li><strong>Descatalogar:</strong> treu el llibre del catàleg (perquè s'ha perdut, s'ha fet malbé o s'ha donat de baixa). Abans et demana confirmació i t'avisa si encara en té algun exemplar en préstec.</li>
         </ul>
+        <div class="help-tip"><strong>Si compreu més còpies.</strong> Edita el llibre i augmenta els <em>Exemplars</em>. Els disponibles s'actualitzen sols tenint en compte els préstecs oberts; ho veuràs a <em>Disponibles ara</em>.</div>
+        <div class="help-tip">Des de la fitxa d'un llibre al catàleg també pots prémer <em>Editar la fitxa</em> i arribaràs aquí amb el llibre carregat.</div>
         <div class="help-tip">Descatalogar no esborra el llibre de la base de dades: només l'amaga. Si l'has descatalogat per error, l'administrador el pot recuperar.</div>
       `
     },
@@ -201,11 +210,11 @@
         <ul class="help-list">
           <li>Les sol·licituds s'ordenen <strong>per ubicació</strong>, perquè puguis recollir tots els llibres d'una mateixa prestatgeria d'un sol cop.</li>
           <li><strong>Fer préstec:</strong> el llibre passa a <em>Préstecs</em> amb un termini de <strong>15 dies</strong> i els exemplars disponibles baixen en un. El botó queda desactivat si no en queda cap de disponible.</li>
-          <li><strong>Rebutjar:</strong> tanca la sol·licitud sense fer el préstec.</li>
+          <li><strong>Rebutjar:</strong> tanca la sol·licitud sense fer el préstec, després de confirmar-ho.</li>
           <li><strong>Contactar:</strong> obre un correu adreçat a la persona que l'ha demanat.</li>
           <li>Si les dades no s'actualitzen, prem <em>Actualitzar</em>.</li>
         </ul>
-        <div class="help-tip">De moment, els préstecs sempre es fan a partir d'una sol·licitud. Si algú et demana un llibre en persona, pot fer la sol·licitud des del mòbil en un moment i tu la converteixes en préstec.</div>
+        <div class="help-tip">Si algú et demana un llibre en persona, no cal que faci la sol·licitud: fes-li un <a href="#" data-help-go="prestecs">préstec ràpid</a>.</div>
       `
     },
     {
@@ -214,6 +223,22 @@
       icon: "📚",
       html: `
         <p class="help-lead">La pestanya <strong>Préstecs</strong> mostra tots els llibres que són fora, ordenats per la data de retorn més propera.</p>
+        <h4>Préstec ràpid</h4>
+        <p>Per deixar un llibre a algú que és a la biblioteca, prem <strong>Préstec ràpid</strong> (o <em>Prestar</em> a la llista del catàleg):</p>
+        <div class="help-mock" aria-hidden="true">
+          <div class="loan-mock">
+            <label>Llibre<input type="text" value="Dits llargs — Roger Collinson" tabindex="-1" readonly></label>
+            <label>Correu de qui se l'endú<input type="text" value="nom.cognom@ramonpont.cat" tabindex="-1" readonly></label>
+            <label>Data de retorn<input type="text" value="25/11/2026" tabindex="-1" readonly></label>
+            <div class="form-actions"><span class="button button-save">Registrar el préstec</span></div>
+          </div>
+        </div>
+        <ol class="help-steps">
+          <li><strong>Escriu unes lletres del títol</strong><span>i tria'l de la llista. Només hi surten els llibres que tenen algun exemplar disponible.</span></li>
+          <li><strong>Escriu el correu</strong><span>de l'alumne o del docent. Ha d'acabar en @ramonpont.cat; si ja ha entrat alguna vegada a l'app, te'l suggereix.</span></li>
+          <li><strong>Revisa la data de retorn</strong><span>(per defecte, d'aquí a 15 dies) i prem <em>Registrar el préstec</em>.</span></li>
+        </ol>
+        <h4>Els préstecs oberts</h4>
         <div class="help-mock" aria-hidden="true">
           <article class="circulation-card">
             <div class="circulation-main">
@@ -234,7 +259,7 @@
           </article>
         </div>
         <ul class="help-list">
-          <li><strong>Registrar devolució:</strong> fes-ho quan tinguis el llibre a les mans. L'exemplar torna a estar disponible i el préstec passa a l'<em>Historial</em>.</li>
+          <li><strong>Registrar devolució:</strong> fes-ho quan tinguis el llibre a les mans. Després de confirmar-ho, l'exemplar torna a estar disponible i el préstec passa a l'<em>Historial</em>.</li>
           <li><strong>Renovar 15 dies:</strong> allarga el termini 15 dies a partir de la data prevista. Si el termini ja havia passat, compten des d'avui.</li>
           <li><strong>Contactar:</strong> obre un correu per recordar el retorn.</li>
         </ul>
@@ -307,20 +332,15 @@
         <p class="help-lead">La pàgina <strong>Catàleg</strong> és la que fan servir alumnes i docents per trobar llibres. Com a gestor, també hi pots entrar des del menú superior.</p>
         <ul class="help-list">
           <li><strong>Cerca:</strong> busca alhora en el títol, l'autor, l'editorial, l'ISBN, la col·lecció, l'edat, la temàtica, el gènere, la ubicació i el resum.</li>
-          <li><strong>Filtres:</strong> obre els filtres d'edat, temàtica, gènere i disponibilitat. Es poden combinar entre ells i amb la cerca.</li>
-          <li><strong>Netejar filtres:</strong> torna a mostrar tots els llibres.</li>
-          <li><strong>Ordena per:</strong> nom, autor, edat, temàtica, gènere, disponibilitat o any, en ordre ascendent o descendent.</li>
-          <li><strong>Descarregar PDF:</strong> obre la llista que estàs veient, amb els filtres aplicats, a punt per imprimir o desar en PDF. Si no s'obre, permet les finestres emergents al navegador.</li>
+          <li><strong>Filtres:</strong> a l'esquerra (al mòbil, amb el botó <em>Filtres</em>) hi ha l'edat, el gènere, la llengua i la temàtica, amb el nombre de llibres de cada opció, i l'interruptor <em>Només disponibles</em>. Es combinen entre ells i amb la cerca.</li>
+          <li><strong>Filtres actius:</strong> surten com a etiquetes sobre els resultats; la creu de cada etiqueta en treu un, i <em>Esborrar-los</em> els treu tots.</li>
+          <li><strong>Ordena per:</strong> títol, autor, edat, novetats, any d'edició o disponibles.</li>
+          <li><strong>Portades o Llista:</strong> la vista de portades és més visual; la de llista mostra més llibres alhora, amb l'edat, el gènere, la llengua, l'estat i la ubicació. L'app recorda la que has triat.</li>
+          <li><strong>PDF:</strong> obre la llista que estàs veient, amb els filtres aplicats, a punt per imprimir o desar en PDF. Si no s'obre, permet les finestres emergents al navegador.</li>
         </ul>
-        <p>Sota el títol de cada llibre hi ha l'editorial i l'ISBN i, en una segona línia, la col·lecció, el número i les pàgines, si s'han omplert:</p>
-        <div class="help-mock" aria-hidden="true">
-          <div class="help-mock-row">
-            <h3>Títol del llibre</h3>
-            <span class="book-kicker">Editorial · ISBN 9788400000000</span>
-            <span class="book-kicker">Col·lecció Nom de la col·lecció, núm. 12 · 96 pàg.</span>
-          </div>
-        </div>
-        <div class="help-tip">A la portada hi ha l'enllaç <em>Consultar el catàleg sense entrar</em>: mostra el catàleg a qualsevol persona, sense iniciar sessió, però sense poder demanar llibres.</div>
+        <h4>La fitxa del llibre</h4>
+        <p>Un clic a qualsevol llibre obre la seva fitxa: portada, resum, edat, gènere, temàtica, editorial, col·lecció, pàgines, ISBN, ubicació i quants exemplars n'hi ha disponibles. Com a gestor, hi tens el botó <em>Editar la fitxa</em>.</p>
+        <div class="help-tip">A la portada de l'app hi ha un cercador i les <em>darreres incorporacions</em>. Qualsevol persona pot consultar el catàleg sense iniciar sessió, però només qui entra amb el correu del centre pot demanar llibres.</div>
       `
     },
     {
@@ -332,10 +352,10 @@
         <ol class="help-steps">
           <li><strong>Entren amb el correu del centre.</strong><span>A la portada escriuen el seu correu @ramonpont.cat i premen <em>Entrar</em>. No els cal contrasenya.</span></li>
           <li><strong>Busquen al catàleg.</strong><span>Fan servir la cerca i els filtres, igual que tu.</span></li>
-          <li><strong>Trien els llibres.</strong><span>Cada llibre té un botó <em>Triar</em>. Poden triar-ne més d'un.</span>
-            <div class="help-mock" aria-hidden="true"><span class="link-button compact-select icon-add">Triar</span> <span class="link-button compact-select button-selected icon-save">Triat</span></div>
+          <li><strong>Trien els llibres.</strong><span>Cada llibre té un botó <em>Triar</em> (o, dins la fitxa, <em>Afegir a la sol·licitud</em>). Poden triar-ne més d'un.</span>
+            <div class="help-mock" aria-hidden="true"><span class="select-toggle">Triar</span> <span class="select-toggle is-on">Triat</span></div>
           </li>
-          <li><strong>Envien la sol·licitud.</strong><span>Al requadre <em>Sol·licitud de llibres</em> premen <em>Enviar sol·licitud</em>. A tu et surt a la pestanya Sol·licituds.</span></li>
+          <li><strong>Envien la sol·licitud.</strong><span>A baix de la pantalla apareix una barra amb els llibres triats i el botó <em>Enviar sol·licitud</em>. A tu et surt a la pestanya Sol·licituds i reps un correu d'avís.</span></li>
           <li><strong>Recullen el llibre</strong> a la biblioteca i tu en registres el préstec.</li>
         </ol>
       `
@@ -360,15 +380,19 @@
           </details>
           <details>
             <summary>He creat un llibre repetit.</summary>
-            <p>Descataloga el duplicat i, al llibre bo, augmenta els exemplars totals i disponibles.</p>
+            <p>Descataloga el duplicat i, al llibre bo, augmenta els exemplars.</p>
           </details>
           <details>
             <summary>Un llibre surt amb disponibles 0, però és a la prestatgeria.</summary>
-            <p>Mira a Préstecs si hi ha un préstec obert d'aquest llibre i registra'n la devolució. Si no n'hi ha cap, edita'l i corregeix els exemplars disponibles.</p>
+            <p>Mira a Préstecs si hi ha un préstec obert d'aquest llibre i registra'n la devolució. Els disponibles es calculen a partir dels préstecs oberts, així que en registrar-la es corregeix sol.</p>
           </details>
           <details>
             <summary>He creat un gènere o una temàtica amb una falta.</summary>
             <p>Corregeix els llibres afectats triant el valor bo. El valor mal escrit continuarà sortint com a opció fins que l'administrador l'esborri.</p>
+          </details>
+          <details>
+            <summary>Després d'una actualització de l'app, alguna cosa es veu estranya.</summary>
+            <p>Recarrega la pàgina amb Ctrl+F5 (o Cmd+Maj+R al Mac) perquè el navegador agafi la versió nova.</p>
           </details>
           <details>
             <summary>Com surto de la gestió?</summary>

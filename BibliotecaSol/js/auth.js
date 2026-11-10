@@ -9,7 +9,7 @@
     editorForm.addEventListener("submit", handleEditorLogin);
     logoutButton.addEventListener("click", () => {
       window.BibliotecaSol.clearSession();
-      showMessage("reader-login-message", "Sessio tancada.", "success");
+      showMessage("reader-login-message", "Sessió tancada.", "success");
       renderSession();
     });
     window.addEventListener("bibliotecaSol:sessionchange", renderSession);
@@ -31,7 +31,7 @@
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget));
     if (!window.BibliotecaSol.isManagerEmail(data.email)) {
-      showMessage("editor-login-message", "Aquest acces es nomes per al compte biblioteca@ramonpont.cat.", "error");
+      showMessage("editor-login-message", "Aquest accés és només per al compte biblioteca@ramonpont.cat.", "error");
       return;
     }
 
@@ -50,7 +50,7 @@
 
     panel.hidden = !session;
     if (session) {
-      summary.textContent = `${session.nom} ${session.cognoms || ""} - ${session.email} - ${session.rol}`;
+      summary.textContent = `${session.email} · ${session.rol === "editor" ? "gestor" : "lector"}`;
     }
   }
 
