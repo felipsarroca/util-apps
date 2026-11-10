@@ -191,9 +191,9 @@ function pIdioma(){
     <img src="${LOGO}" alt="Escola Ramon Pont">
     <div class="salutacio">Benvinguts · Bienvenidos<br><span class="ar" dir="rtl">مرحبا بيكم</span></div>
     <div class="idiomes">
+      <button class="idioma" data-idioma="ca" type="button"><span class="bombolla">👋</span><span>Català<small>Catalan</small></span></button>
       <button class="idioma" data-idioma="es" type="button"><span class="bombolla">👋</span><span>Español<small>Castellano</small></span></button>
       <button class="idioma" data-idioma="ar" type="button"><span class="bombolla">👋</span><span class="ar" dir="rtl">الدارجة<small>Darija · العربية المغربية</small></span></button>
-      <button class="idioma" data-idioma="ca" type="button"><span class="bombolla">👋</span><span>Català<small>Catalan</small></span></button>
     </div>
     ${window.VALORACIO && VALORACIO.clientId ? '<button class="boto-estadistiques" id="obreEstadistiques" type="button" lang="ca">📊 Estadístiques</button>' : ''}
   </div>`;
