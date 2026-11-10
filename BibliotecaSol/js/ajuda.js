@@ -267,13 +267,13 @@
         </div>
         <p>Hi tens els mateixos botons que a Préstecs. Si el llibre ja ha tornat, registra'n la devolució i desapareixerà d'aquesta llista.</p>
         <h4>Avisos automàtics per correu</h4>
-        <p>Cada matí (a les 7.30 a l'hivern i a les 8.30 a l'estiu) l'app revisa els préstecs i, si el servei de correu està configurat, envia:</p>
+        <p>Cada matí (a les 7.30 a l'hivern i a les 8.30 a l'estiu) l'app revisa els préstecs i envia aquests correus des del compte <strong>biblioteca@ramonpont.cat</strong>:</p>
         <ul class="help-list">
           <li>a la persona que té el llibre, un recordatori quan falten <strong>dos dies o menys</strong>, un altre <strong>el dia del termini</strong> i un altre quan ja <strong>ha vençut</strong>;</li>
           <li>a la biblioteca, un <strong>resum dels retards</strong>;</li>
           <li>a la biblioteca, un avís cada vegada que algú fa una <strong>sol·licitud nova</strong>.</li>
         </ul>
-        <p>Cada avís s'envia una sola vegada per préstec, de manera que ningú no rep correus repetits.</p>
+        <p>Cada avís s'envia una sola vegada per préstec, de manera que ningú no rep correus repetits. Com que surten del compte de la biblioteca, si algú hi respon, la resposta arriba a la safata de la biblioteca.</p>
       `
     },
     {

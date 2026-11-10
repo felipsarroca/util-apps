@@ -83,7 +83,7 @@ Cada dia a les 06.30 UTC (7.30 a l'hivern i 8.30 a l'estiu) una tasca programada
 
 A més, la biblioteca rep un avís cada vegada que es crea una sol·licitud. Cada avís queda registrat a la taula `email_notifications` i no es repeteix.
 
-> **Estat actual:** l'enviament de correus no està operatiu perquè el servei de correu no està configurat del tot (vegeu [Pendents](#pendents)).
+Tots els correus surten del compte **biblioteca@ramonpont.cat** mitjançant l'Apps Script de la carpeta `apps-script/` (vegeu [Correu](#correu-apps-script)).
 
 ## Arquitectura
 
@@ -130,6 +130,7 @@ A més, la biblioteca rep un avís cada vegada que es crea una sol·licitud. Cad
 | `supabase/email_notifications_patch.sql` | Ajust de la taula d'avisos. |
 | `supabase/functions/` | Edge Functions: `isbn-lookup`, `notify-reservation`, `daily-loan-reminders` i el mòdul comú `_shared/mailer.ts`. |
 | `supabase/README.md` | Notes tècniques de Supabase (correu, cron i Google Books). |
+| `apps-script/` | Apps Script del compte de la biblioteca que envia els correus (`Code.gs`, `appsscript.json`). El fitxer `.clasp.json` és local i no es publica. |
 | `Instruccions.md` / `Instruccions.pdf` | Document de requisits original amb què es va encarregar l'app. |
 | `LICENSE.txt` | Llicència AGPLv3 del codi. |
 
@@ -173,6 +174,15 @@ Totes les taules tenen la Row Level Security activada. El catàleg actiu i les o
 
 Els secrets es guarden a Supabase i no apareixen mai al codi.
 
+### Correu (Apps Script)
+
+- Projecte d'Apps Script «Biblioteca de la Sol · correu», propietat de **biblioteca@ramonpont.cat**, publicat com a aplicació web (s'executa com el propietari).
+- Les Edge Functions hi envien un POST amb el testimoni `GOOGLE_MAIL_WEBHOOK_TOKEN`. El script només en guarda l'empremta SHA-256, només escriu a adreces `@ramonpont.cat` i només té permís per enviar correu.
+- L'adreça de l'aplicació web és el secret `GOOGLE_MAIL_WEBHOOK_URL`.
+- Quota de Google Workspace: uns 1.500 destinataris al dia.
+- Per modificar-lo: editar `apps-script/Code.gs` i, des d'aquesta carpeta, `clasp --user biblioteca push` i `clasp --user biblioteca update-deployment <id del desplegament @1>` (per conservar l'adreça).
+- Si cal canviar el testimoni: generar-ne un de nou, desar-lo amb `supabase secrets set GOOGLE_MAIL_WEBHOOK_TOKEN=...` i posar-ne l'empremta SHA-256 a `TOKEN_SHA256` de `Code.gs`.
+
 ## Manteniment habitual
 
 Totes les ordres s'executen des d'aquesta carpeta, que ja està vinculada al projecte de Supabase.
@@ -207,13 +217,14 @@ Per publicar canvis del frontend n'hi ha prou amb fer *commit* i *push* a `main`
 
 ### Pendents
 
-- Configurar l'enviament de correus (Apps Script de Google o domini verificat a Resend).
+- Cap de crític. Si algun dia es canvia la contrasenya del gestor, només cal fer-ho a Supabase Auth.
 
 ## Historial de canvis
 
 | Data | Canvis |
 |---|---|
 | Maig de 2026 | Primera versió: catàleg, accés per correu, gestió, sol·licituds, préstecs, devolucions i avisos. |
+| 10/11/2026 (3) | Correus operatius des de biblioteca@ramonpont.cat amb un Apps Script propi. Funcions de correu tornades a publicar. |
 | 10/11/2026 (2) | Seguretat: el gestor entra només amb Supabase Auth, fora la contrasenya i el botó de prova del codi, sessió que es renova sola, i lectura de les dades personals restringida al gestor. |
 | 10/11/2026 | Col·lecció, número de col·lecció i pàgines a la fitxa. Edat «14-16 anys» (substitueix «15-16») i gènere «Conte». Cerca per ISBN amb Open Library i Google Books. Botons per a edat, gènere i temàtica. Descatalogar i les opcions noves es desen a Supabase. Edats ordenades de petites a grans. Eliminats els 30 llibres de mostra. Ajuda integrada per al gestor. |
 

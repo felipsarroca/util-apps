@@ -43,6 +43,8 @@ Hi ha dues Edge Functions preparades:
 - `notify-reservation`: s'executa quan es registra una reserva i avisa `biblioteca@ramonpont.cat`.
 - `daily-loan-reminders`: revisa préstecs actius i envia avisos de cortesia quan falten pocs dies, quan venç el termini o quan ja s'ha superat.
 
+**Estat (10/11/2026):** els correus funcionen amb l'Apps Script de `../apps-script/`, propietat de biblioteca@ramonpont.cat. Els secrets `GOOGLE_MAIL_WEBHOOK_URL`, `GOOGLE_MAIL_WEBHOOK_TOKEN` i `LIBRARY_EMAIL` ja estan configurats.
+
 Per enviar correus reals hi ha dues opcions. La principal és Google Apps Script, perquè permet enviar des del compte de Gmail de la biblioteca sense tocar DNS:
 
 ```powershell
