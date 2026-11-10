@@ -1303,6 +1303,154 @@ main h3 {
   gap: 8px;
 }
 
+.isbn-lookup {
+  display: grid;
+  gap: 0.4rem;
+  padding: 12px 14px;
+  border: 1px solid #f3d27a;
+  border-radius: 18px;
+  background: var(--accent-soft);
+}
+
+.isbn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.isbn-row input {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.isbn-row .button {
+  flex: none;
+}
+
+.isbn-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.isbn-status.loading {
+  color: var(--ink);
+}
+
+.isbn-status.success {
+  color: var(--green-2);
+}
+
+.isbn-status.warning {
+  color: #9a5b00;
+}
+
+.isbn-status.error {
+  color: var(--red);
+}
+
+.isbn-status .link-button {
+  display: inline-flex;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.editor-form input.autofilled,
+.editor-form textarea.autofilled {
+  border-color: #f3c34d;
+  background: #fff8e1;
+  box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.45);
+}
+
+.chip-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.chip-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.chip-label {
+  color: #344054;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  min-height: 34px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #f9fafb;
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chip:hover {
+  border-color: #c9a23f;
+  background: #ffffff;
+}
+
+.chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.55);
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--green-2);
+  background: var(--green);
+  color: #ffffff;
+}
+
+.chip-new {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+}
+
+.chip-adder {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.chip-input {
+  width: 190px;
+  min-height: 34px;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.84rem;
+}
+
+.chip-confirm {
+  border-color: var(--green-2);
+  background: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .isbn-row {
+    flex-direction: column;
+  }
+
+  .chip-input {
+    width: 150px;
+  }
+}
+
 .button-disabled,
 .link-button:disabled {
   opacity: 0.52;

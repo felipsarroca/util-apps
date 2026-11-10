@@ -2,6 +2,7 @@
   const config = window.BIBLIOTECA_SOL_CONFIG || {};
   const TOKEN_KEY = "bibliotecaSol.supabaseAccessToken";
   let accessToken = sessionStorage.getItem(TOKEN_KEY) || "";
+  const SESSION_EXPIRED_MESSAGE = "No s'ha pogut desar el canvi. Tanca la sessió i torna a entrar com a gestor.";
 
   function getHeaders(prefer) {
     const headers = {
@@ -276,6 +277,7 @@
           prefer: "return=representation",
           body: JSON.stringify(payload)
         });
+        if (!rows || !rows.length) throw new Error(SESSION_EXPIRED_MESSAGE);
         return dbBookToApp(rows[0]);
       }
 
@@ -287,9 +289,21 @@
       return dbBookToApp(rows[0]);
     },
     async archiveBook(bookId) {
-      await request(`/rest/v1/books?id=eq.${encodeURIComponent(bookId)}`, {
+      const rows = await request(`/rest/v1/books?id=eq.${encodeURIComponent(bookId)}&select=id`, {
         method: "PATCH",
+        prefer: "return=representation",
         body: JSON.stringify({ active: false })
+      });
+      if (!rows || !rows.length) throw new Error(SESSION_EXPIRED_MESSAGE);
+    },
+    async saveOption(field, value) {
+      const dbField = Object.keys(optionFieldMap).find((key) => optionFieldMap[key] === field);
+      const cleanValue = String(value || "").trim();
+      if (!dbField || !cleanValue) return;
+      await request("/rest/v1/book_options?on_conflict=field_name,value", {
+        method: "POST",
+        prefer: "resolution=ignore-duplicates,return=minimal",
+        body: JSON.stringify({ field_name: dbField, value: cleanValue })
       });
     },
     async listReservations() {

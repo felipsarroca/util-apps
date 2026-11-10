@@ -7,6 +7,8 @@ Aplicació web inicial per gestionar i consultar el catàleg de la biblioteca es
 - HTML, CSS i JavaScript pur.
 - Catàleg consultable sense fotografies, amb cerca i filtres múltiples combinables.
 - Fitxa del llibre amb col·lecció, número de col·lecció i nombre de pàgines (des del 10/11/2026).
+- Cerca per ISBN (Open Library i, si respon, Google Books) que omple els camps buits i avisa si el llibre ja és al catàleg.
+- Edat, gènere i temàtica es trien amb botons; els valors nous es desen a Supabase per a tothom.
 - Inici de sessió local amb correu `@ramonpont.cat` per a consulta.
 - Accés d’editor amb contrasenya per modificar el catàleg.
 - Editor local per afegir, modificar i descatalogar llibres.

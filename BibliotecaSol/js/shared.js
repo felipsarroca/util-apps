@@ -28,7 +28,7 @@
   ];
 
   const seedOptions = {
-    nivell_recomanat: ["3-5 anys", "6-8 anys", "9-11 anys", "12-14 anys", "14-16 anys", "15-16 anys", "Mestres"],
+    nivell_recomanat: ["3-5 anys", "6-8 anys", "9-11 anys", "12-14 anys", "14-16 anys", "Mestres"],
     tematica: ["Aventura", "Ciència", "Coneixements", "Convivència", "Emocions", "Fantasia", "Història", "Misteri", "Natura"],
     genere: ["Àlbum il·lustrat", "Còmic", "Conte", "Divulgació", "Narrativa", "Novel·la curta", "Poesia", "Teatre"],
     ubicacio: ["Biblioteca central", "Prestatgeria A1", "Prestatgeria A2", "Prestatgeria B1", "Prestatgeria B2", "Prestatgeria C1", "Prestatgeria C2", "Racó infantil", "Zona ESO"]
@@ -151,7 +151,7 @@
       isbn: "9788400000073",
       any_publicacio: 2023,
       llengua: "Català",
-      nivell_recomanat: "15-16 anys",
+      nivell_recomanat: "14-16 anys",
       tematica: "Aventura",
       genere: "Narrativa",
       resum: "Una expedició escolar descobreix restes d'una ciutat antiga.",
@@ -331,7 +331,7 @@
       isbn: "9788400000172",
       any_publicacio: 2023,
       llengua: "Català",
-      nivell_recomanat: "15-16 anys",
+      nivell_recomanat: "14-16 anys",
       tematica: "Convivència",
       genere: "Narrativa",
       resum: "Diari fictici d'una alumna nouvinguda que descobreix una nova ciutat.",
@@ -457,7 +457,7 @@
       isbn: "9788400000240",
       any_publicacio: 2021,
       llengua: "Català",
-      nivell_recomanat: "15-16 anys",
+      nivell_recomanat: "14-16 anys",
       tematica: "Misteri",
       genere: "Narrativa",
       resum: "Un cas ambientat en una biblioteca on desapareix un llibre antic.",
@@ -565,7 +565,7 @@
       isbn: "9788400000301",
       any_publicacio: 2024,
       llengua: "Català",
-      nivell_recomanat: "15-16 anys",
+      nivell_recomanat: "14-16 anys",
       tematica: "Misteri",
       genere: "Còmic",
       resum: "Un còmic d'humor i misteri ambientat en una aula plena de pistes falses.",
@@ -660,7 +660,21 @@
 
   function getOptions(field) {
     const options = optionsCache || ensureOptions();
-    return options[field] || [];
+    return sortOptions(field, options[field] || []);
+  }
+
+  function ageRank(value) {
+    if (!String(value || "").trim()) return 2000;
+    const match = String(value || "").match(/\d+/);
+    return match ? Number(match[0]) : 1000;
+  }
+
+  function sortOptions(field, values) {
+    const list = uniqueSorted(values);
+    if (field === "nivell_recomanat") {
+      list.sort((a, b) => ageRank(a) - ageRank(b) || a.localeCompare(b, "ca", { numeric: true }));
+    }
+    return list;
   }
 
   function addOption(field, value) {
@@ -1095,6 +1109,8 @@
     getUsers,
     saveUsers,
     getOptions,
+    sortOptions,
+    ageRank,
     addOption,
     getSession,
     setSession,

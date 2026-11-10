@@ -1,5 +1,9 @@
 (function () {
   let currentQuery = "";
+  const CHIP_FIELDS = ["nivell_recomanat", "genere", "tematica"];
+  const OPTION_FIELDS = ["nivell_recomanat", "tematica", "genere", "ubicacio"];
+  let isbnTimer = null;
+  let lastLookupIsbn = "";
   let circulation = {
     reservations: [],
     loans: [],
@@ -24,6 +28,8 @@
     }
 
     populateOptionLists();
+    renderChipFields();
+    initIsbnLookup(form);
     initManagerTabs();
     form.addEventListener("submit", handleSave);
     resetButton.addEventListener("click", resetForm);
@@ -91,10 +97,10 @@
       updated_at: new Date().toISOString()
     };
 
-    saveFieldOptions(book);
     if (window.BibliotecaSolSupabase && window.BibliotecaSolSupabase.isConfigured()) {
       try {
         const savedBook = await window.BibliotecaSolSupabase.saveBook(book);
+        await saveFieldOptions(book);
         if (existingIndex >= 0) {
           books[existingIndex] = savedBook;
         } else {
@@ -112,6 +118,7 @@
       }
     }
 
+    await saveFieldOptions(book);
     if (existingIndex >= 0) {
       books[existingIndex] = book;
     } else {
@@ -125,18 +132,27 @@
     renderEditorList();
   }
 
-  function saveFieldOptions(book) {
-    window.BibliotecaSol.addOption("nivell_recomanat", book.nivell_recomanat);
-    window.BibliotecaSol.addOption("tematica", book.tematica);
-    window.BibliotecaSol.addOption("genere", book.genere);
-    window.BibliotecaSol.addOption("ubicacio", book.ubicacio);
+  async function saveFieldOptions(book) {
+    const remote = window.BibliotecaSolSupabase && window.BibliotecaSolSupabase.isConfigured();
+    for (const field of OPTION_FIELDS) {
+      const value = String(book[field] || "").trim();
+      if (!value) continue;
+      const known = window.BibliotecaSol.getOptions(field)
+        .some((option) => window.BibliotecaSol.normalize(option) === window.BibliotecaSol.normalize(value));
+      if (known) continue;
+      if (remote) {
+        try {
+          await window.BibliotecaSolSupabase.saveOption(field, value);
+        } catch (error) {
+          console.warn("No s'ha pogut desar l'opció nova a Supabase.", error);
+        }
+      }
+      window.BibliotecaSol.addOption(field, value);
+    }
   }
 
   function populateOptionLists() {
     const mapping = {
-      "edat-options": "nivell_recomanat",
-      "tematica-options": "tematica",
-      "genere-options": "genere",
       "ubicacio-options": "ubicacio"
     };
 
@@ -166,6 +182,278 @@
           option.value = value;
           collectionList.appendChild(option);
         });
+    }
+  }
+
+  function renderChipFields() {
+    CHIP_FIELDS.forEach(renderChipField);
+  }
+
+  function renderChipField(field) {
+    const wrap = document.querySelector(`[data-chip-field="${field}"]`);
+    if (!wrap) return;
+    const input = wrap.querySelector('input[type="hidden"]');
+    const group = wrap.querySelector(".chip-group");
+    const label = wrap.querySelector(".chip-label").textContent;
+    const normalize = window.BibliotecaSol.normalize;
+    const current = String(input.value || "").trim();
+    const values = window.BibliotecaSol.sortOptions(field, [
+      ...window.BibliotecaSol.getOptions(field),
+      ...(current ? [current] : [])
+    ]);
+
+    group.innerHTML = "";
+    values.forEach((value) => {
+      const selected = normalize(value) === normalize(current);
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = value;
+      chip.setAttribute("aria-pressed", String(selected));
+      chip.addEventListener("click", () => {
+        input.value = selected ? "" : value;
+        renderChipField(field);
+      });
+      group.appendChild(chip);
+    });
+
+    const adder = document.createElement("span");
+    adder.className = "chip-adder";
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "chip chip-new";
+    addButton.textContent = "+ Altre";
+    addButton.addEventListener("click", () => {
+      adder.innerHTML = `
+        <input class="chip-input" type="text" aria-label="Nou valor de ${window.BibliotecaSol.escapeHtml(label)}" placeholder="Escriu-ne un de nou">
+        <button class="chip chip-confirm" type="button">Afegir</button>
+      `;
+      const newInput = adder.querySelector("input");
+      const commit = () => {
+        const value = newInput.value.trim();
+        if (value) input.value = value;
+        renderChipField(field);
+      };
+      adder.querySelector("button").addEventListener("click", commit);
+      newInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          commit();
+        }
+        if (event.key === "Escape") renderChipField(field);
+      });
+      newInput.focus();
+    });
+    adder.appendChild(addButton);
+    group.appendChild(adder);
+  }
+
+  function initIsbnLookup(form) {
+    const input = form.elements.isbn;
+    const button = document.getElementById("isbn-lookup");
+    if (!input || !button) return;
+
+    button.addEventListener("click", () => lookupIsbn(true));
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      lookupIsbn(true);
+    });
+    input.addEventListener("input", () => {
+      clearTimeout(isbnTimer);
+      const isbn = cleanIsbn(input.value);
+      if (!isValidIsbn(isbn) || isbn === lastLookupIsbn) return;
+      isbnTimer = setTimeout(() => lookupIsbn(false), 500);
+    });
+  }
+
+  async function lookupIsbn(manual) {
+    const form = document.getElementById("book-form");
+    const button = document.getElementById("isbn-lookup");
+    const isbn = cleanIsbn(form.elements.isbn.value);
+    if (!isbn) {
+      setIsbnStatus("Escriu l'ISBN que surt a la contraportada, sobre el codi de barres.", "warning");
+      return;
+    }
+    if (!isValidIsbn(isbn)) {
+      if (manual) setIsbnStatus("Aquest ISBN no és vàlid. Revisa que tingui 10 o 13 xifres i que no falti cap número.", "error");
+      return;
+    }
+    lastLookupIsbn = isbn;
+
+    const duplicate = window.BibliotecaSol.getBooks().find((book) =>
+      cleanIsbn(book.isbn) === isbn && book.id !== form.elements.id.value
+    );
+    if (duplicate) {
+      setIsbnStatus(`Aquest llibre ja és al catàleg: «${duplicate.titol}» (${duplicate.ubicacio || "ubicació pendent"}).`, "warning", {
+        label: "Obrir la fitxa",
+        action: () => fillForm(duplicate.id)
+      });
+      return;
+    }
+
+    setIsbnStatus("Cercant les dades del llibre...", "loading");
+    button.disabled = true;
+    try {
+      const [openLibrary, googleBooks] = await Promise.all([
+        fetchOpenLibrary(isbn).catch(() => null),
+        fetchGoogleBooks(isbn).catch(() => null)
+      ]);
+      if (!openLibrary && !googleBooks) {
+        setIsbnStatus("No hem trobat aquest ISBN a Open Library ni a Google Books. Omple la fitxa a mà.", "warning");
+        return;
+      }
+      const merged = { ...(googleBooks || {}) };
+      Object.entries(openLibrary || {}).forEach(([key, value]) => {
+        if (value) merged[key] = value;
+      });
+      const sources = [openLibrary && "Open Library", googleBooks && "Google Books"].filter(Boolean).join(" i ");
+      const filled = applyLookup(merged);
+      setIsbnStatus(
+        filled.length
+          ? `Trobat a ${sources}. S'ha omplert: ${filled.join(", ")}. Revisa-ho abans de desar.`
+          : `Trobat a ${sources}, però no hi havia cap camp buit per omplir.`,
+        "success"
+      );
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function fetchJson(url) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 9000);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) return null;
+      return await response.json();
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function fetchOpenLibrary(isbn) {
+    const payload = await fetchJson(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
+    const entry = payload && payload[`ISBN:${isbn}`];
+    const details = entry && entry.details;
+    if (!details) return null;
+
+    let title = [details.title, details.subtitle].filter(Boolean).join(". ");
+    let collection = "";
+    let collectionNumber = "";
+    const series = Array.isArray(details.series) ? details.series[0] : details.series;
+    if (series) {
+      const parsed = parseSeries(series);
+      collection = parsed.collection;
+      collectionNumber = parsed.number;
+    } else {
+      const match = title.match(/^(.*\S)\s*\(([^)]+)\)\s*$/);
+      if (match && !/edition|edici[oó]n?/i.test(match[2])) {
+        title = match[1];
+        collection = match[2];
+      }
+    }
+
+    return {
+      titol: title,
+      autor: (details.authors || []).map((author) => author.name).filter(Boolean).join(", "),
+      editorial: uniqueText(details.publishers || [])[0] || "",
+      any_publicacio: extractYear(details.publish_date),
+      pagines: Number(details.number_of_pages) > 0 ? Number(details.number_of_pages) : "",
+      coleccio: collection,
+      numero_coleccio: collectionNumber
+    };
+  }
+
+  async function fetchGoogleBooks(isbn) {
+    const payload = await fetchJson(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+    const info = payload && payload.items && payload.items[0] && payload.items[0].volumeInfo;
+    if (!info) return null;
+    return {
+      titol: [info.title, info.subtitle].filter(Boolean).join(". "),
+      autor: (info.authors || []).join(", "),
+      editorial: info.publisher || "",
+      any_publicacio: extractYear(info.publishedDate),
+      pagines: Number(info.pageCount) > 0 ? Number(info.pageCount) : "",
+      resum: info.description || ""
+    };
+  }
+
+  function applyLookup(data) {
+    const form = document.getElementById("book-form");
+    const labels = {
+      titol: "títol",
+      autor: "autor",
+      editorial: "editorial",
+      coleccio: "col·lecció",
+      numero_coleccio: "número de col·lecció",
+      pagines: "pàgines",
+      any_publicacio: "any",
+      resum: "resum"
+    };
+    const filled = [];
+    Object.entries(labels).forEach(([field, label]) => {
+      const element = form.elements[field];
+      const value = data[field];
+      if (!element || !value || String(element.value).trim()) return;
+      element.value = value;
+      element.classList.add("autofilled");
+      setTimeout(() => element.classList.remove("autofilled"), 2600);
+      filled.push(label);
+    });
+    return filled;
+  }
+
+  function parseSeries(series) {
+    const text = String(series || "").trim();
+    const match = text.match(/^(.*?)\s*[;,]\s*(?:n[úu]m\.?\s*|no\.?\s*|n\.?\s*º?\s*)?(\d+[a-z]?)\s*$/i);
+    if (match) return { collection: match[1].trim(), number: match[2] };
+    return { collection: text, number: "" };
+  }
+
+  function extractYear(value) {
+    const match = String(value || "").match(/\b(1[4-9]\d{2}|20\d{2})\b/);
+    return match ? Number(match[1]) : "";
+  }
+
+  function uniqueText(values) {
+    const map = new Map();
+    values.forEach((value) => {
+      const clean = String(value || "").trim();
+      const key = window.BibliotecaSol.normalize(clean);
+      if (clean && !map.has(key)) map.set(key, clean);
+    });
+    return Array.from(map.values());
+  }
+
+  function cleanIsbn(value) {
+    return String(value || "").replace(/[^0-9Xx]/g, "").toUpperCase();
+  }
+
+  function isValidIsbn(isbn) {
+    if (/^\d{9}[\dX]$/.test(isbn)) {
+      const sum = isbn.split("").reduce((total, char, index) => total + (char === "X" ? 10 : Number(char)) * (10 - index), 0);
+      return sum % 11 === 0;
+    }
+    if (/^\d{13}$/.test(isbn)) {
+      const sum = isbn.split("").reduce((total, char, index) => total + Number(char) * (index % 2 ? 3 : 1), 0);
+      return sum % 10 === 0;
+    }
+    return false;
+  }
+
+  function setIsbnStatus(text, type, link) {
+    const element = document.getElementById("isbn-status");
+    if (!element) return;
+    element.className = `isbn-status ${type || ""}`.trim();
+    element.textContent = text;
+    if (link) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "link-button icon-edit";
+      button.textContent = link.label;
+      button.addEventListener("click", link.action);
+      element.append(" ", button);
     }
   }
 
@@ -495,18 +783,29 @@
     const form = document.getElementById("book-form");
     if (!book || !form) return;
 
+    resetForm();
     Object.keys(book).forEach((key) => {
-      if (form.elements[key]) {
-        form.elements[key].value = book[key];
+      if (form.elements[key] && typeof form.elements[key].value !== "undefined") {
+        form.elements[key].value = book[key] ?? "";
       }
     });
+    lastLookupIsbn = cleanIsbn(book.isbn);
+    renderChipFields();
     document.getElementById("form-title").textContent = "Editar llibre";
     document.getElementById("form-mode").textContent = "Modificació del registre seleccionat.";
     form.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function archiveBook(id) {
+  async function archiveBook(id) {
     if (!requireManager()) return;
+    if (window.BibliotecaSolSupabase && window.BibliotecaSolSupabase.isConfigured()) {
+      try {
+        await window.BibliotecaSolSupabase.archiveBook(id);
+      } catch (error) {
+        showMessage(error.message || "No s'ha pogut descatalogar el llibre.", "error");
+        return;
+      }
+    }
     const books = window.BibliotecaSol.getBooks().map((book) => {
       if (book.id === id) {
         return { ...book, actiu: false };
@@ -526,6 +825,12 @@
     form.elements.llengua.value = "Català";
     form.elements.exemplars.value = 1;
     form.elements.disponibles.value = 1;
+    CHIP_FIELDS.forEach((field) => {
+      form.elements[field].value = "";
+    });
+    lastLookupIsbn = "";
+    renderChipFields();
+    setIsbnStatus("Amb l'ISBN, l'app intenta omplir la fitxa automàticament.", "");
     document.getElementById("form-title").textContent = "Introduir nous llibres";
     document.getElementById("form-mode").textContent = "Alta de llibres al catàleg.";
   }

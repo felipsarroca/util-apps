@@ -454,7 +454,6 @@ insert into public.book_options (field_name, value) values
   ('recommended_level', '9-11 anys'),
   ('recommended_level', '12-14 anys'),
   ('recommended_level', '14-16 anys'),
-  ('recommended_level', '15-16 anys'),
   ('recommended_level', 'Mestres'),
   ('topic', 'Aventura'),
   ('topic', 'Ciència'),

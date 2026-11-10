@@ -212,7 +212,7 @@
   function valuesFor(field) {
     const fromBooks = window.BibliotecaSol.getBooks().map((book) => book[field]).filter(Boolean);
     const fromOptions = window.BibliotecaSol.getOptions(field);
-    return uniqueSorted([...fromBooks, ...fromOptions]);
+    return window.BibliotecaSol.sortOptions(field, [...fromBooks, ...fromOptions]);
   }
 
   function populateSelect(select, values) {
@@ -232,15 +232,6 @@
     return window.BibliotecaSol.normalize(selected) === window.BibliotecaSol.normalize(value);
   }
 
-  function uniqueSorted(values) {
-    const map = new Map();
-    values
-      .map((value) => String(value || "").trim())
-      .filter(Boolean)
-      .forEach((value) => map.set(window.BibliotecaSol.normalize(value), value));
-    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, "ca"));
-  }
-
   function sortBooks(books, field, direction) {
     const multiplier = direction === "desc" ? -1 : 1;
     books.sort((a, b) => {
@@ -257,6 +248,7 @@
   function sortValue(book, field) {
     if (field === "disponibles") return Number(book.disponibles || 0);
     if (field === "any_publicacio") return Number(book.any_publicacio || 0);
+    if (field === "nivell_recomanat") return window.BibliotecaSol.ageRank(book.nivell_recomanat);
     return book[field] || "";
   }
 
