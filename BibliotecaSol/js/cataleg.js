@@ -23,15 +23,6 @@
     document.getElementById("stat-copies").textContent = stats.copies;
     document.getElementById("stat-available").textContent = stats.available;
 
-    const searchForm = document.getElementById("home-search");
-    if (searchForm) {
-      searchForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const query = searchForm.elements.q.value.trim();
-        window.location.href = `cataleg.html?mode=public${query ? `&q=${encodeURIComponent(query)}` : ""}`;
-      });
-    }
-
     const strip = document.getElementById("home-new");
     if (strip) {
       const latest = [...books]

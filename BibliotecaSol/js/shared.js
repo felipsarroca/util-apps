@@ -525,7 +525,7 @@
     }
     if (!helpScript) {
       helpScript = document.createElement("script");
-      helpScript.src = "js/ajuda.js?v=1.1";
+      helpScript.src = "js/ajuda.js?v=1.2";
       helpScript.addEventListener("load", () => window.BibliotecaSolAjuda && window.BibliotecaSolAjuda.open());
       helpScript.addEventListener("error", () => {
         helpScript.remove();

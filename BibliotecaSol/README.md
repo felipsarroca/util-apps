@@ -6,7 +6,7 @@ Aplicació web per gestionar i consultar el catàleg de la biblioteca escolar de
 
 | Portada | Catàleg |
 |---|---|
-| ![Portada amb cercador, accés amb el correu del centre i darreres incorporacions](captures/portada.png) | ![Catàleg amb portades, filtres amb recompte i ordenació](captures/cataleg.png) |
+| ![Portada amb l'accés amb el correu del centre i darreres incorporacions](captures/portada.png) | ![Catàleg amb portades, filtres amb recompte i ordenació](captures/cataleg.png) |
 
 | Fitxa d'un llibre | Catàleg al mòbil |
 |---|---|
@@ -40,7 +40,7 @@ L'app té tres maneres d'accedir-hi:
 
 | Perfil | Com hi entra | Què pot fer |
 |---|---|---|
-| **Visitant** | Cercador o botó *Veure tot el catàleg* de la portada | Consultar el catàleg, cercar, filtrar, obrir les fitxes i descarregar la llista en PDF. No pot demanar llibres. |
+| **Visitant** | Botó *Veure tot el catàleg* de la portada | Consultar el catàleg, cercar, filtrar, obrir les fitxes i descarregar la llista en PDF. No pot demanar llibres. |
 | **Lector** (alumnat i professorat) | Escriu el seu correu `@ramonpont.cat` a la portada. No cal contrasenya. | Tot el que fa el visitant i, a més, triar llibres i enviar-ne la sol·licitud de préstec. |
 | **Gestor** (biblioteca) | Correu `biblioteca@ramonpont.cat` i contrasenya | Pantalla de **Gestió**: alta, edició i baixa de llibres, sol·licituds, préstecs, retards, historial i ajuda integrada. |
 
@@ -48,7 +48,7 @@ L'app té tres maneres d'accedir-hi:
 
 ### Catàleg (tots els perfils)
 
-- **Portada** amb un cercador, els comptadors de llibres, exemplars i disponibles, i les **darreres incorporacions**.
+- **Portada** amb l'accés amb el correu del centre, els comptadors de llibres, exemplars i disponibles, i les **darreres incorporacions**.
 - **Cerca** simultània en el títol, l'autor, l'editorial, l'ISBN, la col·lecció, l'edat, la temàtica, el gènere, la ubicació i el resum.
 - **Filtres sempre visibles** (en un panell lateral, o en una safata al mòbil) per edat, gènere, llengua i temàtica, amb el nombre de llibres de cada opció, i l'interruptor *Només disponibles*. Els filtres actius es veuen com a etiquetes que es poden treure d'una en una.
 - **Dues vistes:** *Portades* (quadrícula) i *Llista* (taula compacta amb edat, gènere, llengua, estat i ubicació). L'app recorda la darrera triada.
@@ -119,7 +119,7 @@ Tots els correus surten del compte **biblioteca@ramonpont.cat** mitjançant l'Ap
 
 | Fitxer o carpeta | Funció |
 |---|---|
-| `index.html` | Portada: cercador, accés amb el correu del centre, comptadors i darreres incorporacions. |
+| `index.html` | Portada: accés amb el correu del centre, comptadors i darreres incorporacions. |
 | `cataleg.html` | Catàleg amb cerca, filtres, vistes de portades i llista, fitxa, ordenació, PDF i selecció de llibres. |
 | `editor.html` | Gestió: formulari d'alta, llista d'edició, préstec ràpid i pestanyes de circulació. |
 | `login.html` | Pàgina d'accés alternativa (lector i gestor). |
@@ -237,6 +237,7 @@ Per publicar canvis del frontend n'hi ha prou amb fer *commit* i *push* a `main`
 | Data | Canvis |
 |---|---|
 | Maig de 2026 | Primera versió: catàleg, accés per correu, gestió, sol·licituds, préstecs, devolucions i avisos. |
+| 11/11/2026 · v1.2 | Portada més neta: sense el cercador (el catàleg ja en té); l'accés amb el correu i el botó *Veure tot el catàleg* són les dues accions principals. |
 | 10/11/2026 (4) · v1.1 | Nou disseny del catàleg: portades, vista de llista alineada, fitxa del llibre, filtres laterals amb recompte (també per llengua), etiquetes de filtres actius i safata de filtres al mòbil. Portada amb cercador i darreres incorporacions. Gestió: préstec ràpid, botó *Prestar*, llista compacta, disponibles calculats a la base de dades (`cover_url` i disparador a `supabase/2026-11-10_portades_i_disponibles.sql`), confirmacions i avisos breus. Textos amb accents també als missatges de la base de dades. Revisió de les dades del catàleg (faltes, editorials, llengües i portades). Versions als fitxers per evitar memòries cau antigues. |
 | 10/11/2026 (3) | Correus operatius des de biblioteca@ramonpont.cat amb un Apps Script propi. Funcions de correu tornades a publicar. |
 | 10/11/2026 (2) | Seguretat: el gestor entra només amb Supabase Auth, fora la contrasenya i el botó de prova del codi, sessió que es renova sola, i lectura de les dades personals restringida al gestor. |
