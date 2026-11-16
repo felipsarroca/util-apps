@@ -1,0 +1,1722 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Capa de sincronització en temps real (Firebase Firestore + sincronització local entre pestanyes) i simulador de 40 participants */
+
+import { FIREBASE_CONFIG, CORREUS_ORGANITZADORS_INICIALS, LIMITS, STORAGE_KEYS } from './config.js';
+import { EXEMPLE_MERCAT_INDUSTRIAL, TEXTOS } from './textos.js';
+import {
+  netejaText,
+  clauAlies,
+  validaAlies,
+  validaConfiguracio,
+  validaOferta,
+  calculaMinimOferta,
+  determinaSeguentObjecteId
+} from './domini.js';
+
+const FB_VER = '10.14.1';
+const FB_APP_URL = `https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`;
+const FB_FS_URL = `https://www.gstatic.com/firebasejs/${FB_VER}/firebase-firestore.js`;
+const FB_AUTH_URL = `https://www.gstatic.com/firebasejs/${FB_VER}/firebase-auth.js`;
+
+let fbPromise = null;
+const canalLocal = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('subhasta:canal') : null;
+
+function generaHex(bytesLen = 8) {
+  const bytes = new Uint8Array(bytesLen);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export function getUid() {
+  if (typeof sessionStorage !== 'undefined') {
+    let tabUid = sessionStorage.getItem(STORAGE_KEYS.UID);
+    if (tabUid) return tabUid;
+    tabUid = 'u_' + generaHex(8);
+    try {
+      sessionStorage.setItem(STORAGE_KEYS.UID, tabUid);
+      if (!localStorage.getItem(STORAGE_KEYS.UID)) {
+        localStorage.setItem(STORAGE_KEYS.UID, tabUid);
+      }
+    } catch (_) {}
+    return tabUid;
+  }
+  let uid = localStorage.getItem(STORAGE_KEYS.UID);
+  if (!uid) {
+    uid = 'u_' + generaHex(8);
+    try {
+      localStorage.setItem(STORAGE_KEYS.UID, uid);
+    } catch (_) {}
+  }
+  return uid;
+}
+
+export function getClauOrganitzador() {
+  let clau = localStorage.getItem(STORAGE_KEYS.CLAU_ORG);
+  if (!clau || clau.length < 16) {
+    clau = 'org_' + generaHex(12);
+    try {
+      localStorage.setItem(STORAGE_KEYS.CLAU_ORG, clau);
+    } catch (_) {}
+  }
+  return clau;
+}
+
+export function getCorreuOrganitzador() {
+  return localStorage.getItem(STORAGE_KEYS.CORREU_ORG) || '';
+}
+
+export function setCorreuOrganitzador(correu) {
+  try {
+    if (correu) localStorage.setItem(STORAGE_KEYS.CORREU_ORG, correu.trim().toLowerCase());
+    else localStorage.removeItem(STORAGE_KEYS.CORREU_ORG);
+  } catch (_) {}
+}
+
+export function esCorreuAutoritzatLocal(correu) {
+  if (!correu) return false;
+  const net = correu.trim().toLowerCase();
+  return CORREUS_ORGANITZADORS_INICIALS.includes(net) || net.endsWith('@ramonpont.cat');
+}
+
+export function normalitzaCodiSala(raw) {
+  return String(raw || '').replace(/[^0-9]/g, '').slice(0, 6);
+}
+
+export function formatCodiSala(codi) {
+  const net = normalitzaCodiSala(codi);
+  if (net.length <= 3) return net;
+  return `${net.slice(0, 3)} ${net.slice(3)}`;
+}
+
+function generaCodi6() {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  const num = 100000 + (arr[0] % 900000);
+  return String(num);
+}
+
+function generaCodi4() {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  const num = 1000 + (arr[0] % 9000);
+  return String(num);
+}
+
+async function carregaFirebase() {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    throw new Error('SENSE_CONNEXIO');
+  }
+  if (!fbPromise) {
+    fbPromise = (async () => {
+      const [appMod, fsMod, authMod] = await Promise.all([
+        import(FB_APP_URL),
+        import(FB_FS_URL),
+        import(FB_AUTH_URL).catch(() => null)
+      ]);
+      const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
+      const db = fsMod.getFirestore(app);
+      let auth = null;
+      if (authMod) {
+        try {
+          auth = authMod.getAuth(app);
+          if (!auth.currentUser) {
+            authMod.signInAnonymously(auth).catch(() => {});
+          }
+        } catch (_) {}
+      }
+      return { app, db, fs: fsMod, auth, authMod };
+    })().catch((err) => {
+      fbPromise = null;
+      throw err;
+    });
+  }
+  return fbPromise;
+}
+
+/* ============================================================
+   Emmagatzematge local sincronitzat (localStorage + BroadcastChannel)
+   Garanteix funcionament instantani entre pestanyes i mode d'assaig
+   ============================================================ */
+function llegeixMagatzemLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.SESSIONS_LOCALS);
+    return raw ? JSON.parse(raw) : { sessions: {}, codis: {} };
+  } catch (_) {
+    return { sessions: {}, codis: {} };
+  }
+}
+
+function escriuMagatzemLocal(data, sessioIdNotificar = null) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.SESSIONS_LOCALS, JSON.stringify(data));
+  } catch (_) {}
+  if (canalLocal && sessioIdNotificar) {
+    try {
+      canalLocal.postMessage({ tipus: 'canvi_sessio', sessioId: sessioIdNotificar, t: Date.now() });
+    } catch (_) {}
+  }
+}
+
+function inicialitzaCatalegTauler(objectes) {
+  const cataleg = {};
+  for (const obj of objectes) {
+    cataleg[obj.id] = {
+      venudes: 0,
+      darrerPreu: null,
+      preus: []
+    };
+  }
+  return cataleg;
+}
+
+function creaPaquetSessioInicial(configBase = EXEMPLE_MERCAT_INDUSTRIAL, opcions = {}) {
+  const ara = Date.now();
+  const expiraMs = ara + LIMITS.DIES_CADUCITAT * 24 * 3600 * 1000;
+  const sessioId = opcions.sessioId || 'ses_' + generaHex(6);
+  const codi = opcions.codi || generaCodi6();
+  const propietariUid = getUid();
+  const clauOrganitzador = getClauOrganitzador();
+
+  const objectes = (configBase.objectes || EXEMPLE_MERCAT_INDUSTRIAL.objectes).map((o, idx) => ({
+    id: o.id || `obj_${idx + 1}_${generaHex(2)}`,
+    ordre: idx + 1,
+    nom: netejaText(o.nom || `Objecte ${idx + 1}`, LIMITS.MAX_NOM_OBJECTE),
+    descripcio: netejaText(o.descripcio || '', LIMITS.MAX_DESCRIPCIO),
+    icona: o.icona || 'carbo',
+    imatgeDataUrl: o.imatgeDataUrl || null,
+    quantitat: Number(o.quantitat) || 3,
+    preuSortida: Number(o.preuSortida) || 10,
+    valor: o.valor !== '' && o.valor !== null && o.valor !== undefined ? Number(o.valor) : 0
+  }));
+
+  const sessio = {
+    id: sessioId,
+    codi,
+    propietariUid,
+    propietariCorreu: getCorreuOrganitzador() || 'felip.sarroca@ramonpont.cat',
+    clauOrganitzador,
+    titol: netejaText(configBase.titol || EXEMPLE_MERCAT_INDUSTRIAL.titol, LIMITS.MAX_TITOL),
+    repte: netejaText(configBase.repte ?? EXEMPLE_MERCAT_INDUSTRIAL.repte, LIMITS.MAX_REPTE),
+    pressupost: Number(configBase.pressupost) || 1000,
+    moneda: netejaText(configBase.moneda || 'monedes', LIMITS.MAX_MONEDA),
+    increment: Number(configBase.increment) || 10,
+    puntuacioActiva: Boolean(configBase.puntuacioActiva ?? true),
+    bonificacioConjunt: Number(configBase.bonificacioConjunt ?? 0),
+    estat: opcions.estatInicial || 'preparacio',
+    inscripcionsObertes: true,
+    ronda: 1,
+    mostrarClassificacio: false,
+    creatMs: ara,
+    actualitzatMs: ara,
+    expiraMs
+  };
+
+  const cataleg = inicialitzaCatalegTauler(objectes);
+  const tauler = {
+    estatSessio: sessio.estat,
+    ronda: 1,
+    licitacio: null,
+    cataleg,
+    seguentObjecteId: objectes[0]?.id || null,
+    ultimaAdjudicacio: null,
+    ultimEsdeveniment: null,
+    actualitzatMs: ara,
+    orgSig: clauOrganitzador
+  };
+
+  return {
+    sessio,
+    objectes,
+    tauler,
+    participants: {},
+    carteres: {},
+    alies: {},
+    canvis: {},
+    adjudicacions: []
+  };
+}
+
+/* ============================================================
+   Sincronització amb Cloud Firestore
+   ============================================================ */
+async function desarPaquetAFirestore(paquet) {
+  try {
+    const { db, fs } = await carregaFirebase();
+    const { sessio, objectes, tauler } = paquet;
+    const batch = fs.writeBatch(db);
+
+    const refSessio = fs.doc(db, 'sessions', sessio.id);
+    const refCodi = fs.doc(db, 'codis', sessio.codi);
+    const refTauler = fs.doc(db, 'sessions', sessio.id, 'estat', 'tauler');
+
+    batch.set(refSessio, sessio, { merge: true });
+    batch.set(refCodi, {
+      sessioId: sessio.id,
+      actualitzatMs: sessio.actualitzatMs,
+      expiraMs: sessio.expiraMs
+    });
+    batch.set(refTauler, { ...tauler, orgSig: sessio.clauOrganitzador }, { merge: true });
+
+    for (const obj of objectes) {
+      const refObj = fs.doc(db, 'sessions', sessio.id, 'objectes', obj.id);
+      batch.set(refObj, obj);
+    }
+
+    await batch.commit();
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function carregaPaquetDeFirestore(sessioId) {
+  const { db, fs } = await carregaFirebase();
+  const refSessio = fs.doc(db, 'sessions', sessioId);
+  const snapSessio = await fs.getDoc(refSessio);
+  if (!snapSessio.exists()) return null;
+
+  const sessio = snapSessio.data();
+  if (sessio.expiraMs && sessio.expiraMs <= Date.now()) {
+    return null;
+  }
+
+  const [snapTauler, snapObjectes, snapParticipants, snapAdjudicacions] = await Promise.all([
+    fs.getDoc(fs.doc(db, 'sessions', sessioId, 'estat', 'tauler')),
+    fs.getDocs(fs.collection(db, 'sessions', sessioId, 'objectes')),
+    fs.getDocs(fs.collection(db, 'sessions', sessioId, 'participants')),
+    fs.getDocs(fs.collection(db, 'sessions', sessioId, 'adjudicacions'))
+  ]);
+
+  const objectes = [];
+  snapObjectes.forEach((d) => objectes.push(d.data()));
+  objectes.sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+
+  const participants = {};
+  snapParticipants.forEach((d) => {
+    participants[d.id] = d.data();
+  });
+
+  const adjudicacions = [];
+  snapAdjudicacions.forEach((d) => adjudicacions.push(d.data()));
+  adjudicacions.sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+
+  const carteres = {};
+  const esOrg = sessio.clauOrganitzador === getClauOrganitzador() || sessio.propietariUid === getUid();
+  if (esOrg) {
+    try {
+      const snapCarteres = await fs.getDocs(fs.collection(db, 'sessions', sessioId, 'carteres'));
+      snapCarteres.forEach((d) => {
+        carteres[d.id] = d.data();
+      });
+    } catch (_) {}
+  } else {
+    const uid = getUid();
+    try {
+      const snapCarteraPropia = await fs.getDoc(fs.doc(db, 'sessions', sessioId, 'carteres', uid));
+      if (snapCarteraPropia.exists()) {
+        carteres[uid] = snapCarteraPropia.data();
+      }
+    } catch (_) {}
+  }
+
+  const tauler = snapTauler.exists()
+    ? snapTauler.data()
+    : {
+        estatSessio: sessio.estat,
+        ronda: sessio.ronda || 1,
+        licitacio: null,
+        cataleg: inicialitzaCatalegTauler(objectes),
+        seguentObjecteId: objectes[0]?.id || null,
+        ultimaAdjudicacio: null,
+        ultimEsdeveniment: null,
+        actualitzatMs: Date.now()
+      };
+
+  return {
+    sessio,
+    objectes,
+    tauler,
+    participants,
+    carteres,
+    alies: {},
+    canvis: {},
+    adjudicacions
+  };
+}
+
+/* ============================================================
+   Gestor principal de la sessió (Organitzador, Projecció i Terminal)
+   ============================================================ */
+export class GestorSubhasta {
+  constructor() {
+    this.sessioId = null;
+    this.rol = null; // 'organitzador' | 'projeccio' | 'terminal'
+    this.onChange = null;
+    this.unsubs = [];
+    this.simuladorTimer = null;
+    this.comptadorLectures = 0;
+    this.latenciesMs = [];
+
+    if (canalLocal) {
+      canalLocal.addEventListener('message', (ev) => {
+        if (ev.data?.tipus === 'canvi_sessio' && ev.data?.sessioId === this.sessioId) {
+          this._emetEstatLocal();
+        }
+      });
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (ev) => {
+        if (ev.key === STORAGE_KEYS.SESSIONS_LOCALS && this.sessioId) {
+          this._emetEstatLocal();
+        }
+      });
+    }
+  }
+
+  desconnecta() {
+    this.aturaSimulador();
+    for (const u of this.unsubs) {
+      try {
+        u();
+      } catch (_) {}
+    }
+    this.unsubs = [];
+    this.sessioId = null;
+    this.onChange = null;
+  }
+
+  _emetEstatLocal() {
+    if (!this.sessioId || !this.onChange) return;
+    const mag = llegeixMagatzemLocal();
+    const paquet = mag.sessions[this.sessioId];
+    if (paquet) {
+      this.comptadorLectures += 1;
+      this.onChange(this._formataVista(paquet));
+    }
+  }
+
+  _formataVista(paquet) {
+    const uid = getUid();
+    const objectes = [...(paquet.objectes || [])].sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+    const participantsList = Object.values(paquet.participants || {}).filter((p) => p.actiu !== false);
+    const carteresList = Object.values(paquet.carteres || {}).filter((c) => !c.substituitPer);
+    const carteraPropia = paquet.carteres?.[uid] || null;
+    const adjudicacions = [...(paquet.adjudicacions || [])].sort((a, b) => {
+      if ((a.ronda || 1) !== (b.ronda || 1)) return (a.ronda || 1) - (b.ronda || 1);
+      return (a.ordre || 0) - (b.ordre || 0);
+    });
+
+    return {
+      sessio: paquet.sessio,
+      objectes,
+      tauler: paquet.tauler,
+      participants: participantsList,
+      carteres: carteresList,
+      carteraPropia,
+      adjudicacions,
+      canvis: paquet.canvis || {},
+      uid,
+      esOrganitzador:
+        paquet.sessio.propietariUid === uid || paquet.sessio.clauOrganitzador === getClauOrganitzador(),
+      lecturesConsumides: this.comptadorLectures,
+      latenciaMitjanaMs: this.latenciesMs.length
+        ? Math.round(this.latenciesMs.reduce((a, b) => a + b, 0) / this.latenciesMs.length)
+        : 0
+    };
+  }
+
+  /**
+   * Inicia sessió amb Google per a l'organitzador (§10 Autenticació).
+   */
+  async iniciaSessioGoogle() {
+    const { auth, authMod } = await carregaFirebase();
+    if (!auth || !authMod) {
+      throw new Error('El proveïdor d’autenticació no està disponible en aquest navegador.');
+    }
+    const provider = new authMod.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const cred = await authMod.signInWithPopup(auth, provider);
+    const email = cred?.user?.email || '';
+    if (!esCorreuAutoritzatLocal(email)) {
+      await authMod.signOut(auth).catch(() => {});
+      throw new Error(`El compte ${email} no figura a la llista d’organitzadors autoritzats.`);
+    }
+    setCorreuOrganitzador(email);
+    return email;
+  }
+
+  /**
+   * Llista «Les meves subhastes» i elimina automàticament les sessions caducades (§7 i §10).
+   */
+  async llistaLesMevesSubhastes() {
+    const ara = Date.now();
+    const mag = llegeixMagatzemLocal();
+    let haCanviat = false;
+
+    for (const [id, paq] of Object.entries(mag.sessions)) {
+      if (paq?.sessio?.expiraMs && paq.sessio.expiraMs <= ara) {
+        if (paq.sessio.codi) delete mag.codis[paq.sessio.codi];
+        delete mag.sessions[id];
+        haCanviat = true;
+      }
+    }
+    if (haCanviat) escriuMagatzemLocal(mag);
+
+    // Intenta recuperar també de Firestore
+    try {
+      const { db, fs } = await carregaFirebase();
+      const snap = await fs.getDocs(fs.collection(db, 'sessions'));
+      const clauOrg = getClauOrganitzador();
+      const uid = getUid();
+      const caducadesIds = [];
+
+      snap.forEach((docSnap) => {
+        const s = docSnap.data();
+        if (s.clauOrganitzador === clauOrg || s.propietariUid === uid) {
+          if (s.expiraMs && s.expiraMs <= ara) {
+            caducadesIds.push(s.id);
+          } else if (!mag.sessions[s.id]) {
+            mag.sessions[s.id] = {
+              sessio: s,
+              objectes: [],
+              tauler: { estatSessio: s.estat, ronda: s.ronda || 1, licitacio: null, cataleg: {} },
+              participants: {},
+              carteres: {},
+              adjudicacions: []
+            };
+          }
+        }
+      });
+
+      for (const cadId of caducadesIds) {
+        await this.eliminaSessio(cadId).catch(() => {});
+      }
+    } catch (_) {}
+
+    return Object.values(mag.sessions)
+      .map((p) => ({
+        ...p.sessio,
+        numObjectes: (p.objectes || []).length,
+        numParticipants: Object.values(p.participants || {}).filter((x) => x.actiu !== false).length,
+        numAdjudicacions: (p.adjudicacions || []).filter((a) => a.estat === 'vigent').length
+      }))
+      .sort((a, b) => (b.actualitzatMs || 0) - (a.actualitzatMs || 0));
+  }
+
+  /**
+   * Crea una subhasta nova amb l'exemple «Mercat industrial» o una configuració donada.
+   */
+  async creaSubhasta(configBase = EXEMPLE_MERCAT_INDUSTRIAL, estatInicial = 'preparacio') {
+    const mag = llegeixMagatzemLocal();
+    let codi = generaCodi6();
+    while (mag.codis[codi]) {
+      codi = generaCodi6();
+    }
+    const paquet = creaPaquetSessioInicial(configBase, { codi, estatInicial });
+    mag.sessions[paquet.sessio.id] = paquet;
+    mag.codis[codi] = paquet.sessio.id;
+    escriuMagatzemLocal(mag, paquet.sessio.id);
+
+    desarPaquetAFirestore(paquet);
+    return paquet.sessio;
+  }
+
+  /**
+   * Duplica una sessió existent amb un codi nou i estat 'preparacio' (§7 Les meves subhastes).
+   */
+  async duplicaSessio(sessioIdOrigen) {
+    const mag = llegeixMagatzemLocal();
+    let origen = mag.sessions[sessioIdOrigen];
+    if (!origen || !origen.objectes?.length) {
+      origen = await carregaPaquetDeFirestore(sessioIdOrigen);
+    }
+    if (!origen) throw new Error('No s’ha trobat la sessió a duplicar.');
+
+    const cfg = {
+      titol: `${origen.sessio.titol} (còpia)`.slice(0, LIMITS.MAX_TITOL),
+      repte: origen.sessio.repte,
+      pressupost: origen.sessio.pressupost,
+      moneda: origen.sessio.moneda,
+      increment: origen.sessio.increment,
+      puntuacioActiva: origen.sessio.puntuacioActiva,
+      bonificacioConjunt: origen.sessio.bonificacioConjunt,
+      objectes: origen.objectes.map((o) => ({ ...o, id: `obj_${generaHex(3)}` }))
+    };
+    return this.creaSubhasta(cfg, 'preparacio');
+  }
+
+  /**
+   * Elimina completament una sessió (§7 i §10).
+   */
+  async eliminaSessio(sessioId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    const codi = paq?.sessio?.codi;
+    if (codi) delete mag.codis[codi];
+    delete mag.sessions[sessioId];
+    escriuMagatzemLocal(mag, sessioId);
+
+    try {
+      const { db, fs } = await carregaFirebase();
+      if (codi) await fs.deleteDoc(fs.doc(db, 'codis', codi)).catch(() => {});
+      await fs.deleteDoc(fs.doc(db, 'sessions', sessioId)).catch(() => {});
+    } catch (_) {}
+  }
+
+  /**
+   * Subscriu la pantalla als canvis en temps real d'una sessió.
+   */
+  async subscriuSessio(sessioId, rol, onChange) {
+    this.desconnecta();
+    this.sessioId = sessioId;
+    this.rol = rol;
+    this.onChange = onChange;
+
+    const mag = llegeixMagatzemLocal();
+    if (mag.sessions[sessioId]) {
+      this._emetEstatLocal();
+    } else {
+      try {
+        const remot = await carregaPaquetDeFirestore(sessioId);
+        if (remot) {
+          mag.sessions[sessioId] = remot;
+          mag.codis[remot.sessio.codi] = sessioId;
+          escriuMagatzemLocal(mag);
+          this._emetEstatLocal();
+        }
+      } catch (_) {}
+    }
+
+    // Subscripció en temps real a Firestore
+    try {
+      const { db, fs } = await carregaFirebase();
+      const refTauler = fs.doc(db, 'sessions', sessioId, 'estat', 'tauler');
+      const refSessio = fs.doc(db, 'sessions', sessioId);
+
+      const unsubTauler = fs.onSnapshot(
+        refTauler,
+        (snap) => {
+          if (!snap.exists()) return;
+          this.comptadorLectures += 1;
+          const m = llegeixMagatzemLocal();
+          if (!m.sessions[sessioId]) return;
+          const remot = snap.data();
+          const localMs = m.sessions[sessioId].tauler?.actualitzatMs || 0;
+          if ((remot.actualitzatMs || 0) >= localMs) {
+            m.sessions[sessioId].tauler = remot;
+            escriuMagatzemLocal(m);
+            if (this.onChange) this.onChange(this._formataVista(m.sessions[sessioId]));
+          }
+        },
+        () => {}
+      );
+
+      const unsubSessio = fs.onSnapshot(
+        refSessio,
+        (snap) => {
+          if (!snap.exists()) return;
+          this.comptadorLectures += 1;
+          const m = llegeixMagatzemLocal();
+          if (!m.sessions[sessioId]) return;
+          const remot = snap.data();
+          const localMs = m.sessions[sessioId].sessio?.actualitzatMs || 0;
+          if ((remot.actualitzatMs || 0) >= localMs) {
+            m.sessions[sessioId].sessio = remot;
+            escriuMagatzemLocal(m);
+            if (this.onChange) this.onChange(this._formataVista(m.sessions[sessioId]));
+          }
+        },
+        () => {}
+      );
+
+      const unsubParticipants = fs.onSnapshot(
+        fs.collection(db, 'sessions', sessioId, 'participants'),
+        (snap) => {
+          this.comptadorLectures += Math.max(1, snap.docChanges().length);
+          const m = llegeixMagatzemLocal();
+          if (!m.sessions[sessioId]) return;
+          const mapP = { ...(m.sessions[sessioId].participants || {}) };
+          snap.forEach((d) => {
+            mapP[d.id] = d.data();
+          });
+          m.sessions[sessioId].participants = mapP;
+          escriuMagatzemLocal(m);
+          if (this.onChange) this.onChange(this._formataVista(m.sessions[sessioId]));
+        },
+        () => {}
+      );
+
+      this.unsubs.push(unsubTauler, unsubSessio, unsubParticipants);
+
+      if (rol === 'terminal') {
+        const uid = getUid();
+        const unsubCartera = fs.onSnapshot(
+          fs.doc(db, 'sessions', sessioId, 'carteres', uid),
+          (snap) => {
+            if (!snap.exists()) return;
+            this.comptadorLectures += 1;
+            const m = llegeixMagatzemLocal();
+            if (!m.sessions[sessioId]) return;
+            m.sessions[sessioId].carteres[uid] = snap.data();
+            escriuMagatzemLocal(m);
+            if (this.onChange) this.onChange(this._formataVista(m.sessions[sessioId]));
+          },
+          () => {}
+        );
+        this.unsubs.push(unsubCartera);
+      } else if (rol === 'organitzador') {
+        const unsubCarteres = fs.onSnapshot(
+          fs.collection(db, 'sessions', sessioId, 'carteres'),
+          (snap) => {
+            this.comptadorLectures += Math.max(1, snap.docChanges().length);
+            const m = llegeixMagatzemLocal();
+            if (!m.sessions[sessioId]) return;
+            const mapC = { ...(m.sessions[sessioId].carteres || {}) };
+            snap.forEach((d) => {
+              const dData = d.data();
+              const prevMs = mapC[d.id]?.actualitzatMs || 0;
+              if ((dData.actualitzatMs || 0) >= prevMs) {
+                mapC[d.id] = dData;
+              }
+            });
+            m.sessions[sessioId].carteres = mapC;
+            escriuMagatzemLocal(m);
+            if (this.onChange) this.onChange(this._formataVista(m.sessions[sessioId]));
+          },
+          () => {}
+        );
+        this.unsubs.push(unsubCarteres);
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * Resol un codi de 6 xifres a un sessioId.
+   */
+  async resolCodiSala(rawCodi) {
+    const codi = normalitzaCodiSala(rawCodi);
+    if (codi.length !== 6) {
+      throw new Error('El codi de la sala ha de tenir 6 xifres.');
+    }
+    const mag = llegeixMagatzemLocal();
+    if (mag.codis[codi] && mag.sessions[mag.codis[codi]]) {
+      const paq = mag.sessions[mag.codis[codi]];
+      if (paq.sessio.expiraMs > Date.now()) {
+        return paq.sessio.id;
+      }
+    }
+
+    try {
+      const { db, fs } = await carregaFirebase();
+      const snapCodi = await fs.getDoc(fs.doc(db, 'codis', codi));
+      if (snapCodi.exists()) {
+        const d = snapCodi.data();
+        if (d.expiraMs > Date.now() && d.sessioId) {
+          const remot = await carregaPaquetDeFirestore(d.sessioId);
+          if (remot) {
+            mag.sessions[d.sessioId] = remot;
+            mag.codis[codi] = d.sessioId;
+            escriuMagatzemLocal(mag);
+            return d.sessioId;
+          }
+        }
+      }
+    } catch (_) {}
+
+    throw new Error('No s’ha trobat cap subhasta activa amb aquest codi.');
+  }
+
+  /**
+   * Desa canvis de preparació (editable a preparació i a la sala d'espera fins a «Començar»).
+   */
+  async desaPreparacio(sessioId, cfg) {
+    const val = validaConfiguracio(cfg);
+    if (!val.valid) {
+      return { ok: false, validacio: val };
+    }
+
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+    if (paq.sessio.estat !== 'preparacio' && paq.sessio.estat !== 'espera') {
+      throw new Error('La configuració només es pot editar abans de començar les licitacions.');
+    }
+
+    const ara = Date.now();
+    paq.sessio.titol = netejaText(cfg.titol, LIMITS.MAX_TITOL);
+    paq.sessio.repte = netejaText(cfg.repte ?? '', LIMITS.MAX_REPTE);
+    paq.sessio.pressupost = Number(cfg.pressupost);
+    paq.sessio.moneda = netejaText(cfg.moneda || 'monedes', LIMITS.MAX_MONEDA);
+    paq.sessio.increment = Number(cfg.increment);
+    paq.sessio.puntuacioActiva = Boolean(cfg.puntuacioActiva);
+    paq.sessio.bonificacioConjunt = Number(cfg.bonificacioConjunt ?? 0);
+    paq.sessio.actualitzatMs = ara;
+    paq.sessio.expiraMs = ara + LIMITS.DIES_CADUCITAT * 24 * 3600 * 1000;
+
+    paq.objectes = cfg.objectes.map((o, idx) => ({
+      id: o.id || `obj_${idx + 1}_${generaHex(2)}`,
+      ordre: idx + 1,
+      nom: netejaText(o.nom, LIMITS.MAX_NOM_OBJECTE),
+      descripcio: netejaText(o.descripcio ?? '', LIMITS.MAX_DESCRIPCIO),
+      icona: o.icona || 'carbo',
+      imatgeDataUrl: o.imatgeDataUrl || null,
+      quantitat: Number(o.quantitat),
+      preuSortida: Number(o.preuSortida),
+      valor: o.valor !== '' && o.valor !== null && o.valor !== undefined ? Number(o.valor) : 0
+    }));
+
+    paq.tauler.cataleg = inicialitzaCatalegTauler(paq.objectes);
+    paq.tauler.seguentObjecteId = paq.objectes[0]?.id || null;
+    paq.tauler.actualitzatMs = ara;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+    return { ok: true, validacio: val };
+  }
+
+  /**
+   * Passa de Preparació a Sala d'espera.
+   */
+  async obreSalaEspera(sessioId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+
+    const ara = Date.now();
+    paq.sessio.estat = 'espera';
+    paq.sessio.inscripcionsObertes = true;
+    paq.sessio.actualitzatMs = ara;
+    paq.tauler.estatSessio = 'espera';
+    paq.tauler.actualitzatMs = ara;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Commuta l'interruptor «Inscripcions obertes/tancades» (§2 i §7).
+   */
+  async commutaInscripcions(sessioId, obertes) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) return;
+    paq.sessio.inscripcionsObertes = Boolean(obertes);
+    paq.sessio.actualitzatMs = Date.now();
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Comença la subhasta des de la sala d'espera: tanca les inscripcions automàticament (§2).
+   */
+  async comencaSubhasta(sessioId, obrirPrimerObjecte = false) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+
+    const ara = Date.now();
+    paq.sessio.estat = 'en_curs';
+    paq.sessio.inscripcionsObertes = false;
+    paq.sessio.actualitzatMs = ara;
+    paq.tauler.estatSessio = 'en_curs';
+    paq.tauler.actualitzatMs = ara;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+
+    if (obrirPrimerObjecte && paq.objectes[0]) {
+      await this.obreUnitat(sessioId, paq.objectes[0].id);
+    }
+  }
+
+  /**
+   * Entrada d'un participant a la sala amb àlies (§5 i §10).
+   */
+  async entraParticipant(rawCodi, rawAlies, uidForcat = null) {
+    const sessioId = await this.resolCodiSala(rawCodi);
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('No s’ha trobat la sessió.');
+
+    const uid = uidForcat || getUid();
+
+    // Si ja té cartera activa a la sala, el reconnecta directament
+    if (paq.carteres[uid] && paq.carteres[uid].habilitada !== false) {
+      return { sessioId, uid, alies: paq.carteres[uid].alies, reconnectat: true };
+    }
+
+    if (!paq.sessio.inscripcionsObertes) {
+      throw new Error('Les inscripcions estan tancades en aquest moment.');
+    }
+
+    const participantsActius = Object.values(paq.participants || {}).filter((p) => p.actiu !== false);
+    if (participantsActius.length >= LIMITS.MAX_PARTICIPANTS) {
+      throw new Error(`La sala és plena (màxim ${LIMITS.MAX_PARTICIPANTS} participants).`);
+    }
+
+    const val = validaAlies(rawAlies, participantsActius, uid);
+    if (!val.valid) {
+      throw new Error(val.error);
+    }
+
+    const ara = Date.now();
+    const pDoc = { uid, alies: val.alies, creatMs: ara, actiu: true };
+    const cDoc = {
+      uid,
+      alies: val.alies,
+      habilitada: true,
+      gastat: 0,
+      compres: [],
+      actualitzatMs: ara
+    };
+
+    paq.participants[uid] = pDoc;
+    paq.carteres[uid] = cDoc;
+    paq.alies[val.clau] = { uid, alies: val.alies, creatMs: ara };
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+
+    (async () => {
+      try {
+        const { db, fs } = await carregaFirebase();
+        await fs.runTransaction(db, async (tx) => {
+          const refAlies = fs.doc(db, 'sessions', sessioId, 'alies', val.clau);
+          const snapAlies = await tx.get(refAlies);
+          if (snapAlies.exists() && snapAlies.data().uid !== uid) {
+            return;
+          }
+          tx.set(fs.doc(db, 'sessions', sessioId, 'participants', uid), pDoc);
+          tx.set(fs.doc(db, 'sessions', sessioId, 'carteres', uid), cDoc);
+          tx.set(refAlies, { uid, alies: val.alies, creatMs: ara });
+        });
+      } catch (_) {}
+    })();
+
+    return { sessioId, uid, alies: val.alies, reconnectat: false };
+  }
+
+  /**
+   * Canvia l'àlies d'un participant des del comandament de l'organitzador (§7).
+   */
+  async canviaAliesParticipant(sessioId, uidParticipant, nouAliesRaw) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq || !paq.participants[uidParticipant]) return;
+
+    const participantsActius = Object.values(paq.participants).filter((p) => p.actiu !== false);
+    const val = validaAlies(nouAliesRaw, participantsActius, uidParticipant);
+    if (!val.valid) throw new Error(val.error);
+
+    const anticAlies = paq.participants[uidParticipant].alies;
+    delete paq.alies[clauAlies(anticAlies)];
+
+    paq.participants[uidParticipant].alies = val.alies;
+    if (paq.carteres[uidParticipant]) {
+      paq.carteres[uidParticipant].alies = val.alies;
+    }
+    paq.alies[val.clau] = { uid: uidParticipant, alies: val.alies, creatMs: Date.now() };
+
+    if (paq.tauler.licitacio?.liderUid === uidParticipant) {
+      paq.tauler.licitacio.liderAlies = val.alies;
+    }
+    if (Array.isArray(paq.tauler.licitacio?.ultimesOfertes)) {
+      paq.tauler.licitacio.ultimesOfertes.forEach((o) => {
+        if (o.uid === uidParticipant) o.alies = val.alies;
+      });
+    }
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Treu / desactiva un participant des del comandament (§7).
+   */
+  async treuParticipant(sessioId, uidParticipant) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) return;
+    if (paq.tauler.licitacio && paq.tauler.licitacio.liderUid === uidParticipant) {
+      throw new Error('No es pot treure el participant que lidera la licitació en curs. Retira o adjudica abans.');
+    }
+    const anticAlies = paq.participants[uidParticipant]?.alies;
+    if (anticAlies) delete paq.alies[clauAlies(anticAlies)];
+    if (paq.participants[uidParticipant]) paq.participants[uidParticipant].actiu = false;
+    if (paq.carteres[uidParticipant]) paq.carteres[uidParticipant].habilitada = false;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+  }
+
+  /**
+   * Genera un codi de 4 xifres vàlid 5 minuts per a canvi d'aparell (§10).
+   */
+  async generaCodiCanviAparell(sessioId, uidParticipant) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq || !paq.carteres[uidParticipant]) {
+      throw new Error('Participant no trobat.');
+    }
+    const codi4 = generaCodi4();
+    const expiraMs = Date.now() + LIMITS.MINUTS_CODI_CANVI * 60 * 1000;
+    const c = paq.carteres[uidParticipant];
+
+    paq.canvis = paq.canvis || {};
+    paq.canvis[codi4] = {
+      codi: codi4,
+      targetUid: uidParticipant,
+      alies: c.alies,
+      gastat: c.gastat,
+      compres: c.compres,
+      expiraMs,
+      usat: false
+    };
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+
+    try {
+      const { db, fs } = await carregaFirebase();
+      await fs.setDoc(fs.doc(db, 'sessions', sessioId, 'canvis', codi4), paq.canvis[codi4]);
+    } catch (_) {}
+
+    return { codi: codi4, expiraMs, alies: c.alies };
+  }
+
+  /**
+   * Recupera la cartera en un aparell nou amb el codi de 4 xifres (§10).
+   */
+  async recuperaAmbCodiCanvi(rawCodiSala, rawCodi4) {
+    const sessioId = await this.resolCodiSala(rawCodiSala);
+    const codi4 = String(rawCodi4 || '').replace(/[^0-9]/g, '').slice(0, 4);
+    if (codi4.length !== 4) {
+      throw new Error('El codi de canvi d’aparell ha de tenir 4 xifres.');
+    }
+
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+
+    let infoCanvi = paq.canvis?.[codi4];
+    if (!infoCanvi) {
+      try {
+        const { db, fs } = await carregaFirebase();
+        const snap = await fs.getDoc(fs.doc(db, 'sessions', sessioId, 'canvis', codi4));
+        if (snap.exists()) infoCanvi = snap.data();
+      } catch (_) {}
+    }
+
+    if (!infoCanvi || infoCanvi.usat || infoCanvi.expiraMs <= Date.now()) {
+      throw new Error('Aquest codi de canvi d’aparell no és vàlid o ha caducat.');
+    }
+
+    const nouUid = getUid();
+    const anticUid = infoCanvi.targetUid;
+    const ara = Date.now();
+
+    const carteraAntiga = paq.carteres[anticUid] || {
+      alies: infoCanvi.alies,
+      gastat: infoCanvi.gastat || 0,
+      compres: infoCanvi.compres || []
+    };
+
+    paq.carteres[nouUid] = {
+      uid: nouUid,
+      alies: carteraAntiga.alies,
+      habilitada: true,
+      gastat: carteraAntiga.gastat,
+      compres: [...(carteraAntiga.compres || [])],
+      transferitDesDe: anticUid,
+      actualitzatMs: ara
+    };
+
+    if (anticUid !== nouUid && paq.carteres[anticUid]) {
+      paq.carteres[anticUid].habilitada = false;
+      paq.carteres[anticUid].substituitPer = nouUid;
+    }
+    if (anticUid !== nouUid && paq.participants[anticUid]) {
+      paq.participants[anticUid].actiu = false;
+    }
+    paq.participants[nouUid] = {
+      uid: nouUid,
+      alies: carteraAntiga.alies,
+      creatMs: ara,
+      actiu: true
+    };
+    paq.alies[clauAlies(carteraAntiga.alies)] = {
+      uid: nouUid,
+      alies: carteraAntiga.alies,
+      creatMs: ara
+    };
+
+    for (const adj of paq.adjudicacions || []) {
+      if (adj.participantUid === anticUid) {
+        adj.participantUid = nouUid;
+      }
+    }
+    if (paq.tauler.licitacio?.liderUid === anticUid) {
+      paq.tauler.licitacio.liderUid = nouUid;
+    }
+    infoCanvi.usat = true;
+    paq.canvis[codi4] = infoCanvi;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    return { sessioId, uid: nouUid, alies: carteraAntiga.alies };
+  }
+
+  /* ============================================================
+     Transicions de la subhasta (§5 Regles de la subhasta)
+     ============================================================ */
+
+  /**
+   * Obre una unitat d'un objecte (§5: Cap licitació en curs -> Licitació oberta, sense ofertes).
+   */
+  async obreUnitat(sessioId, objecteId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+    if (paq.tauler.licitacio !== null) {
+      throw new Error('Ja hi ha una licitació en curs. Atura-la i adjudica-la o retira-la abans d’obrir-ne una altra.');
+    }
+
+    const obj = paq.objectes.find((o) => o.id === objecteId);
+    if (!obj) throw new Error('Objecte no trobat.');
+
+    const estatObj = paq.tauler.cataleg[obj.id] || { venudes: 0, darrerPreu: null, preus: [] };
+    if (estatObj.venudes >= obj.quantitat) {
+      throw new Error(`No queden unitats disponibles de ${obj.nom}.`);
+    }
+
+    const ara = Date.now();
+    const unitatNum = estatObj.venudes + 1;
+
+    paq.sessio.estat = 'en_curs';
+    paq.sessio.inscripcionsObertes = false;
+    paq.sessio.actualitzatMs = ara;
+    paq.tauler.estatSessio = 'en_curs';
+
+    // En obrir la unitat següent ja no es pot desfer l'adjudicació anterior (§5)
+    if (paq.tauler.ultimaAdjudicacio) {
+      paq.tauler.ultimaAdjudicacio.potDesfer = false;
+    }
+
+    paq.tauler.licitacio = {
+      objecteId: obj.id,
+      objecteNom: obj.nom,
+      objecteIcona: obj.icona,
+      unitat: unitatNum,
+      quantitatTotal: obj.quantitat,
+      preuSortida: Number(obj.preuSortida),
+      increment: Number(paq.sessio.increment),
+      estat: 'oberta',
+      importActual: 0,
+      liderUid: null,
+      liderAlies: null,
+      numOfertes: 0,
+      ultimesOfertes: []
+    };
+
+    paq.tauler.seguentObjecteId = determinaSeguentObjecteId(
+      paq.objectes,
+      paq.tauler.cataleg,
+      obj.id,
+      true
+    );
+    paq.tauler.ultimEsdeveniment = {
+      tipus: 'oberta',
+      text: `${obj.nom} · unitat ${unitatNum} de ${obj.quantitat}`,
+      ms: ara
+    };
+    paq.tauler.actualitzatMs = ara;
+    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Atura les ofertes (§5: Oberta -> Aturada: import i líder congelats).
+   */
+  async aturaOfertes(sessioId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq || !paq.tauler.licitacio) return;
+    if (paq.tauler.licitacio.estat !== 'oberta') return;
+
+    const ara = Date.now();
+    paq.tauler.licitacio.estat = 'aturada';
+    paq.tauler.ultimEsdeveniment = {
+      tipus: 'aturada',
+      text: TEXTOS.projeccio.aturada,
+      ms: ara
+    };
+    paq.tauler.actualitzatMs = ara;
+    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Reprèn les ofertes (§5: Aturada -> Oberta; es conserva la millor oferta).
+   */
+  async reprenOfertes(sessioId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq || !paq.tauler.licitacio) return;
+    if (paq.tauler.licitacio.estat !== 'aturada') return;
+
+    const ara = Date.now();
+    paq.tauler.licitacio.estat = 'oberta';
+    paq.tauler.ultimEsdeveniment = {
+      tipus: 'represa',
+      text: 'Ofertes obertes de nou',
+      ms: ara
+    };
+    paq.tauler.actualitzatMs = ara;
+    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Adjudica la unitat (§5: Aturada amb líder -> Venuda).
+   * Comprova que el líder i l'import coincideixen amb els revisats per l'organitzador,
+   * i impedeix que un doble clic faci dos càrrecs (Regla 6).
+   */
+  async adjudicaUnitat(sessioId, esperatLiderUid, esperatImport) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+
+    const lic = paq.tauler.licitacio;
+    if (!lic) {
+      // Idempotència: si ja s'ha adjudicat per un primer clic, no fa res
+      return { ok: false, motiu: 'JA_PROCESSADA' };
+    }
+    if (lic.estat !== 'aturada') {
+      throw new Error('Cal aturar les ofertes abans d’adjudicar la unitat.');
+    }
+    if (!lic.liderUid || lic.numOfertes < 1) {
+      throw new Error('No hi ha cap oferta vàlida per adjudicar. Pots retirar la unitat.');
+    }
+    if (lic.liderUid !== esperatLiderUid || lic.importActual !== Number(esperatImport)) {
+      throw new Error('L’oferta o qui lidera ha canviat just abans d’aturar. Revisa les dades congelades i confirma de nou.');
+    }
+
+    const cartera = paq.carteres[lic.liderUid];
+    if (!cartera) {
+      throw new Error('No s’ha trobat la cartera de qui lidera.');
+    }
+    const saldoActual = Number(paq.sessio.pressupost) - Number(cartera.gastat);
+    if (lic.importActual > saldoActual) {
+      throw new Error('Saldo insuficient a la cartera de qui lidera.');
+    }
+
+    const ara = Date.now();
+    const adjId = `adj_${paq.sessio.ronda || 1}_${(paq.adjudicacions?.length || 0) + 1}_${generaHex(2)}`;
+    const ordre = (paq.adjudicacions?.length || 0) + 1;
+    const ronda = paq.sessio.ronda || 1;
+
+    // 1. Actualitza cartera
+    cartera.gastat = Number(cartera.gastat) + lic.importActual;
+    cartera.compres = Array.isArray(cartera.compres) ? cartera.compres : [];
+    cartera.compres.push({
+      adjId,
+      objecteId: lic.objecteId,
+      objecteNom: lic.objecteNom,
+      unitat: lic.unitat,
+      preu: lic.importActual,
+      ronda,
+      horaMs: ara
+    });
+    cartera.actualitzatMs = ara;
+
+    // 2. Actualitza catàleg del tauler
+    const catObj = paq.tauler.cataleg[lic.objecteId] || { venudes: 0, darrerPreu: null, preus: [] };
+    catObj.venudes = Number(catObj.venudes) + 1;
+    catObj.darrerPreu = lic.importActual;
+    catObj.preus = Array.isArray(catObj.preus) ? [...catObj.preus, lic.importActual] : [lic.importActual];
+    paq.tauler.cataleg[lic.objecteId] = catObj;
+
+    // 3. Registra l'adjudicació
+    const adjDoc = {
+      id: adjId,
+      ronda,
+      ordre,
+      objecteId: lic.objecteId,
+      objecteNom: lic.objecteNom,
+      unitat: lic.unitat,
+      participantUid: lic.liderUid,
+      alies: lic.liderAlies,
+      import: lic.importActual,
+      ofertesRebudes: lic.numOfertes,
+      horaMs: ara,
+      estat: 'vigent',
+      orgSig: paq.sessio.clauOrganitzador
+    };
+    paq.adjudicacions = paq.adjudicacions || [];
+    paq.adjudicacions.push(adjDoc);
+
+    // 4. Actualitza tauler
+    paq.tauler.ultimaAdjudicacio = {
+      id: adjId,
+      objecteId: lic.objecteId,
+      objecteNom: lic.objecteNom,
+      objecteIcona: lic.objecteIcona,
+      unitat: lic.unitat,
+      quantitatTotal: lic.quantitatTotal,
+      compradorUid: lic.liderUid,
+      compradorAlies: lic.liderAlies,
+      preu: lic.importActual,
+      numOfertes: lic.numOfertes,
+      ronda,
+      ordre,
+      horaMs: ara,
+      potDesfer: true
+    };
+    paq.tauler.seguentObjecteId = determinaSeguentObjecteId(
+      paq.objectes,
+      paq.tauler.cataleg,
+      lic.objecteId,
+      false
+    );
+    paq.tauler.ultimEsdeveniment = {
+      tipus: 'adjudicada',
+      text: TEXTOS.projeccio.venut(lic.liderAlies, lic.importActual, paq.sessio.moneda),
+      compradorUid: lic.liderUid,
+      compradorAlies: lic.liderAlies,
+      objecteNom: lic.objecteNom,
+      preu: lic.importActual,
+      quedara: Number(paq.sessio.pressupost) - cartera.gastat,
+      ms: ara
+    };
+    paq.tauler.licitacio = null;
+    paq.tauler.actualitzatMs = ara;
+    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
+    paq.sessio.actualitzatMs = ara;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+
+    (async () => {
+      try {
+        const { db, fs } = await carregaFirebase();
+        const batch = fs.writeBatch(db);
+        batch.set(fs.doc(db, 'sessions', sessioId, 'estat', 'tauler'), paq.tauler);
+        batch.set(fs.doc(db, 'sessions', sessioId, 'carteres', cartera.uid), {
+          ...cartera,
+          orgSig: paq.sessio.clauOrganitzador
+        });
+        batch.set(fs.doc(db, 'sessions', sessioId, 'adjudicacions', adjId), adjDoc);
+        await batch.commit();
+      } catch (_) {}
+    })();
+
+    return { ok: true, adjudicacio: adjDoc };
+  }
+
+  /**
+   * Retira una licitació aturada (§5: Sense vendre, cap càrrec i la unitat continua disponible).
+   */
+  async retiraUnitat(sessioId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq || !paq.tauler.licitacio) return;
+    if (paq.tauler.licitacio.estat !== 'aturada') {
+      throw new Error('Cal aturar les ofertes abans de retirar la unitat.');
+    }
+
+    const ara = Date.now();
+    const objId = paq.tauler.licitacio.objecteId;
+    paq.tauler.licitacio = null;
+    paq.tauler.seguentObjecteId = determinaSeguentObjecteId(
+      paq.objectes,
+      paq.tauler.cataleg,
+      objId,
+      false
+    );
+    paq.tauler.ultimEsdeveniment = {
+      tipus: 'retirada',
+      text: TEXTOS.projeccio.senseVendre,
+      ms: ara
+    };
+    paq.tauler.actualitzatMs = ara;
+    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Desfà l'última adjudicació abans d'obrir la unitat següent (§5).
+   */
+  async desfesUltimaAdjudicacio(sessioId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+    if (paq.tauler.licitacio !== null) {
+      throw new Error('No es pot desfer l’adjudicació anterior un cop s’ha obert una unitat nova.');
+    }
+
+    const ultima = paq.tauler.ultimaAdjudicacio;
+    if (!ultima || !ultima.potDesfer) {
+      throw new Error('No hi ha cap adjudicació recent disponible per desfer.');
+    }
+
+    const ara = Date.now();
+    const cartera = paq.carteres[ultima.compradorUid];
+    if (cartera) {
+      cartera.gastat = Math.max(0, Number(cartera.gastat) - Number(ultima.preu));
+      cartera.compres = (cartera.compres || []).filter((c) => c.adjId !== ultima.id);
+      cartera.actualitzatMs = ara;
+    }
+
+    const catObj = paq.tauler.cataleg[ultima.objecteId];
+    if (catObj) {
+      catObj.venudes = Math.max(0, Number(catObj.venudes) - 1);
+      if (Array.isArray(catObj.preus) && catObj.preus.length > 0) {
+        catObj.preus.pop();
+      }
+      catObj.darrerPreu = catObj.preus?.length ? catObj.preus[catObj.preus.length - 1] : null;
+    }
+
+    const adj = (paq.adjudicacions || []).find((a) => a.id === ultima.id);
+    if (adj) {
+      adj.estat = 'desfeta';
+    }
+
+    paq.tauler.ultimaAdjudicacio.potDesfer = false;
+    paq.tauler.seguentObjecteId = ultima.objecteId;
+    paq.tauler.ultimEsdeveniment = {
+      tipus: 'desfeta',
+      text: `Adjudicació desfeta (${ultima.objecteNom} · ${ultima.compradorAlies})`,
+      ms: ara
+    };
+    paq.tauler.actualitzatMs = ara;
+    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+
+    (async () => {
+      try {
+        const { db, fs } = await carregaFirebase();
+        const batch = fs.writeBatch(db);
+        batch.set(fs.doc(db, 'sessions', sessioId, 'estat', 'tauler'), paq.tauler);
+        if (cartera) {
+          batch.set(fs.doc(db, 'sessions', sessioId, 'carteres', cartera.uid), {
+            ...cartera,
+            orgSig: paq.sessio.clauOrganitzador
+          });
+        }
+        if (adj) {
+          batch.set(fs.doc(db, 'sessions', sessioId, 'adjudicacions', adj.id), {
+            ...adj,
+            orgSig: paq.sessio.clauOrganitzador
+          });
+        }
+        await batch.commit();
+      } catch (_) {}
+    })();
+  }
+
+  /**
+   * «Tornar a començar» (§5): posa a zero despeses, compres i vendes, conserva els participants
+   * i torna a la sala d'espera amb una ronda nova; les adjudicacions de cada ronda queden al CSV.
+   */
+  async tornaAComencar(sessioId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+    if (paq.tauler.licitacio !== null) {
+      throw new Error('Tanca o retira la licitació en curs abans de tornar a començar.');
+    }
+
+    const ara = Date.now();
+    const novaRonda = Number(paq.sessio.ronda || 1) + 1;
+
+    paq.sessio.estat = 'espera';
+    paq.sessio.ronda = novaRonda;
+    paq.sessio.inscripcionsObertes = true;
+    paq.sessio.mostrarClassificacio = false;
+    paq.sessio.actualitzatMs = ara;
+
+    for (const c of Object.values(paq.carteres || {})) {
+      if (!c.substituitPer) {
+        c.gastat = 0;
+        c.compres = [];
+        c.actualitzatMs = ara;
+      }
+    }
+
+    paq.tauler = {
+      estatSessio: 'espera',
+      ronda: novaRonda,
+      licitacio: null,
+      cataleg: inicialitzaCatalegTauler(paq.objectes),
+      seguentObjecteId: paq.objectes[0]?.id || null,
+      ultimaAdjudicacio: null,
+      ultimEsdeveniment: {
+        tipus: 'reinici',
+        text: `Ronda ${novaRonda} preparada`,
+        ms: ara
+      },
+      actualitzatMs: ara,
+      orgSig: paq.sessio.clauOrganitzador
+    };
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Finalitza la subhasta (§5: pas separat i definitiu, només sense licitació oberta o aturada).
+   */
+  async finalitzaSessio(sessioId) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) throw new Error('Sessió no trobada.');
+    if (paq.tauler.licitacio !== null) {
+      throw new Error('No es pot finalitzar mentre hi ha una licitació oberta o aturada.');
+    }
+
+    const ara = Date.now();
+    paq.sessio.estat = 'finalitzada';
+    paq.sessio.inscripcionsObertes = false;
+    paq.sessio.actualitzatMs = ara;
+    paq.sessio.expiraMs = ara + LIMITS.DIES_CADUCITAT * 24 * 3600 * 1000;
+
+    paq.tauler.estatSessio = 'finalitzada';
+    if (paq.tauler.ultimaAdjudicacio) {
+      paq.tauler.ultimaAdjudicacio.potDesfer = false;
+    }
+    paq.tauler.actualitzatMs = ara;
+    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Commuta la projecció conscient de la classificació/balanç de participants (§4).
+   */
+  async commutaClassificacioPublica(sessioId, mostrar) {
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) return;
+    paq.sessio.mostrarClassificacio = Boolean(mostrar);
+    paq.sessio.actualitzatMs = Date.now();
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+    desarPaquetAFirestore(paq);
+  }
+
+  /**
+   * Envia una oferta des del terminal (§5, §7, §10, §11).
+   * Comprova l'estat fixat en començar la pulsació i executa la transacció.
+   */
+  async enviaOferta(sessioId, importOferta, contexteFixat = null, uidForcat = null) {
+    const tInici = performance.now();
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) {
+      return { ok: false, codi: 'SESSIO_NO_TROBADA', missatge: TEXTOS.terminal.senseConnexio };
+    }
+
+    const uid = uidForcat || getUid();
+    const lic = paq.tauler.licitacio;
+
+    // Si la unitat ha canviat des que es va prémer el botó, es cancel·la amb explicació (§7)
+    if (
+      contexteFixat &&
+      lic &&
+      (lic.objecteId !== contexteFixat.objecteId || lic.unitat !== contexteFixat.unitat)
+    ) {
+      return {
+        ok: false,
+        codi: 'UNITAT_CANVIADA',
+        missatge: 'La unitat en curs ha canviat abans d’enviar l’oferta.'
+      };
+    }
+
+    const cartera = paq.carteres[uid];
+    const validacio = validaOferta({
+      sessio: paq.sessio,
+      tauler: paq.tauler,
+      cartera,
+      uid,
+      importOferta
+    });
+
+    if (!validacio.valid) {
+      return { ok: false, codi: validacio.codi, missatge: validacio.missatge };
+    }
+
+    const ara = Date.now();
+    const novaOfertaItem = {
+      uid,
+      alies: cartera.alies,
+      import: validacio.import,
+      ms: ara
+    };
+
+    lic.importActual = validacio.import;
+    lic.liderUid = uid;
+    lic.liderAlies = cartera.alies;
+    lic.numOfertes = Number(lic.numOfertes || 0) + 1;
+    lic.ultimesOfertes = [novaOfertaItem, ...(lic.ultimesOfertes || [])].slice(
+      0,
+      LIMITS.MAX_ULTIMES_OFERTES
+    );
+
+    paq.tauler.ultimEsdeveniment = {
+      tipus: 'oferta',
+      text: `${cartera.alies} ofereix ${validacio.import}`,
+      uid,
+      alies: cartera.alies,
+      import: validacio.import,
+      ms: ara
+    };
+    paq.tauler.actualitzatMs = ara;
+
+    escriuMagatzemLocal(mag, sessioId);
+    this._emetEstatLocal();
+
+    // Transacció a Firestore en segon pla i resolució d'incertesa mirant el tauler (§10)
+    (async () => {
+      try {
+        const { db, fs } = await carregaFirebase();
+        const refTauler = fs.doc(db, 'sessions', sessioId, 'estat', 'tauler');
+        await fs.runTransaction(db, async (tx) => {
+          const snap = await tx.get(refTauler);
+          if (!snap.exists()) return;
+          const tRemot = snap.data();
+          const licRemota = tRemot.licitacio;
+          if (!licRemota || licRemota.estat !== 'oberta') return;
+          const minimRemot = calculaMinimOferta(licRemota);
+          if (validacio.import < minimRemot) return;
+          if (licRemota.liderUid === uid) return;
+          const novesUltimes = [novaOfertaItem, ...(licRemota.ultimesOfertes || [])].slice(0, 3);
+          tx.update(refTauler, {
+            licitacio: {
+              ...licRemota,
+              importActual: validacio.import,
+              liderUid: uid,
+              liderAlies: cartera.alies,
+              numOfertes: Number(licRemota.numOfertes || 0) + 1,
+              ultimesOfertes: novesUltimes
+            },
+            ultimEsdeveniment: paq.tauler.ultimEsdeveniment,
+            actualitzatMs: ara
+          });
+        });
+      } catch (_) {}
+    })();
+
+    const dt = Math.round(performance.now() - tInici);
+    this.latenciesMs.push(dt);
+    if (this.latenciesMs.length > 60) this.latenciesMs.shift();
+
+    return {
+      ok: true,
+      import: validacio.import,
+      quedara: validacio.quedara,
+      missatge: TEXTOS.terminal.lideres(validacio.import, validacio.quedara)
+    };
+  }
+
+  /* ============================================================
+     Simulador d'aula de fins a 40 participants (§12 i §13)
+     Es conserva perquè l'organitzador pugui assajar sol
+     ============================================================ */
+  async afegeixParticipantsSimulats(sessioId, quantitat = 10) {
+    const nomsBase = [
+      'Anna', 'Marc', 'Júlia', 'Pol', 'Laia', 'Nil', 'Martina', 'Jan',
+      'Carla', 'Àlex', 'Berta', 'Pau', 'Clàudia', 'Roger', 'Arnau', 'Bernat',
+      'Nora', 'Biel', 'Ona', 'oriol', 'Aina', 'Guillem', 'Paula', 'Unai',
+      'Mireia', 'Èric', 'Sara', 'Hugo', 'Alba', 'Leo', 'Ariadna', 'Iker',
+      'Judit', 'Dídac', 'Marina', 'Roc', 'Abril', 'Enzo', 'Gemma', 'Lluc'
+    ];
+    const mag = llegeixMagatzemLocal();
+    const paq = mag.sessions[sessioId];
+    if (!paq) return 0;
+
+    const actius = Object.values(paq.participants || {}).filter((p) => p.actiu !== false);
+    const llocsLliures = Math.max(0, LIMITS.MAX_PARTICIPANTS - actius.length);
+    const aCrear = Math.min(quantitat, llocsLliures);
+
+    const inscripcionsPrevies = paq.sessio.inscripcionsObertes;
+    paq.sessio.inscripcionsObertes = true;
+    escriuMagatzemLocal(mag);
+
+    let creats = 0;
+    for (let i = 0; i < nomsBase.length && creats < aCrear; i++) {
+      const candidat = nomsBase[i].charAt(0).toUpperCase() + nomsBase[i].slice(1);
+      const jaHiEs = Object.values(paq.participants || {}).some(
+        (p) => p.actiu !== false && clauAlies(p.alies) === clauAlies(candidat)
+      );
+      if (jaHiEs) continue;
+      const botUid = `bot_${ i + 1 }_${generaHex(3)}`;
+      await this.entraParticipant(paq.sessio.codi, candidat, botUid);
+      creats += 1;
+    }
+
+    const mag2 = llegeixMagatzemLocal();
+    if (mag2.sessions[sessioId]) {
+      mag2.sessions[sessioId].sessio.inscripcionsObertes = inscripcionsPrevies;
+      escriuMagatzemLocal(mag2, sessioId);
+    }
+    this._emetEstatLocal();
+    return creats;
+  }
+
+  iniciaSimuladorOfertes(sessioId, intervalMs = 1100) {
+    this.aturaSimulador();
+    this.simuladorTimer = setInterval(() => {
+      const mag = llegeixMagatzemLocal();
+      const paq = mag.sessions[sessioId];
+      if (!paq || !paq.tauler.licitacio || paq.tauler.licitacio.estat !== 'oberta') return;
+
+      const lic = paq.tauler.licitacio;
+      const bots = Object.values(paq.carteres || {}).filter(
+        (c) => String(c.uid).startsWith('bot_') && c.habilitada !== false && c.uid !== lic.liderUid
+      );
+      if (bots.length === 0) return;
+
+      const minim = calculaMinimOferta(lic);
+      const obj = paq.objectes.find((o) => o.id === lic.objecteId);
+      const llindarMax = obj?.valor > 0 ? Math.round(obj.valor * 1.25) : Math.round(paq.sessio.pressupost * 0.45);
+      if (minim > llindarMax) return;
+
+      const candidatsValids = bots.filter((b) => paq.sessio.pressupost - b.gastat >= minim);
+      if (candidatsValids.length === 0) return;
+
+      const escollit = candidatsValids[Math.floor(Math.random() * candidatsValids.length)];
+      const salt = Math.random() < 0.22 ? lic.increment : 0;
+      const oferta =
+        minim + salt <= paq.sessio.pressupost - escollit.gastat ? minim + salt : minim;
+
+      this.enviaOferta(sessioId, oferta, { objecteId: lic.objecteId, unitat: lic.unitat }, escollit.uid);
+    }, intervalMs);
+  }
+
+  aturaSimulador() {
+    if (this.simuladorTimer) {
+      clearInterval(this.simuladorTimer);
+      this.simuladorTimer = null;
+    }
+  }
+}

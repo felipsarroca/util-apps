@@ -1,0 +1,219 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Llista d'organitzadors autoritzats: ningú la pot llegir ni escriure des del client;
+    // només la consulten les regles amb get().
+    match /config/organitzadors {
+      allow read, write: if false;
+    }
+
+    function organitzadorsConfig() {
+      return get(/databases/$(database)/documents/config/organitzadors).data;
+    }
+
+    function esCorreuAutoritzat() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email in organitzadorsConfig().correus;
+    }
+
+    function sessioDoc(sessioId) {
+      return get(/databases/$(database)/documents/sessions/$(sessioId)).data;
+    }
+
+    function sessioNoCaducadaData(data) {
+      return data.expiraMs is int && data.expiraMs > request.time.toMillis();
+    }
+
+    function sessioVigent(sessioId) {
+      let s = sessioDoc(sessioId);
+      return s != null && sessioNoCaducadaData(s);
+    }
+
+    // Codi de 6 xifres -> sessioId
+    match /codis/{codi} {
+      allow get: if codi.matches('^[0-9]{6}$');
+      allow list: if false;
+      allow create, update: if codi.matches('^[0-9]{6}$')
+        && request.resource.data.sessioId is string
+        && request.resource.data.expiraMs is int;
+      allow delete: if codi.matches('^[0-9]{6}$');
+    }
+
+    match /sessions/{sessioId} {
+      // Una sessió caducada deixa de ser llegible excepte per a l'organitzador que l'elimina
+      allow get: if sessioNoCaducadaData(resource.data)
+        || (request.auth != null && resource.data.propietariUid == request.auth.uid);
+      allow list: if true;
+
+      allow create: if (esCorreuAutoritzat() || request.resource.data.clauOrganitzador is string)
+        && request.resource.data.titol is string
+        && request.resource.data.titol.size() >= 1
+        && request.resource.data.titol.size() <= 60
+        && request.resource.data.repte is string
+        && request.resource.data.repte.size() <= 280
+        && request.resource.data.moneda is string
+        && request.resource.data.moneda.size() >= 1
+        && request.resource.data.moneda.size() <= 16
+        && request.resource.data.pressupost is int
+        && request.resource.data.pressupost >= 1
+        && request.resource.data.pressupost <= 100000
+        && request.resource.data.increment is int
+        && request.resource.data.increment >= 1
+        && request.resource.data.increment <= request.resource.data.pressupost
+        && request.resource.data.estat in ['preparacio', 'espera', 'en_curs', 'finalitzada']
+        && request.resource.data.expiraMs is int;
+
+      allow update: if (
+          (request.auth != null && resource.data.propietariUid == request.auth.uid)
+          || (resource.data.clauOrganitzador is string && request.resource.data.clauOrganitzador == resource.data.clauOrganitzador)
+        )
+        && request.resource.data.pressupost is int
+        && request.resource.data.pressupost >= 1
+        && request.resource.data.pressupost <= 100000
+        && request.resource.data.increment is int
+        && request.resource.data.increment >= 1
+        && request.resource.data.increment <= request.resource.data.pressupost
+        && request.resource.data.estat in ['preparacio', 'espera', 'en_curs', 'finalitzada'];
+
+      allow delete: if (request.auth != null && resource.data.propietariUid == request.auth.uid)
+        || (resource.data.clauOrganitzador is string);
+
+      // Objectes del catàleg
+      match /objectes/{objId} {
+        allow read: if sessioVigent(sessioId);
+        allow create, update: if sessioVigent(sessioId)
+          && request.resource.data.nom is string
+          && request.resource.data.nom.size() >= 1
+          && request.resource.data.nom.size() <= 40
+          && request.resource.data.quantitat is int
+          && request.resource.data.quantitat >= 1
+          && request.resource.data.quantitat <= 60
+          && request.resource.data.preuSortida is int
+          && request.resource.data.preuSortida >= 1;
+        allow delete: if true;
+      }
+
+      // Tauler en temps real (únic document que canvia a cada oferta)
+      match /estat/tauler {
+        allow read: if sessioVigent(sessioId);
+        allow create, delete: if true;
+
+        allow update: if sessioVigent(sessioId) && (
+          // Cas A: actualització d'organitzador (porta el segell clauOrganitzador o és el propietari autenticat)
+          (
+            (request.auth != null && sessioDoc(sessioId).propietariUid == request.auth.uid)
+            || (request.resource.data.orgSig is string && request.resource.data.orgSig == sessioDoc(sessioId).clauOrganitzador)
+          )
+          ||
+          // Cas B: oferta d'un participant amb totes les garanties del §10
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['licitacio', 'actualitzatMs', 'ultimEsdeveniment'])
+            && resource.data.licitacio != null
+            && resource.data.licitacio.estat == 'oberta'
+            && request.resource.data.licitacio != null
+            && request.resource.data.licitacio.estat == 'oberta'
+            && request.resource.data.licitacio.objecteId == resource.data.licitacio.objecteId
+            && request.resource.data.licitacio.unitat == resource.data.licitacio.unitat
+            && request.resource.data.licitacio.preuSortida == resource.data.licitacio.preuSortida
+            && request.resource.data.licitacio.increment == resource.data.licitacio.increment
+            && request.resource.data.licitacio.liderUid is string
+            && (request.auth == null || request.resource.data.licitacio.liderUid == request.auth.uid)
+            && request.resource.data.licitacio.liderUid != resource.data.licitacio.liderUid
+            && request.resource.data.licitacio.numOfertes == resource.data.licitacio.numOfertes + 1
+            && request.resource.data.licitacio.importActual is int
+            && (
+              (resource.data.licitacio.numOfertes == 0 && request.resource.data.licitacio.importActual >= resource.data.licitacio.preuSortida)
+              || (resource.data.licitacio.numOfertes > 0 && request.resource.data.licitacio.importActual >= resource.data.licitacio.importActual + resource.data.licitacio.increment)
+            )
+            && ((request.resource.data.licitacio.importActual - resource.data.licitacio.preuSortida) % resource.data.licitacio.increment) == 0
+            && request.resource.data.licitacio.ultimesOfertes is list
+            && request.resource.data.licitacio.ultimesOfertes.size() <= 3
+            && exists(/databases/$(database)/documents/sessions/$(sessioId)/carteres/$(request.resource.data.licitacio.liderUid))
+            && get(/databases/$(database)/documents/sessions/$(sessioId)/carteres/$(request.resource.data.licitacio.liderUid)).data.habilitada == true
+            && get(/databases/$(database)/documents/sessions/$(sessioId)/carteres/$(request.resource.data.licitacio.liderUid)).data.alies == request.resource.data.licitacio.liderAlies
+            && request.resource.data.licitacio.importActual <= sessioDoc(sessioId).pressupost - get(/databases/$(database)/documents/sessions/$(sessioId)/carteres/$(request.resource.data.licitacio.liderUid)).data.gastat
+          )
+        );
+      }
+
+      // Participants públics (àlies)
+      match /participants/{uid} {
+        allow read: if sessioVigent(sessioId);
+        allow create: if sessioVigent(sessioId)
+          && (request.auth == null || request.auth.uid == uid)
+          && request.resource.data.uid == uid
+          && request.resource.data.alies is string
+          && request.resource.data.alies.size() >= 1
+          && request.resource.data.alies.size() <= 24;
+        allow update, delete: if sessioVigent(sessioId);
+      }
+
+      // Carteres privades: només el titular pot llegir la seva (get amb el seu uid), o l'organitzador.
+      // Ningú pot fer list de carteres alienes sense ser l'organitzador.
+      match /carteres/{uid} {
+        allow get: if sessioVigent(sessioId)
+          && (request.auth == null || request.auth.uid == uid || sessioDoc(sessioId).propietariUid == request.auth.uid);
+        allow list: if sessioVigent(sessioId)
+          && (request.auth == null || sessioDoc(sessioId).propietariUid == request.auth.uid);
+        allow create: if sessioVigent(sessioId)
+          && (request.auth == null || request.auth.uid == uid || sessioDoc(sessioId).propietariUid == request.auth.uid)
+          && request.resource.data.uid == uid
+          && request.resource.data.alies is string
+          && request.resource.data.alies.size() >= 1
+          && request.resource.data.alies.size() <= 24
+          && (
+            // Cartera nova a zero amb inscripcions obertes
+            (
+              sessioDoc(sessioId).inscripcionsObertes == true
+              && request.resource.data.gastat == 0
+              && request.resource.data.compres is list
+              && request.resource.data.compres.size() == 0
+              && request.resource.data.habilitada == true
+            )
+            // O transferència d'aparell / acció de l'organitzador
+            || (request.resource.data.transferitDesDe is string)
+            || (request.resource.data.orgSig is string && request.resource.data.orgSig == sessioDoc(sessioId).clauOrganitzador)
+          );
+        allow update, delete: if sessioVigent(sessioId)
+          && (
+            (request.auth != null && sessioDoc(sessioId).propietariUid == request.auth.uid)
+            || (request.resource.data.orgSig is string && request.resource.data.orgSig == sessioDoc(sessioId).clauOrganitzador)
+            || (request.resource.data.substituitPer is string)
+          );
+      }
+
+      // Reserva d'àlies (unicitat sense distingir majúscules): ningú en fa list
+      match /alies/{aliesNorm} {
+        allow get: if sessioVigent(sessioId);
+        allow list: if false;
+        allow create: if sessioVigent(sessioId)
+          && sessioDoc(sessioId).inscripcionsObertes == true
+          && request.resource.data.uid is string;
+        allow update, delete: if sessioVigent(sessioId);
+      }
+
+      // Codis temporals de 4 xifres per a canvi d'aparell
+      match /canvis/{codi4} {
+        allow get: if sessioVigent(sessioId) && codi4.matches('^[0-9]{4}$');
+        allow list: if false;
+        allow create, update, delete: if sessioVigent(sessioId) && codi4.matches('^[0-9]{4}$');
+      }
+
+      // Adjudicacions
+      match /adjudicacions/{adjId} {
+        allow read: if sessioVigent(sessioId);
+        allow create, update, delete: if sessioVigent(sessioId)
+          && (
+            (request.auth != null && sessioDoc(sessioId).propietariUid == request.auth.uid)
+            || (request.resource.data.orgSig is string && request.resource.data.orgSig == sessioDoc(sessioId).clauOrganitzador)
+          );
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

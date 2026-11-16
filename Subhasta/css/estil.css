@@ -1,0 +1,2245 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Estils de Subhasta: 3 direccions visuals (Mercat, Llotja clara, Sala fosca),
+   adaptació amb escala uniforme tipus Equacions i accessibilitat completa */
+
+:root,
+html[data-theme="mercat"] {
+  --bg: #d9e8df;
+  --bg-top: #eff6f1;
+  --surface: #fcfefd;
+  --surface-soft: #eef5f0;
+  --surface-accent: #e3f0e8;
+  --border: #bfd5c8;
+  --border-strong: #8fb19e;
+  --ink: #132e27;
+  --ink-soft: #3d5b52;
+  --ink-faint: #527067;
+
+  --primary: #0c6356;
+  --primary-hover: #084a40;
+  --primary-soft: #dff1ed;
+  --primary-ink: #08453c;
+
+  --secondary: #0d6896;
+  --secondary-hover: #094f73;
+  --secondary-soft: #e1f0f8;
+
+  --warm: #c2491d;
+  --warm-soft: #fcebe4;
+  --amber: #b45309;
+  --amber-soft: #fef3c7;
+
+  --ok: #0d7a49;
+  --ok-soft: #e0f5ec;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+
+  --focus-ring: #d97706;
+  --shadow: 0 6px 20px rgba(16, 48, 39, 0.07);
+}
+
+html[data-theme="llotja"] {
+  --bg: #e9eff7;
+  --bg-top: #f6f9fc;
+  --surface: #ffffff;
+  --surface-soft: #f1f5fb;
+  --surface-accent: #e5edf8;
+  --border: #cbd7e8;
+  --border-strong: #9bb0cd;
+  --ink: #10253d;
+  --ink-soft: #3d546e;
+  --ink-faint: #566d87;
+
+  --primary: #1754c6;
+  --primary-hover: #103e96;
+  --primary-soft: #e4edfc;
+  --primary-ink: #0f3a8a;
+
+  --secondary: #0f6674;
+  --secondary-hover: #0a4c57;
+  --secondary-soft: #e1f2f5;
+
+  --warm: #b9481a;
+  --warm-soft: #fbece6;
+  --amber: #9a5106;
+  --amber-soft: #fef1d6;
+
+  --ok: #0f764a;
+  --ok-soft: #e2f5ec;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+
+  --focus-ring: #1754c6;
+  --shadow: 0 6px 20px rgba(16, 37, 61, 0.06);
+}
+
+html[data-theme="fosca"] {
+  --bg: #0b1520;
+  --bg-top: #101e2e;
+  --surface: #152538;
+  --surface-soft: #1c3047;
+  --surface-accent: #223a56;
+  --border: #2a4565;
+  --border-strong: #416793;
+  --ink: #f3f7fc;
+  --ink-soft: #bfd0e4;
+  --ink-faint: #94aecb;
+
+  --primary: #14967f;
+  --primary-hover: #1bb398;
+  --primary-soft: #143b3a;
+  --primary-ink: #6ee7d2;
+
+  --secondary: #2b86c5;
+  --secondary-hover: #3ca0e3;
+  --secondary-soft: #173652;
+
+  --warm: #f97316;
+  --warm-soft: #3c2216;
+  --amber: #fbbf24;
+  --amber-soft: #3a2e14;
+
+  --ok: #34d399;
+  --ok-soft: #12392d;
+  --danger: #f87171;
+  --danger-soft: #3c1a1e;
+
+  --focus-ring: #fbbf24;
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+:root {
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 16px;
+  --ui-zoom: 1;
+  --vh: calc(1vh / var(--ui-zoom));
+  --dvh: calc(1dvh / var(--ui-zoom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  font-size: 16px;
+  zoom: var(--ui-zoom);
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: calc(100 * var(--vh));
+  min-height: calc(100 * var(--dvh));
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.42;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 100%);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, p, ul, ol, dl, dd {
+  margin: 0;
+}
+
+ul, ol {
+  padding: 0;
+  list-style: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-justificat {
+  text-align: justify;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  padding: 0.6rem 1rem;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 0 0 var(--radius-s) 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.ic {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+}
+
+.ic-obj {
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  color: var(--primary);
+}
+
+.ic-obj-img {
+  object-fit: cover;
+  border-radius: var(--radius-s);
+}
+
+/* ============================================================
+   Carcassa principal i capçalera
+   ============================================================ */
+.app-carcassa {
+  min-height: calc(100 * var(--vh));
+  min-height: calc(100 * var(--dvh));
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  flex: 0 0 auto;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 30;
+}
+
+.topbar-inner {
+  max-width: 1520px;
+  margin: 0 auto;
+  padding: 0.45rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: none;
+  border: none;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  font-size: 1.32rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.brand:hover {
+  background: var(--surface-soft);
+}
+
+.brand-ic {
+  width: 1.95rem;
+  height: 1.95rem;
+}
+
+.insignia-sala {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.22rem 0.45rem 0.22rem 0.65rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.insignia-etiqueta {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.insignia-codi {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--primary-ink);
+}
+
+.nav-espais {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--surface-soft);
+  padding: 0.2rem;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border);
+}
+
+.btn-espai {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.86rem;
+  font-weight: 650;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+.btn-espai:hover,
+.btn-espai.actiu {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.selector-tema {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface-soft);
+  padding: 0.18rem;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border);
+}
+
+.btn-tema {
+  border: none;
+  background: transparent;
+  padding: 0.26rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.btn-tema.actiu {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-top,
+.btn-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.86rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.btn-top:hover,
+.btn-mini:hover {
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+}
+
+.btn-top[aria-pressed="true"] {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-ink);
+}
+
+/* ============================================================
+   Contenidor principal i panells nets (sense marcs dins de marcs)
+   ============================================================ */
+.app-main {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.vista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex: 1 1 auto;
+}
+
+.panell {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  padding: 1.1rem 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.subtext {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.baner-connexio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.65rem;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-m);
+  font-weight: 700;
+}
+
+/* ============================================================
+   Botons i formularis
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-m);
+  border: 1px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 120ms ease;
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.btn-primari {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.btn-primari:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-secundari {
+  background: var(--secondary-soft);
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+
+.btn-secundari:hover:not(:disabled) {
+  background: var(--surface-accent);
+}
+
+.btn-suau {
+  background: var(--surface-soft);
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+.btn-suau:hover:not(:disabled) {
+  background: var(--surface-accent);
+}
+
+.btn-perill-suau {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-gran {
+  min-height: 48px;
+  padding: 0.65rem 1.25rem;
+  font-size: 1.05rem;
+}
+
+.btn-sm {
+  min-height: 36px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+.btn-complet {
+  width: 100%;
+}
+
+.btn-enllac {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  color: var(--primary-ink);
+  font-weight: 650;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.camp-grup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.camp-grup label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.45rem 0.7rem;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 58px;
+}
+
+.error-camp,
+.missatge-error {
+  color: var(--danger);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+/* ============================================================
+   VISTA 1: PORTADA
+   ============================================================ */
+.barra-reprendre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-m);
+}
+
+.barra-reprendre-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.barra-reprendre-accions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.graella-inici {
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: 1.15rem;
+  align-items: stretch;
+  margin: auto 0;
+}
+
+.panell-entrar,
+.panell-organitzador {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.1rem;
+  padding: 1.4rem 1.5rem;
+}
+
+.panell-cap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.panell-cap h1,
+.panell-cap h2 {
+  font-size: 1.42rem;
+  line-height: 1.2;
+  margin-bottom: 0.2rem;
+}
+
+.icona-cercle {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.icona-cercle-accent {
+  background: var(--warm-soft);
+  color: var(--warm);
+}
+
+.fila-camps-entrar {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 0.85rem;
+  margin-bottom: 0.9rem;
+}
+
+.input-codi {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.accions-entrar {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 0.65rem;
+}
+
+.bloc-canvi-aparell {
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fila-canvi-aparell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.accions-organitzador-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.fila-accions-org-secundaries {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.pastilla-num {
+  background: var(--primary);
+  color: #fff;
+  padding: 0.08rem 0.48rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.peu-organitzador-auth {
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+.info-compte-org {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ============================================================
+   VISTA 2: LES MEVES SUBHASTES
+   ============================================================ */
+.capcalera-vista {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.capcalera-vista h1 {
+  font-size: 1.35rem;
+}
+
+.capcalera-vista-accions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.llista-sessions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 0.85rem;
+}
+
+.targeta-sessio-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.targeta-sessio-cap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.targeta-sessio-cap h3 {
+  font-size: 1.08rem;
+}
+
+.etiqueta-estat {
+  display: inline-block;
+  padding: 0.16rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+}
+
+.targeta-sessio-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+.targeta-sessio-accions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* ============================================================
+   VISTA 3: PREPARACIÓ EN UNA SOLA PANTALLA
+   ============================================================ */
+.titol-amb-estat {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.indicador-desament {
+  font-size: 0.84rem;
+  font-weight: 650;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.graella-preparacio {
+  display: grid;
+  grid-template-columns: 0.88fr 1.12fr;
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.panell-parametres {
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+}
+
+.panell-parametres h2,
+.panell-objectes h2 {
+  font-size: 1.08rem;
+}
+
+.etiqueta-amb-comptador {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.comptador-caracters {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.fila-3-camps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+.caixa-puntuacio-opcional {
+  padding: 0.65rem 0.8rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-s);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.fila-bonificacio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+}
+
+.input-curt {
+  width: 92px !important;
+}
+
+.cap-taula-objectes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.taula-objectes-wrap {
+  overflow-x: auto;
+  max-height: 470px;
+  overflow-y: auto;
+}
+
+.taula-objectes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.taula-objectes th,
+.taula-objectes td {
+  padding: 0.4rem 0.38rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  text-align: left;
+}
+
+.taula-objectes th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+}
+
+.col-icona {
+  width: 154px;
+}
+
+.sel-icona-obj {
+  min-height: 32px !important;
+  padding: 0.2rem 0.4rem !important;
+  font-size: 0.82rem;
+}
+
+.col-num {
+  width: 82px;
+  text-align: right !important;
+}
+
+.col-accions {
+  width: 42px;
+  text-align: center !important;
+}
+
+.cel-icona-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cel-nom-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.input-desc-petit {
+  font-size: 0.8rem;
+  min-height: 32px !important;
+  padding: 0.22rem 0.5rem !important;
+}
+
+/* ============================================================
+   VISTA 4: SALA D'ESPERA
+   ============================================================ */
+.graella-espera {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 0.95rem;
+  align-items: stretch;
+  flex: 1 1 auto;
+}
+
+.panell-acces-espera,
+.panell-participants-espera {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.targeta-codi-gegant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-m);
+}
+
+.etiqueta-pas {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-ink);
+}
+
+.adreca-gegant {
+  font-size: 1.55rem;
+  font-weight: 850;
+  color: var(--ink);
+}
+
+.codi-sala-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.6rem;
+}
+
+.codi-6-xifres {
+  font-size: 2.35rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.accions-compartir-espera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.qr-caixa {
+  width: 122px;
+  height: 122px;
+  background: #fff;
+  padding: 6px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border);
+  flex: none;
+}
+
+.qr-caixa svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.repte-destacat {
+  padding: 0.7rem 0.95rem;
+  background: var(--amber-soft);
+  border-left: 4px solid var(--amber);
+  border-radius: var(--radius-s);
+}
+
+.repte-etiqueta {
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.espera-cataleg-i-glossari {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 0.85rem;
+}
+
+.espera-cataleg-i-glossari h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.45rem;
+}
+
+.llista-objectes-compacta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+}
+
+.item-obj-compacte {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-s);
+  font-size: 0.88rem;
+}
+
+.item-obj-esquerra {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 650;
+}
+
+.dl-glossari-breu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+  font-size: 0.82rem;
+}
+
+.dl-glossari-breu dt {
+  font-weight: 750;
+  color: var(--ink);
+}
+
+.dl-glossari-breu dd {
+  color: var(--ink-soft);
+}
+
+.cap-participants-espera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.switch-inscripcions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.65rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.graella-alies-espera {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 0.45rem;
+  max-height: 270px;
+  overflow-y: auto;
+  align-content: start;
+  padding: 0.2rem 0;
+}
+
+.xip-participant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.38rem 0.6rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.xip-accions {
+  display: inline-flex;
+  gap: 0.2rem;
+}
+
+.btn-xip {
+  border: none;
+  background: transparent;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.btn-xip:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.caixa-simulador {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-s);
+  font-size: 0.85rem;
+}
+
+.simulador-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.simulador-botons {
+  display: flex;
+  gap: 0.4rem;
+  flex: none;
+}
+
+.peu-accions-espera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================================
+   VISTA 5: COMANDAMENT DE L'ORGANITZADOR
+   ============================================================ */
+.graella-comandament {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 0.9rem;
+  align-items: stretch;
+  flex: 1 1 auto;
+}
+
+.comandament-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.targeta-control-directe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.2rem 1.35rem;
+}
+
+.cmd-estat-superior {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cmd-unitat-titol {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.cmd-resum-oferta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-m);
+  flex-wrap: wrap;
+}
+
+.cmd-import-gegant {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1.05;
+}
+
+.cmd-lider-info {
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+
+.cmd-accio-principal-fila {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.cmd-confirmacio-adjudicar {
+  font-size: 0.96rem;
+  font-weight: 700;
+  padding: 0.55rem 0.85rem;
+  background: var(--ok-soft);
+  color: var(--ok);
+  border-radius: var(--radius-s);
+}
+
+.cap-cataleg-comandament {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.accions-secundaries-comandament {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.graella-objectes-cmd {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.65rem;
+}
+
+.targeta-obj-cmd {
+  padding: 0.75rem 0.85rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.targeta-obj-cmd.en-joc {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.targeta-obj-cmd-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.targeta-obj-cmd-nom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 750;
+}
+
+.panell-lateral-comandament {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.cap-lateral-cmd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pastilla-ronda {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 750;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: var(--secondary-soft);
+  color: var(--ink);
+}
+
+.barra-sim-cmd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-s);
+  font-size: 0.82rem;
+}
+
+.llista-carteres-cmd {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.fila-cartera-cmd {
+  padding: 0.5rem 0.65rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-s);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+}
+
+.fila-cartera-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.fila-cartera-accions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ============================================================
+   VISTA 6: PROJECCIÓ PÚBLICA (§7 Projecció)
+   Jerarquia: import -> objecte -> líder -> estat -> context
+   ============================================================ */
+.projeccio-capcalera-interna {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.proj-titol-bloc,
+.proj-acces-bloc {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.proj-marca {
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  font-size: 0.92rem;
+}
+
+.proj-titol-bloc h1 {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.proj-url {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.proj-codi {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--primary);
+  background: var(--primary-soft);
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-s);
+}
+
+.graella-projeccio {
+  display: grid;
+  grid-template-columns: 1.32fr 0.68fr;
+  gap: 1rem;
+  flex: 1 1 auto;
+  align-items: stretch;
+}
+
+.proj-escenari {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.6rem 1.8rem;
+}
+
+.proj-unitat-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.proj-unitat-nom {
+  font-size: 1.65rem;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+}
+
+.proj-estat-pastilla {
+  padding: 0.32rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.proj-estat-oberta {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.proj-estat-aturada {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.proj-estat-venut {
+  background: var(--primary);
+  color: #fff;
+}
+
+.proj-centre-import {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 0.8rem 0;
+}
+
+.proj-icona-gran {
+  width: 5.2rem;
+  height: 5.2rem;
+  border-radius: 20px;
+  background: var(--surface-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.proj-icona-gran .ic-obj {
+  width: 3.4rem;
+  height: 3.4rem;
+}
+
+.proj-xifra-dominant {
+  font-size: clamp(2.8rem, 5vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+  transition: transform 180ms ease, color 180ms ease;
+}
+
+.proj-xifra-dominant.flash-oferta {
+  transform: scale(1.03);
+  color: var(--warm);
+}
+
+.proj-lider-gran {
+  font-size: clamp(1.4rem, 2.3vw, 2rem);
+  font-weight: 800;
+  color: var(--ink);
+  margin-top: 0.25rem;
+}
+
+.proj-peu-escenari {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.proj-oferta-minima {
+  font-size: 1.15rem;
+  font-weight: 750;
+  color: var(--ink);
+}
+
+.proj-ultimes-ofertes {
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+.proj-cataleg-panell {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.proj-cataleg-cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.proj-seguent {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary-ink);
+}
+
+.taula-proj-cataleg {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.02rem;
+}
+
+.taula-proj-cataleg th,
+.taula-proj-cataleg td {
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.taula-proj-cataleg th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: left;
+}
+
+.taula-proj-cataleg tr.fila-activa {
+  background: var(--primary-soft);
+  font-weight: 800;
+}
+
+.proj-repte-caixa {
+  padding: 0.7rem 0.85rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-s);
+  font-size: 0.92rem;
+}
+
+.barra-mode-presentacio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-m);
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   VISTA 7: TERMINAL DEL PARTICIPANT (1366x768 principal, mòbil secundari)
+   ============================================================ */
+.terminal-capcalera {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.terminal-identitat {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.terminal-avatar {
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.term-alies-nom {
+  display: block;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.term-pressupost-detall {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.terminal-saldo-destacat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--primary-soft);
+  border-radius: var(--radius-s);
+}
+
+.saldo-etiqueta {
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+
+.saldo-xifra {
+  font-size: 1.32rem;
+  font-weight: 900;
+  color: var(--primary-ink);
+}
+
+.terminal-repte-top {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.terminal-repte-top .repte-etiqueta {
+  display: inline;
+  margin-right: 0.3rem;
+}
+
+.graella-terminal {
+  display: grid;
+  grid-template-columns: 1.18fr 0.82fr;
+  gap: 0.95rem;
+  flex: 1 1 auto;
+  align-items: stretch;
+}
+
+.panell-licitar-terminal {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.term-unitat-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.term-unitat-titol-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.term-unitat-nom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 1.35rem;
+  font-weight: 850;
+}
+
+.term-millor-oferta-caixa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-m);
+}
+
+.term-import-actual {
+  font-size: 2.15rem;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.term-lider-actual {
+  font-size: 1.08rem;
+  font-weight: 750;
+}
+
+.term-missatge-estat {
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--radius-s);
+  font-weight: 750;
+  font-size: 0.96rem;
+  background: var(--surface-soft);
+  border-left: 4px solid var(--secondary);
+}
+
+.term-missatge-estat.estat-lider {
+  background: var(--ok-soft);
+  color: var(--ok);
+  border-left-color: var(--ok);
+}
+
+.term-missatge-estat.estat-superat,
+.term-missatge-estat.estat-avis {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-left-color: var(--amber);
+}
+
+.term-missatge-estat.estat-error {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-left-color: var(--danger);
+}
+
+.term-zona-botons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.btn-oferta-principal {
+  width: 100%;
+  min-height: 74px;
+  padding: 0.75rem 1.2rem;
+  border-radius: var(--radius-m);
+  border: 2px solid transparent;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 120ms ease;
+}
+
+.btn-oferta-principal:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-oferta-principal:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-oferta-accio {
+  font-size: 1.38rem;
+  font-weight: 850;
+}
+
+.btn-oferta-sub {
+  font-size: 0.9rem;
+  opacity: 0.92;
+}
+
+.fila-ofertes-rapides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.btn-oferta-rapida {
+  min-height: 48px;
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-soft);
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn-oferta-rapida:hover:not(:disabled) {
+  background: var(--surface-accent);
+  border-color: var(--primary);
+}
+
+.btn-oferta-rapida:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.fila-selector-import {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-m);
+  flex-wrap: wrap;
+}
+
+.etiqueta-altre-import {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.grup-selector-pas {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  padding: 0.15rem;
+}
+
+.btn-pas {
+  width: 40px;
+  height: 38px;
+  border: none;
+  background: var(--surface-soft);
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn-pas:hover:not(:disabled) {
+  background: var(--surface-accent);
+}
+
+.btn-pas:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.valor-selector {
+  min-width: 74px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 850;
+}
+
+.terminal-columna-dreta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.panell-compres-terminal,
+.panell-cataleg-terminal {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.cap-seccio-term {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cap-seccio-term h2 {
+  font-size: 1rem;
+}
+
+.pastilla-punts {
+  font-size: 0.8rem;
+  font-weight: 750;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+}
+
+.llista-compres-term,
+.llista-cataleg-term {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   VISTA 8: RESULTATS, GRÀFIC I REFLEXIÓ
+   ============================================================ */
+.res-balanc-personal {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.graella-resultats {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 0.95rem;
+  align-items: start;
+}
+
+.contenedor-grafic-svg {
+  width: 100%;
+  height: 250px;
+  margin: 0.65rem 0;
+  background: var(--surface-soft);
+  border-radius: var(--radius-m);
+  padding: 0.5rem;
+}
+
+.contenedor-grafic-svg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.taula-resum-objectes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.taula-resum-objectes th,
+.taula-resum-objectes td {
+  padding: 0.45rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.columna-dreta-resultats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.llista-preguntes {
+  padding-left: 1.25rem;
+  list-style: decimal;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-weight: 650;
+}
+
+.cap-res-participants {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+.modal-dialeg {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  padding: 0;
+  background: var(--surface);
+  color: var(--ink);
+  max-width: 760px;
+  width: calc(100% - 2rem);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+}
+
+.modal-dialeg::backdrop {
+  background: rgba(10, 22, 32, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.modal-caixa-estreta {
+  max-width: 480px;
+}
+
+.modal-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-cap h2 {
+  font-size: 1.15rem;
+}
+
+.btn-tancar-modal {
+  border: none;
+  background: var(--surface-soft);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.modal-cos {
+  padding: 1.1rem 1.25rem;
+  max-height: 68vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal-peu {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.guia-seccio h3 {
+  font-size: 1rem;
+  margin-bottom: 0.45rem;
+  color: var(--primary-ink);
+}
+
+.graella-passos-guia {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+}
+
+.pas-guia {
+  padding: 0.65rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-s);
+  font-size: 0.86rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pas-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.llista-curriculum {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+}
+
+.llista-curriculum li {
+  text-align: justify;
+  padding-left: 0.65rem;
+  border-left: 3px solid var(--border-strong);
+}
+
+.dl-glossari-modal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+}
+
+.dl-glossari-modal div {
+  padding: 0.5rem 0.65rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-s);
+}
+
+.dl-glossari-modal dt {
+  font-weight: 800;
+  margin-bottom: 0.15rem;
+}
+
+/* ============================================================
+   PEU D'APLICACIONS DE FELIP
+   ============================================================ */
+.felip-app-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  padding: 0.4rem clamp(1rem, 2.5vw, 2rem);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.felip-license-image-link {
+  display: block;
+  line-height: 0;
+}
+
+.felip-license-image {
+  display: block;
+  width: 72px;
+  height: auto;
+}
+
+.felip-footer-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.felip-footer-text a {
+  color: var(--ink);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.felip-footer-text a:hover {
+  color: var(--primary);
+}
+
+/* ============================================================
+   DISPOSICIÓ RESPONSIVA PER SOTA DE 1200px I MÒBIL (390x844)
+   ============================================================ */
+@media (max-width: 1199px) {
+  .graella-inici,
+  .graella-preparacio,
+  .graella-espera,
+  .graella-comandament,
+  .graella-projeccio,
+  .graella-terminal,
+  .graella-resultats {
+    grid-template-columns: 1fr;
+  }
+
+  .terminal-capcalera {
+    grid-template-columns: 1fr auto;
+  }
+
+  .terminal-repte-top {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
+
+@media (max-width: 680px) {
+  .topbar-inner {
+    padding: 0.4rem 0.65rem;
+  }
+
+  .nom-curt-ocult {
+    display: none;
+  }
+
+  .app-main {
+    padding: 0.65rem;
+  }
+
+  .panell {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .fila-camps-entrar,
+  .accions-entrar,
+  .fila-accions-org-secundaries,
+  .fila-3-camps,
+  .espera-cataleg-i-glossari,
+  .graella-passos-guia,
+  .dl-glossari-modal {
+    grid-template-columns: 1fr;
+  }
+
+  .targeta-codi-gegant {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .terminal-capcalera {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .btn,
+  .btn-pas,
+  .btn-oferta-rapida {
+    min-height: 44px;
+  }
+
+  .felip-app-footer {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.72rem;
+  }
+
+  .felip-license-image {
+    width: 60px;
+  }
+}

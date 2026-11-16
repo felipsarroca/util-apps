@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     const apps = [
         {
+            name: 'Subhasta',
+            path: 'https://ja.cat/subhasta',
+            icon: 'Subhasta/assets/favicon.svg',
+            description: 'Subhasta anglesa oberta en temps real per treballar l’escassetat, l’oferta i la demanda, el pressupost i el cost d’oportunitat a l’aula.',
+            category: 'Aula i avaluació'
+        },
+        {
             name: 'Atzar a l’aula',
             path: 'https://ja.cat/atzar',
             icon: 'Atzar/favicon.svg',

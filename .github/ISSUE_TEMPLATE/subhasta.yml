@@ -1,0 +1,43 @@
+name: Subhasta
+description: Comunica un error o proposa una millora per a l'aplicació Subhasta.
+title: "[Subhasta] "
+labels: ["Subhasta"]
+body:
+  - type: dropdown
+    id: tipus
+    attributes:
+      label: Tipus
+      options:
+        - Error
+        - Suggeriment
+        - Dubte
+    validations:
+      required: true
+  - type: textarea
+    id: descripcio
+    attributes:
+      label: Descripció
+      description: Explica què passa o què t'agradaria millorar.
+      placeholder: Escriu aquí el detall...
+    validations:
+      required: true
+  - type: input
+    id: espai
+    attributes:
+      label: Espai de l'aplicació
+      description: Indica on passa, si ho saps.
+      placeholder: Preparació, sala d'espera, comandament, projecció, terminal, resultats...
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos per reproduir-ho
+      description: Omple-ho només si es tracta d'un error.
+      placeholder: |
+        1. Obro...
+        2. Clico...
+        3. Veig...
+  - type: input
+    id: dispositiu
+    attributes:
+      label: Dispositiu i navegador
+      placeholder: Portàtil o Chromebook amb Chrome, pissarra digital, mòbil...

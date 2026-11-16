@@ -1,0 +1,807 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later AND CC-BY-NC-SA-4.0 -->
+<html lang="ca" data-theme="mercat">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f5f53">
+  <title>Subhasta · Subhasta oberta en temps real per a l’aula</title>
+  <meta name="description" content="Aplicació educativa de subhastes angleses obertes en temps real per treballar l’escassetat, l’oferta i la demanda, el pressupost i el cost d’oportunitat a l’aula.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estil.css?v=1.0.0">
+  <script type="module" src="js/app.js?v=1.0.0"></script>
+</head>
+<body>
+  <a class="skip-link" href="#contingut-principal">Salta al contingut principal</a>
+
+  <div id="app" class="app-carcassa">
+    <!-- CAPÇALERA -->
+    <header class="topbar" role="banner">
+      <div class="topbar-inner">
+        <div class="topbar-left">
+          <button type="button" class="brand" id="btn-inici" aria-label="Subhasta, torna a la portada">
+            <img class="brand-ic" src="assets/favicon.svg" alt="" aria-hidden="true">
+            <span class="brand-nom">Subhasta</span>
+          </button>
+
+          <div id="insignia-sala" class="insignia-sala" hidden>
+            <span class="insignia-etiqueta">Sala</span>
+            <strong id="insignia-codi" class="insignia-codi tabular">000 000</strong>
+            <button type="button" class="btn-mini" id="btn-copia-codi-top" title="Copia l’enllaç d’entrada">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>Copia l’enllaç</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Commutador de vistes ràpid quan hi ha sessió activa -->
+          <div id="nav-espais" class="nav-espais" role="group" aria-label="Espais de la sessió" hidden>
+            <button type="button" class="btn-espai" id="btn-nav-comandament" hidden>
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+              </svg>
+              <span>Comandament</span>
+            </button>
+            <button type="button" class="btn-espai" id="btn-nav-projeccio">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+              </svg>
+              <span>Projecció</span>
+            </button>
+            <button type="button" class="btn-espai" id="btn-nav-finestra-projeccio" title="Obre la projecció pública en una finestra nova">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              <span class="nom-curt-ocult">Finestra nova</span>
+            </button>
+          </div>
+
+          <!-- So de martell (només visible a la projecció, desactivat per defecte) -->
+          <button type="button" class="btn-top" id="btn-so-martell" aria-pressed="false" hidden title="So de martell en adjudicar (desactivat per defecte)">
+            <svg class="ic ic-so-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+              <path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+            </svg>
+            <svg class="ic ic-so-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/>
+            </svg>
+            <span>Martell</span>
+          </button>
+
+          <!-- Selector de les 3 direccions visuals (§9) -->
+          <div class="selector-tema" role="group" aria-label="Estil visual">
+            <button type="button" class="btn-tema actiu" data-tema="mercat" title="Estil Mercat (tons vegetals i càlids)">Mercat</button>
+            <button type="button" class="btn-tema" data-tema="llotja" title="Estil Llotja clara (fons blanc i tinta blava)">Llotja</button>
+            <button type="button" class="btn-tema" data-tema="fosca" title="Estil Sala fosca (pensat per al projector)">Sala fosca</button>
+          </div>
+
+          <button type="button" class="btn-top" id="btn-guia" title="Guia docent, regles i glossari">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.1-2.4 3.5"/>
+              <circle cx="12" cy="17.2" r="0.6" fill="currentColor"/>
+            </svg>
+            <span>Guia</span>
+          </button>
+
+          <button type="button" class="btn-top btn-sortir" id="btn-sortir" hidden title="Surt a la portada">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>
+            </svg>
+            <span>Surt</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTINGUT PRINCIPAL -->
+    <main id="contingut-principal" class="app-main" tabindex="-1">
+      <!-- BÀNER SENSE CONNEXIÓ -->
+      <div id="baner-connexio" class="baner-connexio" role="alert" hidden>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+        <span>Sense connexió. Les dades poden ser antigues.</span>
+      </div>
+
+      <!-- VISTA 1: INICI / PORTADA -->
+      <section id="vista-inici" class="vista vista-inici">
+        <div id="barra-reprendre" class="barra-reprendre" hidden>
+          <div class="barra-reprendre-info">
+            <span class="etiqueta-estat">Sessió recent</span>
+            <strong id="reprendre-titol">Mercat industrial</strong>
+            <span id="reprendre-codi" class="tabular"></span>
+          </div>
+          <div class="barra-reprendre-accions">
+            <button type="button" class="btn btn-primari btn-sm" id="btn-reprendre-ara">Continua</button>
+            <button type="button" class="btn btn-suau btn-sm" id="btn-descarta-reprendre">Oculta</button>
+          </div>
+        </div>
+
+        <div class="graella-inici">
+          <!-- COLUMNA ESQUERRA: ALUMNAT I PROJECCIÓ -->
+          <article class="panell panell-entrar">
+            <div class="panell-cap">
+              <span class="icona-cercle">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
+              </span>
+              <div>
+                <h1>Entra a una subhasta</h1>
+                <p class="subtext">Escriu el codi de 6 xifres que es projecta a l’aula i tria el teu àlies.</p>
+              </div>
+            </div>
+
+            <form id="form-entrar-participant" class="form-entrar" novalidate>
+              <div class="fila-camps-entrar">
+                <div class="camp-grup">
+                  <label for="input-codi-sala">Codi de sala (6 xifres)</label>
+                  <input id="input-codi-sala" class="input-codi tabular" type="text" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="482 915" required>
+                </div>
+                <div class="camp-grup">
+                  <label for="input-alies-participant">Àlies o nom d’equip (màx. 24)</label>
+                  <input id="input-alies-participant" type="text" maxlength="24" autocomplete="off" placeholder="Ex.: Anna o Equip 2" required>
+                </div>
+              </div>
+
+              <div class="accions-entrar">
+                <button type="submit" class="btn btn-primari btn-gran" id="btn-entrar-terminal">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+                  </svg>
+                  <span>Entra per participar</span>
+                </button>
+                <button type="button" class="btn btn-secundari" id="btn-entrar-projeccio">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                  </svg>
+                  <span>Projectar a l’aula</span>
+                </button>
+              </div>
+            </form>
+
+            <!-- Canvi d'aparell amb codi de 4 xifres -->
+            <div class="bloc-canvi-aparell">
+              <button type="button" class="btn-enllac" id="btn-mostra-canvi-aparell" aria-expanded="false">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+                <span>Ja hi participava · Tinc un codi de canvi d’aparell (4 xifres)</span>
+              </button>
+              <form id="form-canvi-aparell" class="fila-canvi-aparell" hidden novalidate>
+                <label for="input-codi-canvi" class="sr-only">Codi de canvi d’aparell de 4 xifres</label>
+                <input id="input-codi-canvi" class="tabular" type="text" inputmode="numeric" maxlength="4" placeholder="Codi de 4 xifres (ex. 7392)">
+                <button type="submit" class="btn btn-secundari btn-sm">Recupera la cartera</button>
+              </form>
+            </div>
+
+            <p id="error-inici-entrar" class="missatge-error" role="alert" hidden></p>
+          </article>
+
+          <!-- COLUMNA DRETA: ORGANITZADOR -->
+          <article class="panell panell-organitzador">
+            <div class="panell-cap">
+              <span class="icona-cercle icona-cercle-accent">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14 4l6 6-8 8-6-6 8-8z"/><path d="M4 20h16"/><path d="M12 12l-6 6"/>
+                </svg>
+              </span>
+              <div>
+                <h2>Dirigeix una subhasta</h2>
+                <p class="subtext">Prepara el catàleg i el repte, obre cada unitat en directe i adjudica-la quan decideixis.</p>
+              </div>
+            </div>
+
+            <div class="accions-organitzador-vertical">
+              <button type="button" class="btn btn-primari btn-gran btn-complet" id="btn-nova-subhasta">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                <span>Crea una subhasta nova</span>
+              </button>
+
+              <div class="fila-accions-org-secundaries">
+                <button type="button" class="btn btn-secundari btn-complet" id="btn-les-meves-subhastes">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 6h18M3 12h18M3 18h18"/>
+                  </svg>
+                  <span>Les meves subhastes</span>
+                  <span id="comptador-meves-subhastes" class="pastilla-num tabular">0</span>
+                </button>
+
+                <button type="button" class="btn btn-suau btn-complet" id="btn-assaig-rapid">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  <span>Assaig ràpid amb simulador</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="peu-organitzador-auth">
+              <div class="info-compte-org">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span id="estat-compte-org">Organitzador autoritzat actiu</span>
+              </div>
+              <button type="button" class="btn-enllac" id="btn-identifica-google">Canvia de compte Google</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- VISTA 2: LES MEVES SUBHASTES -->
+      <section id="vista-llista" class="vista vista-llista" hidden>
+        <div class="capcalera-vista">
+          <div>
+            <h1>Les meves subhastes</h1>
+            <p class="subtext">Les sessions es conserven durant 30 dies des de l’última activitat. Pots duplicar-les per a un altre grup o exportar-ne els CSV.</p>
+          </div>
+          <div class="capcalera-vista-accions">
+            <button type="button" class="btn btn-suau" id="btn-llista-tornar">← Portada</button>
+            <button type="button" class="btn btn-primari" id="btn-llista-nova">+ Nova subhasta</button>
+          </div>
+        </div>
+
+        <div id="contenedor-llista-sessions" class="llista-sessions"></div>
+      </section>
+
+      <!-- VISTA 3: PREPARACIÓ EN UNA SOLA PANTALLA -->
+      <section id="vista-preparacio" class="vista vista-preparacio" hidden>
+        <div class="capcalera-vista capcalera-preparacio">
+          <div class="titol-amb-estat">
+            <h1>Preparació de la subhasta</h1>
+            <span id="indicador-desament" class="indicador-desament" role="status" aria-live="polite">Desat automàticament ✓</span>
+          </div>
+          <div class="capcalera-vista-accions">
+            <button type="button" class="btn btn-suau btn-sm" id="btn-carrega-exemple">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Carrega «Mercat industrial»</span>
+            </button>
+            <button type="button" class="btn btn-suau btn-sm" id="btn-prep-meves">Les meves subhastes</button>
+            <button type="button" class="btn btn-primari" id="btn-anar-sala-espera">
+              <span>Obre la sala d’espera →</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="graella-preparacio">
+          <!-- Paràmetres generals i motor didàctic -->
+          <div class="panell panell-parametres">
+            <h2>1. Dades generals i repte didàctic</h2>
+            <div class="camp-grup">
+              <div class="etiqueta-amb-comptador">
+                <label for="prep-titol">Títol de la subhasta</label>
+                <span id="comptador-prep-titol" class="comptador-caracters tabular">0/60</span>
+              </div>
+              <input id="prep-titol" type="text" maxlength="60" required>
+              <p id="err-prep-titol" class="error-camp" hidden></p>
+            </div>
+
+            <div class="fila-3-camps">
+              <div class="camp-grup">
+                <label for="prep-pressupost">Pressupost inicial</label>
+                <input id="prep-pressupost" class="tabular" type="number" min="1" max="100000" step="1" required>
+                <p id="err-prep-pressupost" class="error-camp" hidden></p>
+              </div>
+              <div class="camp-grup">
+                <label for="prep-increment">Increment mínim</label>
+                <input id="prep-increment" class="tabular" type="number" min="1" max="100000" step="1" required>
+                <p id="err-prep-increment" class="error-camp" hidden></p>
+              </div>
+              <div class="camp-grup">
+                <label for="prep-moneda">Moneda (màx. 16)</label>
+                <input id="prep-moneda" type="text" maxlength="16" required>
+                <p id="err-prep-moneda" class="error-camp" hidden></p>
+              </div>
+            </div>
+
+            <div class="camp-grup">
+              <div class="etiqueta-amb-comptador">
+                <label for="prep-repte">Repte per a l’alumnat (visible a l’espera, terminal i projecció)</label>
+                <span id="comptador-prep-repte" class="comptador-caracters tabular">0/280</span>
+              </div>
+              <textarea id="prep-repte" rows="2" maxlength="280" placeholder="Ex.: Sou una fàbrica. Necessiteu carbó, ferro, cotó i fusta per produir. Cada moneda que us sobri també compta."></textarea>
+              <p id="err-prep-repte" class="error-camp" hidden></p>
+            </div>
+
+            <div class="caixa-puntuacio-opcional">
+              <div class="fila-check-puntuacio">
+                <label class="switch-label">
+                  <input id="prep-puntuacio-activa" type="checkbox">
+                  <span><strong>Puntuació final opcional</strong> (valor dels objectes + bonificació per conjunt complet + saldo)</span>
+                </label>
+              </div>
+              <div id="bloc-bonificacio-conjunt" class="fila-bonificacio">
+                <label for="prep-bonificacio-conjunt">Bonificació per cada conjunt complet (1 unitat de cada objecte):</label>
+                <input id="prep-bonificacio-conjunt" class="tabular input-curt" type="number" min="0" max="100000" step="10" value="200">
+                <span class="subtext">punts</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Taula d'objectes -->
+          <div class="panell panell-objectes">
+            <div class="cap-taula-objectes">
+              <div>
+                <h2>2. Catàleg d’objectes a subhastar</h2>
+                <p id="resum-capacitat-prep" class="subtext tabular">4 objectes · 14 unitats totals (màxim 12 objectes i 60 unitats)</p>
+              </div>
+              <button type="button" class="btn btn-secundari btn-sm" id="btn-afegir-objecte">+ Afegeix un objecte</button>
+            </div>
+
+            <p id="err-prep-objectes" class="missatge-error" role="alert" hidden></p>
+
+            <div class="taula-objectes-wrap">
+              <table class="taula-objectes" aria-label="Objectes del catàleg">
+                <thead>
+                  <tr>
+                    <th scope="col" class="col-icona">Icona / imatge</th>
+                    <th scope="col">Nom i descripció breu</th>
+                    <th scope="col" class="col-num">Unitats</th>
+                    <th scope="col" class="col-num">Sortida</th>
+                    <th scope="col" class="col-num" id="th-valor-punts">Valor (opc.)</th>
+                    <th scope="col" class="col-accions"><span class="sr-only">Accions</span></th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-prep-objectes"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 4: SALA D'ESPERA -->
+      <section id="vista-espera" class="vista vista-espera" hidden>
+        <div class="graella-espera">
+          <!-- Columna esquerra: Accés ràpid a l'aula i catàleg -->
+          <div class="panell panell-acces-espera">
+            <div class="targeta-codi-gegant">
+              <div class="codi-gegant-info">
+                <span class="etiqueta-pas">Pas 1 · Entra des del portàtil o Chromebook</span>
+                <div class="adreca-gegant">ja.cat/subhasta</div>
+                <div class="codi-sala-display">
+                  <span class="codi-etiqueta">Codi de sala:</span>
+                  <strong id="espera-codi-6" class="codi-6-xifres tabular">482 915</strong>
+                </div>
+                <div class="accions-compartir-espera">
+                  <button type="button" class="btn btn-primari btn-sm" id="btn-copia-classroom">
+                    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    <span>Copia l’enllaç per al Classroom</span>
+                  </button>
+                  <button type="button" class="btn btn-secundari btn-sm" id="btn-espera-projeccio">
+                    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                    </svg>
+                    <span>Obre la projecció</span>
+                  </button>
+                </div>
+              </div>
+              <div class="qr-caixa" id="espera-qr-svg" aria-label="Codi QR d'entrada a la sala"></div>
+            </div>
+
+            <div class="repte-destacat" id="espera-repte-bloc">
+              <span class="repte-etiqueta">Repte de la sessió</span>
+              <p id="espera-repte-text"></p>
+            </div>
+
+            <div class="espera-cataleg-i-glossari">
+              <div>
+                <h3>Catàleg inicial (<span id="espera-resum-pressupost" class="tabular"></span>)</h3>
+                <ul id="espera-llista-objectes" class="llista-objectes-compacta"></ul>
+              </div>
+              <div class="glossari-compacte">
+                <h3>Vocabulari clau</h3>
+                <dl class="dl-glossari-breu">
+                  <div><dt>Licitar / oferta (dita)</dt><dd>Oferir un import superior per comprar la unitat en joc.</dd></div>
+                  <div><dt>Increment</dt><dd>Quantitat mínima que cal sumar a l’oferta anterior.</dd></div>
+                  <div><dt>Adjudicar</dt><dd>Vendre definitivament la unitat a qui lidera quan s’aturen les ofertes.</dd></div>
+                </dl>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna dreta: Participants inscrits i comandament d'inici -->
+          <div class="panell panell-participants-espera">
+            <div class="cap-participants-espera">
+              <div>
+                <h2>Participants a la sala (<span id="espera-num-participants" class="tabular">0</span>/40)</h2>
+                <p class="subtext">Els àlies apareixen a l’instant. Pots corregir un nom o treure algú amb un clic.</p>
+              </div>
+              <label class="switch-inscripcions">
+                <input type="checkbox" id="check-inscripcions-espera" checked>
+                <span id="txt-inscripcions-espera">Inscripcions obertes</span>
+              </label>
+            </div>
+
+            <div id="llista-participants-espera" class="graella-alies-espera" aria-live="polite"></div>
+
+            <!-- Barra d'assaig amb simulador -->
+            <div id="barra-simulador-espera" class="caixa-simulador">
+              <div class="simulador-text">
+                <strong>Assaig amb participants simulats</strong>
+                <span>Afegeix alumnat virtual per provar la subhasta o assajar sol.</span>
+              </div>
+              <div class="simulador-botons">
+                <button type="button" class="btn btn-suau btn-sm" id="btn-sim-afegir-6">+6 simulats</button>
+                <button type="button" class="btn btn-suau btn-sm" id="btn-sim-afegir-40">Omple fins a 40</button>
+              </div>
+            </div>
+
+            <div id="accions-org-espera" class="peu-accions-espera">
+              <button type="button" class="btn btn-suau" id="btn-tornar-preparacio">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <span>Edita la configuració</span>
+              </button>
+              <button type="button" class="btn btn-primari btn-gran" id="btn-comencar-subhasta">
+                <span>Comença la subhasta →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 5: COMANDAMENT DE L'ORGANITZADOR -->
+      <section id="vista-comandament" class="vista vista-comandament" hidden>
+        <div class="graella-comandament">
+          <!-- Columna principal: Control de la licitació i catàleg -->
+          <div class="comandament-principal">
+            <!-- Targeta d'acció principal única segons el moment (§1 i §7) -->
+            <div id="targeta-control-directe" class="panell targeta-control-directe"></div>
+
+            <!-- Catàleg per obrir qualsevol objecte disponible -->
+            <div class="panell panell-cataleg-comandament">
+              <div class="cap-cataleg-comandament">
+                <div>
+                  <h2>Catàleg i unitats disponibles</h2>
+                  <p class="subtext">Pots obrir la unitat proposada o qualsevol altre objecte amb existències.</p>
+                </div>
+                <div class="accions-secundaries-comandament">
+                  <button type="button" class="btn btn-suau btn-sm" id="btn-cmd-desfer" hidden>
+                    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                    </svg>
+                    <span id="txt-cmd-desfer">Desfés l’última adjudicació</span>
+                  </button>
+                  <button type="button" class="btn btn-suau btn-sm" id="btn-cmd-reiniciar">Tornar a començar</button>
+                  <button type="button" class="btn btn-perill-suau btn-sm" id="btn-cmd-finalitzar">Finalitza la subhasta</button>
+                </div>
+              </div>
+
+              <div id="graella-cataleg-comandament" class="graella-objectes-cmd"></div>
+            </div>
+          </div>
+
+          <!-- Panell lateral: Participants, saldos, compres, inscripcions i canvi d'aparell -->
+          <aside class="panell panell-lateral-comandament" aria-label="Participants i carteres">
+            <div class="cap-lateral-cmd">
+              <div>
+                <h2>Participants (<span id="cmd-num-participants" class="tabular">0</span>)</h2>
+                <span id="cmd-ronda-badge" class="pastilla-ronda">Ronda 1</span>
+              </div>
+              <label class="switch-inscripcions switch-sm">
+                <input type="checkbox" id="check-inscripcions-cmd">
+                <span id="txt-inscripcions-cmd">Inscripcions tancades</span>
+              </label>
+            </div>
+
+            <!-- Control del simulador en directe -->
+            <div class="barra-sim-cmd">
+              <label class="switch-inscripcions switch-sm">
+                <input type="checkbox" id="check-sim-actiu">
+                <span>Ofertes automàtiques (bots)</span>
+              </label>
+              <button type="button" class="btn-mini" id="btn-cmd-afegir-bots">+5 bots</button>
+            </div>
+
+            <div id="llista-carteres-comandament" class="llista-carteres-cmd"></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- VISTA 6: PROJECCIÓ PÚBLICA (i Mode de presentació) -->
+      <section id="vista-projeccio" class="vista vista-projeccio" hidden>
+        <div class="projeccio-capcalera-interna">
+          <div class="proj-titol-bloc">
+            <span class="proj-marca">SUBHASTA</span>
+            <span class="proj-sep">·</span>
+            <h1 id="proj-titol-sessio">Mercat industrial</h1>
+            <span id="proj-ronda-tag" class="pastilla-ronda">Ronda 1</span>
+          </div>
+          <div class="proj-acces-bloc">
+            <span class="proj-url">ja.cat/subhasta</span>
+            <span class="proj-sep">·</span>
+            <strong id="proj-codi-sala" class="proj-codi tabular">482 915</strong>
+            <button type="button" class="btn-mini" id="btn-proj-mode-presentacio" title="Mostra o oculta la barra de controls per a un sol ordinador duplicat">
+              <span>Mode presentació</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="graella-projeccio">
+          <!-- Escenari principal de la unitat en joc (Jerarquia: import -> objecte -> líder -> estat -> context) -->
+          <div id="proj-escenari-unitat" class="panell proj-escenari" aria-live="polite"></div>
+
+          <!-- Taula de catàleg d'ordre fix -->
+          <aside class="panell proj-cataleg-panell" aria-label="Catàleg d'objectes">
+            <div class="proj-cataleg-cap">
+              <h2>Catàleg</h2>
+              <span id="proj-seguent-indicador" class="proj-seguent"></span>
+            </div>
+            <table class="taula-proj-cataleg">
+              <thead>
+                <tr>
+                  <th scope="col">Objecte</th>
+                  <th scope="col" class="col-num">Queden</th>
+                  <th scope="col" class="col-num">Darrer preu</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-proj-cataleg"></tbody>
+            </table>
+
+            <div id="proj-repte-caixa" class="proj-repte-caixa">
+              <span class="repte-etiqueta">Repte</span>
+              <p id="proj-repte-text"></p>
+            </div>
+          </aside>
+        </div>
+
+        <!-- Barra compacta per al «Mode de presentació» (un sol ordinador duplicat, sense mostrar saldos) -->
+        <div id="barra-mode-presentacio" class="barra-mode-presentacio" hidden></div>
+      </section>
+
+      <!-- VISTA 7: TERMINAL DEL PARTICIPANT (disseny principal 1366x768, responsiu a mòbil) -->
+      <section id="vista-terminal" class="vista vista-terminal" hidden>
+        <!-- Franja superior de cartera i repte -->
+        <div class="terminal-capcalera">
+          <div class="terminal-identitat">
+            <span class="terminal-avatar" aria-hidden="true">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <div>
+              <span id="term-alies" class="term-alies-nom">Anna</span>
+              <span class="term-pressupost-detall tabular" id="term-gastat-resum">Gastat: 0 de 1.000</span>
+            </div>
+          </div>
+
+          <div class="terminal-saldo-destacat">
+            <span class="saldo-etiqueta">Saldo disponible:</span>
+            <strong id="term-saldo-valor" class="saldo-xifra tabular">1.000 monedes</strong>
+          </div>
+
+          <div class="terminal-repte-top" id="term-repte-caixa">
+            <span class="repte-etiqueta">Repte:</span>
+            <span id="term-repte-text"></span>
+          </div>
+        </div>
+
+        <div class="graella-terminal">
+          <!-- Columna esquerra: Licitació en directe i botons d'oferta -->
+          <div class="panell panell-licitar-terminal">
+            <div id="term-unitat-cap" class="term-unitat-cap"></div>
+
+            <!-- Missatge d'estat persistent (§7: es manté a la pantalla, no depèn d'avisos efímers) -->
+            <div id="term-missatge-estat" class="term-missatge-estat" role="status" aria-live="polite"></div>
+
+            <!-- Zona de botons d'oferta (3 botons + selector - / +) -->
+            <div id="term-zona-botons" class="term-zona-botons">
+              <button type="button" class="btn-oferta-principal" id="btn-oferta-1">
+                <span class="btn-oferta-accio" id="lbl-oferta-1">Oferir 20 monedes</span>
+                <span class="btn-oferta-sub tabular" id="sub-oferta-1">Si guanyes, et quedaran 980</span>
+              </button>
+
+              <div class="fila-ofertes-rapides">
+                <button type="button" class="btn-oferta-rapida tabular" id="btn-oferta-2">Oferir 30</button>
+                <button type="button" class="btn-oferta-rapida tabular" id="btn-oferta-3">Oferir 60</button>
+              </div>
+
+              <div class="fila-selector-import">
+                <span class="etiqueta-altre-import">Un altre import:</span>
+                <div class="grup-selector-pas">
+                  <button type="button" class="btn-pas" id="btn-pas-menys" aria-label="Baixa un increment">−</button>
+                  <output id="out-import-selector" class="valor-selector tabular" aria-live="off">20</output>
+                  <button type="button" class="btn-pas" id="btn-pas-mes" aria-label="Puja un increment">+</button>
+                </div>
+                <button type="button" class="btn btn-secundari tabular" id="btn-oferta-selector">Oferir 20</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna dreta: Les meves compres i Catàleg -->
+          <div class="terminal-columna-dreta">
+            <section class="panell panell-compres-terminal" aria-labelledby="titol-meves-compres">
+              <div class="cap-seccio-term">
+                <h2 id="titol-meves-compres">Les meves compres</h2>
+                <span id="term-punts-badge" class="pastilla-punts tabular" hidden></span>
+              </div>
+              <ul id="term-llista-compres" class="llista-compres-term"></ul>
+            </section>
+
+            <section class="panell panell-cataleg-terminal" aria-labelledby="titol-cataleg-term">
+              <div class="cap-seccio-term">
+                <h2 id="titol-cataleg-term">Catàleg</h2>
+                <span id="term-seguent-obj" class="subtext"></span>
+              </div>
+              <ul id="term-llista-cataleg" class="llista-cataleg-term"></ul>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 8: RESULTATS FINALS, GRÀFIC DE PREUS I REFLEXIÓ -->
+      <section id="vista-resultats" class="vista vista-resultats" hidden>
+        <div class="capcalera-vista">
+          <div>
+            <span class="etiqueta-estat">Subhasta finalitzada</span>
+            <h1 id="res-titol-sessio">Resultats · Mercat industrial</h1>
+          </div>
+          <div id="res-accions-organitzador" class="capcalera-vista-accions" hidden>
+            <button type="button" class="btn btn-secundari btn-sm" id="btn-csv-participants">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>CSV Participants</span>
+            </button>
+            <button type="button" class="btn btn-secundari btn-sm" id="btn-csv-adjudicacions">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>CSV Adjudicacions</span>
+            </button>
+            <button type="button" class="btn btn-suau btn-sm" id="btn-res-nova-ronda">Tornar a començar (nova ronda)</button>
+            <button type="button" class="btn btn-suau btn-sm" id="btn-res-duplicar">Duplica la sessió</button>
+          </div>
+        </div>
+
+        <!-- Balanç propi quan qui ho mira és un participant -->
+        <div id="res-balanc-personal" class="panell res-balanc-personal" hidden></div>
+
+        <div class="graella-resultats">
+          <!-- Gràfic d'evolució de preus per unitat successiva + taula equivalent -->
+          <div class="panell panell-grafic-preus">
+            <h2>Evolució dels preus unitat a unitat</h2>
+            <p class="subtext">Preu d’adjudicació de cada unitat successiva venuda de cada objecte.</p>
+            <div id="contenedor-grafic-svg" class="contenedor-grafic-svg" role="img" aria-label="Gràfic d'evolució dels preus per unitat"></div>
+            <div class="taula-resum-objectes-wrap">
+              <table class="taula-resum-objectes" aria-label="Taula equivalent de preus per objecte">
+                <thead>
+                  <tr>
+                    <th scope="col">Objecte</th>
+                    <th scope="col" class="col-num">Venudes</th>
+                    <th scope="col">Preus successius</th>
+                    <th scope="col" class="col-num">Preu mitjà</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-res-objectes"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Preguntes de tancament i balanç de participants -->
+          <div class="columna-dreta-resultats">
+            <div class="panell panell-preguntes-reflexio">
+              <h2>Preguntes per a la reflexió a l’aula</h2>
+              <ol id="llista-preguntes-reflexio" class="llista-preguntes"></ol>
+            </div>
+
+            <div id="panell-res-participants" class="panell panell-res-participants">
+              <div class="cap-res-participants">
+                <h2>Balanç dels participants</h2>
+                <label id="lbl-switch-classificacio" class="switch-inscripcions switch-sm" hidden>
+                  <input type="checkbox" id="check-mostrar-classificacio">
+                  <span>Mostra a la projecció</span>
+                </label>
+              </div>
+              <div id="contingut-res-participants"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- PEU D'AUTORIA I LLICÈNCIA DOBLE -->
+    <footer class="felip-app-footer">
+      <a class="felip-license-image-link"
+         href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca"
+         target="_blank"
+         rel="noopener noreferrer"
+         aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+        <img class="felip-license-image"
+             src="assets/CC_BY-NC-SA.png"
+             alt="Creative Commons BY-NC-SA">
+      </a>
+      <div class="felip-footer-text">
+        <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+        <p>Codi: <a href="https://github.com/felipsarroca/util-apps/blob/main/Subhasta/LICENSE" target="_blank" rel="noopener noreferrer">AGPLv3</a> · Continguts: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> · <a href="https://github.com/felipsarroca/util-apps/issues/new?template=subhasta.yml" target="_blank" rel="noopener noreferrer">Suggeriments i errors</a></p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- MODAL: GUIA DOCENT, REGLES I PRIVACITAT -->
+  <dialog id="modal-guia" class="modal-dialeg" aria-labelledby="titol-modal-guia">
+    <div class="modal-caixa">
+      <div class="modal-cap">
+        <h2 id="titol-modal-guia">Guia docent, vocabulari i privadesa</h2>
+        <button type="button" class="btn-tancar-modal" data-tanca="modal-guia" aria-label="Tanca la finestra">✕</button>
+      </div>
+      <div class="modal-cos">
+        <section class="guia-seccio">
+          <h3>Com funciona la subhasta a l’aula</h3>
+          <div class="graella-passos-guia">
+            <div class="pas-guia">
+              <span class="pas-num">1</span>
+              <div>
+                <strong>Abans (5 min)</strong>
+                <p>Recomanat per a 12–20 unitats totals i equips de 2 o 3 persones en un portàtil o Chromebook. L’alumnat entra a <code>ja.cat/subhasta</code> amb el codi de 6 xifres i llegeix el repte.</p>
+              </div>
+            </div>
+            <div class="pas-guia">
+              <span class="pas-num">2</span>
+              <div>
+                <strong>Durant (15–25 min)</strong>
+                <p>Cada unitat se subhasta per separat. El saldo no baixa mentre es licita, sinó només quan s’adjudica la compra. La primera unitat es pot fer servir com a ronda de prova i després prémer «Tornar a començar».</p>
+              </div>
+            </div>
+            <div class="pas-guia">
+              <span class="pas-num">3</span>
+              <div>
+                <strong>Després (10 min)</strong>
+                <p>Observeu el gràfic de preus unitat a unitat i responeu les tres preguntes finals sobre escassetat, cost d’oportunitat i estratègia.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="guia-seccio">
+          <h3>Vincle curricular (Decret 175/2022)</h3>
+          <p class="text-justificat">Activitat alineada amb el <strong>Decret 175/2022, de 27 de setembre, d’ordenació dels ensenyaments de l’educació bàsica</strong>:</p>
+          <ul class="llista-curriculum">
+            <li><strong>Economia Bàsica (4t d’ESO) — Competència específica 1:</strong> «Reconèixer els rols individuals i col·lectius de les persones dintre del sistema econòmic i constituir dinàmiques de participació ciutadana, prenent consciència de la interdependència dels factors econòmics, per valorar les desigualtats en l’accés als recursos i la distribució de la riquesa.»</li>
+            <li><strong>Economia Bàsica (4t d’ESO) — Competència específica 5:</strong> «Dissenyar un pla financer personal i/o familiar, aplicant estratègies de planificació i presa de decisions, avaluant-ne la coherència i consistència al llarg del temps, per donar resposta a les necessitats vitals presents i futures, i millorar la qualitat de vida.»</li>
+            <li><strong>Emprenedoria (ESO) — Competència específica 5:</strong> «Dissenyar solucions emprenedores, creatives i sostenibles, utilitzant metodologies àgils i actives d’innovació, per respondre a reptes o necessitats de l’entorn.»</li>
+            <li><strong>Ciències Socials: Geografia i Història (ESO) — Competència específica 2:</strong> «Indagar i argumentar a partir de problemes socials rellevants, locals i globals, per comprendre la complexitat del món actual i fomentar el pensament crític i el compromís cívic.»</li>
+          </ul>
+        </section>
+
+        <section class="guia-seccio">
+          <h3>Glossari de la sala</h3>
+          <dl id="modal-dl-glossari" class="dl-glossari-modal"></dl>
+        </section>
+
+        <section class="guia-seccio guia-privadesa">
+          <h3>Privadesa i conservació</h3>
+          <p class="text-justificat">No es demana cap dada personal a l’alumnat: només un àlies triat per a l’activitat i un identificador tècnic anònim. Les dades s’allotgen a Firebase Firestore a la Unió Europea (<code>eur3</code>) i caduquen automàticament 30 dies després de finalitzar la sessió o de l’última acció de l’organitzador.</p>
+        </section>
+      </div>
+      <div class="modal-peu">
+        <button type="button" class="btn btn-primari" data-tanca="modal-guia">Entesos</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- MODAL: CONFIRMACIÓ / CANVI D'APARELL / EDICIÓ D'ÀLIES -->
+  <dialog id="modal-accio" class="modal-dialeg" aria-labelledby="titol-modal-accio">
+    <div class="modal-caixa modal-caixa-estreta">
+      <div class="modal-cap">
+        <h2 id="titol-modal-accio">Confirmació</h2>
+        <button type="button" class="btn-tancar-modal" data-tanca="modal-accio" aria-label="Tanca">✕</button>
+      </div>
+      <div id="cos-modal-accio" class="modal-cos"></div>
+      <div id="peu-modal-accio" class="modal-peu"></div>
+    </div>
+  </dialog>
+</body>
+</html>
