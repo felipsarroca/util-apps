@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* Controlador principal d'interfície, adaptació de pantalla, gràfic de preus i accessibilitat de Subhasta */
 
-import { LIMITS, STORAGE_KEYS } from './config.js?v=1.1.0';
-import { TEXTOS, ICONES, EXEMPLE_MERCAT_INDUSTRIAL, fmtNum, renderIconaSvg } from './textos.js?v=1.1.0';
+import { LIMITS, STORAGE_KEYS } from './config.js?v=1.2.0';
+import { TEXTOS, ICONES, EXEMPLE_MERCAT_INDUSTRIAL, fmtNum, renderIconaSvg } from './textos.js?v=1.2.0';
 import {
   netejaText,
   validaConfiguracio,
@@ -11,17 +11,17 @@ import {
   calculaPuntuacioParticipant,
   generaCsvParticipants,
   generaCsvAdjudicacions
-} from './domini.js?v=1.1.0';
+} from './domini.js?v=1.2.0';
 import {
   GestorSubhasta,
   normalitzaCodiSala,
   formatCodiSala,
   esCodiSalaComplet,
   getCorreuOrganitzador,
-  setCorreuOrganitzador
-} from './emmagatzematge.js?v=1.1.0';
-import { renderQrSvg } from './qr.js?v=1.1.0';
-import { soMartell } from './audio.js?v=1.1.0';
+  preparaIdentitat
+} from './emmagatzematge.js?v=1.2.0';
+import { renderQrSvg } from './qr.js?v=1.2.0';
+import { soMartell } from './audio.js?v=1.2.0';
 
 const gestor = new GestorSubhasta();
 
@@ -237,13 +237,23 @@ function redueixImatgeAlNavegador(file) {
   });
 }
 
+// «de» o «d’» segons la paraula següent (d’Anna, d’Equip Roure, de Marc)
+function deNom(nom) {
+  return /^(h?[aeiouàèéíòóúAEIOUÀÈÉÍÒÓÚ]|H[aeiouàèéíòóú])/.test(String(nom || '')) ? `d’${nom}` : `de ${nom}`;
+}
+
 /* ============================================================
    6. Vista 1: Portada i Vista 2: Les meves subhastes
    ============================================================ */
 async function actualitzaPortada() {
   const correu = getCorreuOrganitzador();
-  $('estat-compte-org').textContent = correu ? `Organitzador: ${correu}` : 'Només per a docents autoritzats';
-  $('btn-identifica-google').textContent = correu ? 'Canvia de compte Google' : 'Identifica’t amb Google';
+  $('estat-compte-org').textContent = correu
+    ? `Subhastes vinculades a ${correu}`
+    : 'Les teves subhastes es desen en aquest navegador';
+  $('btn-identifica-google').textContent = correu ? 'Desvincula' : 'Vincula-les a Google';
+  $('btn-identifica-google').title = correu
+    ? 'Aquest navegador deixa d’estar vinculat. Les subhastes continuen al teu compte de Google.'
+    : 'Opcional: per obrir les teves subhastes des d’un altre ordinador amb el teu compte de Google';
 
   const sessions = await gestor.llistaLesMevesSubhastes();
   $('comptador-meves-subhastes').textContent = String(sessions.length);
@@ -386,15 +396,15 @@ function renderFilesObjectesPreparacio() {
           </div>
         </td>
         <td class="col-num">
-          <input type="number" class="inp-obj-quantitat tabular" data-idx="${idx}" min="1" max="60" step="1" value="${obj.quantitat}" aria-label="Quantitat de ${escHtml(obj.nom)}">
+          <input type="number" class="inp-obj-quantitat tabular" data-idx="${idx}" min="1" max="60" step="1" value="${obj.quantitat}" aria-label="Quantitat ${deNom(escHtml(obj.nom))}">
           <p class="error-camp err-obj-quantitat" data-idx="${idx}" hidden></p>
         </td>
         <td class="col-num">
-          <input type="number" class="inp-obj-sortida tabular" data-idx="${idx}" min="1" max="100000" step="${esb.increment || 1}" value="${obj.preuSortida}" aria-label="Preu de sortida de ${escHtml(obj.nom)}">
+          <input type="number" class="inp-obj-sortida tabular" data-idx="${idx}" min="1" max="100000" step="${esb.increment || 1}" value="${obj.preuSortida}" aria-label="Preu de sortida ${deNom(escHtml(obj.nom))}">
           <p class="error-camp err-obj-sortida" data-idx="${idx}" hidden></p>
         </td>
         <td class="col-num" ${esb.puntuacioActiva ? '' : 'hidden'}>
-          <input type="number" class="inp-obj-valor tabular" data-idx="${idx}" min="0" max="100000" step="10" value="${obj.valor ?? 0}" aria-label="Valor en punts de ${escHtml(obj.nom)}">
+          <input type="number" class="inp-obj-valor tabular" data-idx="${idx}" min="0" max="100000" step="10" value="${obj.valor ?? 0}" aria-label="Valor en punts ${deNom(escHtml(obj.nom))}">
         </td>
         <td class="col-accions">
           <button type="button" class="btn-xip btn-eliminar-obj" data-idx="${idx}" title="Elimina l'objecte" ${esb.objectes.length <= 1 ? 'disabled' : ''}>✕</button>
@@ -557,7 +567,7 @@ function renderSalaEspera(dades) {
           ${
             esOrganitzador
               ? `<span class="xip-accions">
-                  <button type="button" class="btn-xip" data-accio-part="renomena" data-uid="${p.uid}" data-alies="${escHtml(p.alies)}" title="Canvia l’àlies" aria-label="Canvia l’àlies de ${escHtml(p.alies)}">${IC.editar}</button>
+                  <button type="button" class="btn-xip" data-accio-part="renomena" data-uid="${p.uid}" data-alies="${escHtml(p.alies)}" title="Canvia l’àlies" aria-label="Canvia l’àlies ${deNom(escHtml(p.alies))}">${IC.editar}</button>
                   <button type="button" class="btn-xip btn-xip-perill" data-accio-part="treu" data-uid="${p.uid}" data-alies="${escHtml(p.alies)}" title="Treu de la sala" aria-label="Treu ${escHtml(p.alies)} de la sala">${IC.treure}</button>
                 </span>`
               : ''
@@ -771,8 +781,8 @@ function renderComandament(dades) {
               <span class="subtext" style="font-size:0.78rem;">${escHtml(compresTxt)}</span>
             </div>
             <div class="fila-cartera-accions">
-              <button type="button" class="btn-xip" data-accio-part="canvi-aparell" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Codi de 4 xifres per canviar d’aparell" aria-label="Canvi d’aparell de ${escHtml(c.alies)}">${IC.aparell}</button>
-              <button type="button" class="btn-xip" data-accio-part="renomena" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Canvia l’àlies" aria-label="Canvia l’àlies de ${escHtml(c.alies)}">${IC.editar}</button>
+              <button type="button" class="btn-xip" data-accio-part="canvi-aparell" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Codi de 4 xifres per canviar d’aparell" aria-label="Canvi d’aparell ${deNom(escHtml(c.alies))}">${IC.aparell}</button>
+              <button type="button" class="btn-xip" data-accio-part="renomena" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Canvia l’àlies" aria-label="Canvia l’àlies ${deNom(escHtml(c.alies))}">${IC.editar}</button>
               <button type="button" class="btn-xip btn-xip-perill" data-accio-part="treu" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Treu de la sessió" aria-label="Treu ${escHtml(c.alies)} de la sessió">${IC.treure}</button>
             </div>
           </div>
@@ -1734,26 +1744,31 @@ function inicialitzaEsdeveniments() {
   });
 
   $('btn-identifica-google').addEventListener('click', async () => {
+    const btn = $('btn-identifica-google');
+    btn.disabled = true;
     try {
-      const email = await gestor.iniciaSessioGoogle();
-      $('estat-compte-org').textContent = `Organitzador: ${email}`;
+      if (getCorreuOrganitzador()) {
+        await gestor.desvinculaGoogle();
+      } else {
+        await gestor.vinculaGoogle();
+      }
     } catch (err) {
-      obreModalAccio({
-        titol: 'Identificació d’organitzador',
-        htmlCos: `
-          <p>${escHtml(err.message || 'S’utilitza la sessió local autoritzada.')}</p>
-          <div class="camp-grup" style="margin-top:0.5rem;">
-            <label for="inp-correu-org-manual">Correu autoritzat (@ramonpont.cat o @gmail.com)</label>
-            <input id="inp-correu-org-manual" type="text" value="${escHtml(getCorreuOrganitzador() || 'felip.sarroca@ramonpont.cat')}">
-          </div>
-        `,
-        textConfirmar: 'Desa el compte',
-        onConfirm: () => {
-          const v = $('inp-correu-org-manual')?.value;
-          if (v) setCorreuOrganitzador(v);
-          actualitzaPortada();
-        }
-      });
+      const codi = err?.code || '';
+      if (codi !== 'auth/popup-closed-by-user' && codi !== 'auth/cancelled-popup-request') {
+        obreModalAccio({
+          titol: 'Vinculació amb Google',
+          htmlCos: `<p>${escHtml(
+            codi === 'auth/popup-blocked'
+              ? 'El navegador ha blocat la finestra de Google. Permet les finestres emergents d’aquesta pàgina i torna-ho a provar.'
+              : 'No s’ha pogut vincular amb Google. Pots continuar sense: les teves subhastes es desen en aquest navegador.'
+          )}</p>`,
+          textConfirmar: 'D’acord',
+          onConfirm: () => {}
+        });
+      }
+    } finally {
+      btn.disabled = false;
+      actualitzaPortada();
     }
   });
 
@@ -2185,6 +2200,8 @@ function inicialitzaEsdeveniments() {
 async function arrencaApp() {
   inicialitzaEsdeveniments();
   ajustaEscalaPantalla();
+  // Identitat anònima de Firebase (qui crea una subhasta n'és el propietari)
+  await preparaIdentitat(6000);
 
   // Comprova paràmetres d'URL immediatament (?codi=K7QM o ?vista=projeccio&codi=K7QM)
   const params = new URLSearchParams(window.location.search);

@@ -31,7 +31,7 @@ export const TEXTOS = {
     orgDesc: 'Prepara els objectes, obre la sala d’espera i dirigeix les licitacions.',
     btnLesMevesSubhastes: 'Les meves subhastes',
     btnNovaSubhasta: 'Crea una subhasta nova',
-    btnEntraGoogle: 'Identifica’t amb Google',
+    btnEntraGoogle: 'Vincula-les a Google',
     btnAssaigRapid: 'Prova ràpida amb l’exemple «Mercat industrial»'
   },
 
@@ -98,7 +98,7 @@ export const TEXTOS = {
   // Privadesa (§10)
   privadesa: {
     titol: 'Privadesa i conservació de dades',
-    resum: 'L’alumnat no introdueix cap dada personal: només un àlies triat per a la sessió i un identificador tècnic anònim. L’organitzador s’identifica amb el seu compte autoritzat. Les dades es desen a Firebase Firestore dins la Unió Europea (regió eur3) i caduquen automàticament al cap de 30 dies de finalitzar la sessió o de l’última activitat.'
+    resum: 'L’alumnat no introdueix cap dada personal: només un àlies triat per a la sessió i un identificador tècnic anònim. Qualsevol docent pot organitzar una subhasta sense compte; opcionalment, la pot vincular al seu compte de Google per dirigir-la des d’un altre ordinador. Les dades es desen a Firebase Firestore dins la Unió Europea (regió eur3) i caduquen automàticament al cap de 30 dies de finalitzar la sessió o de l’última activitat.'
   }
 };
 

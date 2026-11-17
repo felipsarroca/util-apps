@@ -1,6 +1,6 @@
 # Subhasta: document de disseny
 
-Revisió: 17 de novembre de 2026 (codi de sala de 4 caràcters, a petició de Felip). Estat: planificació aprovada per Felip i aplicació implementada, verificada i publicada a `ja.cat/subhasta`. Aquest és l'únic document de disseny del projecte: substitueix la planificació anterior i l'antic `ESPECIFICACIO.md`.
+Revisió: 17 de novembre de 2026 (codi de sala de 4 caràcters i organització oberta a tothom, a petició de Felip). Estat: planificació aprovada per Felip i aplicació implementada, verificada i publicada a `ja.cat/subhasta`. Aquest és l'únic document de disseny del projecte: substitueix la planificació anterior i l'antic `ESPECIFICACIO.md`.
 
 ## 1. La idea que ho guia tot
 
@@ -28,14 +28,14 @@ Felip va aprovar aplicar totes les propostes de l'auditoria. Queden així:
 | Cost | Pla gratuït de Firebase, en un projecte propi separat de `flota-naval-cat` |
 | Aparell de l'alumnat | El disseny principal és el portàtil o Chromebook a 1366 × 768; el mòbil és una disposició responsiva secundària |
 | Motor didàctic | Camp «Repte», puntuació opcional i gràfic final de preus a la primera versió |
-| Qui pot crear subhastes | Només els comptes de Google d'una llista de correus autoritzats |
+| Qui pot crear subhastes | Qualsevol persona, sense compte; qui la crea n'és el propietari i l'únic que la dirigeix (canvi decidit per Felip el 17-11-2026; abans, només una llista de correus autoritzats) |
 | Imatges | Biblioteca d'icones de línia integrada i pujada opcional reduïda al mateix navegador |
 | Imports | Enters i sempre múltiples de l'increment a partir del preu de sortida |
 | Licitar | Tres botons amb l'import total i un selector − / +; sense teclat numèric |
 | Estats | Una licitació és «oberta» o «aturada»; no hi ha «pausada» i «tancada» per separat |
 | Configuració | Editable a la sala d'espera fins a «Començar» |
 | Projecció | Vista pública de només lectura que s'obre amb el codi de sala |
-| Control | Sense concessió ni batec: qui ha entrat amb el compte organitzador dirigeix |
+| Control | Sense concessió ni batec: dirigeix el navegador que l'ha creada o el compte de Google al qual s'ha vinculat |
 | Correccions | Desfer només l'última adjudicació, abans d'obrir la unitat següent |
 | Líder | No es pot superar a si mateix; una oferta no es pot retirar |
 | Inscripcions | Interruptor «Inscripcions obertes/tancades»; es tanquen soles en començar |
@@ -51,7 +51,7 @@ Condicions d'ús:
 
 1. **Aparells**: l'alumnat fa servir portàtils o Chromebooks de l'escola.
 2. **Freqüència**: no es faran més de dues sessions el mateix dia. Si mai en calen més, s'activa el pla Blaze amb una alerta de pressupost, sense tocar el codi (vegeu §10).
-3. **Compte organitzador**: el compte de Google de l'escola permet iniciar sessió en una app externa. Es verifica igualment a la prova tècnica, perquè depèn de la configuració del domini.
+3. **Compte organitzador**: no cal cap compte per organitzar. La vinculació amb Google és opcional i serveix per dirigir les subhastes des d'un altre ordinador; amb el compte de l'escola depèn de la configuració del domini.
 
 Simplificacions del model:
 
@@ -253,20 +253,20 @@ Comú a totes: xifres d'amplada fixa, imports molt dominants, moviment de 150–
 
 - **Allotjament**: GitHub Pages, dins d'`util-apps`. Sense procés de compilació obligatori.
 - **Firestore** des del navegador, com a Flota, en un projecte Firebase nou i a una regió de la UE.
-- **Autenticació**: anònima per a l'alumnat i la projecció; Google per a l'organitzador, limitat a la llista de correus autoritzats.
+- **Autenticació**: anònima per a tothom (alumnat, projecció i organitzador). L'organitzador pot vincular opcionalment el seu usuari a Google per recuperar les subhastes en un altre ordinador; si aquell compte ja estava vinculat en un altre lloc, les subhastes d'aquest navegador s'hi traspassen.
 - **Regles de seguretat**: tota la validació que abans s'atribuïa al servidor. Es desenvolupen i proven amb l'emulador local.
 
 ### Dades
 
 | Document | Contingut | Qui el llegeix | Qui l'escriu |
 |---|---|---|---|
-| Llista d'organitzadors | Correus autoritzats | Ningú; només les regles | Felip, a la consola |
 | Codi de sala | Sessió a què porta | Qualsevol identitat | Organitzador |
 | Sessió | Propietari, títol, repte, pressupost, moneda, increment, puntuació, estat, ronda, caducitat | Qualsevol identitat | Organitzador |
 | Objecte | Nom, descripció, icona o imatge, quantitat, preu de sortida, valor | Qualsevol identitat | Organitzador |
 | Tauler | Licitació en curs (objecte, unitat, estat, import, líder, nombre d'ofertes, tres darreres), venudes i darrer preu de cada objecte, objecte següent, última adjudicació | Qualsevol identitat | Organitzador; el participant, només els camps d'oferta |
 | Participant | Àlies | Qualsevol identitat | El titular en entrar; organitzador |
-| Cartera | Àlies, habilitada, gastat, compres | Titular i organitzador | El titular només en crear-la, a zero; organitzador |
+| Cartera | Àlies, habilitada, gastat, compres | Titular i organitzador | El titular només en crear-la, a zero, o en un canvi d'aparell amb codi vàlid; organitzador |
+| Balanç públic | Àlies, gastat i compres de tothom | Qualsevol identitat | Organitzador, només mentre decideix projectar-lo |
 | Reserva d'àlies | Nom normalitzat | Ningú | El titular en entrar; organitzador |
 | Adjudicació | Ronda, ordre, objecte, unitat, participant, preu, ofertes rebudes, hora, desfeta | Qualsevol identitat | Organitzador |
 
@@ -274,7 +274,7 @@ El tauler és l'únic document que canvia a cada oferta i no conté imatges: és
 
 ### Què garanteixen les regles
 
-- Només un compte de la llista pot crear sessions, i només el propietari les dirigeix.
+- Qualsevol identitat pot crear sessions, sempre a nom seu, i només el propietari les dirigeix: ningú més pot canviar-ne la configuració, el tauler (fora de les ofertes), les carteres ni les adjudicacions, ni reutilitzar-ne el codi de sala.
 - Només s'entra amb les inscripcions obertes, amb un àlies lliure i mentre hi hagi places; cada identitat crea una sola cartera, a zero.
 - Una oferta només modifica els camps d'oferta del tauler, amb la licitació oberta.
 - El líder nou és qui envia l'oferta, té la cartera habilitada i no era ja el líder.
@@ -289,8 +289,8 @@ L'adjudicació, la retirada i el desfer són transaccions fetes des del navegado
 - El que mostra cada pantalla surt del tauler i, al terminal, de la cartera pròpia. No es permet oferir fins que tots dos han arribat.
 - Una oferta amb resposta dubtosa es resol mirant el tauler: si lidero amb aquell import, ha entrat. No es desen ofertes per enviar-les més tard.
 - Recarregar o desbloquejar l'aparell recupera la mateixa identitat i cartera.
-- Si l'organitzador perd la connexió, la subhasta es queda com estava: sense ell no s'adjudica res. Pot continuar des de qualsevol aparell amb el seu compte.
-- **Canvi d'aparell d'un participant**: l'organitzador obre la fila de la persona i mostra un codi de quatre xifres vàlid cinc minuts; en escriure'l a l'aparell nou, la cartera hi passa sencera i l'antic perd l'accés.
+- Si l'organitzador perd la connexió, la subhasta es queda com estava: sense ell no s'adjudica res. Pot continuar des d'un altre aparell si ha vinculat les subhastes al seu compte de Google.
+- **Canvi d'aparell d'un participant**: l'organitzador obre la fila de la persona i mostra un codi de quatre xifres vàlid cinc minuts; en escriure'l a l'aparell nou, la cartera hi passa sencera i l'antic perd l'accés. Les regles comproven el codi i que la cartera nova és idèntica a l'antiga.
 
 ### Quota i cost
 
@@ -301,10 +301,10 @@ L'adjudicació, la retirada i el desfer són transaccions fetes des del navegado
 
 ### Conservació i privadesa
 
-- No es demana cap dada personal a l'alumnat: àlies i identificador anònim. De l'organitzador, el compte de Google.
+- No es demana cap dada personal a l'alumnat: àlies i identificador anònim. De l'organitzador, res; el correu de Google només si decideix vincular-hi les subhastes.
 - La sessió caduca 30 dies després de finalitzar o de l'última acció de l'organitzador. Les regles en bloquegen l'accés a partir d'aquella data; l'eliminació efectiva es fa quan l'organitzador entra a «Les meves subhastes» o amb el botó «Eliminar».
 - L'app inclou un text breu de privadesa: què es desa, on i fins quan.
-- No es pot limitar la freqüència de peticions sense servidor. Es considera acceptable a l'aula, amb l'organitzador present i la creació de sessions restringida.
+- No es pot limitar la freqüència de peticions sense servidor. Es considera acceptable a l'aula, amb l'organitzador present; cada sessió només la pot modificar qui l'ha creada.
 
 ## 11. Casos de referència
 
@@ -365,7 +365,7 @@ El simulador de participants de la fase 6 es conserva perquè l'organitzador pug
 - README amb captures a 1366 × 768, projecció i mòbil, i la guia docent.
 - Llicència doble: capçaleres SPDX, fitxer `LICENSE` i peu «Codi: AGPLv3 · Continguts: CC BY-NC-SA 4.0».
 - Formulari d'errors `.github/ISSUE_TEMPLATE/subhasta.yml` amb etiqueta pròpia.
-- Dominis autoritzats i llista d'organitzadors configurats a Firebase.
+- Autenticació anònima i de Google activades i domini `felipsarroca.github.io` autoritzat a Firebase.
 
 ## 15. Fonts
 

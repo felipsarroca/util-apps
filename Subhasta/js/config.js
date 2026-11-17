@@ -10,11 +10,6 @@ export const FIREBASE_CONFIG = {
   appId: '1:388682808914:web:51074ffbd11c843321a98b'
 };
 
-export const CORREUS_ORGANITZADORS_INICIALS = [
-  'felip.sarroca@gmail.com',
-  'felip.sarroca@ramonpont.cat'
-];
-
 export const LIMITS = {
   MAX_PARTICIPANTS: 40,
   MAX_OBJECTES: 12,

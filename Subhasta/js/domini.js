@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* Lògica pura de domini, validacions, transicions, puntuació i exportació CSV de Subhasta */
 
-import { LIMITS } from './config.js?v=1.1.0';
-import { TEXTOS } from './textos.js?v=1.1.0';
+import { LIMITS } from './config.js?v=1.2.0';
+import { TEXTOS } from './textos.js?v=1.2.0';
 
 /**
  * Neteja caràcters invisibles i salts de línia d'un text.

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* So de martell opcional per a la projecció (desactivat per defecte) */
 
-import { STORAGE_KEYS } from './config.js?v=1.1.0';
+import { STORAGE_KEYS } from './config.js?v=1.2.0';
 
 class MartellAudio {
   constructor() {

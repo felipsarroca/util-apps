@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* Capa de sincronització en temps real (Firebase Firestore + sincronització local entre pestanyes) i simulador de 40 participants */
 
-import { FIREBASE_CONFIG, CORREUS_ORGANITZADORS_INICIALS, LIMITS, STORAGE_KEYS } from './config.js?v=1.1.0';
-import { EXEMPLE_MERCAT_INDUSTRIAL, TEXTOS } from './textos.js?v=1.1.0';
+import { FIREBASE_CONFIG, LIMITS, STORAGE_KEYS } from './config.js?v=1.2.0';
+import { EXEMPLE_MERCAT_INDUSTRIAL, TEXTOS } from './textos.js?v=1.2.0';
 import {
   netejaText,
   clauAlies,
@@ -11,7 +11,7 @@ import {
   validaOferta,
   calculaMinimOferta,
   determinaSeguentObjecteId
-} from './domini.js?v=1.1.0';
+} from './domini.js?v=1.2.0';
 
 const FB_VER = '10.14.1';
 const FB_APP_URL = `https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`;
@@ -29,55 +29,49 @@ function generaHex(bytesLen = 8) {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function getUid() {
-  if (typeof sessionStorage !== 'undefined') {
-    let tabUid = sessionStorage.getItem(STORAGE_KEYS.UID);
-    if (tabUid) return tabUid;
-    tabUid = 'u_' + generaHex(8);
-    try {
-      sessionStorage.setItem(STORAGE_KEYS.UID, tabUid);
-      if (!localStorage.getItem(STORAGE_KEYS.UID)) {
-        localStorage.setItem(STORAGE_KEYS.UID, tabUid);
-      }
-    } catch (_) {}
-    return tabUid;
-  }
-  let uid = localStorage.getItem(STORAGE_KEYS.UID);
+/* ============================================================
+   Identitat: cada navegador té un usuari anònim de Firebase (persistent).
+   Qui crea una subhasta n'és el propietari; opcionalment, la pot vincular a Google
+   per dirigir-la des d'un altre ordinador.
+   ============================================================ */
+let uidAuth = null;
+let correuAuth = '';
+
+function uidLocalDeReserva() {
+  // Només s'utilitza si Firebase no està disponible (sense connexió): mode local
+  let uid = null;
+  try { uid = localStorage.getItem(STORAGE_KEYS.UID); } catch (_) {}
   if (!uid) {
     uid = 'u_' + generaHex(8);
-    try {
-      localStorage.setItem(STORAGE_KEYS.UID, uid);
-    } catch (_) {}
+    try { localStorage.setItem(STORAGE_KEYS.UID, uid); } catch (_) {}
   }
   return uid;
 }
 
-export function getClauOrganitzador() {
-  let clau = localStorage.getItem(STORAGE_KEYS.CLAU_ORG);
-  if (!clau || clau.length < 16) {
-    clau = 'org_' + generaHex(12);
-    try {
-      localStorage.setItem(STORAGE_KEYS.CLAU_ORG, clau);
-    } catch (_) {}
-  }
-  return clau;
+function actualitzaIdentitat(user) {
+  uidAuth = user?.uid || null;
+  correuAuth = user && !user.isAnonymous ? String(user.email || '').toLowerCase() : '';
 }
 
+export function getUid() {
+  return uidAuth || uidLocalDeReserva();
+}
+
+/** Correu de Google vinculat a aquest navegador (buit si és anònim). */
 export function getCorreuOrganitzador() {
-  return localStorage.getItem(STORAGE_KEYS.CORREU_ORG) || '';
+  return correuAuth;
 }
 
-export function setCorreuOrganitzador(correu) {
+export function esSessioPropia(sessio) {
+  return Boolean(sessio && sessio.propietariUid && sessio.propietariUid === getUid());
+}
+
+/** Espera (com a molt uns segons) que hi hagi identitat de Firebase. */
+export async function preparaIdentitat(timeoutMs = 8000) {
   try {
-    if (correu) localStorage.setItem(STORAGE_KEYS.CORREU_ORG, correu.trim().toLowerCase());
-    else localStorage.removeItem(STORAGE_KEYS.CORREU_ORG);
+    await Promise.race([carregaFirebase(), new Promise((r) => setTimeout(r, timeoutMs))]);
   } catch (_) {}
-}
-
-export function esCorreuAutoritzatLocal(correu) {
-  if (!correu) return false;
-  const net = correu.trim().toLowerCase();
-  return CORREUS_ORGANITZADORS_INICIALS.includes(net) || net.endsWith('@ramonpont.cat');
+  return uidAuth;
 }
 
 /* Codi de sala: 4 caràcters entre lletres i xifres, sense els que es confonen (0/O, 1/I/L). */
@@ -133,9 +127,10 @@ async function carregaFirebase() {
       if (authMod) {
         try {
           auth = authMod.getAuth(app);
-          if (!auth.currentUser) {
-            authMod.signInAnonymously(auth).catch(() => {});
-          }
+          if (typeof auth.authStateReady === 'function') await auth.authStateReady();
+          if (!auth.currentUser) await authMod.signInAnonymously(auth);
+          actualitzaIdentitat(auth.currentUser);
+          authMod.onAuthStateChanged(auth, actualitzaIdentitat);
         } catch (_) {}
       }
       return { app, db, fs: fsMod, auth, authMod };
@@ -189,7 +184,6 @@ function creaPaquetSessioInicial(configBase = EXEMPLE_MERCAT_INDUSTRIAL, opcions
   const sessioId = opcions.sessioId || 'ses_' + generaHex(6);
   const codi = opcions.codi || generaCodiSala();
   const propietariUid = getUid();
-  const clauOrganitzador = getClauOrganitzador();
 
   const objectes = (configBase.objectes || EXEMPLE_MERCAT_INDUSTRIAL.objectes).map((o, idx) => ({
     id: o.id || `obj_${idx + 1}_${generaHex(2)}`,
@@ -207,8 +201,6 @@ function creaPaquetSessioInicial(configBase = EXEMPLE_MERCAT_INDUSTRIAL, opcions
     id: sessioId,
     codi,
     propietariUid,
-    propietariCorreu: getCorreuOrganitzador() || 'felip.sarroca@ramonpont.cat',
-    clauOrganitzador,
     titol: netejaText(configBase.titol || EXEMPLE_MERCAT_INDUSTRIAL.titol, LIMITS.MAX_TITOL),
     repte: netejaText(configBase.repte ?? EXEMPLE_MERCAT_INDUSTRIAL.repte, LIMITS.MAX_REPTE),
     pressupost: Number(configBase.pressupost) || 1000,
@@ -234,8 +226,7 @@ function creaPaquetSessioInicial(configBase = EXEMPLE_MERCAT_INDUSTRIAL, opcions
     seguentObjecteId: objectes[0]?.id || null,
     ultimaAdjudicacio: null,
     ultimEsdeveniment: null,
-    actualitzatMs: ara,
-    orgSig: clauOrganitzador
+    actualitzatMs: ara
   };
 
   return {
@@ -300,11 +291,24 @@ async function desarPaquetAFirestore(paquet) {
     const batch = fs.writeBatch(db);
     batch.set(refSessio, sessio, { merge: true });
     batch.set(refCodi, docCodi);
-    batch.set(refTauler, { ...tauler, orgSig: sessio.clauOrganitzador }, { merge: true });
+    batch.set(refTauler, tauler, { merge: true });
 
     for (const obj of objectes) {
       const refObj = fs.doc(db, 'sessions', sessio.id, 'objectes', obj.id);
       batch.set(refObj, obj);
+    }
+
+    // Balanç de tothom: només és públic quan l'organitzador decideix projectar-lo
+    const refBalanc = fs.doc(db, 'sessions', sessio.id, 'estat', 'balanc');
+    if (sessio.mostrarClassificacio) {
+      batch.set(refBalanc, {
+        carteres: Object.values(paquet.carteres || {})
+          .filter((c) => !c.substituitPer && c.habilitada !== false)
+          .map((c) => ({ uid: c.uid, alies: c.alies, habilitada: true, gastat: Number(c.gastat) || 0, compres: c.compres || [] })),
+        actualitzatMs: Date.now()
+      });
+    } else {
+      batch.delete(refBalanc);
     }
 
     await batch.commit();
@@ -325,8 +329,7 @@ async function desaParticipantAlNuvol(paq, uidParticipant, clauAliesAntiga = nul
     if (c) {
       batch.set(fs.doc(db, 'sessions', sessioId, 'carteres', uidParticipant), {
         ...c,
-        actualitzatMs: Date.now(),
-        orgSig: paq.sessio.clauOrganitzador
+        actualitzatMs: Date.now()
       });
     }
     if (clauAliesAntiga) batch.delete(fs.doc(db, 'sessions', sessioId, 'alies', clauAliesAntiga));
@@ -373,7 +376,7 @@ async function carregaPaquetDeFirestore(sessioId) {
   adjudicacions.sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
 
   const carteres = {};
-  const esOrg = sessio.clauOrganitzador === getClauOrganitzador() || sessio.propietariUid === getUid();
+  const esOrg = esSessioPropia(sessio);
   if (esOrg) {
     try {
       const snapCarteres = await fs.getDocs(fs.collection(db, 'sessions', sessioId, 'carteres'));
@@ -388,6 +391,14 @@ async function carregaPaquetDeFirestore(sessioId) {
       if (snapCarteraPropia.exists()) {
         carteres[uid] = snapCarteraPropia.data();
       }
+    } catch (_) {}
+  }
+
+  let balancPublic = null;
+  if (!esOrg && sessio.mostrarClassificacio) {
+    try {
+      const snapBalanc = await fs.getDoc(fs.doc(db, 'sessions', sessioId, 'estat', 'balanc'));
+      if (snapBalanc.exists()) balancPublic = snapBalanc.data();
     } catch (_) {}
   }
 
@@ -412,7 +423,8 @@ async function carregaPaquetDeFirestore(sessioId) {
     carteres,
     alies: {},
     canvis: {},
-    adjudicacions
+    adjudicacions,
+    balancPublic
   };
 }
 
@@ -471,7 +483,12 @@ export class GestorSubhasta {
     const uid = getUid();
     const objectes = [...(paquet.objectes || [])].sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
     const participantsList = Object.values(paquet.participants || {}).filter((p) => p.actiu !== false);
-    const carteresList = Object.values(paquet.carteres || {}).filter((c) => !c.substituitPer);
+    const esOrganitzador = esSessioPropia(paquet.sessio);
+    // Fora del navegador de l'organitzador, el balanç de tothom només arriba si s'ha decidit projectar-lo
+    const fontCarteres = !esOrganitzador && paquet.sessio?.mostrarClassificacio && paquet.balancPublic?.carteres
+      ? paquet.balancPublic.carteres
+      : Object.values(paquet.carteres || {});
+    const carteresList = fontCarteres.filter((c) => !c.substituitPer);
     const carteraPropia = paquet.carteres?.[uid] || null;
     const adjudicacions = [...(paquet.adjudicacions || [])].sort((a, b) => {
       if ((a.ronda || 1) !== (b.ronda || 1)) return (a.ronda || 1) - (b.ronda || 1);
@@ -488,8 +505,7 @@ export class GestorSubhasta {
       adjudicacions,
       canvis: paquet.canvis || {},
       uid,
-      esOrganitzador:
-        paquet.sessio.propietariUid === uid || paquet.sessio.clauOrganitzador === getClauOrganitzador(),
+      esOrganitzador,
       lecturesConsumides: this.comptadorLectures,
       latenciaMitjanaMs: this.latenciesMs.length
         ? Math.round(this.latenciesMs.reduce((a, b) => a + b, 0) / this.latenciesMs.length)
@@ -498,23 +514,63 @@ export class GestorSubhasta {
   }
 
   /**
-   * Inicia sessió amb Google per a l'organitzador (§10 Autenticació).
+   * Vincula les subhastes d'aquest navegador a un compte de Google (opcional),
+   * per poder-les dirigir també des d'un altre ordinador.
    */
-  async iniciaSessioGoogle() {
-    const { auth, authMod } = await carregaFirebase();
+  async vinculaGoogle() {
+    const { auth, authMod, db, fs } = await carregaFirebase();
     if (!auth || !authMod) {
-      throw new Error('El proveïdor d’autenticació no està disponible en aquest navegador.');
+      throw new Error('L’identificació amb Google no està disponible en aquest navegador.');
     }
     const provider = new authMod.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    const cred = await authMod.signInWithPopup(auth, provider);
-    const email = cred?.user?.email || '';
-    if (!esCorreuAutoritzatLocal(email)) {
-      await authMod.signOut(auth).catch(() => {});
-      throw new Error(`El compte ${email} no figura a la llista d’organitzadors autoritzats.`);
+    const actual = auth.currentUser;
+    let user;
+    if (actual && actual.isAnonymous) {
+      try {
+        user = (await authMod.linkWithPopup(actual, provider)).user;
+      } catch (err) {
+        if (err?.code !== 'auth/credential-already-in-use') throw err;
+        // El compte ja s'havia vinculat en un altre ordinador: les sales d'aquest navegador
+        // es marquen per passar-hi i després s'entra amb aquell compte.
+        const cred = authMod.GoogleAuthProvider.credentialFromError(err);
+        const correu = String(err?.customData?.email || '').toLowerCase();
+        const propies = await this.llistaLesMevesSubhastes().catch(() => []);
+        if (correu) {
+          for (const s of propies) {
+            await fs.updateDoc(fs.doc(db, 'sessions', s.id), { reclamableCorreu: correu }).catch(() => {});
+          }
+        }
+        user = (await authMod.signInWithCredential(auth, cred)).user;
+        actualitzaIdentitat(user);
+        const mag = llegeixMagatzemLocal();
+        for (const s of propies) {
+          try {
+            await fs.updateDoc(fs.doc(db, 'sessions', s.id), {
+              propietariUid: user.uid,
+              reclamableCorreu: fs.deleteField()
+            });
+            if (mag.sessions[s.id]) mag.sessions[s.id].sessio.propietariUid = user.uid;
+          } catch (_) {}
+        }
+        escriuMagatzemLocal(mag);
+      }
+    } else {
+      user = (await authMod.signInWithPopup(auth, provider)).user;
     }
-    setCorreuOrganitzador(email);
-    return email;
+    actualitzaIdentitat(user);
+    return correuAuth;
+  }
+
+  /**
+   * Desvincula aquest navegador del compte de Google (les subhastes continuen al compte).
+   */
+  async desvinculaGoogle() {
+    const { auth, authMod } = await carregaFirebase();
+    if (!auth || !authMod) return;
+    await authMod.signOut(auth);
+    const user = (await authMod.signInAnonymously(auth)).user;
+    actualitzaIdentitat(user);
   }
 
   /**
@@ -537,17 +593,16 @@ export class GestorSubhasta {
     // Intenta recuperar també de Firestore
     try {
       const { db, fs } = await carregaFirebase();
-      const clauOrg = getClauOrganitzador();
+      const uid = getUid();
       // Només les sessions d'aquest organitzador (no es descarreguen les de ningú més)
       const snap = await fs.getDocs(
-        fs.query(fs.collection(db, 'sessions'), fs.where('clauOrganitzador', '==', clauOrg))
+        fs.query(fs.collection(db, 'sessions'), fs.where('propietariUid', '==', uid))
       );
-      const uid = getUid();
       const caducadesIds = [];
 
       snap.forEach((docSnap) => {
         const s = docSnap.data();
-        if (s.clauOrganitzador === clauOrg || s.propietariUid === uid) {
+        if (s.propietariUid === uid) {
           if (s.expiraMs && s.expiraMs <= ara) {
             caducadesIds.push(s.id);
           } else if (!mag.sessions[s.id]) {
@@ -569,10 +624,8 @@ export class GestorSubhasta {
     } catch (_) {}
 
     // Les sales on aquest aparell només hi participa no són «les meves subhastes»
-    const clauPropia = getClauOrganitzador();
-    const uidPropi = getUid();
     return Object.values(mag.sessions)
-      .filter((p) => p?.sessio && (p.sessio.clauOrganitzador === clauPropia || p.sessio.propietariUid === uidPropi))
+      .filter((p) => esSessioPropia(p?.sessio))
       .map((p) => ({
         ...p.sessio,
         numObjectes: (p.objectes || []).length,
@@ -586,6 +639,7 @@ export class GestorSubhasta {
    * Crea una subhasta nova amb l'exemple «Mercat industrial» o una configuració donada.
    */
   async creaSubhasta(configBase = EXEMPLE_MERCAT_INDUSTRIAL, estatInicial = 'preparacio') {
+    await preparaIdentitat();
     const mag = llegeixMagatzemLocal();
     const codi = await generaCodiSalaLliure(mag);
     const paquet = creaPaquetSessioInicial(configBase, { codi, estatInicial });
@@ -753,6 +807,22 @@ export class GestorSubhasta {
 
       unsubsNuvol.push(unsubTauler, unsubSessio, unsubParticipants);
 
+      if (rol !== 'organitzador') {
+        // Balanç de tothom, només quan l'organitzador el projecta
+        const unsubBalanc = fs.onSnapshot(
+          fs.doc(db, 'sessions', sessioId, 'estat', 'balanc'),
+          (snap) => {
+            const m = llegeixMagatzemLocal();
+            if (!m.sessions[sessioId]) return;
+            m.sessions[sessioId].balancPublic = snap.exists() ? snap.data() : null;
+            escriuMagatzemLocal(m);
+            if (this.onChange) this.onChange(this._formataVista(m.sessions[sessioId]));
+          },
+          () => {}
+        );
+        unsubsNuvol.push(unsubBalanc);
+      }
+
       if (rol === 'terminal') {
         const uid = getUid();
         const unsubCartera = fs.onSnapshot(
@@ -814,11 +884,12 @@ export class GestorSubhasta {
     if (!esCodiSalaComplet(codi)) {
       throw new Error(TEXTOS_CODI_INCOMPLET);
     }
+    await preparaIdentitat();
     const mag = llegeixMagatzemLocal();
     const paqLocal = mag.codis[codi] ? mag.sessions[mag.codis[codi]] : null;
     const localPropi = paqLocal
       && paqLocal.sessio.expiraMs > Date.now()
-      && (paqLocal.sessio.clauOrganitzador === getClauOrganitzador() || paqLocal.sessio.propietariUid === getUid());
+      && esSessioPropia(paqLocal.sessio);
     if (localPropi) return paqLocal.sessio.id;
 
     try {
@@ -1019,7 +1090,7 @@ export class GestorSubhasta {
 
     // A l'aparell de l'alumnat, l'entrada només és vàlida si ha arribat al núvol:
     // així l'organitzador i la projecció la veuen de debò.
-    const sessioPropia = paq.sessio.clauOrganitzador === getClauOrganitzador();
+    const sessioPropia = esSessioPropia(paq.sessio);
     if (!uidForcat && !sessioPropia) {
       try {
         await desaAlNuvol;
@@ -1172,6 +1243,45 @@ export class GestorSubhasta {
       compres: infoCanvi.compres || []
     };
 
+    // En un aparell diferent del de l'organitzador, el traspàs es fa al núvol en una transacció:
+    // les regles comproven el codi i que la cartera nova és idèntica a l'antiga.
+    if (!esSessioPropia(paq.sessio) && anticUid !== nouUid) {
+      try {
+        const { db, fs } = await carregaFirebase();
+        await fs.runTransaction(db, async (tx) => {
+          const refCanvi = fs.doc(db, 'sessions', sessioId, 'canvis', codi4);
+          const snapCanvi = await tx.get(refCanvi);
+          const c = snapCanvi.exists() ? snapCanvi.data() : null;
+          if (!c || c.usat || c.expiraMs <= Date.now() || c.targetUid !== anticUid) throw new Error('CODI_INVALID');
+          tx.set(fs.doc(db, 'sessions', sessioId, 'carteres', nouUid), {
+            uid: nouUid,
+            alies: c.alies,
+            habilitada: true,
+            gastat: c.gastat || 0,
+            compres: c.compres || [],
+            transferitDesDe: anticUid,
+            codiCanvi: codi4,
+            actualitzatMs: ara
+          });
+          tx.update(fs.doc(db, 'sessions', sessioId, 'carteres', anticUid), {
+            habilitada: false,
+            substituitPer: nouUid,
+            actualitzatMs: ara
+          });
+          tx.set(fs.doc(db, 'sessions', sessioId, 'participants', nouUid), {
+            uid: nouUid, alies: c.alies, creatMs: ara, actiu: true
+          });
+          tx.update(fs.doc(db, 'sessions', sessioId, 'participants', anticUid), { actiu: false });
+          tx.set(fs.doc(db, 'sessions', sessioId, 'alies', clauAlies(c.alies)), {
+            uid: nouUid, alies: c.alies, creatMs: ara
+          });
+          tx.update(refCanvi, { usat: true });
+        });
+      } catch (_) {
+        throw new Error('No s’ha pogut recuperar la cartera. Demana a l’organitzador un codi nou i torna-ho a provar.');
+      }
+    }
+
     paq.carteres[nouUid] = {
       uid: nouUid,
       alies: carteraAntiga.alies,
@@ -1281,7 +1391,6 @@ export class GestorSubhasta {
       ms: ara
     };
     paq.tauler.actualitzatMs = ara;
-    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
 
     escriuMagatzemLocal(mag, sessioId);
     this._emetEstatLocal();
@@ -1305,7 +1414,6 @@ export class GestorSubhasta {
       ms: ara
     };
     paq.tauler.actualitzatMs = ara;
-    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
 
     escriuMagatzemLocal(mag, sessioId);
     this._emetEstatLocal();
@@ -1329,7 +1437,6 @@ export class GestorSubhasta {
       ms: ara
     };
     paq.tauler.actualitzatMs = ara;
-    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
 
     escriuMagatzemLocal(mag, sessioId);
     this._emetEstatLocal();
@@ -1361,7 +1468,10 @@ export class GestorSubhasta {
       throw new Error('L’oferta o qui lidera ha canviat just abans d’aturar. Revisa les dades congelades i confirma de nou.');
     }
 
-    const cartera = paq.carteres[lic.liderUid];
+    let cartera = paq.carteres[lic.liderUid];
+    for (let salts = 0; cartera?.substituitPer && paq.carteres[cartera.substituitPer] && salts < 5; salts += 1) {
+      cartera = paq.carteres[cartera.substituitPer];
+    }
     if (!cartera) {
       throw new Error('No s’ha trobat la cartera de qui lidera.');
     }
@@ -1409,8 +1519,7 @@ export class GestorSubhasta {
       import: lic.importActual,
       ofertesRebudes: lic.numOfertes,
       horaMs: ara,
-      estat: 'vigent',
-      orgSig: paq.sessio.clauOrganitzador
+      estat: 'vigent'
     };
     paq.adjudicacions = paq.adjudicacions || [];
     paq.adjudicacions.push(adjDoc);
@@ -1450,7 +1559,6 @@ export class GestorSubhasta {
     };
     paq.tauler.licitacio = null;
     paq.tauler.actualitzatMs = ara;
-    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
     paq.sessio.actualitzatMs = ara;
 
     escriuMagatzemLocal(mag, sessioId);
@@ -1462,8 +1570,7 @@ export class GestorSubhasta {
         const batch = fs.writeBatch(db);
         batch.set(fs.doc(db, 'sessions', sessioId, 'estat', 'tauler'), paq.tauler);
         batch.set(fs.doc(db, 'sessions', sessioId, 'carteres', cartera.uid), {
-          ...cartera,
-          orgSig: paq.sessio.clauOrganitzador
+          ...cartera
         });
         batch.set(fs.doc(db, 'sessions', sessioId, 'adjudicacions', adjId), adjDoc);
         await batch.commit();
@@ -1499,7 +1606,6 @@ export class GestorSubhasta {
       ms: ara
     };
     paq.tauler.actualitzatMs = ara;
-    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
 
     escriuMagatzemLocal(mag, sessioId);
     this._emetEstatLocal();
@@ -1552,7 +1658,6 @@ export class GestorSubhasta {
       ms: ara
     };
     paq.tauler.actualitzatMs = ara;
-    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
 
     escriuMagatzemLocal(mag, sessioId);
     this._emetEstatLocal();
@@ -1564,14 +1669,12 @@ export class GestorSubhasta {
         batch.set(fs.doc(db, 'sessions', sessioId, 'estat', 'tauler'), paq.tauler);
         if (cartera) {
           batch.set(fs.doc(db, 'sessions', sessioId, 'carteres', cartera.uid), {
-            ...cartera,
-            orgSig: paq.sessio.clauOrganitzador
+            ...cartera
           });
         }
         if (adj) {
           batch.set(fs.doc(db, 'sessions', sessioId, 'adjudicacions', adj.id), {
-            ...adj,
-            orgSig: paq.sessio.clauOrganitzador
+            ...adj
           });
         }
         await batch.commit();
@@ -1620,8 +1723,7 @@ export class GestorSubhasta {
         text: `Ronda ${novaRonda} preparada`,
         ms: ara
       },
-      actualitzatMs: ara,
-      orgSig: paq.sessio.clauOrganitzador
+      actualitzatMs: ara
     };
 
     escriuMagatzemLocal(mag, sessioId);
@@ -1651,7 +1753,6 @@ export class GestorSubhasta {
       paq.tauler.ultimaAdjudicacio.potDesfer = false;
     }
     paq.tauler.actualitzatMs = ara;
-    paq.tauler.orgSig = paq.sessio.clauOrganitzador;
 
     escriuMagatzemLocal(mag, sessioId);
     this._emetEstatLocal();
@@ -1763,7 +1864,7 @@ export class GestorSubhasta {
       return resultat;
     })();
 
-    const sessioPropia = paq.sessio.clauOrganitzador === getClauOrganitzador();
+    const sessioPropia = esSessioPropia(paq.sessio);
     if (!uidForcat && !sessioPropia) {
       // Terminal en un altre aparell: només es dona per bona l'oferta que el núvol ha acceptat
       let res;

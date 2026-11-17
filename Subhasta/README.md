@@ -91,3 +91,11 @@ Activitat alineada amb el **Decret 175/2022, de 27 de setembre, d'ordenació del
 - **Sala d'espera:** codi gegant, QR més gran i estat buit explicatiu.
 - **Resultats:** eix del gràfic amb valors rodons.
 - **Privadesa:** la portada ja no mostra el correu de l'organitzador i «Les meves subhastes» només inclou les sales pròpies.
+
+## Novetats de la versió 1.2 (17-11-2026)
+
+- **Qualsevol persona pot organitzar una subhasta**, sense compte. Qui la crea n'és el propietari i és l'únic que la pot dirigir.
+- **Seguretat real amb Firebase Authentication:** tothom entra amb un usuari anònim i les regles comproven qui és el propietari de cada sala. Un alumne no pot canviar el tauler, les carteres, les adjudicacions ni el codi de sala d'una subhasta aliena, ni llegir les carteres dels altres.
+- **Vinculació opcional amb Google** («Vincula-les a Google» a la portada) per dirigir les subhastes des d'un altre ordinador.
+- **Canvi d'aparell entre ordinadors diferents:** el traspàs de la cartera es fa al núvol i les regles comproven el codi.
+- **Balanç projectat a tots els aparells** quan l'organitzador ho decideix.
