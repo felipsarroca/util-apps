@@ -4,6 +4,7 @@ Aplicació educativa de **subhastes angleses obertes en temps real** per treball
 
 - **Accés directe:** [https://ja.cat/subhasta](https://ja.cat/subhasta)
 - **Document de disseny:** [PLANIFICACIO.md](PLANIFICACIO.md)
+- **Guia visual pas a pas (per a qui organitza per primer cop):** <https://felipsarroca.github.io/util-apps/Subhasta/guia.html> ([guia.html](guia.html))
 - **Guia docent completa:** [docs/guia-docent.md](docs/guia-docent.md)
 - **Llicència:** [LICENSE](LICENSE) (Codi: AGPLv3 · Continguts: CC BY-NC-SA 4.0)
 
@@ -99,3 +100,4 @@ Activitat alineada amb el **Decret 175/2022, de 27 de setembre, d'ordenació del
 - **Vinculació opcional amb Google** («Vincula-les a Google» a la portada) per dirigir les subhastes des d'un altre ordinador.
 - **Canvi d'aparell entre ordinadors diferents:** el traspàs de la cartera es fa al núvol i les regles comproven el codi.
 - **Balanç projectat a tots els aparells** quan l'organitzador ho decideix.
+- **Guia visual pas a pas** ([guia.html](guia.html)), enllaçada des de la portada i des del botó «Guia»: captures comentades de cada pantalla, com omplir el catàleg (unitats, preu de sortida, valor), quantitats recomanades segons el grup, puntuació, projecció, cicle d'adjudicació, resultats i preguntes freqüents.

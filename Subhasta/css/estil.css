@@ -2542,3 +2542,21 @@ body[data-vista="projeccio"] .felip-app-footer {
     font-size: 2.8rem;
   }
 }
+
+/* Enllaç a la guia pas a pas */
+.enllac-guia-completa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.2rem;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #fff;
+  text-decoration: none;
+}
+.enllac-guia-completa span { display: grid; gap: 0.2rem; }
+.enllac-guia-completa small { opacity: 0.88; font-size: 0.85rem; }
+.enllac-guia-completa svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.enllac-guia-completa:hover, .enllac-guia-completa:focus-visible { filter: brightness(1.08); }

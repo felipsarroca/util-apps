@@ -1,0 +1,733 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later AND CC-BY-NC-SA-4.0 -->
+<html lang="ca" data-theme="mercat">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f5f53">
+  <title>Guia pas a pas · Subhasta</title>
+  <meta name="description" content="Guia visual per crear i dirigir una subhasta a l’aula amb Subhasta: catàleg, unitats, sala d’espera, projecció, adjudicació i resultats.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/guia.css?v=1.2.0">
+  <script>
+    // Aplica el mateix estil visual que l'app abans de pintar la pàgina
+    try {
+      var t = localStorage.getItem('subhasta:tema');
+      if (t === 'mercat' || t === 'llotja' || t === 'fosca') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  </script>
+  <script type="module" src="js/guia.js?v=1.2.0"></script>
+</head>
+<body>
+  <!-- Icones de línia -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-llapis" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+    <symbol id="i-persones" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-pantalla" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+    <symbol id="i-martell" viewBox="0 0 24 24"><path d="M14 13l-7.5 7.5a2.12 2.12 0 0 1-3-3L11 10"/><path d="M16 16l6-6M8 8l6-6M9 7l8 8M21 11l-8-8"/></symbol>
+    <symbol id="i-grafic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></symbol>
+    <symbol id="i-portatil" viewBox="0 0 24 24"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9H4z"/><path d="M2 19h20"/></symbol>
+    <symbol id="i-rellotge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-bombeta" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></symbol>
+    <symbol id="i-avis" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+    <symbol id="i-fletxa" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-capsa" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></symbol>
+    <symbol id="i-enllac" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14L21 3"/></symbol>
+    <symbol id="i-impressora" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></symbol>
+  </svg>
+
+  <a class="skip-link" href="#contingut">Salta al contingut</a>
+
+  <header class="cap">
+    <div class="cap-inner">
+      <a class="marca" href="./">
+        <img src="assets/favicon.svg" alt="" aria-hidden="true">
+        <span>Subhasta</span>
+        <span class="marca-sub">· Guia pas a pas</span>
+      </a>
+      <span class="cap-espai"></span>
+      <div class="selector-tema" role="group" aria-label="Estil visual">
+        <button type="button" class="btn-tema" data-tema="mercat" aria-pressed="true">Mercat</button>
+        <button type="button" class="btn-tema" data-tema="llotja" aria-pressed="false">Llotja</button>
+        <button type="button" class="btn-tema" data-tema="fosca" aria-pressed="false">Sala fosca</button>
+      </div>
+      <a class="boto boto-primari boto-petit cap-obre" href="./">Obre l’app</a>
+    </div>
+  </header>
+
+  <main id="contingut">
+    <!-- PORTADA -->
+    <section class="portada-guia" aria-labelledby="titol-guia">
+      <div>
+        <span class="etiqueta">Guia per a qui organitza</span>
+        <h1 id="titol-guia">Crea i dirigeix la teva primera subhasta en 6 passos</h1>
+        <p class="entradeta">No cal cap compte ni instal·lar res. Prepares què se subhasta, l’alumnat entra des del portàtil amb un codi de 4 caràcters i tu adjudiques cada unitat en directe davant de tota la classe.</p>
+        <div class="botons-portada">
+          <a class="boto boto-primari" href="#pas-1">Comença pel pas 1 <svg class="ic"><use href="#i-fletxa"/></svg></a>
+          <a class="boto" href="./" target="_blank" rel="noopener">Obre l’app <svg class="ic"><use href="#i-enllac"/></svg></a>
+          <button type="button" class="boto" id="btn-imprimeix"><svg class="ic"><use href="#i-impressora"/></svg> Imprimeix</button>
+        </div>
+      </div>
+      <div class="portada-imatge">
+        <img src="docs/images/projeccio-1920x1080.png" width="1920" height="1080" alt="Projecció d’una subhasta: Carbó, unitat 4 de 4, 60 monedes, lidera Equip Roure, amb el catàleg a la dreta">
+        <img class="img-sobre" src="docs/images/terminal-mobil-390x844.png" width="390" height="844" alt="" aria-hidden="true">
+      </div>
+    </section>
+
+    <nav aria-label="Passos de la guia">
+      <ol class="mapa">
+        <li><a href="#pas-1"><span class="mapa-num"><svg class="ic"><use href="#i-plus"/></svg> Pas 1</span><span class="mapa-titol">Crea la subhasta</span><span class="mapa-temps">1 minut</span></a></li>
+        <li><a href="#pas-2"><span class="mapa-num"><svg class="ic"><use href="#i-llapis"/></svg> Pas 2</span><span class="mapa-titol">Prepara el catàleg</span><span class="mapa-temps">5–10 minuts, abans de classe</span></a></li>
+        <li><a href="#pas-3"><span class="mapa-num"><svg class="ic"><use href="#i-persones"/></svg> Pas 3</span><span class="mapa-titol">Obre la sala d’espera</span><span class="mapa-temps">5 minuts a l’aula</span></a></li>
+        <li><a href="#pas-4"><span class="mapa-num"><svg class="ic"><use href="#i-pantalla"/></svg> Pas 4</span><span class="mapa-titol">Projecta-la</span><span class="mapa-temps">1 minut</span></a></li>
+        <li><a href="#pas-5"><span class="mapa-num"><svg class="ic"><use href="#i-martell"/></svg> Pas 5</span><span class="mapa-titol">Dirigeix i adjudica</span><span class="mapa-temps">15–25 minuts</span></a></li>
+        <li><a href="#pas-6"><span class="mapa-num"><svg class="ic"><use href="#i-grafic"/></svg> Pas 6</span><span class="mapa-titol">Tanca i comenta</span><span class="mapa-temps">10 minuts</span></a></li>
+      </ol>
+    </nav>
+
+    <!-- ABANS DE COMENÇAR -->
+    <section class="seccio" id="abans" aria-labelledby="titol-abans">
+      <div class="seccio-cap">
+        <div>
+          <h2 id="titol-abans">Abans de començar: tres pantalles, tres papers</h2>
+          <p>Una mateixa subhasta es veu de tres maneres. Totes s’actualitzen a l’instant, encara que siguin en ordinadors diferents.</p>
+        </div>
+      </div>
+      <div class="tres">
+        <article class="targeta paper">
+          <span class="paper-qui">Tu</span>
+          <h3>Comandament</h3>
+          <img src="docs/images/comandament-1366x768.png" width="1366" height="768" alt="Pantalla de comandament de l’organitzador" loading="lazy">
+          <p>Obres cada unitat, atures les ofertes i adjudiques. Veus el saldo i les compres de tothom.</p>
+        </article>
+        <article class="targeta paper">
+          <span class="paper-qui">Tota la classe</span>
+          <h3>Projecció</h3>
+          <img src="docs/images/projeccio-1920x1080.png" width="1920" height="1080" alt="Pantalla de projecció" loading="lazy">
+          <p>Es veu a la pissarra digital: què se subhasta, l’oferta més alta i qui va al davant.</p>
+        </article>
+        <article class="targeta paper">
+          <span class="paper-qui">Cada equip</span>
+          <h3>Terminal</h3>
+          <img src="docs/images/terminal-1366x768.png" width="1366" height="768" alt="Terminal d’un equip" loading="lazy">
+          <p>Cada equip, des del seu portàtil o Chromebook, fa ofertes i veu el seu saldo i les seves compres.</p>
+        </article>
+      </div>
+
+      <h3>Què necessites</h3>
+      <div class="tres">
+        <div class="targeta">
+          <svg class="ic-gran"><use href="#i-pantalla"/></svg>
+          <h3>Per a tu</h3>
+          <p>Un ordinador connectat al projector. Si vols, un segon aparell per dirigir des de la taula mentre l’ordinador de l’aula projecta.</p>
+        </div>
+        <div class="targeta">
+          <svg class="ic-gran"><use href="#i-portatil"/></svg>
+          <h3>Per a l’alumnat</h3>
+          <p>Un portàtil o Chromebook per equip de 2 o 3 persones, amb connexió a internet. Entren a <strong>ja.cat/subhasta</strong>; no cal cap compte.</p>
+        </div>
+        <div class="targeta">
+          <svg class="ic-gran"><use href="#i-rellotge"/></svg>
+          <h3>Temps</h3>
+          <p>Uns 30–40 minuts de classe: 5 per entrar, 15–25 de subhasta i 10 per comentar el gràfic de preus. La preparació la pots fer abans.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAS 1 -->
+    <section class="seccio" id="pas-1" aria-labelledby="titol-pas-1">
+      <div class="seccio-cap">
+        <span class="pas-gran" aria-hidden="true">1</span>
+        <div>
+          <h2 id="titol-pas-1">Crea la subhasta</h2>
+          <p>Obre <strong>ja.cat/subhasta</strong>. La portada té dues bandes: l’esquerra és per a l’alumnat i la dreta, per a qui organitza.</p>
+        </div>
+      </div>
+
+      <div class="anotada apilada">
+        <figure>
+          <div class="marc-captura">
+            <img src="docs/images/guia/portada-retall.png" width="1366" height="305" alt="Portada de Subhasta amb els blocs «Entra a una subhasta» i «Dirigeix una subhasta»">
+            <span class="punt" data-n="1" style="--x:57.9%;--y:46.9%">1</span>
+            <span class="punt" data-n="2" style="--x:77.2%;--y:63.6%">2</span>
+            <span class="punt" data-n="3" style="--x:57.9%;--y:63.6%">3</span>
+            <span class="punt" data-n="4" style="--x:86.8%;--y:83.6%">4</span>
+            <span class="punt" data-n="5" style="--x:4%;--y:46.2%">5</span>
+            <span class="punt" data-n="6" style="--x:33.9%;--y:63.9%">6</span>
+          </div>
+          <figcaption>Passa el ratolí per sobre de cada número per veure on és. Fes clic a una captura per veure-la a mida real.</figcaption>
+        </figure>
+        <ol class="llegenda">
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Crea una subhasta nova.</strong> Comença amb l’exemple «Mercat industrial» ja omplert, que pots canviar del tot.</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>Assaig ràpid amb simulador.</strong> Crea una subhasta de prova amb participants virtuals que fan ofertes sols. Ideal per entendre-ho tot en dos minuts.</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Les meves subhastes.</strong> Les que has creat en aquest navegador: obrir, duplicar o eliminar.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Vincula-les a Google</strong> (opcional). Per dirigir-les també des d’un altre ordinador.</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Banda de l’alumnat:</strong> hi escriuen el codi de la sala i el seu àlies.</span></li>
+          <li data-n="6"><span class="n">6</span><span class="d"><strong>Projectar a l’aula:</strong> per obrir la projecció en l’ordinador de l’aula (pas 4).</span></li>
+        </ol>
+      </div>
+
+      <div class="consell">
+        <svg class="ic"><use href="#i-bombeta"/></svg>
+        <p><strong>Primer cop?</strong> Prova l’<strong>Assaig ràpid amb simulador</strong> abans de fer-ho amb l’alumnat: veuràs com pugen les ofertes, com s’adjudica i com queden els resultats, sense que hi hagi ningú connectat.</p>
+      </div>
+    </section>
+
+    <!-- PAS 2 -->
+    <section class="seccio" id="pas-2" aria-labelledby="titol-pas-2">
+      <div class="seccio-cap">
+        <span class="pas-gran" aria-hidden="true">2</span>
+        <div>
+          <h2 id="titol-pas-2">Prepara el catàleg: què se subhasta i quantes unitats</h2>
+          <p>A l’esquerra hi ha les dades generals; a la dreta, la llista d’objectes. Tot es <strong>desa automàticament</strong> i ho pots modificar fins que premis «Comença la subhasta».</p>
+        </div>
+      </div>
+
+      <div class="anotada ample">
+        <figure>
+          <div class="marc-captura">
+            <img src="docs/images/guia/preparacio-retall.png" width="1366" height="525" alt="Pantalla de preparació: dades generals a l’esquerra i catàleg d’objectes a la dreta">
+            <span class="punt" data-n="1" style="--x:3.8%;--y:23%">1</span>
+            <span class="punt" data-n="2" style="--x:3.8%;--y:36.4%">2</span>
+            <span class="punt" data-n="3" style="--x:16.9%;--y:36.4%">3</span>
+            <span class="punt" data-n="4" style="--x:30%;--y:36.4%">4</span>
+            <span class="punt" data-n="5" style="--x:3.8%;--y:49.7%">5</span>
+            <span class="punt" data-n="6" style="--x:5.2%;--y:69.7%">6</span>
+            <span class="punt" data-n="7" style="--x:85.4%;--y:19%">7</span>
+            <span class="punt" data-n="8" style="--x:56.5%;--y:42.1%">8</span>
+            <span class="punt" data-n="9" style="--x:76.2%;--y:37.7%">9</span>
+            <span class="punt" data-n="10" style="--x:82.8%;--y:37.7%">10</span>
+            <span class="punt" data-n="11" style="--x:88.2%;--y:37.7%">11</span>
+            <span class="punt" data-n="12" style="--x:93.4%;--y:37.7%">12</span>
+            <span class="punt" data-n="13" style="--x:97.6%;--y:34.7%">13</span>
+            <span class="punt" data-n="14" style="--x:56.7%;--y:3%">14</span>
+            <span class="punt" data-n="15" style="--x:84%;--y:3%">15</span>
+          </div>
+          <figcaption>Pantalla de preparació (exemple «Mercat industrial»).</figcaption>
+        </figure>
+        <ol class="llegenda">
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Títol</strong> de la subhasta (es veu a la projecció).</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>Pressupost inicial:</strong> les monedes que rep cada equip.</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Increment mínim:</strong> quant ha de pujar, com a mínim, cada oferta.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Moneda:</strong> el nom dels diners (monedes, lliures, crèdits…).</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Repte:</strong> l’objectiu de cada equip. Es veu a tots els terminals.</span></li>
+          <li data-n="6"><span class="n">6</span><span class="d"><strong>Puntuació final</strong> (opcional), per saber qui ha comprat millor.</span></li>
+          <li data-n="7"><span class="n">7</span><span class="d"><strong>Afegeix un objecte:</strong> una fila nova al catàleg.</span></li>
+          <li data-n="8"><span class="n">8</span><span class="d"><strong>Icona o foto</strong> de l’objecte.</span></li>
+          <li data-n="9"><span class="n">9</span><span class="d"><strong>Nom i descripció breu</strong> de l’objecte.</span></li>
+          <li data-n="10"><span class="n">10</span><span class="d"><strong>Unitats:</strong> quantes se’n subhasten, d’una en una.</span></li>
+          <li data-n="11"><span class="n">11</span><span class="d"><strong>Sortida:</strong> el preu mínim de la primera oferta.</span></li>
+          <li data-n="12"><span class="n">12</span><span class="d"><strong>Valor</strong> en punts (opcional).</span></li>
+          <li data-n="13"><span class="n">13</span><span class="d"><strong>×</strong> treu l’objecte del catàleg.</span></li>
+          <li data-n="14"><span class="n">14</span><span class="d"><strong>Carrega «Mercat industrial»:</strong> torna a l’exemple inicial.</span></li>
+          <li data-n="15"><span class="n">15</span><span class="d"><strong>Obre la sala d’espera</strong> quan el catàleg estigui a punt.</span></li>
+        </ol>
+      </div>
+
+      <h3>Com s’omple un objecte</h3>
+      <p>Cada fila del catàleg és un objecte. Fixa’t en aquest exemple: es subhastaran <strong>4 unitats de carbó</strong>, d’una en una, i la primera oferta de cada unitat haurà de ser, com a mínim, de 20 monedes.</p>
+      <div class="anatomia" aria-label="Exemple d’objecte amb l’explicació de cada camp">
+        <div class="fila-model">
+          <div class="camp-model">
+            <span class="rotul">Icona o foto</span>
+            <span class="caixa"><svg class="ic"><use href="#i-capsa"/></svg> Carbó ▾</span>
+            <span class="explica">Tria una de les <b>10 icones</b> o prem «Puja foto». La foto es redueix sola i no surt del navegador fins que es desa.</span>
+          </div>
+          <div class="camp-model camp-nom">
+            <span class="rotul">Nom i descripció breu</span>
+            <span class="caixa">Carbó</span>
+            <span class="caixa petita">Combustible per a les màquines de vapor.</span>
+            <span class="explica"><b>Nom</b> de fins a 40 caràcters, sense repetir-ne cap. La <b>descripció</b> (opcional, fins a 200) surt al terminal de l’alumnat.</span>
+          </div>
+          <div class="camp-model">
+            <span class="rotul">Unitats</span>
+            <span class="caixa">4</span>
+            <span class="explica">Quantes <b>unitats</b> se’n venen. Cada una té la seva pròpia licitació.</span>
+          </div>
+          <div class="camp-model">
+            <span class="rotul">Sortida</span>
+            <span class="caixa">20</span>
+            <span class="explica"><b>Preu mínim</b> de la primera oferta de cada unitat.</span>
+          </div>
+          <div class="camp-model">
+            <span class="rotul">Valor</span>
+            <span class="caixa">180</span>
+            <span class="explica"><b>Punts</b> que val cada unitat comprada (si uses puntuació).</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Les unitats se subhasten d’una en una</h3>
+      <p>Amb 4 unitats de carbó hi haurà quatre licitacions seguides. Cada unitat la guanya un equip, i el preu pot pujar o baixar segons quants equips encara en vulguin i quants diners els quedin. Això és el que mostra el gràfic final.</p>
+      <div class="unitats-fila" aria-label="Exemple real de preus de 4 unitats de carbó">
+        <div class="unitat-xip"><strong>Carbó</strong>unitat 1 de 4<span class="preu">60</span></div>
+        <span class="fletxa" aria-hidden="true">→</span>
+        <div class="unitat-xip"><strong>Carbó</strong>unitat 2 de 4<span class="preu">70</span></div>
+        <span class="fletxa" aria-hidden="true">→</span>
+        <div class="unitat-xip"><strong>Carbó</strong>unitat 3 de 4<span class="preu">40</span></div>
+        <span class="fletxa" aria-hidden="true">→</span>
+        <div class="unitat-xip"><strong>Carbó</strong>unitat 4 de 4<span class="preu">60</span></div>
+      </div>
+
+      <h3>Quantes unitats i quins preus hi poso?</h3>
+      <div class="dues">
+        <div>
+          <p class="text-justificat">La clau és l’<strong>escassetat</strong>: si n’hi ha per a tothom, ningú no competeix. Posa <strong>menys unitats de cada objecte que equips</strong>, i un total d’entre 12 i 20 unitats perquè la subhasta duri uns 20 minuts.</p>
+          <table class="taula-guia">
+            <thead><tr><th>Grup</th><th>Objectes</th><th>Unitats per objecte</th><th class="num">Total</th></tr></thead>
+            <tbody>
+              <tr><td>5–6 equips</td><td>3</td><td>3–4</td><td class="num">9–12</td></tr>
+              <tr><td>7–9 equips</td><td>4</td><td>3–4</td><td class="num">12–16</td></tr>
+              <tr><td>10–14 equips</td><td>4</td><td>4–5</td><td class="num">16–20</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <p class="text-justificat">Pensa els imports en relació amb el <strong>pressupost</strong>. Amb 1.000 monedes per equip, funciona bé:</p>
+          <table class="taula-guia">
+            <thead><tr><th>Camp</th><th class="num">Exemple</th><th>Per què</th></tr></thead>
+            <tbody>
+              <tr><td>Pressupost</td><td class="num">1.000</td><td>Fàcil de calcular mentalment.</td></tr>
+              <tr><td>Increment</td><td class="num">10</td><td>Un 1 %: les ofertes pugen a bon ritme.</td></tr>
+              <tr><td>Sortida</td><td class="num">10–30</td><td>Un 1–3 %: tothom pot començar a licitar.</td></tr>
+            </tbody>
+          </table>
+          <p class="text-justificat">Les ofertes sempre són <strong>múltiples de l’increment</strong> a partir del preu de sortida (20, 30, 40…). Un increment massa petit allarga la subhasta; un de massa gran fa que tothom arribi de seguida al límit.</p>
+        </div>
+      </div>
+
+      <h3>La puntuació final (opcional)</h3>
+      <p class="text-justificat">Si marques «Puntuació final», el balanç de cada equip és: <strong>valor dels objectes comprats + bonificació per cada conjunt complet + monedes que li sobren</strong>. Un conjunt complet és tenir una unitat de cada objecte del catàleg. Així l’alumnat ha de decidir entre gastar o estalviar.</p>
+      <table class="taula-guia" aria-label="Exemple de càlcul de punts">
+        <thead><tr><th>Exemple: un equip compra…</th><th class="num">Valor</th><th class="num">Sobra</th><th class="num">Conjunts</th><th class="num">Punts</th></tr></thead>
+        <tbody>
+          <tr><td>2 carbons per 60 i 40 monedes</td><td class="num">180 + 180</td><td class="num">900</td><td class="num">0</td><td class="num"><strong>1.260</strong></td></tr>
+          <tr><td>1 carbó, 1 ferro, 1 cotó i 1 fusta per 280 monedes</td><td class="num">720</td><td class="num">720</td><td class="num">1 × 200</td><td class="num"><strong>1.640</strong></td></tr>
+          <tr><td>No compra res</td><td class="num">0</td><td class="num">1.000</td><td class="num">0</td><td class="num"><strong>1.000</strong></td></tr>
+        </tbody>
+      </table>
+      <p>Si no omples cap valor ni bonificació, la puntuació no apareix enlloc.</p>
+
+      <h3>Límits de cada subhasta</h3>
+      <div class="limits">
+        <div class="limit"><b>40</b><span>participants (equips) com a màxim</span></div>
+        <div class="limit"><b>12</b><span>objectes diferents</span></div>
+        <div class="limit"><b>60</b><span>unitats en total</span></div>
+        <div class="limit"><b>60</b><span>caràcters per al títol</span></div>
+        <div class="limit"><b>280</b><span>caràcters per al repte</span></div>
+        <div class="limit"><b>100.000</b><span>monedes de pressupost com a màxim</span></div>
+      </div>
+
+      <div class="avis">
+        <svg class="ic"><use href="#i-avis"/></svg>
+        <p>Si un camp no és vàlid (un nom repetit, unes unitats a zero, una sortida més gran que el pressupost…), queda marcat en vermell amb l’explicació i no podràs obrir la sala d’espera fins que el corregeixis.</p>
+      </div>
+    </section>
+
+    <!-- PAS 3 -->
+    <section class="seccio" id="pas-3" aria-labelledby="titol-pas-3">
+      <div class="seccio-cap">
+        <span class="pas-gran" aria-hidden="true">3</span>
+        <div>
+          <h2 id="titol-pas-3">Obre la sala d’espera i fes entrar l’alumnat</h2>
+          <p>La sala d’espera dona el codi de 4 caràcters. Projecta-la perquè els equips entrin mentre llegeixen el repte.</p>
+        </div>
+      </div>
+
+      <div class="anotada ample">
+        <figure>
+          <div class="marc-captura">
+            <img src="docs/images/sala-espera-1366x768.png" width="1366" height="768" alt="Sala d’espera amb el codi HKAB, el QR i la llista de participants" loading="lazy">
+            <span class="punt" data-n="1" style="--x:11.5%;--y:20.5%">1</span>
+            <span class="punt" data-n="2" style="--x:34.9%;--y:13%">2</span>
+            <span class="punt" data-n="3" style="--x:5%;--y:27.1%">3</span>
+            <span class="punt" data-n="4" style="--x:22.1%;--y:27.1%">4</span>
+            <span class="punt" data-n="5" style="--x:3.8%;--y:34.6%">5</span>
+            <span class="punt" data-n="6" style="--x:49.6%;--y:12.4%">6</span>
+            <span class="punt" data-n="7" style="--x:51.5%;--y:18.8%">7</span>
+            <span class="punt" data-n="8" style="--x:84.6%;--y:12%">8</span>
+            <span class="punt" data-n="9" style="--x:79.6%;--y:77.5%">9</span>
+            <span class="punt" data-n="10" style="--x:49.6%;--y:85.5%">10</span>
+            <span class="punt" data-n="11" style="--x:81.3%;--y:85.3%">11</span>
+          </div>
+          <figcaption>Sala d’espera amb set equips ja connectats.</figcaption>
+        </figure>
+        <ol class="llegenda">
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Codi de la sala</strong>, ben gran per llegir-lo des del fons.</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>QR</strong> que porta directament a la sala.</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Copia l’enllaç</strong> per penjar-lo al Classroom: entren sense escriure el codi.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Obre la projecció</strong> en aquest ordinador (pas 4).</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Repte, catàleg i vocabulari</strong> perquè l’alumnat els llegeixi.</span></li>
+          <li data-n="6"><span class="n">6</span><span class="d"><strong>Participants</strong>: apareixen a mesura que entren.</span></li>
+          <li data-n="7"><span class="n">7</span><span class="d"><strong>Llapis i ×</strong>: corregeix un àlies inadequat o treu algú.</span></li>
+          <li data-n="8"><span class="n">8</span><span class="d"><strong>Inscripcions obertes:</strong> desmarca-ho si ja no ha d’entrar ningú més.</span></li>
+          <li data-n="9"><span class="n">9</span><span class="d"><strong>Participants simulats</strong> per assajar sol.</span></li>
+          <li data-n="10"><span class="n">10</span><span class="d"><strong>Edita la configuració</strong> si cal retocar el catàleg.</span></li>
+          <li data-n="11"><span class="n">11</span><span class="d"><strong>Comença la subhasta</strong> quan hi siguin tots. Les inscripcions es tanquen soles.</span></li>
+        </ol>
+      </div>
+
+      <h3>Què fa cada equip per entrar</h3>
+      <ol class="passos-mini">
+        <li><b>1. Obre l’adreça</b>Escriu <strong>ja.cat/subhasta</strong> al navegador (o fa clic a l’enllaç del Classroom).</li>
+        <li><b>2. Escriu el codi</b>El de la pantalla, per exemple <span class="codi-mostra">HKAB</span>. Majúscules o minúscules, és igual.</li>
+        <li><b>3. Tria un àlies</b>El nom de l’equip, de fins a 24 caràcters. No es demana cap dada personal.</li>
+        <li><b>4. Entra per participar</b>Ja és a la sala: veu el saldo, el repte i espera que obris la primera unitat.</li>
+      </ol>
+
+      <div class="consell">
+        <svg class="ic"><use href="#i-bombeta"/></svg>
+        <p>El codi no fa servir caràcters que es confonen (ni 0 i O, ni 1, I i L). Si un equip tanca el portàtil per error, només ha de tornar a entrar amb el mateix navegador: recupera la mateixa cartera.</p>
+      </div>
+    </section>
+
+    <!-- PAS 4 -->
+    <section class="seccio" id="pas-4" aria-labelledby="titol-pas-4">
+      <div class="seccio-cap">
+        <span class="pas-gran" aria-hidden="true">4</span>
+        <div>
+          <h2 id="titol-pas-4">Projecta la subhasta a l’aula</h2>
+          <p>La projecció és una pantalla pública de només lectura: ningú no hi pot fer res. Hi ha dues maneres de muntar-la.</p>
+        </div>
+      </div>
+
+      <div class="dues">
+        <div class="opcio">
+          <h3>A. Amb un sol ordinador</h3>
+          <div class="esquema">
+            <span class="aparell"><svg class="ic"><use href="#i-portatil"/></svg>El teu ordinador</span>
+            <svg class="ic" aria-hidden="true"><use href="#i-fletxa"/></svg>
+            <span class="aparell"><svg class="ic"><use href="#i-pantalla"/></svg>Projector (pantalla ampliada)</span>
+          </div>
+          <ol>
+            <li>Amb <span class="tecla">⊞ Windows</span> + <span class="tecla">P</span>, tria <strong>Amplia</strong>.</li>
+            <li>Al comandament, prem <span class="boto-app sec">Finestra nova</span>.</li>
+            <li>Arrossega aquella finestra a la pantalla del projector i posa-la a pantalla completa.</li>
+            <li>Tu continues dirigint des de la finestra del comandament, que l’alumnat no veu.</li>
+          </ol>
+          <p><small>Si només tens una pantalla (sense ampliar-la), obre la projecció i prem <strong>Mode presentació</strong>: hi apareix una barra per dirigir-la des d’allà mateix.</small></p>
+        </div>
+        <div class="opcio">
+          <h3>B. Amb dos aparells</h3>
+          <div class="esquema">
+            <span class="aparell"><svg class="ic"><use href="#i-portatil"/></svg>El teu portàtil (comandament)</span>
+            <span class="aparell"><svg class="ic"><use href="#i-pantalla"/></svg>Ordinador de l’aula (projecció)</span>
+          </div>
+          <ol>
+            <li>A l’ordinador de l’aula, obre <strong>ja.cat/subhasta</strong>.</li>
+            <li>Escriu el codi de la sala i prem <span class="boto-app sec">Projectar a l’aula</span>.</li>
+            <li>Dirigeix des del teu portàtil, on has creat la subhasta.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="anotada ample">
+        <figure>
+          <div class="marc-captura">
+            <img src="docs/images/projeccio-1920x1080.png" width="1920" height="1080" alt="Projecció de la subhasta" loading="lazy">
+            <span class="punt" data-n="1" style="--x:3.2%;--y:22.7%">1</span>
+            <span class="punt" data-n="2" style="--x:12.1%;--y:53.2%">2</span>
+            <span class="punt" data-n="3" style="--x:3.2%;--y:90%">3</span>
+            <span class="punt" data-n="4" style="--x:68.1%;--y:34.7%">4</span>
+            <span class="punt" data-n="5" style="--x:68.3%;--y:88%">5</span>
+            <span class="punt" data-n="6" style="--x:69.9%;--y:11.9%">6</span>
+            <span class="punt" data-n="7" style="--x:88.3%;--y:11.9%">7</span>
+            <span class="punt" data-n="8" style="--x:67.2%;--y:3.2%">8</span>
+          </div>
+          <figcaption>Projecció amb l’estil «Mercat». A la capçalera pots triar «Sala fosca» si el projector és poc lluminós.</figcaption>
+        </figure>
+        <ol class="llegenda">
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Unitat en joc</strong> i estat (oberta o aturada).</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>Oferta més alta</strong> i qui lidera, ben grans.</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Oferta mínima següent</strong> i les tres últimes ofertes.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Catàleg:</strong> quantes en queden, el darrer preu i què ve després.</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Repte</strong> de la sessió, sempre a la vista.</span></li>
+          <li data-n="6"><span class="n">6</span><span class="d"><strong>Adreça i codi</strong> per a qui arribi tard.</span></li>
+          <li data-n="7"><span class="n">7</span><span class="d"><strong>Mode presentació:</strong> si només tens una pantalla, afegeix a la projecció una barra petita per obrir, aturar i adjudicar sense sortir-ne.</span></li>
+          <li data-n="8"><span class="n">8</span><span class="d"><strong>Martell:</strong> activa el so de martell en cada adjudicació.</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- PAS 5 -->
+    <section class="seccio" id="pas-5" aria-labelledby="titol-pas-5">
+      <div class="seccio-cap">
+        <span class="pas-gran" aria-hidden="true">5</span>
+        <div>
+          <h2 id="titol-pas-5">Dirigeix la subhasta i adjudica cada unitat</h2>
+          <p>Tu marques el ritme. No hi ha cap temporitzador: una unitat es ven quan tu decideixes aturar les ofertes i adjudicar-la.</p>
+        </div>
+      </div>
+
+      <h3>El cicle de cada unitat</h3>
+      <div class="cicle" role="img" aria-label="Cicle d’una unitat: obres la unitat, l’alumnat fa ofertes, atures les ofertes i, aleshores, adjudiques, reprens o retires sense vendre">
+        <div class="estat estat-inici">Unitat disponible<small>al catàleg</small></div>
+        <div class="accio">Obre la unitat</div>
+        <div class="estat estat-oberta">Oberta<small>els equips fan ofertes</small></div>
+        <div class="accio">Atura les ofertes</div>
+        <div class="estat estat-aturada">Aturada<small>import i líder congelats</small></div>
+        <div class="cicle-branques">
+          <div class="branca"><span class="accio">Adjudica</span><span class="estat estat-venuda">Venuda<small>es cobra al guanyador</small></span></div>
+          <div class="branca"><span class="accio">Reprèn</span><span class="estat estat-oberta">Torna a estar oberta<small>es poden fer més ofertes</small></span></div>
+          <div class="branca"><span class="accio">Retira</span><span class="estat estat-retirada">Sense vendre<small>la unitat continua disponible</small></span></div>
+        </div>
+      </div>
+
+      <div class="anotada ample">
+        <figure>
+          <div class="marc-captura">
+            <img src="docs/images/comandament-1366x768.png" width="1366" height="768" alt="Comandament amb una unitat de carbó oberta" loading="lazy">
+            <span class="punt" data-n="1" style="--x:4.6%;--y:12.4%">1</span>
+            <span class="punt" data-n="2" style="--x:5%;--y:18.2%">2</span>
+            <span class="punt" data-n="3" style="--x:40.5%;--y:19.8%">3</span>
+            <span class="punt" data-n="4" style="--x:3.9%;--y:28.6%">4</span>
+            <span class="punt" data-n="5" style="--x:22.8%;--y:49%">5</span>
+            <span class="punt" data-n="6" style="--x:39.2%;--y:43.7%">6</span>
+            <span class="punt" data-n="7" style="--x:62.6%;--y:43.7%">7</span>
+            <span class="punt" data-n="8" style="--x:63.7%;--y:12.4%">8</span>
+            <span class="punt" data-n="9" style="--x:63.6%;--y:35.6%">9</span>
+            <span class="punt" data-n="10" style="--x:88.2%;--y:33.8%">10</span>
+            <span class="punt" data-n="11" style="--x:48.6%;--y:3.1%">11</span>
+          </div>
+          <figcaption>Comandament amb una unitat oberta.</figcaption>
+        </figure>
+        <ol class="llegenda">
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Unitat en joc</strong> i estat.</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>Oferta més alta i líder</strong>, en directe.</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Ofertes rebudes</strong> i les tres últimes.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Aturar ofertes:</strong> el botó principal canvia segons el moment.</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Catàleg:</strong> obre la unitat proposada o qualsevol altre objecte amb existències.</span></li>
+          <li data-n="6"><span class="n">6</span><span class="d"><strong>Tornar a començar:</strong> ronda nova amb els mateixos equips i tothom torna al pressupost inicial.</span></li>
+          <li data-n="7"><span class="n">7</span><span class="d"><strong>Finalitza la subhasta</strong> i mostra els resultats.</span></li>
+          <li data-n="8"><span class="n">8</span><span class="d"><strong>Participants</strong> amb saldo, despesa i compres.</span></li>
+          <li data-n="9"><span class="n">9</span><span class="d"><strong>Qui lidera</strong> queda destacat.</span></li>
+          <li data-n="10"><span class="n">10</span><span class="d"><strong>Canvi d’aparell, àlies i treure</strong> un participant.</span></li>
+          <li data-n="11"><span class="n">11</span><span class="d"><strong>Comandament, Projecció i Finestra nova:</strong> canvia de pantalla.</span></li>
+        </ol>
+      </div>
+
+      <div class="anotada ample">
+        <figure>
+          <div class="marc-captura">
+            <img src="docs/images/guia/comandament-aturada.png" width="1366" height="768" alt="Comandament amb les ofertes aturades i els botons Adjudicar, Reprendre ofertes i Retirar sense vendre" loading="lazy">
+            <span class="punt" data-n="1" style="--x:47.2%;--y:12.4%">1</span>
+            <span class="punt" data-n="2" style="--x:4.8%;--y:30.9%">2</span>
+            <span class="punt" data-n="3" style="--x:3.9%;--y:37.5%">3</span>
+            <span class="punt" data-n="4" style="--x:29%;--y:41.2%">4</span>
+            <span class="punt" data-n="5" style="--x:41%;--y:41.2%">5</span>
+          </div>
+          <figcaption>Després de prémer «Aturar ofertes».</figcaption>
+        </figure>
+        <ol class="llegenda">
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Ofertes aturades:</strong> ningú no pot fer cap oferta més.</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>Revisió:</strong> qui guanya i quant pagarà, abans de confirmar.</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Adjudicar:</strong> ven la unitat i en descompta l’import del saldo del guanyador.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Reprendre ofertes</strong> si encara n’hi havia per fer.</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Retirar sense vendre</strong> si ningú no n’ha ofert res.</span></li>
+        </ol>
+      </div>
+
+      <h3>Què veu cada equip</h3>
+      <div class="anotada ample">
+        <figure>
+          <div class="marc-captura">
+            <img src="docs/images/terminal-1366x768.png" width="1366" height="768" alt="Terminal d’un equip amb el saldo, la unitat en joc i els botons d’oferta" loading="lazy">
+            <span class="punt" data-n="1" style="--x:37.8%;--y:12%">1</span>
+            <span class="punt" data-n="2" style="--x:4%;--y:21.6%">2</span>
+            <span class="punt" data-n="3" style="--x:4.9%;--y:32%">3</span>
+            <span class="punt" data-n="4" style="--x:3.8%;--y:40.2%">4</span>
+            <span class="punt" data-n="5" style="--x:3.8%;--y:69.9%">5</span>
+            <span class="punt" data-n="6" style="--x:3.8%;--y:79.7%">6</span>
+            <span class="punt" data-n="7" style="--x:24.7%;--y:87.2%">7</span>
+            <span class="punt" data-n="8" style="--x:60.4%;--y:21.2%">8</span>
+            <span class="punt" data-n="9" style="--x:60.4%;--y:66.1%">9</span>
+          </div>
+          <figcaption>Terminal d’un equip a 1366 × 768. En un mòbil, la mateixa informació es posa en una sola columna.</figcaption>
+        </figure>
+        <ol class="llegenda">
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Saldo disponible</strong> i quant ha gastat.</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>Unitat en joc</strong> i estat.</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Millor oferta</strong> i qui lidera.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Missatge</strong>: si va primer, què li quedaria si guanya, si algú l’ha superat…</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Oferta mínima</strong> en un sol clic, amb el saldo que li quedaria.</span></li>
+          <li data-n="6"><span class="n">6</span><span class="d"><strong>Dues ofertes més altes</strong> de drecera.</span></li>
+          <li data-n="7"><span class="n">7</span><span class="d"><strong>Un altre import</strong> amb − i +, sempre vàlid.</span></li>
+          <li data-n="8"><span class="n">8</span><span class="d"><strong>Les meves compres</strong> i els punts actuals.</span></li>
+          <li data-n="9"><span class="n">9</span><span class="d"><strong>Catàleg</strong> amb les unitats que queden i què ve després.</span></li>
+        </ol>
+      </div>
+
+      <h3>Normes que l’app fa complir sola</h3>
+      <table class="taula-guia">
+        <thead><tr><th>Norma</th><th>Què passa</th></tr></thead>
+        <tbody>
+          <tr><td>Ningú no pot oferir més del que té</td><td>Els botons d’imports massa alts es desactiven.</td></tr>
+          <tr><td>Qui va primer no es pot superar a si mateix</td><td>Ha d’esperar que algú altre l’avanci.</td></tr>
+          <tr><td>Una oferta no es pot retirar</td><td>Quan s’ha fet, compromet aquell import fins que algú la superi.</td></tr>
+          <tr><td>El saldo només baixa en adjudicar</td><td>Mentre licita, l’equip no perd res: només paga qui guanya cada unitat.</td></tr>
+          <tr><td>Dues ofertes alhora</td><td>Només una entra; l’altre equip rep «Algú ha ofert abans» amb el nou mínim.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="consell">
+        <svg class="ic"><use href="#i-bombeta"/></svg>
+        <p><strong>Dona-li ritme de subhasta.</strong> Canta en veu alta: «60 monedes per a l’Equip Roure… a la una… a les dues…» i prem «Aturar ofertes». Fes servir la primera unitat com a <strong>ronda d’assaig</strong> i, després, «Tornar a començar» perquè la subhasta real comenci amb tothom amb el pressupost sencer.</p>
+      </div>
+
+      <h3>Si alguna cosa no surt bé</h3>
+      <div class="tres">
+        <div class="targeta">
+          <h3>M’he equivocat d’adjudicació</h3>
+          <p>Prem <span class="boto-app sec">Desfés l’última adjudicació</span>. Es pot fer mentre no hagis obert la unitat següent: torna els diners i la unitat.</p>
+        </div>
+        <div class="targeta">
+          <h3>Un equip canvia d’ordinador</h3>
+          <p>A la seva fila, prem la icona de les dues fletxes. Surt un codi de 4 xifres vàlid 5 minuts. A l’ordinador nou, l’equip escriu el codi de la sala, obre «Tinc un codi de canvi d’aparell» i el codi. La cartera hi passa sencera.</p>
+        </div>
+        <div class="targeta">
+          <h3>Un àlies no és adequat</h3>
+          <p>Prem el llapis per canviar-lo o la × per treure l’equip. No es pot treure qui lidera la unitat en joc.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAS 6 -->
+    <section class="seccio" id="pas-6" aria-labelledby="titol-pas-6">
+      <div class="seccio-cap">
+        <span class="pas-gran" aria-hidden="true">6</span>
+        <div>
+          <h2 id="titol-pas-6">Tanca la subhasta i comenteu els resultats</h2>
+          <p>Prem «Finalitza la subhasta» quan no hi hagi cap unitat oberta. És definitiu: totes les pantalles passen als resultats.</p>
+        </div>
+      </div>
+
+      <div class="anotada ample">
+        <figure>
+          <div class="marc-captura">
+            <img src="docs/images/resultats-1366x768.png" width="1366" height="768" alt="Resultats: gràfic d’evolució de preus, taula per objecte, preguntes de reflexió i balanç dels participants" loading="lazy">
+            <span class="punt" data-n="1" style="--x:3.8%;--y:20.4%">1</span>
+            <span class="punt" data-n="2" style="--x:4.2%;--y:59.9%">2</span>
+            <span class="punt" data-n="3" style="--x:59%;--y:20.4%">3</span>
+            <span class="punt" data-n="4" style="--x:59%;--y:41.3%">4</span>
+            <span class="punt" data-n="5" style="--x:84.2%;--y:41.1%">5</span>
+            <span class="punt" data-n="6" style="--x:49.5%;--y:11.5%">6</span>
+            <span class="punt" data-n="7" style="--x:76.4%;--y:8.3%">7</span>
+            <span class="punt" data-n="8" style="--x:92.4%;--y:8.3%">8</span>
+          </div>
+          <figcaption>Pantalla de resultats de l’organitzador.</figcaption>
+        </figure>
+        <ol class="llegenda">
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Gràfic de preus</strong> unitat a unitat de cada objecte.</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>Taula</strong> amb les unitats venudes, els preus successius i el preu mitjà.</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Tres preguntes</strong> per a la reflexió a l’aula.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Balanç de cada equip:</strong> unitats, despesa, saldo i punts.</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Mostra a la projecció:</strong> el balanç és privat fins que decideixes ensenyar-lo.</span></li>
+          <li data-n="6"><span class="n">6</span><span class="d"><strong>CSV</strong> de participants i d’adjudicacions per obrir-los amb Google Sheets o Excel.</span></li>
+          <li data-n="7"><span class="n">7</span><span class="d"><strong>Tornar a començar:</strong> una ronda nova amb els mateixos equips.</span></li>
+          <li data-n="8"><span class="n">8</span><span class="d"><strong>Duplica la sessió</strong> per fer-la amb un altre grup.</span></li>
+        </ol>
+      </div>
+
+      <div class="consell">
+        <svg class="ic"><use href="#i-bombeta"/></svg>
+        <p><strong>Idees per al debat:</strong> per què l’últim carbó es va pagar més car que el primer (o més barat)? Quins equips van gastar massa al principi i després no van poder comprar? Quin objecte era més escàs? Què faríeu diferent si ho repetíssim?</p>
+      </div>
+    </section>
+
+    <!-- LES MEVES SUBHASTES -->
+    <section class="seccio" id="meves" aria-labelledby="titol-meves">
+      <div class="seccio-cap">
+        <div>
+          <h2 id="titol-meves">On es desen les teves subhastes</h2>
+          <p>Cada subhasta pertany a qui l’ha creada. Ningú més la pot dirigir ni modificar.</p>
+        </div>
+      </div>
+      <div class="tres">
+        <div class="targeta">
+          <h3>En aquest navegador</h3>
+          <p>Les trobaràs a <span class="boto-app sec">Les meves subhastes</span> de la portada, sempre que facis servir el mateix ordinador i navegador.</p>
+        </div>
+        <div class="targeta">
+          <h3>En un altre ordinador</h3>
+          <p>A la portada, prem <strong>Vincula-les a Google</strong> i tria el teu compte. Després, entra amb aquest compte des de l’altre ordinador.</p>
+        </div>
+        <div class="targeta">
+          <h3>30 dies</h3>
+          <p>Una subhasta s’esborra sola 30 dies després de finalitzar-la o de l’última acció. No es demana cap dada personal a l’alumnat.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREGUNTES FREQÜENTS -->
+    <section class="seccio faq" id="preguntes" aria-labelledby="titol-preguntes">
+      <h2 id="titol-preguntes">Preguntes freqüents</h2>
+      <details>
+        <summary>Un equip no pot entrar a la sala</summary>
+        <div>
+          <p>Comprova que el codi sigui el de la pantalla i que les <strong>inscripcions estiguin obertes</strong> (la casella de la sala d’espera o del comandament).</p>
+          <p>Si l’àlies ja l’ha triat un altre equip, n’ha de triar un de diferent. La sala admet fins a 40 participants.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Puc canviar el catàleg quan ja he començat?</summary>
+        <div><p>No. Pots editar-lo a la preparació i a la sala d’espera fins que premis «Comença la subhasta». Si cal canviar-lo després, duplica la sessió i fes-ne una de nova.</p></div>
+      </details>
+      <details>
+        <summary>Què passa si es talla la connexió?</summary>
+        <div><p>Res no es perd. Sense l’organitzador no s’adjudica cap unitat; quan tornis a tenir connexió, recarrega la pàgina i continua. Si un equip perd la connexió, no pot fer ofertes fins que la recupera.</p></div>
+      </details>
+      <details>
+        <summary>Hi ha temporitzador?</summary>
+        <div><p>No. Tu decideixes quan s’aturen les ofertes. Així pots allargar el moment de tensió o accelerar-lo segons la classe.</p></div>
+      </details>
+      <details>
+        <summary>Puc fer la subhasta sense alumnat per provar-la?</summary>
+        <div><p>Sí: «Assaig ràpid amb simulador» a la portada, o «+6 simulats» a la sala d’espera. Al comandament, «Ofertes automàtiques (bots)» fa que els participants simulats licitin sols.</p></div>
+      </details>
+      <details>
+        <summary>Puc fer servir fotos en lloc d’icones?</summary>
+        <div><p>Sí, amb «Puja foto» a cada objecte. La foto es redueix automàticament al navegador. Fes servir imatges senzilles i amb drets d’ús.</p></div>
+      </details>
+      <details>
+        <summary>Quina diferència hi ha entre «Tornar a començar» i «Duplica la sessió»?</summary>
+        <div><p>«Tornar a començar» manté la mateixa sala, el mateix codi i els mateixos equips, i torna el pressupost inicial a tothom per fer una ronda nova. «Duplica la sessió» crea una subhasta nova amb el mateix catàleg i un codi nou, per a un altre grup.</p></div>
+      </details>
+    </section>
+
+    <!-- RESUM -->
+    <section class="seccio" id="resum" aria-labelledby="titol-resum">
+      <h2 id="titol-resum">Resum en una ullada</h2>
+      <ul class="check">
+        <li><svg class="ic"><use href="#i-check"/></svg><span>A <strong>ja.cat/subhasta</strong>, prem «Crea una subhasta nova».</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>Omple el títol, el pressupost, l’increment i el repte.</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>Posa 3 o 4 objectes amb menys unitats que equips i un preu de sortida.</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>Obre la sala d’espera i projecta el codi o penja l’enllaç al Classroom.</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>Quan hi siguin tots, «Comença la subhasta».</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>Per a cada unitat: obre, deixa licitar, atura i adjudica.</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>Finalitza i comenteu el gràfic de preus.</span></li>
+        <li><svg class="ic"><use href="#i-check"/></svg><span>Descarrega els CSV si vols avaluar-ho.</span></li>
+      </ul>
+
+      <div class="peu-final">
+        <div>
+          <h2>Som-hi!</h2>
+          <p>Prova-ho primer amb l’assaig ràpid: en dos minuts ho tindràs tot clar.</p>
+        </div>
+        <a class="boto" href="./">Obre Subhasta</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="felip-app-footer">
+    <a class="felip-license-image-link" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer" aria-label="Llicència Creative Commons BY-NC-SA 4.0">
+      <img class="felip-license-image" src="assets/CC_BY-NC-SA.png" alt="Creative Commons BY-NC-SA">
+    </a>
+    <div class="felip-footer-text">
+      <p>Aplicació creada per <a href="https://ja.cat/felipsarroca" target="_blank" rel="noopener noreferrer">Felip Sarroca</a> amb assistència de la IA</p>
+      <p>Codi: <a href="https://github.com/felipsarroca/util-apps/blob/main/Subhasta/LICENSE" target="_blank" rel="noopener noreferrer">AGPLv3</a> · Continguts: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0</a> · <a href="https://github.com/felipsarroca/util-apps/issues/new?template=subhasta.yml" target="_blank" rel="noopener noreferrer">Suggeriments i errors</a></p>
+    </div>
+  </footer>
+</body>
+</html>
