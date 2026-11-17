@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* Controlador principal d'interfície, adaptació de pantalla, gràfic de preus i accessibilitat de Subhasta */
 
-import { LIMITS, STORAGE_KEYS } from './config.js';
-import { TEXTOS, ICONES, EXEMPLE_MERCAT_INDUSTRIAL, fmtNum, renderIconaSvg } from './textos.js';
+import { LIMITS, STORAGE_KEYS } from './config.js?v=1.1.0';
+import { TEXTOS, ICONES, EXEMPLE_MERCAT_INDUSTRIAL, fmtNum, renderIconaSvg } from './textos.js?v=1.1.0';
 import {
   netejaText,
   validaConfiguracio,
@@ -11,16 +11,17 @@ import {
   calculaPuntuacioParticipant,
   generaCsvParticipants,
   generaCsvAdjudicacions
-} from './domini.js';
+} from './domini.js?v=1.1.0';
 import {
   GestorSubhasta,
   normalitzaCodiSala,
   formatCodiSala,
+  esCodiSalaComplet,
   getCorreuOrganitzador,
   setCorreuOrganitzador
-} from './emmagatzematge.js';
-import { renderQrSvg } from './qr.js';
-import { soMartell } from './audio.js';
+} from './emmagatzematge.js?v=1.1.0';
+import { renderQrSvg } from './qr.js?v=1.1.0';
+import { soMartell } from './audio.js?v=1.1.0';
 
 const gestor = new GestorSubhasta();
 
@@ -44,6 +45,32 @@ const estatUI = {
 };
 
 const $ = (id) => document.getElementById(id);
+
+/* Icones de línia per a accions petites (en lloc de glifs o emojis) */
+const SVG_OBERT = '<svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+const IC = {
+  editar: `${SVG_OBERT}<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+  treure: `${SVG_OBERT}<path d="M18 6 6 18M6 6l12 12"/></svg>`,
+  aparell: `${SVG_OBERT}<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+  martell: `${SVG_OBERT}<path d="M14 4l6 6-8 8-6-6 8-8z"/><path d="M4 20h16"/></svg>`,
+  check: `${SVG_OBERT}<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16.5 9.5"/></svg>`,
+  rellotge: `${SVG_OBERT}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  persones: `${SVG_OBERT}<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  bossa: `${SVG_OBERT}<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+  tancat: `${SVG_OBERT}<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`
+};
+
+/* Text «Després: …» amb la unitat concreta que es proposa obrir */
+function textSeguent(objectes, tauler) {
+  const objSeg = objectes.find((o) => o.id === tauler.seguentObjecteId);
+  if (!objSeg) return '';
+  const venudes = Number(tauler.cataleg?.[objSeg.id]?.venudes ?? 0);
+  const enJoc = tauler.licitacio?.objecteId === objSeg.id ? 1 : 0;
+  const unitat = venudes + 1 + enJoc;
+  return unitat <= Number(objSeg.quantitat)
+    ? `Després: ${objSeg.nom} · unitat ${unitat}`
+    : `Després: ${objSeg.nom}`;
+}
 
 function escHtml(str) {
   return String(str ?? '')
@@ -147,6 +174,8 @@ function mostraVista(nomVista) {
 
   const enSessio = !['inici', 'llista'].includes(nomVista) && Boolean(estatUI.dades?.sessio);
   const esVistaOrg = enSessio && estatUI.rolActual === 'organitzador';
+  document.body.dataset.vista = nomVista;
+  $('btn-copia-codi-top').hidden = !esVistaOrg;
   $('insignia-sala').hidden = !enSessio;
   $('btn-sortir').hidden = nomVista === 'inici';
   $('nav-espais').hidden = !esVistaOrg;
@@ -213,9 +242,8 @@ function redueixImatgeAlNavegador(file) {
    ============================================================ */
 async function actualitzaPortada() {
   const correu = getCorreuOrganitzador();
-  $('estat-compte-org').textContent = correu
-    ? `Organitzador: ${correu}`
-    : 'Organitzador autoritzat (felip.sarroca@ramonpont.cat)';
+  $('estat-compte-org').textContent = correu ? `Organitzador: ${correu}` : 'Només per a docents autoritzats';
+  $('btn-identifica-google').textContent = correu ? 'Canvia de compte Google' : 'Identifica’t amb Google';
 
   const sessions = await gestor.llistaLesMevesSubhastes();
   $('comptador-meves-subhastes').textContent = String(sessions.length);
@@ -514,7 +542,12 @@ function renderSalaEspera(dades) {
 
   const llistaEl = $('llista-participants-espera');
   if (!participants.length) {
-    llistaEl.innerHTML = `<p class="subtext">Esperant que entrin els participants amb el codi <strong>${formatCodiSala(sessio.codi)}</strong>…</p>`;
+    llistaEl.innerHTML = `
+      <div class="espera-buida">
+        <span class="espera-buida-ic">${IC.persones}</span>
+        <strong>Encara no ha entrat ningú</strong>
+        <span>L’alumnat entra a <b>ja.cat/subhasta</b> amb el codi <b class="tabular">${formatCodiSala(sessio.codi)}</b>.</span>
+      </div>`;
   } else {
     llistaEl.innerHTML = participants
       .map(
@@ -524,8 +557,8 @@ function renderSalaEspera(dades) {
           ${
             esOrganitzador
               ? `<span class="xip-accions">
-                  <button type="button" class="btn-xip" data-accio-part="renomena" data-uid="${p.uid}" data-alies="${escHtml(p.alies)}" title="Canvia l'àlies">✎</button>
-                  <button type="button" class="btn-xip" data-accio-part="treu" data-uid="${p.uid}" data-alies="${escHtml(p.alies)}" title="Treu de la sala">✕</button>
+                  <button type="button" class="btn-xip" data-accio-part="renomena" data-uid="${p.uid}" data-alies="${escHtml(p.alies)}" title="Canvia l’àlies" aria-label="Canvia l’àlies de ${escHtml(p.alies)}">${IC.editar}</button>
+                  <button type="button" class="btn-xip btn-xip-perill" data-accio-part="treu" data-uid="${p.uid}" data-alies="${escHtml(p.alies)}" title="Treu de la sala" aria-label="Treu ${escHtml(p.alies)} de la sala">${IC.treure}</button>
                 </span>`
               : ''
           }
@@ -704,8 +737,9 @@ function renderComandament(dades) {
           <div class="subtext tabular">
             Sortida: ${fmtNum(o.preuSortida)} · Darrer: <strong>${cat.darrerPreu !== null ? fmtNum(cat.darrerPreu) : '—'}</strong>
           </div>
-          <button type="button" class="btn btn-secundari btn-sm btn-obrir-obj-cataleg" data-obj-id="${o.id}" ${lic || queden <= 0 ? 'disabled' : ''}>
-            ${queden > 0 ? `Obrir unitat ${proxUnitat} de ${o.quantitat}` : 'Esgotat'}
+          <button type="button" class="btn btn-secundari btn-sm btn-obrir-obj-cataleg" data-obj-id="${o.id}" ${lic || queden <= 0 ? 'disabled' : ''}
+            title="${lic && queden > 0 ? 'Adjudica o retira la unitat en joc per obrir-ne una altra' : ''}">
+            ${queden <= 0 ? 'Esgotat' : enJoc ? `En joc · unitat ${lic.unitat}` : `Obrir unitat ${proxUnitat} de ${o.quantitat}`}
           </button>
         </div>
       `;
@@ -728,17 +762,18 @@ function renderComandament(dades) {
           (c.compres || []).length > 0
             ? c.compres.map((item) => `${item.objecteNom} (${fmtNum(item.preu)})`).join(', ')
             : 'Cap compra';
+        const esLider = lic?.liderUid === c.uid;
         return `
-          <div class="fila-cartera-cmd">
+          <div class="fila-cartera-cmd ${esLider ? 'es-lider' : ''}">
             <div class="fila-cartera-info">
-              <strong>${escHtml(c.alies)}</strong>
+              <strong>${escHtml(c.alies)}${esLider ? ' <span class="pastilla-lider">Lidera</span>' : ''}</strong>
               <span class="subtext tabular">Saldo: <strong>${fmtNum(saldo)}</strong> · Gastat: ${fmtNum(c.gastat)}</span>
               <span class="subtext" style="font-size:0.78rem;">${escHtml(compresTxt)}</span>
             </div>
             <div class="fila-cartera-accions">
-              <button type="button" class="btn-xip" data-accio-part="canvi-aparell" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Genera codi de 4 xifres per canviar d'aparell">⇄ Aparell</button>
-              <button type="button" class="btn-xip" data-accio-part="renomena" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Canvia l'àlies">✎</button>
-              <button type="button" class="btn-xip" data-accio-part="treu" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Treu de la sessió">✕</button>
+              <button type="button" class="btn-xip" data-accio-part="canvi-aparell" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Codi de 4 xifres per canviar d’aparell" aria-label="Canvi d’aparell de ${escHtml(c.alies)}">${IC.aparell}</button>
+              <button type="button" class="btn-xip" data-accio-part="renomena" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Canvia l’àlies" aria-label="Canvia l’àlies de ${escHtml(c.alies)}">${IC.editar}</button>
+              <button type="button" class="btn-xip btn-xip-perill" data-accio-part="treu" data-uid="${c.uid}" data-alies="${escHtml(c.alies)}" title="Treu de la sessió" aria-label="Treu ${escHtml(c.alies)} de la sessió">${IC.treure}</button>
             </div>
           </div>
         `;
@@ -871,8 +906,7 @@ function renderProjeccio(dades) {
   }
 
   // Catàleg d'ordre fix: «Queden» inclou la unitat en curs; «Darrer preu» és sempre l'última adjudicació (§7)
-  const objSeg = objectes.find((o) => o.id === tauler.seguentObjecteId);
-  $('proj-seguent-indicador').textContent = objSeg ? TEXTOS.projeccio.despres(objSeg.nom) : '';
+  $('proj-seguent-indicador').textContent = textSeguent(objectes, tauler);
 
   $('tbody-proj-cataleg').innerHTML = objectes
     .map((o) => {
@@ -882,9 +916,10 @@ function renderProjeccio(dades) {
       return `
         <tr class="${esActiu ? 'fila-activa' : ''}">
           <td>
-            <span style="display:inline-flex;align-items:center;gap:0.45rem;">
+            <span class="cel-obj-proj">
               ${renderIconaSvg(o.icona, o.imatgeDataUrl)}
-              <span>${escHtml(o.nom)} ${esActiu ? '●' : ''}</span>
+              <span>${escHtml(o.nom)}</span>
+              ${esActiu ? '<span class="pastilla-en-joc">En joc</span>' : ''}
             </span>
           </td>
           <td class="col-num tabular">${queden} de ${o.quantitat}</td>
@@ -972,36 +1007,47 @@ function renderTerminal(dades) {
 
   // Si la cartera s'ha transferit a un altre aparell o desactivat
   if (carteraPropia.habilitada === false) {
-    capUnitat.innerHTML = `<div class="term-unitat-nom">Accés tancat en aquest aparell</div>`;
+    capUnitat.className = 'term-unitat-cap term-estat-gran';
+    capUnitat.innerHTML = `
+      <span class="term-estat-gran-ic to-error">${IC.tancat}</span>
+      <strong class="term-estat-gran-titol">Accés tancat en aquest aparell</strong>`;
     msgEl.className = 'term-missatge-estat estat-error';
     msgEl.textContent = TEXTOS.terminal.carteraDeshabilitada;
     zonaBotons.hidden = true;
     return;
   }
 
+  const estatGran = (icona, titol, detall, to = '') => {
+    capUnitat.className = 'term-unitat-cap term-estat-gran';
+    capUnitat.innerHTML = `
+      <span class="term-estat-gran-ic ${to}">${icona}</span>
+      <strong class="term-estat-gran-titol">${titol}</strong>
+      ${detall ? `<span class="term-estat-gran-detall">${detall}</span>` : ''}`;
+  };
+
   if (!lic) {
     zonaBotons.hidden = true;
     estatUI.selectorObjecteKey = null;
+    // El missatge queda per als lectors de pantalla; la targeta central el mostra en gran
+    msgEl.className = 'term-missatge-estat sr-only';
 
     if (sessio.estat === 'espera') {
-      capUnitat.innerHTML = `<div class="term-unitat-nom">Sala d’espera · ${escHtml(sessio.titol)}</div>`;
-      msgEl.className = 'term-missatge-estat';
+      estatGran(IC.rellotge, 'Ja ets a la sala', `${escHtml(sessio.titol)} · ${escHtml(TEXTOS.terminal.salaEspera)}`);
       msgEl.textContent = TEXTOS.terminal.salaEspera;
     } else if (ev?.tipus === 'adjudicada' && ev.compradorUid === uid) {
-      capUnitat.innerHTML = `<div class="term-unitat-nom">Adjudicació confirmada</div>`;
-      msgEl.className = 'term-missatge-estat estat-lider';
+      estatGran(IC.check, `Has comprat 1 ${escHtml(String(ev.objecteNom).toLowerCase())}`,
+        `Per <b class="tabular">${fmtNum(ev.preu)}</b> ${escHtml(sessio.moneda)} · Et queden <b class="tabular">${fmtNum(saldo)}</b>`, 'to-ok');
       msgEl.textContent = TEXTOS.terminal.compra(ev.objecteNom, ev.preu, saldo);
     } else if (ev?.tipus === 'adjudicada') {
-      capUnitat.innerHTML = `<div class="term-unitat-nom">${escHtml(ev.text)}</div>`;
-      msgEl.className = 'term-missatge-estat';
-      msgEl.textContent = TEXTOS.terminal.esperantSeguent;
+      estatGran(IC.martell, escHtml(ev.text), escHtml(TEXTOS.terminal.esperantSeguent));
+      msgEl.textContent = `${ev.text}. ${TEXTOS.terminal.esperantSeguent}`;
     } else {
-      capUnitat.innerHTML = `<div class="term-unitat-nom">${TEXTOS.terminal.esperantSeguent}</div>`;
-      msgEl.className = 'term-missatge-estat';
+      estatGran(IC.rellotge, escHtml(TEXTOS.terminal.esperantSeguent), 'Quan s’obri una unitat, aquí apareixeran els botons per oferir.');
       msgEl.textContent = TEXTOS.terminal.esperantSeguent;
     }
   } else {
     zonaBotons.hidden = false;
+    capUnitat.className = 'term-unitat-cap';
     const obj = objectes.find((o) => o.id === lic.objecteId);
     const estatTxt = lic.estat === 'oberta' ? 'OBERTA' : 'ATURADA';
     const estatCls = lic.estat === 'oberta' ? 'proj-estat-oberta' : 'proj-estat-aturada';
@@ -1127,7 +1173,7 @@ function renderTerminal(dades) {
 
   const llistaCompres = $('term-llista-compres');
   if (!carteraPropia.compres?.length) {
-    llistaCompres.innerHTML = `<li class="subtext">Encara no has comprat cap unitat.</li>`;
+    llistaCompres.innerHTML = `<li class="compres-buida">${IC.bossa}<span>Encara no has comprat cap unitat.</span></li>`;
   } else {
     llistaCompres.innerHTML = carteraPropia.compres
       .map(
@@ -1142,8 +1188,7 @@ function renderTerminal(dades) {
   }
 
   // Catàleg al terminal
-  const objSeg = objectes.find((o) => o.id === tauler.seguentObjecteId);
-  $('term-seguent-obj').textContent = objSeg ? `Després: ${objSeg.nom}` : '';
+  $('term-seguent-obj').textContent = textSeguent(objectes, tauler);
   $('term-llista-cataleg').innerHTML = objectes
     .map((o) => {
       const cat = tauler.cataleg?.[o.id] || { venudes: 0, darrerPreu: null };
@@ -1316,14 +1361,18 @@ function renderGraficPreusSvg(objectes, tauler, moneda) {
 
   const xOf = (uIdx) =>
     maxUnitats <= 1 ? padL + plotW / 2 : padL + (uIdx / (maxUnitats - 1)) * plotW;
-  const yOf = (preu) => padT + plotH - (preu / (maxPreu * 1.1)) * plotH;
+  // Escala amb valors rodons (0, 20, 40, 60…) en lloc de terços del màxim
+  const brut = (maxPreu * 1.05) / 4;
+  const pot = 10 ** Math.max(0, Math.floor(Math.log10(brut)));
+  const pas = [1, 2, 5, 10].map((f) => f * pot).find((v) => v >= brut) || 10 * pot;
+  const sostre = Math.ceil((maxPreu * 1.05) / pas) * pas;
+  const yOf = (preu) => padT + plotH - (preu / sostre) * plotH;
 
   let linies = '';
   let llegenda = '';
 
   // Eixos horitzontals guia
-  for (let i = 0; i <= 3; i++) {
-    const val = Math.round(((maxPreu * 1.1) / 3) * i);
+  for (let val = 0; val <= sostre + 1e-9; val += pas) {
     const y = Math.round(yOf(val));
     linies += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="currentColor" stroke-opacity="0.14" stroke-dasharray="3 3"/>`;
     linies += `<text x="${padL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="currentColor" opacity="0.7">${fmtNum(val)}</text>`;
@@ -1335,6 +1384,7 @@ function renderGraficPreusSvg(objectes, tauler, moneda) {
     linies += `<text x="${x}" y="${H - 12}" text-anchor="middle" font-size="11" fill="currentColor" opacity="0.8">Unitat ${u + 1}</text>`;
   }
 
+  let posLlegenda = 0;
   objectes.forEach((o, idx) => {
     const preus = tauler.cataleg?.[o.id]?.preus || [];
     if (!preus.length) return;
@@ -1349,7 +1399,8 @@ function renderGraficPreusSvg(objectes, tauler, moneda) {
       linies += `<circle cx="${cx}" cy="${cy}" r="5" fill="${col}" stroke="#fff" stroke-width="1.5"><title>${escHtml(o.nom)} · Unitat ${uIdx + 1}: ${fmtNum(p)} ${escHtml(moneda)}</title></circle>`;
     });
 
-    const lx = padL + idx * 125;
+    const lx = padL + posLlegenda * 125;
+    posLlegenda += 1;
     if (lx < W - 70) {
       llegenda += `<g transform="translate(${lx}, 12)">
         <circle cx="0" cy="-4" r="4.5" fill="${col}"/>
@@ -1605,7 +1656,7 @@ function inicialitzaEsdeveniments() {
     renderProjeccio(estatUI.dades);
   });
 
-  // Format del codi de 6 xifres mentre s'escriu
+  // Format del codi de sala mentre s'escriu (majúscules, sense espais)
   $('input-codi-sala').addEventListener('input', (e) => {
     const net = normalitzaCodiSala(e.target.value);
     e.target.value = formatCodiSala(net);
@@ -1636,7 +1687,7 @@ function inicialitzaEsdeveniments() {
       const sessioId = await gestor.resolCodiSala(codi);
       await obreSessioComProjeccio(sessioId);
     } catch (err) {
-      errEl.textContent = err.message || 'Escriu un codi de 6 xifres vàlid per obrir la projecció.';
+      errEl.textContent = err.message || 'Escriu un codi de sala vàlid (4 caràcters) per obrir la projecció.';
       errEl.hidden = false;
     }
   });
@@ -2135,12 +2186,12 @@ async function arrencaApp() {
   inicialitzaEsdeveniments();
   ajustaEscalaPantalla();
 
-  // Comprova paràmetres d'URL immediatament (?codi=482915 o ?vista=projeccio&codi=482915)
+  // Comprova paràmetres d'URL immediatament (?codi=K7QM o ?vista=projeccio&codi=K7QM)
   const params = new URLSearchParams(window.location.search);
   const codiParam = normalitzaCodiSala(params.get('codi') || '');
   const vistaParam = params.get('vista');
 
-  if (codiParam.length === 6) {
+  if (esCodiSalaComplet(codiParam)) {
     $('input-codi-sala').value = formatCodiSala(codiParam);
     if (vistaParam === 'projeccio') {
       try {

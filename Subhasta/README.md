@@ -19,7 +19,7 @@ Aplicació educativa de **subhastes angleses obertes en temps real** per treball
 
 ### Sala d'espera i comandament de l'organitzador (1366 × 768)
 
-![Sala d'espera amb codi de 6 xifres, QR i vocabulari](docs/images/sala-espera-1366x768.png)
+![Sala d'espera amb codi de sala de 4 caràcters, QR i vocabulari](docs/images/sala-espera-1366x768.png)
 
 ![Comandament de l'organitzador en directe](docs/images/comandament-1366x768.png)
 
@@ -46,7 +46,7 @@ Aplicació educativa de **subhastes angleses obertes en temps real** per treball
 ## Com funciona
 
 1. **Preparació:** l'organitzador defineix els objectes, les unitats de cadascun, el pressupost inicial, l'increment mínim, el repte didàctic i la puntuació opcional (o carrega amb un clic l'exemple *«Mercat industrial»*).
-2. **Entrada ràpida:** l'alumnat entra a `ja.cat/subhasta` des del portàtil o Chromebook amb el codi de 6 xifres (o l'enllaç compartit al Classroom) i tria un àlies.
+2. **Entrada ràpida:** l'alumnat entra a `ja.cat/subhasta` des del portàtil o Chromebook amb el codi de sala de 4 caràcters entre lletres i xifres (per exemple, `K7QM`; o l'enllaç compartit al Classroom) i tria un àlies. El codi no fa servir caràcters que es confonen (0/O, 1/I/L) i es pot escriure en minúscules.
 3. **Licitació en directe:** l'organitzador obre una unitat (per exemple, *«Carbó · unitat 2 de 4»*) i totes les pantalles mostren a l'instant l'objecte, la millor oferta i qui lidera.
 4. **Autonomia al terminal:** l'alumnat licita amb tres botons d'import total i un selector `− / +` en múltiples de l'increment, veient sempre quants diners li quedaran si guanya.
 5. **Adjudicació controlada:** l'organitzador atura les ofertes quan ho decideix (sense temporitzador automàtic) i adjudica la unitat sobre l'import i el líder congelats. Es pot desfer l'última adjudicació abans d'obrir la unitat següent.
@@ -76,4 +76,18 @@ Activitat alineada amb el **Decret 175/2022, de 27 de setembre, d'ordenació del
 ## Arquitectura i verificació
 
 - **Aplicació estàtica** allotjada a GitHub Pages amb sincronització en temps real a **Firebase Firestore** (`subhasta-aula-cat`, regió `eur3` de la Unió Europea) i sincronització instantània entre pestanyes (`BroadcastChannel`).
-- **Proves automàtiques:** executeu `node tests/proves-domini.mjs` per verificar tots els casos de referència, les transicions d'estat, les 8 regles comptables invariants i la protecció de fórmules als CSV.
+- **Proves automàtiques:** executeu `node tests/proves-domini.mjs` per verificar tots els casos de referència, les transicions d'estat, les 8 regles comptables invariants, la protecció de fórmules als CSV i el format del codi de sala.
+- **Regles de Firestore:** `firebase/firestore.rules`; es publiquen amb `firebase deploy --only firestore:rules --project subhasta-aula-cat` des de la carpeta `firebase`.
+
+---
+
+## Novetats de la versió 1.1 (17-11-2026)
+
+- **Codi de sala de 4 caràcters** alfanumèrics (abans, 6 xifres). Les sales antigues de 6 xifres continuen funcionant.
+- **Entre aparells de debò:** la sala es desa al núvol abans d'obrir-la, l'entrada i les ofertes de l'alumnat només es donen per bones quan Firestore les confirma, i les pantalles es reconnecten soles si perden la connexió.
+- **Terminal més clar:** targeta central per a l'espera i per al rebut de compra, missatge d'estat just sota l'oferta i botons sempre a la mateixa posició.
+- **Comandament:** icones de línia per a canvi d'aparell, canvi d'àlies i baixa; qui lidera queda destacat a la llista; el catàleg indica quina unitat és en joc.
+- **Projecció:** codi més gran, catàleg alineat a dalt amb la marca «En joc», «Després» amb la unitat concreta i sense peu de pàgina per guanyar espai.
+- **Sala d'espera:** codi gegant, QR més gran i estat buit explicatiu.
+- **Resultats:** eix del gràfic amb valors rodons.
+- **Privadesa:** la portada ja no mostra el correu de l'organitzador i «Les meves subhastes» només inclou les sales pròpies.

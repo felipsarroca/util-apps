@@ -1,6 +1,6 @@
 # Subhasta: document de disseny
 
-Revisió: 16 de novembre de 2026. Estat: planificació aprovada per Felip i aplicació implementada, verificada i publicada a `ja.cat/subhasta`. Aquest és l'únic document de disseny del projecte: substitueix la planificació anterior i l'antic `ESPECIFICACIO.md`.
+Revisió: 17 de novembre de 2026 (codi de sala de 4 caràcters, a petició de Felip). Estat: planificació aprovada per Felip i aplicació implementada, verificada i publicada a `ja.cat/subhasta`. Aquest és l'únic document de disseny del projecte: substitueix la planificació anterior i l'antic `ESPECIFICACIO.md`.
 
 ## 1. La idea que ho guia tot
 
@@ -154,7 +154,7 @@ Disposicions d'aula, de la més recomanable a la més limitada:
 
 - **Les meves subhastes**: llista amb títol, data i estat. Accions: crear, obrir, duplicar, exportar i eliminar. En entrar-hi s'eliminen les sessions caducades.
 - **Preparació** en una sola pantalla: títol i repte; taula d'objectes (nom, icona o imatge, quantitat, preu de sortida, valor opcional); pressupost, moneda i increment; resum de capacitat; exemple carregable. Validació al costat de cada camp i desament automàtic amb indicador.
-- **Sala d'espera**: codi de sis xifres, enllaç curt, QR i botó «Copia l'enllaç» per al Classroom. Els àlies apareixen a mesura que entren; l'organitzador pot canviar-ne o treure'n un amb un toc, ara i entre unitats.
+- **Sala d'espera**: codi de sala de 4 caràcters alfanumèrics (sense 0, O, 1, I ni L; les sales antigues de 6 xifres continuen valent), enllaç curt, QR i botó «Copia l'enllaç» per al Classroom. Els àlies apareixen a mesura que entren; l'organitzador pot canviar-ne o treure'n un amb un toc, ara i entre unitats.
 - **Comandament**: una acció principal segons el moment («Obrir carbó · unitat 2», «Aturar ofertes», «Adjudicar»). El catàleg permet obrir qualsevol objecte amb unitats; per defecte es proposa continuar amb el mateix objecte i després el següent. «Desfer» i «Finalitzar» van separats. Un panell lateral mostra participants amb saldo i compres, inscripcions i canvi d'aparell.
 
 ### Projecció
@@ -162,7 +162,7 @@ Disposicions d'aula, de la més recomanable a la més limitada:
 Esquema de contingut i jerarquia, no de maquetació:
 
 ```text
- SUBHASTA · Mercat industrial              ja.cat/subhasta · 482 915
+ SUBHASTA · Mercat industrial              ja.cat/subhasta · K7QM
 
  CARBÓ · unitat 2 de 4 · OBERTA       Objecte   Queden   Darrer preu
                                       Carbó ●   3 de 4   150

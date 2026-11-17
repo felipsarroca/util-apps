@@ -227,4 +227,22 @@ console.log('Iniciant proves de domini de Subhasta…');
   assert.equal(csvA.includes('2;2;Carbó;1;Marc;50;2;;vigent'), true);
 }
 
-console.log('✓ Totes les proves de domini, casos de referència (§11), invariants (§5) i CSV (§7) han passat amb èxit!');
+// Codi de sala: 4 caràcters alfanumèrics sense caràcters ambigus; compatibilitat amb 6 xifres
+{
+  const { generaCodiSala, normalitzaCodiSala, formatCodiSala, esCodiSalaComplet, ALFABET_CODI_SALA } =
+    await import('../js/emmagatzematge.js');
+  for (let i = 0; i < 500; i += 1) {
+    const c = generaCodiSala();
+    assert.match(c, /^[A-Z0-9]{4}$/);
+    assert.equal([...c].every((ch) => ALFABET_CODI_SALA.includes(ch)), true);
+    assert.equal(/[01OIL]/.test(c), false);
+  }
+  assert.equal(normalitzaCodiSala(' k7-qm '), 'K7QM');
+  assert.equal(formatCodiSala('k7qm'), 'K7QM');
+  assert.equal(esCodiSalaComplet('K7Q'), false);
+  assert.equal(esCodiSalaComplet('K7QM'), true);
+  assert.equal(esCodiSalaComplet('482 915'), true);
+  assert.equal(formatCodiSala('482915'), '482 915');
+}
+
+console.log('✓ Totes les proves de domini, casos de referència (§11), invariants (§5), CSV (§7) i codi de sala han passat amb èxit!');

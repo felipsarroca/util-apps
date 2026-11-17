@@ -31,14 +31,14 @@ service cloud.firestore {
       return s != null && sessioNoCaducadaData(s);
     }
 
-    // Codi de 6 xifres -> sessioId
+    // Codi de sala (4 caràcters alfanumèrics; 6 xifres a les sales antigues) -> sessioId
     match /codis/{codi} {
-      allow get: if codi.matches('^[0-9]{6}$');
+      allow get: if codi.matches('^([A-Z0-9]{4}|[0-9]{6})$');
       allow list: if false;
-      allow create, update: if codi.matches('^[0-9]{6}$')
+      allow create, update: if codi.matches('^([A-Z0-9]{4}|[0-9]{6})$')
         && request.resource.data.sessioId is string
         && request.resource.data.expiraMs is int;
-      allow delete: if codi.matches('^[0-9]{6}$');
+      allow delete: if codi.matches('^([A-Z0-9]{4}|[0-9]{6})$');
     }
 
     match /sessions/{sessioId} {

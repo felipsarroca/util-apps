@@ -8,8 +8,8 @@
   <title>Subhasta · Subhasta oberta en temps real per a l’aula</title>
   <meta name="description" content="Aplicació educativa de subhastes angleses obertes en temps real per treballar l’escassetat, l’oferta i la demanda, el pressupost i el cost d’oportunitat a l’aula.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/estil.css?v=1.0.0">
-  <script type="module" src="js/app.js?v=1.0.0"></script>
+  <link rel="stylesheet" href="css/estil.css?v=1.1.0">
+  <script type="module" src="js/app.js?v=1.1.0"></script>
 </head>
 <body>
   <a class="skip-link" href="#contingut-principal">Salta al contingut principal</a>
@@ -26,7 +26,7 @@
 
           <div id="insignia-sala" class="insignia-sala" hidden>
             <span class="insignia-etiqueta">Sala</span>
-            <strong id="insignia-codi" class="insignia-codi tabular">000 000</strong>
+            <strong id="insignia-codi" class="insignia-codi tabular">----</strong>
             <button type="button" class="btn-mini" id="btn-copia-codi-top" title="Copia l’enllaç d’entrada">
               <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="9" y="9" width="13" height="13" rx="2"/>
@@ -132,15 +132,15 @@
               </span>
               <div>
                 <h1>Entra a una subhasta</h1>
-                <p class="subtext">Escriu el codi de 6 xifres que es projecta a l’aula i tria el teu àlies.</p>
+                <p class="subtext">Escriu el codi de 4 caràcters que es projecta a l’aula i tria el teu àlies.</p>
               </div>
             </div>
 
             <form id="form-entrar-participant" class="form-entrar" novalidate>
               <div class="fila-camps-entrar">
                 <div class="camp-grup">
-                  <label for="input-codi-sala">Codi de sala (6 xifres)</label>
-                  <input id="input-codi-sala" class="input-codi tabular" type="text" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="482 915" required>
+                  <label for="input-codi-sala">Codi de sala (4 caràcters)</label>
+                  <input id="input-codi-sala" class="input-codi tabular" type="text" inputmode="text" maxlength="7" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7QM" required>
                 </div>
                 <div class="camp-grup">
                   <label for="input-alies-participant">Àlies o nom d’equip (màx. 24)</label>
@@ -369,7 +369,7 @@
                 <div class="adreca-gegant">ja.cat/subhasta</div>
                 <div class="codi-sala-display">
                   <span class="codi-etiqueta">Codi de sala:</span>
-                  <strong id="espera-codi-6" class="codi-6-xifres tabular">482 915</strong>
+                  <strong id="espera-codi-6" class="codi-6-xifres tabular">K7QM</strong>
                 </div>
                 <div class="accions-compartir-espera">
                   <button type="button" class="btn btn-primari btn-sm" id="btn-copia-classroom">
@@ -522,7 +522,7 @@
           <div class="proj-acces-bloc">
             <span class="proj-url">ja.cat/subhasta</span>
             <span class="proj-sep">·</span>
-            <strong id="proj-codi-sala" class="proj-codi tabular">482 915</strong>
+            <strong id="proj-codi-sala" class="proj-codi tabular">K7QM</strong>
             <button type="button" class="btn-mini" id="btn-proj-mode-presentacio" title="Mostra o oculta la barra de controls per a un sol ordinador duplicat">
               <span>Mode presentació</span>
             </button>
@@ -745,7 +745,7 @@
               <span class="pas-num">1</span>
               <div>
                 <strong>Abans (5 min)</strong>
-                <p>Recomanat per a 12–20 unitats totals i equips de 2 o 3 persones en un portàtil o Chromebook. L’alumnat entra a <code>ja.cat/subhasta</code> amb el codi de 6 xifres i llegeix el repte.</p>
+                <p>Recomanat per a 12–20 unitats totals i equips de 2 o 3 persones en un portàtil o Chromebook. L’alumnat entra a <code>ja.cat/subhasta</code> amb el codi de sala de 4 caràcters i llegeix el repte.</p>
               </div>
             </div>
             <div class="pas-guia">

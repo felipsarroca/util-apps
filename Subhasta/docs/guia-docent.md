@@ -13,7 +13,7 @@
 
 | Moment | Temps orientatiu | Dinàmica recomanada |
 |---|---|---|
-| **Abans (entrada i repte)** | 5 min | Agrupeu l'alumnat en equips de **2 o 3 persones** amb un portàtil o Chromebook per equip. Projecteu la sala d'espera perquè entrin a `ja.cat/subhasta` amb el codi de 6 xifres, triïn un àlies i llegeixin el repte i el vocabulari. Recomanació: entre **12 i 20 unitats totals** repartides en 3 o 4 objectes. |
+| **Abans (entrada i repte)** | 5 min | Agrupeu l'alumnat en equips de **2 o 3 persones** amb un portàtil o Chromebook per equip. Projecteu la sala d'espera perquè entrin a `ja.cat/subhasta` amb el codi de sala de 4 caràcters (lletres i xifres), triïn un àlies i llegeixin el repte i el vocabulari. Recomanació: entre **12 i 20 unitats totals** repartides en 3 o 4 objectes. |
 | **Durant (licitació unitat a unitat)** | 15–25 min | Obriu la primera unitat com a **ronda d'assaig** perquè comprenguin com pugen els imports i que el saldo només es descompta quan s'adjudica; després premeu **«Tornar a començar»** per iniciar la subhasta real. Dirigiu el ritme verbalment («a la d'una, a les dues…») i atureu les ofertes abans d'adjudicar. |
 | **Després (gràfic i reflexió)** | 10 min | Finalitzeu la subhasta i observeu a la projecció el **gràfic d'evolució de preus unitat a unitat**. Debatgeu a partir de les tres preguntes finals: *Quin objecte s'ha encarit més i per què? A què has renunciat per fer una compra? Què canviaries si ho repetíssim?* |
 

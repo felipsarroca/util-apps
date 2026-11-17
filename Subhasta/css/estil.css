@@ -2168,6 +2168,277 @@ textarea {
 }
 
 /* ============================================================
+   MILLORES v1.1: codi de 4 caràcters, estats buits, icones de línia
+   ============================================================ */
+.ic-sm {
+  width: 0.98rem;
+  height: 0.98rem;
+}
+
+/* Codi de sala alfanumèric: majúscules i ben espaiat */
+.input-codi {
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  padding-left: 0.32em;
+}
+
+.input-codi::placeholder {
+  letter-spacing: 0.32em;
+  opacity: 0.45;
+}
+
+.insignia-codi {
+  letter-spacing: 0.12em;
+}
+
+/* Sala d'espera: el codi és el protagonista i la columna no deixa forats */
+.panell-acces-espera {
+  justify-content: flex-start;
+}
+
+.panell-acces-espera .espera-cataleg-i-glossari {
+  margin-top: auto;
+}
+
+.codi-6-xifres {
+  font-size: 3.6rem;
+  letter-spacing: 0.16em;
+}
+
+.qr-caixa {
+  width: 148px;
+  height: 148px;
+}
+
+.espera-buida {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 180px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.espera-buida strong {
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.espera-buida-ic {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+  margin-bottom: 0.25rem;
+}
+
+.espera-buida-ic .ic {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.graella-alies-espera {
+  max-height: none;
+  flex: 1 1 auto;
+}
+
+/* Botons d'icona dels participants */
+.btn-xip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 30px;
+}
+
+.btn-xip-perill:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* Comandament: qui lidera es veu a la llista i la llista omple el lateral */
+.fila-cartera-cmd {
+  border: 1px solid transparent;
+}
+
+.fila-cartera-cmd.es-lider {
+  background: var(--ok-soft);
+  border-color: var(--ok);
+}
+
+.pastilla-lider {
+  display: inline-block;
+  margin-left: 0.3rem;
+  padding: 0.04rem 0.45rem;
+  border-radius: 999px;
+  background: var(--ok);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  vertical-align: 0.1em;
+}
+
+html[data-theme="fosca"] .pastilla-lider {
+  color: #06251c;
+}
+
+.llista-carteres-cmd {
+  flex: 1 1 0;
+  min-height: 200px;
+  max-height: none;
+}
+
+.panell-cataleg-comandament {
+  flex: 1 1 auto;
+}
+
+/* Projecció: catàleg ancorat a dalt, icona més visible i peu amagat */
+.proj-cataleg-panell {
+  justify-content: flex-start;
+}
+
+.proj-repte-caixa {
+  margin-top: auto;
+}
+
+.cel-obj-proj {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pastilla-en-joc {
+  padding: 0.08rem 0.5rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.proj-icona-gran {
+  width: 6.6rem;
+  height: 6.6rem;
+  border-radius: 24px;
+  background: var(--primary-soft);
+}
+
+.proj-icona-gran .ic-obj {
+  width: 4.2rem;
+  height: 4.2rem;
+}
+
+body[data-vista="projeccio"] .felip-app-footer {
+  display: none;
+}
+
+.proj-codi {
+  font-size: 1.75rem;
+  letter-spacing: 0.16em;
+  padding: 0.1rem 0.5rem 0.1rem 0.66rem;
+}
+
+.proj-repte-caixa {
+  font-size: 1.02rem;
+}
+
+/* Terminal: estats sense licitació en una targeta central clara */
+.term-estat-gran {
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.55rem;
+  padding: 1.5rem 1rem;
+}
+
+.term-estat-gran-ic {
+  width: 4.6rem;
+  height: 4.6rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--secondary-soft);
+  color: var(--secondary);
+  margin-bottom: 0.3rem;
+}
+
+.term-estat-gran-ic .ic {
+  width: 2.3rem;
+  height: 2.3rem;
+}
+
+.term-estat-gran-ic.to-ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.term-estat-gran-ic.to-error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.term-estat-gran-titol {
+  font-size: 1.65rem;
+  font-weight: 850;
+  line-height: 1.2;
+  max-width: 34ch;
+}
+
+.term-estat-gran-detall {
+  font-size: 1.02rem;
+  color: var(--ink-soft);
+  max-width: 46ch;
+}
+
+.term-estat-gran-detall b {
+  color: var(--ink);
+}
+
+/* El missatge d'estat va just sota l'oferta i els botons queden a baix */
+.panell-licitar-terminal {
+  justify-content: flex-start;
+}
+
+.panell-licitar-terminal .term-zona-botons {
+  margin-top: auto;
+}
+
+.panell-compres-terminal {
+  flex: 1 1 auto;
+}
+
+.panell-cataleg-terminal {
+  flex: 0 0 auto;
+}
+
+.compres-buida {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0.2rem;
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+}
+
+.compres-buida .ic {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+/* ============================================================
    DISPOSICIÓ RESPONSIVA PER SOTA DE 1200px I MÒBIL (390x844)
    ============================================================ */
 @media (max-width: 1199px) {
@@ -2241,5 +2512,33 @@ textarea {
 
   .felip-license-image {
     width: 60px;
+  }
+
+  .felip-footer-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .term-unitat-nom {
+    font-size: 1.12rem;
+  }
+
+  .term-millor-oferta-caixa {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .term-import-actual {
+    font-size: 1.6rem;
+    line-height: 1.15;
+  }
+
+  .term-estat-gran-titol {
+    font-size: 1.3rem;
+  }
+
+  .codi-6-xifres {
+    font-size: 2.8rem;
   }
 }

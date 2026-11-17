@@ -16,9 +16,9 @@ export const TEXTOS = {
   // Portada / inici
   inici: {
     entrarTitol: 'Entra a una subhasta',
-    entrarDesc: 'Escriu el codi de 6 xifres que es mostra a la pantalla de l’aula.',
-    codiLabel: 'Codi de la sala (6 xifres)',
-    codiPlaceholder: '482 915',
+    entrarDesc: 'Escriu el codi de 4 caràcters que es mostra a la pantalla de l’aula.',
+    codiLabel: 'Codi de la sala (4 caràcters)',
+    codiPlaceholder: 'K7QM',
     aliesLabel: 'El teu àlies o nom d’equip',
     aliesPlaceholder: 'Ex.: Anna o Equip 3',
     btnEntrarTerminal: 'Entra per participar',
