@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* Controlador principal d'interfície, adaptació de pantalla, gràfic de preus i accessibilitat de Subhasta */
 
-import { LIMITS, STORAGE_KEYS } from './config.js?v=1.2.0';
-import { TEXTOS, ICONES, EXEMPLE_MERCAT_INDUSTRIAL, fmtNum, renderIconaSvg } from './textos.js?v=1.2.0';
+import { LIMITS, STORAGE_KEYS } from './config.js?v=1.3.0';
+import { TEXTOS, ICONES, EXEMPLE_MERCAT_INDUSTRIAL, MODELS, fmtNum, renderIconaSvg } from './textos.js?v=1.3.0';
 import {
   netejaText,
   validaConfiguracio,
@@ -11,7 +11,7 @@ import {
   calculaPuntuacioParticipant,
   generaCsvParticipants,
   generaCsvAdjudicacions
-} from './domini.js?v=1.2.0';
+} from './domini.js?v=1.3.0';
 import {
   GestorSubhasta,
   normalitzaCodiSala,
@@ -19,9 +19,9 @@ import {
   esCodiSalaComplet,
   getCorreuOrganitzador,
   preparaIdentitat
-} from './emmagatzematge.js?v=1.2.0';
-import { renderQrSvg } from './qr.js?v=1.2.0';
-import { soMartell } from './audio.js?v=1.2.0';
+} from './emmagatzematge.js?v=1.3.0';
+import { renderQrSvg } from './qr.js?v=1.3.0';
+import { soMartell } from './audio.js?v=1.3.0';
 
 const gestor = new GestorSubhasta();
 
@@ -41,7 +41,11 @@ const estatUI = {
   missatgeTerminalFix: null,
   darrerEventAdjudicatMs: 0,
   darrerImportProjeccio: null,
-  wakeLock: null
+  wakeLock: null,
+  modeModels: 'crear',   // 'crear' | 'substituir'
+  configsDesades: [],
+  creantSessio: false,
+  unitatsAmbOfertaMeva: new Set()
 };
 
 const $ = (id) => document.getElementById(id);
@@ -57,7 +61,12 @@ const IC = {
   rellotge: `${SVG_OBERT}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
   persones: `${SVG_OBERT}<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
   bossa: `${SVG_OBERT}<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
-  tancat: `${SVG_OBERT}<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`
+  tancat: `${SVG_OBERT}<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
+  avis: `${SVG_OBERT}<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>`,
+  pausa: `${SVG_OBERT}<circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg>`,
+  amunt: `${SVG_OBERT}<path d="M12 19V5M5 12l7-7 7 7"/></svg>`,
+  ma: `${SVG_OBERT}<path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>`,
+  senseXarxa: `${SVG_OBERT}<path d="M1 1l22 22"/><path d="M16.7 11.1A11 11 0 0 1 19 12.6M5 12.6a11 11 0 0 1 5.2-2.4M10.7 5.1A16 16 0 0 1 22.6 9M1.4 9a16 16 0 0 1 4.7-2.9M8.5 16.1a6 6 0 0 1 7 0M12 20h.01"/></svg>`
 };
 
 /* Text «Després: …» amb la unitat concreta que es proposa obrir */
@@ -191,8 +200,41 @@ function mostraVista(nomVista) {
     $('btn-nav-projeccio').classList.toggle('actiu', nomVista === 'projeccio');
   }
 
+  actualitzaPassosOrg();
   ajustaEscalaPantalla();
   actualitzaWakeLock();
+}
+
+/* ============================================================
+   4b. Passos guiats de l'organitzador (v1.3)
+   ============================================================ */
+const ORDRE_PASSOS = ['preparacio', 'espera', 'comandament', 'resultats'];
+const AJUDA_PASSOS = {
+  preparacio: 'revisa els objectes, quantes unitats en vols vendre i el preu de sortida. Tot es desa sol.',
+  espera: 'projecta el codi perquè els equips entrin. Quan hi siguin tots, prem «Comença la subhasta».',
+  comandament: 'obre una unitat, deixa que facin ofertes, atura-les i adjudica-la.',
+  resultats: 'comenteu el gràfic de preus i les preguntes. Pots descarregar els CSV o fer una ronda nova.'
+};
+
+function actualitzaPassosOrg(textAra = null) {
+  const nav = $('passos-org');
+  if (!nav) return;
+  const vista = estatUI.vistaActual;
+  const idx = ORDRE_PASSOS.indexOf(vista);
+  const visible = idx >= 0 && estatUI.rolActual === 'organitzador' && Boolean(estatUI.dades?.esOrganitzador);
+  nav.hidden = !visible;
+  document.body.classList.toggle('amb-passos', visible);
+  if (!visible) return;
+  nav.querySelectorAll('li[data-pas]').forEach((li) => {
+    const i = ORDRE_PASSOS.indexOf(li.dataset.pas);
+    li.classList.toggle('fet', i < idx);
+    li.classList.toggle('actual', i === idx);
+    if (i === idx) li.setAttribute('aria-current', 'step');
+    else li.removeAttribute('aria-current');
+  });
+  if (textAra && vista === 'comandament') estatUI.ajudaComandament = textAra;
+  const text = textAra || (vista === 'comandament' && estatUI.ajudaComandament) || AJUDA_PASSOS[vista] || '';
+  $('passos-org-ara').innerHTML = `<strong>Ara:</strong> ${escHtml(text)}`;
 }
 
 /* ============================================================
@@ -325,6 +367,222 @@ async function renderLlistaMevesSubhastes() {
 }
 
 /* ============================================================
+   6b. Models d'activitat i configuracions desades (v1.3)
+   ============================================================ */
+function copiaConfig(cfg) {
+  return JSON.parse(JSON.stringify(cfg));
+}
+
+function totalUnitatsCfg(cfg) {
+  return (cfg.objectes || []).reduce((a, o) => a + (Number(o.quantitat) || 0), 0);
+}
+
+// Durada orientativa: aproximadament minut i mig per unitat, arrodonit a 5 minuts
+function minutsEstimats(unitats) {
+  return Math.max(5, Math.round((unitats * 1.5) / 5) * 5);
+}
+
+function resumCfg(cfg) {
+  const unitats = totalUnitatsCfg(cfg);
+  const n = (cfg.objectes || []).length;
+  return `${n} ${n === 1 ? 'objecte' : 'objectes'} · ${unitats} ${unitats === 1 ? 'unitat' : 'unitats'} · ${fmtNum(cfg.pressupost)} ${escHtml(cfg.moneda || 'monedes')}`;
+}
+
+function iconesCfg(cfg) {
+  return (cfg.objectes || [])
+    .slice(0, 6)
+    .map((o) => `<span class="model-ic-obj" title="${escHtml(o.nom)}">${renderIconaSvg(o.icona, o.imatgeDataUrl)}</span>`)
+    .join('');
+}
+
+function dataCurta(ms) {
+  return new Date(ms).toLocaleDateString('ca-ES', { day: 'numeric', month: 'numeric', year: 'numeric' });
+}
+
+function renderModalModels() {
+  $('graella-models').innerHTML = MODELS.map(
+    (m) => `
+      <button type="button" class="targeta-model" data-model="${m.id}">
+        <span class="targeta-model-cap">
+          <span class="targeta-model-ic">${renderIconaSvg(m.icona)}</span>
+          <span class="targeta-model-noms">
+            <strong>${escHtml(m.nom)}</strong>
+            <span class="targeta-model-materia">${escHtml(m.materia)}</span>
+          </span>
+        </span>
+        <span class="targeta-model-text">${escHtml(m.consisteix)}</span>
+        <span class="targeta-model-treballa"><b>Treballa:</b> ${escHtml(m.treballa)}</span>
+        <span class="targeta-model-peu">
+          <span class="targeta-model-icones">${iconesCfg(m.config)}</span>
+          <span class="tabular">${resumCfg(m.config)} · uns ${minutsEstimats(totalUnitatsCfg(m.config))} min</span>
+        </span>
+      </button>`
+  ).join('');
+
+  const configs = estatUI.configsDesades;
+  $('bloc-configs-desades').hidden = !configs.length;
+  $('llista-configs-desades').innerHTML = configs
+    .map(
+      (c) => `
+      <div class="targeta-config">
+        <button type="button" class="targeta-config-obre" data-config="${escHtml(c.id)}">
+          <span class="targeta-model-icones">${iconesCfg(c.cfg)}</span>
+          <strong>${escHtml(c.nom)}</strong>
+          <span class="subtext tabular">${resumCfg(c.cfg)}</span>
+          <span class="subtext">Es conserva fins al ${dataCurta(c.expiraMs)}</span>
+          <span class="targeta-config-usa">Fes-la servir →</span>
+        </button>
+        <button type="button" class="btn-xip btn-xip-perill" data-elimina-config="${escHtml(c.id)}" title="Elimina aquesta configuració" aria-label="Elimina la configuració ${escHtml(c.nom)}">${IC.treure}</button>
+      </div>`
+    )
+    .join('');
+}
+
+async function obreModalModels(mode = 'crear') {
+  estatUI.modeModels = mode;
+  $('titol-modal-models').textContent = mode === 'crear' ? 'Com vols començar?' : 'Canvia de model';
+  $('subtitol-modal-models').textContent =
+    mode === 'crear'
+      ? 'Tria un model ja preparat o una configuració teva. Després podràs canviar-ne tots els detalls.'
+      : 'El model que triïs substituirà el títol, el repte i el catàleg d’aquesta subhasta.';
+  estatUI.configsDesades = [];
+  renderModalModels();
+  $('modal-models').showModal();
+  try {
+    estatUI.configsDesades = await gestor.llistaConfiguracions();
+    if ($('modal-models').open) renderModalModels();
+  } catch (_) {}
+}
+
+async function aplicaConfigEscollida(cfg, idConfig = null) {
+  if (estatUI.creantSessio) return;
+  const config = copiaConfig(cfg);
+  if (idConfig) gestor.renovaConfiguracio(idConfig);
+
+  if (estatUI.modeModels === 'substituir' && estatUI.esborranyPrep) {
+    estatUI.esborranyPrep = {
+      titol: config.titol,
+      repte: config.repte ?? '',
+      pressupost: config.pressupost,
+      moneda: config.moneda || 'monedes',
+      increment: config.increment,
+      puntuacioActiva: Boolean(config.puntuacioActiva),
+      bonificacioConjunt: Number(config.bonificacioConjunt ?? 0),
+      objectes: config.objectes
+    };
+    $('modal-models').close();
+    pintaFormulariPreparacio();
+    validaIDesaPreparacio(true);
+    return;
+  }
+
+  estatUI.creantSessio = true;
+  $('modal-models').classList.add('ocupat');
+  try {
+    const sessio = await gestor.creaSubhasta(config, 'preparacio');
+    $('modal-models').close();
+    await obreSessioComOrganitzador(sessio.id, 'preparacio');
+  } finally {
+    estatUI.creantSessio = false;
+    $('modal-models').classList.remove('ocupat');
+  }
+}
+
+function obreDesaConfiguracio() {
+  llegeixEsborranyDelDom();
+  const esb = estatUI.esborranyPrep;
+  if (!esb) return;
+  const val = validaConfiguracio(esb);
+  if (!val.valid) {
+    obreModalAccio({
+      titol: 'Desa la configuració',
+      htmlCos: '<p>Abans de desar-la, corregeix els camps marcats en vermell.</p>',
+      textConfirmar: 'D’acord',
+      onConfirm: () => {}
+    });
+    return;
+  }
+  let error = null;
+  let resultat = null;
+  obreModalAccio({
+    titol: 'Desa la configuració',
+    htmlCos: `
+      <div class="camp-grup">
+        <label for="input-nom-config">Nom de la configuració</label>
+        <input id="input-nom-config" type="text" maxlength="${LIMITS.MAX_NOM_CONFIGURACIO}" value="${escHtml(esb.titol)}">
+      </div>
+      <p class="subtext">Es desen el títol, el repte, els diners i tot el catàleg. La trobaràs a «Crea una subhasta nova» per fer-la servir amb altres grups. Es conserva un any des de l’últim cop que la facis servir; després s’esborra sola. Si ja en tens una amb el mateix nom, s’actualitza.</p>`,
+    textConfirmar: 'Desa',
+    onConfirm: async () => {
+      try {
+        resultat = await gestor.desaConfiguracio($('input-nom-config').value, esb);
+      } catch (err) {
+        error = err.message || 'No s’ha pogut desar la configuració.';
+      }
+      setTimeout(() => {
+        if (error) {
+          obreModalAccio({ titol: 'Desa la configuració', htmlCos: `<p>${escHtml(error)}</p>`, textConfirmar: 'D’acord', onConfirm: () => {} });
+          return;
+        }
+        const ind = $('indicador-desament');
+        ind.textContent = `Configuració «${resultat.nom}» desada ✓`;
+        ind.title = `Es conserva fins al ${dataCurta(resultat.expiraMs)}`;
+        ind.style.background = 'var(--ok-soft)';
+        ind.style.color = 'var(--ok)';
+        if (resultat.senseFotos) {
+          obreModalAccio({
+            titol: 'Configuració desada',
+            htmlCos: '<p>S’ha desat sense les fotos dels objectes, perquè ocupaven massa. Les icones sí que s’hi han desat.</p>',
+            textConfirmar: 'D’acord',
+            onConfirm: () => {}
+          });
+        }
+      }, 0);
+    }
+  });
+  setTimeout(() => {
+    const inp = $('input-nom-config');
+    if (inp) {
+      inp.focus();
+      inp.select();
+    }
+  }, 50);
+}
+
+/* Equips previstos i recomanació d'unitats */
+function equipsPrevistos() {
+  const v = Math.round(Number($('prep-equips')?.value));
+  return Number.isFinite(v) ? Math.min(40, Math.max(2, v)) : 8;
+}
+
+function unitatsRecomanades(equips, numObjectes) {
+  const perObjecte = Math.ceil(equips / 3) + 1;
+  return Math.max(1, Math.min(perObjecte, equips - 1, Math.floor(LIMITS.MAX_UNITATS_TOTALS / Math.max(1, numObjectes))));
+}
+
+function actualitzaRecomanacioUnitats() {
+  const esb = estatUI.esborranyPrep;
+  const el = $('recomanacio-unitats');
+  if (!esb || !el) return;
+  const equips = equipsPrevistos();
+  const total = totalUnitatsCfg(esb);
+  const recomanat = unitatsRecomanades(equips, esb.objectes.length);
+  const saturats = esb.objectes.filter((o) => Number(o.quantitat) >= equips).map((o) => o.nom || 'sense nom');
+  const linia = `<b class="tabular">${total}</b> unitats · uns <b class="tabular">${minutsEstimats(total)}</b> minuts de subhasta.`;
+  if (saturats.length) {
+    el.className = 'recomanacio-unitats rec-avis';
+    el.innerHTML = `${IC.rellotge}<span>${linia} <b>Poca competència:</b> ${escHtml(saturats.join(', '))} ${saturats.length === 1 ? 'té' : 'tenen'} tantes unitats com equips o més.</span>`;
+  } else {
+    el.className = 'recomanacio-unitats rec-ok';
+    el.innerHTML = `${IC.check}<span>${linia} Hi haurà competència: cada objecte té menys unitats que equips.</span>`;
+  }
+  const btn = $('btn-ajusta-unitats');
+  btn.textContent = `Posa ${recomanat} ${recomanat === 1 ? 'unitat' : 'unitats'} a cada objecte`;
+  btn.dataset.recomanat = String(recomanat);
+  btn.disabled = esb.objectes.every((o) => Number(o.quantitat) === recomanat);
+}
+
+/* ============================================================
    7. Vista 3: Preparació en una sola pantalla
    ============================================================ */
 function carregaPreparacioAFormulario(dades) {
@@ -395,8 +653,12 @@ function renderFilesObjectesPreparacio() {
             <p class="error-camp err-obj-nom" data-idx="${idx}" hidden></p>
           </div>
         </td>
-        <td class="col-num">
-          <input type="number" class="inp-obj-quantitat tabular" data-idx="${idx}" min="1" max="60" step="1" value="${obj.quantitat}" aria-label="Quantitat ${deNom(escHtml(obj.nom))}">
+        <td class="col-num col-unitats">
+          <div class="grup-pas-mini">
+            <button type="button" class="btn-pas-mini" data-pas-unitats="-1" data-idx="${idx}" aria-label="Una unitat menys ${deNom(escHtml(obj.nom))}">−</button>
+            <input type="number" class="inp-obj-quantitat tabular" data-idx="${idx}" min="1" max="60" step="1" value="${obj.quantitat}" aria-label="Unitats ${deNom(escHtml(obj.nom))}">
+            <button type="button" class="btn-pas-mini" data-pas-unitats="1" data-idx="${idx}" aria-label="Una unitat més ${deNom(escHtml(obj.nom))}">+</button>
+          </div>
           <p class="error-camp err-obj-quantitat" data-idx="${idx}" hidden></p>
         </td>
         <td class="col-num">
@@ -462,7 +724,8 @@ async function validaIDesaPreparacio(desar = true) {
   setErr('err-prep-repte', val.errors.repte);
   setErr('err-prep-objectes', val.errors.objectes || val.errors.totalUnitats);
 
-  $('resum-capacitat-prep').textContent = `${esb.objectes.length} objectes · ${val.totalUnitats} unitats totals (màxim ${LIMITS.MAX_OBJECTES} objectes i ${LIMITS.MAX_UNITATS_TOTALS} unitats)`;
+  $('resum-capacitat-prep').textContent = `${esb.objectes.length} ${esb.objectes.length === 1 ? 'objecte' : 'objectes'} · ${val.totalUnitats} unitats, que se subhasten d’una en una (màx. ${LIMITS.MAX_OBJECTES} i ${LIMITS.MAX_UNITATS_TOTALS})`;
+  actualitzaRecomanacioUnitats();
 
   val.errorsObjectes.forEach((errObj, idx) => {
     const tr = document.querySelector(`#tbody-prep-objectes tr[data-idx="${idx}"]`);
@@ -726,6 +989,23 @@ function renderComandament(dades) {
         <button type="button" class="btn btn-suau" id="btn-cmd-retirar" data-te-oferta="${teLider ? '1' : '0'}">Retirar sense vendre</button>
       </div>
     `;
+  }
+
+  // Ajuda del pas actual segons el moment de la licitació
+  if (estatUI.vistaActual === 'comandament') {
+    let ara;
+    if (!lic) {
+      ara = tauler.seguentObjecteId && objectes.some((o) => o.id === tauler.seguentObjecteId)
+        ? 'prem «Obrir…» per posar a la venda la unitat següent (o tria un altre objecte del catàleg).'
+        : 'ja s’han venut totes les unitats. Prem «Finalitza la subhasta» per veure els resultats.';
+    } else if (lic.estat === 'oberta') {
+      ara = 'deixa que els equips facin ofertes. Quan ningú no millori el preu, prem «Aturar ofertes».';
+    } else if (lic.liderUid && lic.numOfertes > 0) {
+      ara = 'revisa qui guanya i prem «Adjudicar». Si encara volien oferir, prem «Reprendre ofertes».';
+    } else {
+      ara = 'ningú no ha fet cap oferta. Retira la unitat sense vendre o reprèn les ofertes.';
+    }
+    actualitzaPassosOrg(ara);
   }
 
   // Graella del catàleg al comandament
@@ -1035,6 +1315,7 @@ function renderTerminal(dades) {
       ${detall ? `<span class="term-estat-gran-detall">${detall}</span>` : ''}`;
   };
 
+  $('term-ultimes-ofertes').hidden = !lic;
   if (!lic) {
     zonaBotons.hidden = true;
     estatUI.selectorObjecteKey = null;
@@ -1081,40 +1362,46 @@ function renderTerminal(dades) {
         <span class="term-lider-actual">${liderTxt}</span>
       </div>
     `;
+    // Context secundari sota el missatge: les darreres ofertes de la unitat
+    const ultimesTerm = (lic.ultimesOfertes || []).slice(0, 3);
+    $('term-ultimes-ofertes').innerHTML = ultimesTerm.length
+      ? `<span class="term-ultimes-etiqueta">Últimes ofertes</span>${ultimesTerm
+          .map((o, i) => `<span class="term-ultima ${o.uid === uid ? 'meva' : ''} ${i === 0 ? 'primera' : ''}">${escHtml(o.uid === uid ? 'Tu' : o.alies)} <b class="tabular">${fmtNum(o.import)}</b></span>`)
+          .join('')}`
+      : `<span class="term-ultimes-etiqueta">Encara no hi ha cap oferta en aquesta unitat.</span>`;
 
     const opcions = calculaOpcionsOferta(lic, saldo);
     const minim = opcions.minim;
     const socLider = lic.liderUid === uid;
+    const clauMeva = `${estatUI.sessioId}:${lic.objecteId}:${lic.unitat}:${sessio.ronda || 1}`;
     const emVanSuperar =
       !socLider &&
-      Array.isArray(lic.ultimesOfertes) &&
-      lic.ultimesOfertes.slice(1).some((o) => o.uid === uid);
+      lic.numOfertes > 0 &&
+      (estatUI.unitatsAmbOfertaMeva.has(clauMeva) ||
+        (Array.isArray(lic.ultimesOfertes) && lic.ultimesOfertes.slice(1).some((o) => o.uid === uid)));
 
-    // Determina el missatge d'estat persistent exacte (§7)
+    // Missatge d'estat persistent i destacat: què em passa a mi ara (§7)
+    const T = TEXTOS.terminal;
+    const posaMissatge = (cls, icona, titol, detall = '') => {
+      msgEl.className = `term-missatge-estat ${cls}`;
+      msgEl.innerHTML = `<span class="term-msg-ic">${icona}</span><span class="term-msg-text"><strong>${escHtml(titol)}</strong>${detall ? `<span>${escHtml(detall)}</span>` : ''}</span>`;
+    };
     if (!navigator.onLine) {
-      msgEl.className = 'term-missatge-estat estat-error';
-      msgEl.textContent = TEXTOS.terminal.senseConnexio;
+      posaMissatge('estat-error', IC.senseXarxa, T.senseConnexio, T.senseConnexioDetall);
     } else if (estatUI.enviantOferta) {
-      msgEl.className = 'term-missatge-estat';
-      msgEl.textContent = TEXTOS.terminal.enviant(estatUI.enviantOferta);
+      posaMissatge('', IC.rellotge, T.enviant(estatUI.enviantOferta));
     } else if (lic.estat !== 'oberta') {
-      msgEl.className = 'term-missatge-estat estat-avis';
-      msgEl.textContent = TEXTOS.terminal.aturada;
+      posaMissatge('estat-avis', IC.pausa, T.aturada, T.aturadaDetall);
     } else if (socLider) {
-      msgEl.className = 'term-missatge-estat estat-lider';
-      msgEl.textContent = TEXTOS.terminal.lideres(lic.importActual, saldo - lic.importActual);
+      posaMissatge('estat-lider', IC.check, T.vasPrimer(lic.importActual), `${T.siGuanyes(saldo - lic.importActual)} ${T.esperaQueOfereixin}`);
     } else if (estatUI.missatgeTerminalFix) {
-      msgEl.className = 'term-missatge-estat estat-avis';
-      msgEl.textContent = estatUI.missatgeTerminalFix;
+      posaMissatge('estat-avis', IC.avis, estatUI.missatgeTerminalFix);
     } else if (minim > saldo) {
-      msgEl.className = 'term-missatge-estat estat-error';
-      msgEl.textContent = TEXTOS.terminal.saldoInsuficient(minim, saldo);
+      posaMissatge('estat-error', IC.avis, T.senseDiners, `${T.saldoInsuficient(minim, saldo)}.`);
     } else if (emVanSuperar) {
-      msgEl.className = 'term-missatge-estat estat-superat';
-      msgEl.textContent = TEXTOS.terminal.superat(lic.liderAlies, lic.importActual);
+      posaMissatge('estat-superat', IC.amunt, T.superat(lic.liderAlies, lic.importActual), T.perLiderar(minim));
     } else {
-      msgEl.className = 'term-missatge-estat';
-      msgEl.textContent = `Oferta mínima: ${fmtNum(minim)} ${sessio.moneda}. Si guanyes, et quedaran ${fmtNum(saldo - minim)}.`;
+      posaMissatge('', IC.ma, T.potsOferir(minim, sessio.moneda), T.siGuanyes(saldo - minim));
     }
 
     const bloquejat =
@@ -1182,19 +1469,36 @@ function renderTerminal(dades) {
   }
 
   const llistaCompres = $('term-llista-compres');
-  if (!carteraPropia.compres?.length) {
-    llistaCompres.innerHTML = `<li class="compres-buida">${IC.bossa}<span>Encara no has comprat cap unitat.</span></li>`;
+  const compres = carteraPropia.compres || [];
+  // Progrés cap al conjunt complet (una unitat de cada objecte), si dona punts
+  const ambConjunt = resumPunts.puntuacioActiva && Number(sessio.bonificacioConjunt) > 0 && objectes.length > 1;
+  let htmlConjunt = '';
+  if (ambConjunt) {
+    const recompte = resumPunts.recomptePerObjecte || {};
+    const falten = objectes.filter((o) => !(recompte[o.id] > 0)).map((o) => o.nom);
+    const conjunts = resumPunts.conjuntsComplets || 0;
+    htmlConjunt = falten.length
+      ? `<li class="conjunt-progres"><span>Conjunt complet: <b class="tabular">${objectes.length - falten.length} de ${objectes.length}</b> objectes (+${fmtNum(sessio.bonificacioConjunt)} punts)</span><span>Et falta: ${escHtml(falten.join(', '))}</span></li>`
+      : `<li class="conjunt-progres conjunt-fet">${IC.check}<span>Tens ${conjunts} ${conjunts === 1 ? 'conjunt complet' : 'conjunts complets'}: +${fmtNum(conjunts * Number(sessio.bonificacioConjunt))} punts</span></li>`;
+  }
+  if (!compres.length) {
+    llistaCompres.innerHTML = `<li class="compres-buida">${IC.bossa}<span>Encara no has comprat cap unitat.</span></li>${htmlConjunt}`;
   } else {
-    llistaCompres.innerHTML = carteraPropia.compres
-      .map(
-        (c) => `
+    llistaCompres.innerHTML =
+      objectes
+        .filter((o) => compres.some((c) => c.objecteId === o.id))
+        .map((o) => {
+          const preus = compres.filter((c) => c.objecteId === o.id).map((c) => Number(c.preu));
+          return `
         <li class="item-obj-compacte tabular">
-          <strong>${escHtml(c.objecteNom)} (u. ${c.unitat})</strong>
-          <span>${fmtNum(c.preu)} ${escHtml(sessio.moneda)}</span>
-        </li>
-      `
-      )
-      .join('');
+          <span class="item-obj-esquerra">
+            ${renderIconaSvg(o.icona, o.imatgeDataUrl)}
+            <strong>${escHtml(o.nom)} × ${preus.length}</strong>
+          </span>
+          <span>${preus.map(fmtNum).join(' + ')} ${escHtml(sessio.moneda)}</span>
+        </li>`;
+        })
+        .join('') + htmlConjunt;
   }
 
   // Catàleg al terminal
@@ -1203,11 +1507,13 @@ function renderTerminal(dades) {
     .map((o) => {
       const cat = tauler.cataleg?.[o.id] || { venudes: 0, darrerPreu: null };
       const queden = Math.max(0, Number(o.quantitat) - Number(cat.venudes));
+      const enJoc = lic?.objecteId === o.id;
       return `
-        <li class="item-obj-compacte tabular">
+        <li class="item-obj-compacte tabular ${enJoc ? 'en-joc' : ''} ${queden <= 0 ? 'esgotat' : ''}">
           <span class="item-obj-esquerra">
             ${renderIconaSvg(o.icona, o.imatgeDataUrl)}
             <span>${escHtml(o.nom)}</span>
+            ${enJoc ? '<span class="pastilla-en-joc">En joc</span>' : ''}
           </span>
           <span>queden <strong>${queden}</strong>/${o.quantitat} · darrer ${cat.darrerPreu !== null ? fmtNum(cat.darrerPreu) : '—'}</span>
         </li>
@@ -1725,10 +2031,7 @@ function inicialitzaEsdeveniments() {
   });
 
   // Accions d'organitzador a la portada
-  $('btn-nova-subhasta').addEventListener('click', async () => {
-    const sessio = await gestor.creaSubhasta(EXEMPLE_MERCAT_INDUSTRIAL, 'preparacio');
-    await obreSessioComOrganitzador(sessio.id, 'preparacio');
-  });
+  $('btn-nova-subhasta').addEventListener('click', () => obreModalModels('crear'));
 
   $('btn-assaig-rapid').addEventListener('click', async () => {
     const sessio = await gestor.creaSubhasta(EXEMPLE_MERCAT_INDUSTRIAL, 'en_curs');
@@ -1774,9 +2077,38 @@ function inicialitzaEsdeveniments() {
 
   // Vista 2: Les meves subhastes
   $('btn-llista-tornar').addEventListener('click', tornaPortada);
-  $('btn-llista-nova').addEventListener('click', async () => {
-    const sessio = await gestor.creaSubhasta(EXEMPLE_MERCAT_INDUSTRIAL, 'preparacio');
-    await obreSessioComOrganitzador(sessio.id, 'preparacio');
+  $('btn-llista-nova').addEventListener('click', () => obreModalModels('crear'));
+
+  // Finestra de models i configuracions desades
+  $('modal-models').addEventListener('click', async (e) => {
+    const bModel = e.target.closest('[data-model]');
+    if (bModel) {
+      const model = MODELS.find((m) => m.id === bModel.dataset.model);
+      if (model) await aplicaConfigEscollida(model.config);
+      return;
+    }
+    const bConfig = e.target.closest('[data-config]');
+    if (bConfig) {
+      const c = estatUI.configsDesades.find((x) => x.id === bConfig.dataset.config);
+      if (c) await aplicaConfigEscollida(c.cfg, c.id);
+      return;
+    }
+    const bElimina = e.target.closest('[data-elimina-config]');
+    if (bElimina) {
+      const c = estatUI.configsDesades.find((x) => x.id === bElimina.dataset.eliminaConfig);
+      if (!c) return;
+      obreModalAccio({
+        titol: 'Elimina la configuració',
+        htmlCos: `<p>Segur que vols eliminar la configuració «${escHtml(c.nom)}»? Les subhastes que ja has fet amb ella no canvien.</p>`,
+        textConfirmar: 'Sí, elimina-la',
+        classeBtn: 'btn-perill-suau',
+        onConfirm: async () => {
+          await gestor.eliminaConfiguracio(c.id);
+          estatUI.configsDesades = estatUI.configsDesades.filter((x) => x.id !== c.id);
+          renderModalModels();
+        }
+      });
+    }
   });
 
   $('contenedor-llista-sessions').addEventListener('click', async (e) => {
@@ -1854,6 +2186,14 @@ function inicialitzaEsdeveniments() {
   });
 
   $('tbody-prep-objectes').addEventListener('click', (e) => {
+    const btnPas = e.target.closest('[data-pas-unitats]');
+    if (btnPas) {
+      const inp = btnPas.parentElement.querySelector('.inp-obj-quantitat');
+      const nou = Math.min(LIMITS.MAX_UNITATS_TOTALS, Math.max(1, (Number(inp.value) || 0) + Number(btnPas.dataset.pasUnitats)));
+      inp.value = String(nou);
+      programaAutoDesament();
+      return;
+    }
     const btnDel = e.target.closest('.btn-eliminar-obj');
     if (!btnDel) return;
     const idx = Number(btnDel.dataset.idx);
@@ -1883,18 +2223,34 @@ function inicialitzaEsdeveniments() {
     validaIDesaPreparacio(true);
   });
 
-  $('btn-carrega-exemple').addEventListener('click', () => {
-    estatUI.esborranyPrep = {
-      ...EXEMPLE_MERCAT_INDUSTRIAL,
-      objectes: EXEMPLE_MERCAT_INDUSTRIAL.objectes.map((o) => ({ ...o }))
-    };
-    pintaFormulariPreparacio();
-    validaIDesaPreparacio(true);
-  });
+  $('btn-canvia-model').addEventListener('click', () => obreModalModels('substituir'));
+  $('btn-desa-config').addEventListener('click', obreDesaConfiguracio);
 
-  $('btn-prep-meves').addEventListener('click', async () => {
-    mostraVista('llista');
-    await renderLlistaMevesSubhastes();
+  // Equips previstos: es recorda en aquest navegador i recalcula la recomanació
+  try {
+    const desats = Number(localStorage.getItem(STORAGE_KEYS.EQUIPS_PREVISTOS));
+    if (desats >= 2 && desats <= 40) $('prep-equips').value = String(desats);
+  } catch (_) {}
+  const canviaEquips = (delta = 0) => {
+    $('prep-equips').value = String(Math.min(40, Math.max(2, equipsPrevistos() + delta)));
+    try {
+      localStorage.setItem(STORAGE_KEYS.EQUIPS_PREVISTOS, $('prep-equips').value);
+    } catch (_) {}
+    actualitzaRecomanacioUnitats();
+  };
+  $('btn-equips-menys').addEventListener('click', () => canviaEquips(-1));
+  $('btn-equips-mes').addEventListener('click', () => canviaEquips(1));
+  $('prep-equips').addEventListener('change', () => canviaEquips(0));
+  $('prep-equips').addEventListener('input', actualitzaRecomanacioUnitats);
+
+  $('btn-ajusta-unitats').addEventListener('click', () => {
+    llegeixEsborranyDelDom();
+    const recomanat = Number($('btn-ajusta-unitats').dataset.recomanat) || 1;
+    estatUI.esborranyPrep.objectes.forEach((o) => {
+      o.quantitat = recomanat;
+    });
+    renderFilesObjectesPreparacio();
+    validaIDesaPreparacio(true);
   });
 
   $('btn-anar-sala-espera').addEventListener('click', async () => {
@@ -2138,6 +2494,8 @@ function inicialitzaEsdeveniments() {
       estatUI.missatgeTerminalFix = res.missatge;
     } else {
       estatUI.missatgeTerminalFix = null;
+      const licAct = estatUI.dades?.tauler?.licitacio;
+      if (licAct) estatUI.unitatsAmbOfertaMeva.add(`${estatUI.sessioId}:${licAct.objecteId}:${licAct.unitat}:${estatUI.dades?.sessio?.ronda || 1}`);
     }
     if (estatUI.dades) renderTerminal(estatUI.dades);
   };

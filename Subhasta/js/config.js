@@ -23,6 +23,9 @@ export const LIMITS = {
   MAX_MONEDA: 16,
   MAX_REPTE: 280,
   DIES_CADUCITAT: 30,
+  DIES_CONFIGURACIO: 365,
+  MAX_CONFIGURACIONS: 20,
+  MAX_NOM_CONFIGURACIO: 60,
   MINUTS_CODI_CANVI: 5,
   MAX_ULTIMES_OFERTES: 3,
   MAX_IMATGE_KB: 60
@@ -35,5 +38,7 @@ export const STORAGE_KEYS = {
   TEMA: 'subhasta:tema',
   SO_MARTELL: 'subhasta:soMartell',
   SESSIONS_LOCALS: 'subhasta:sessionsLocals',
-  SESSIO_ACTIVA: 'subhasta:sessioActiva'
+  SESSIO_ACTIVA: 'subhasta:sessioActiva',
+  CONFIGURACIONS: 'subhasta:configuracions',
+  EQUIPS_PREVISTOS: 'subhasta:equipsPrevistos'
 };

@@ -153,7 +153,9 @@ Disposicions d'aula, de la més recomanable a la més limitada:
 ### Organitzador
 
 - **Les meves subhastes**: llista amb títol, data i estat. Accions: crear, obrir, duplicar, exportar i eliminar. En entrar-hi s'eliminen les sessions caducades.
-- **Preparació** en una sola pantalla: títol i repte; taula d'objectes (nom, icona o imatge, quantitat, preu de sortida, valor opcional); pressupost, moneda i increment; resum de capacitat; exemple carregable. Validació al costat de cada camp i desament automàtic amb indicador.
+- **Recorregut guiat**: mentre l'organitzador prepara i dirigeix, una barra de quatre passos (Catàleg → Sala d'espera → Subhasta en directe → Resultats) marca on és i una línia «Ara:» li diu què ha de fer tot seguit; al comandament, la línia canvia segons l'estat de la unitat.
+- **Començar**: «Crea una subhasta nova» obre una finestra amb els models d'activitat (Mercat industrial, Fira medieval, Illa deserta, Llança la teva empresa i Comença de zero), cadascun amb matèria i curs, en què consisteix, què treballa, objectes, unitats, diners i durada orientativa, i les configuracions desades per l'organitzador. Un clic crea la sessió i obre la preparació ja plena.
+- **Preparació** en una sola pantalla: títol i repte; taula d'objectes (nom, icona o imatge, quantitat amb botons − i +, preu de sortida, valor opcional); pressupost, moneda i increment; resum de capacitat. Un bloc «Quants equips hi haurà?» calcula les unitats totals, la durada aproximada (minut i mig per unitat) i avisa si un objecte té tantes unitats com equips; el botó «Posa N unitats a cada objecte» aplica la recomanació (equips ÷ 3 arrodonit amunt + 1, sempre menys que equips). «Canvia de model» substitueix el catàleg i «Desa la configuració» el guarda amb un nom. Validació al costat de cada camp i desament automàtic amb indicador.
 - **Sala d'espera**: codi de sala de 4 caràcters alfanumèrics (sense 0, O, 1, I ni L; les sales antigues de 6 xifres continuen valent), enllaç curt, QR i botó «Copia l'enllaç» per al Classroom. Els àlies apareixen a mesura que entren; l'organitzador pot canviar-ne o treure'n un amb un toc, ara i entre unitats.
 - **Comandament**: una acció principal segons el moment («Obrir carbó · unitat 2», «Aturar ofertes», «Adjudicar»). El catàleg permet obrir qualsevol objecte amb unitats; per defecte es proposa continuar amb el mateix objecte i després el següent. «Desfer» i «Finalitzar» van separats. Un panell lateral mostra participants amb saldo i compres, inscripcions i canvi d'aparell.
 
@@ -206,11 +208,14 @@ L'adjudicació es queda visible fins que s'obre la unitat següent. So de martel
 - Tot funciona amb el teclat, sense dreceres globals que puguin oferir per accident.
 - Al mòbil: una sola columna amb el mateix ordre, compres i catàleg sota demanda, i àrees tàctils de 44 × 44 px com a mínim.
 
+El missatge d'estat és el que més importa a l'alumne: va just sota la millor oferta, amb icona, color, un títol gran i una explicació breu del que pot fer. Sota seu, les tres darreres ofertes de la unitat (la pròpia, marcada com «Tu»). Les compres s'agrupen per objecte («Cereals × 2 · 110 + 95») i, si hi ha bonificació per conjunt, s'indica quants objectes diferents té i quins li falten. Al catàleg, l'objecte que es licita porta la marca «En joc» i els esgotats queden atenuats.
+
 | Situació | Missatge |
 |---|---|
 | Enviant | «Enviant l'oferta de 190…»; evita un segon enviament |
-| Lideres | «Vas primer amb 190. Si guanyes, et quedaran 430» |
-| T'han superat | «T'han superat: Marc ofereix 200» |
+| Pot oferir | «Pots oferir des de 190 monedes» · «Si guanyes, et quedaran 430.» |
+| Lideres | «Vas primer amb 190» · «Si guanyes, et quedaran 430. Espera: no et pots superar a tu mateix.» |
+| T'han superat | «T'han superat: Marc ofereix 200» · «Per tornar a anar primer, ofereix com a mínim 210.» (es recorda en quines unitats ha ofert l'alumne) |
 | Algú s'ha avançat | «Algú ha ofert abans. Ara el mínim és 200» |
 | Saldo insuficient | «El mínim és 630 i tens 620» |
 | Aturada | «Ofertes aturades» |
@@ -269,6 +274,7 @@ Comú a totes: xifres d'amplada fixa, imports molt dominants, moviment de 150–
 | Balanç públic | Àlies, gastat i compres de tothom | Qualsevol identitat | Organitzador, només mentre decideix projectar-lo |
 | Reserva d'àlies | Nom normalitzat | Ningú | El titular en entrar; organitzador |
 | Adjudicació | Ronda, ordre, objecte, unitat, participant, preu, ofertes rebudes, hora, desfeta | Qualsevol identitat | Organitzador |
+| Configuració desada | Propietari, nom, títol, repte, pressupost, moneda, increment, puntuació i objectes; creació, últim ús i caducitat | Només el propietari | Només el propietari |
 
 El tauler és l'únic document que canvia a cada oferta i no conté imatges: és el que reben totes les pantalles.
 
@@ -302,6 +308,7 @@ L'adjudicació, la retirada i el desfer són transaccions fetes des del navegado
 ### Conservació i privadesa
 
 - No es demana cap dada personal a l'alumnat: àlies i identificador anònim. De l'organitzador, res; el correu de Google només si decideix vincular-hi les subhastes.
+- **Configuracions desades** (col·lecció `configuracions`): fins a 20 per organitzador, amb nom únic (desar-ne una amb el mateix nom la substitueix). Cada ús en renova la vigència; caduquen un any després de l'últim ús i s'eliminen en obrir la llista de models. Les regles no admeten caducitats de més de 400 dies. Si les fotos ocupen massa, es desa sense fotos i s'avisa. També se'n guarda una còpia al navegador.
 - La sessió caduca 30 dies després de finalitzar o de l'última acció de l'organitzador. Les regles en bloquegen l'accés a partir d'aquella data; l'eliminació efectiva es fa quan l'organitzador entra a «Les meves subhastes» o amb el botó «Eliminar».
 - L'app inclou un text breu de privadesa: què es desa, on i fins quan.
 - No es pot limitar la freqüència de peticions sense servidor. Es considera acceptable a l'aula, amb l'organitzador present; cada sessió només la pot modificar qui l'ha creada.

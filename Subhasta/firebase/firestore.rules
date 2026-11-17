@@ -68,6 +68,27 @@ service cloud.firestore {
         && (resource.data.expiraMs < request.time.toMillis() || esPropietari(resource.data.sessioId));
     }
 
+    // Configuracions desades amb nom (v1.3): privades del propietari i amb caducitat (com a molt uns 13 mesos)
+    match /configuracions/{configId} {
+      function campsConfig() {
+        return request.resource.data.id == configId
+          && request.resource.data.propietariUid == request.auth.uid
+          && request.resource.data.nom is string
+          && request.resource.data.nom.size() >= 1
+          && request.resource.data.nom.size() <= 60
+          && request.resource.data.cfg is map
+          && request.resource.data.cfg.objectes is list
+          && request.resource.data.cfg.objectes.size() >= 1
+          && request.resource.data.cfg.objectes.size() <= 12
+          && request.resource.data.expiraMs is int
+          && request.resource.data.expiraMs <= request.time.toMillis() + 34560000000;
+      }
+      allow read: if autenticat() && resource.data.propietariUid == request.auth.uid;
+      allow create: if autenticat() && campsConfig();
+      allow update: if autenticat() && resource.data.propietariUid == request.auth.uid && campsConfig();
+      allow delete: if autenticat() && resource.data.propietariUid == request.auth.uid;
+    }
+
     match /sessions/{sessioId} {
       function camps() {
         return request.resource.data.titol is string

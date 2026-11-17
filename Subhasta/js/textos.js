@@ -47,7 +47,16 @@ export const TEXTOS = {
     compra: (unitatNom, imp, queda) => `Has comprat 1 ${unitatNom.toLowerCase()} per ${fmtNum(imp)}. Et queden ${fmtNum(queda)}`,
     esperantSeguent: 'Esperant la unitat següent',
     salaEspera: 'La subhasta començarà aviat. Revisa el repte i el catàleg.',
-    carteraDeshabilitada: 'Aquesta cartera ha passat a un altre aparell o ha estat desactivada.'
+    carteraDeshabilitada: 'Aquesta cartera ha passat a un altre aparell o ha estat desactivada.',
+    // Títol i explicació del missatge destacat (v1.3)
+    vasPrimer: (imp) => `Vas primer amb ${fmtNum(imp)}`,
+    siGuanyes: (queda) => `Si guanyes, et quedaran ${fmtNum(queda)}.`,
+    esperaQueOfereixin: 'Espera: no et pots superar a tu mateix.',
+    perLiderar: (minim) => `Per tornar a anar primer, ofereix com a mínim ${fmtNum(minim)}.`,
+    potsOferir: (minim, moneda) => `Pots oferir des de ${fmtNum(minim)} ${moneda}`,
+    aturadaDetall: 'Ara no es pot oferir. L’organitzador decideix a qui s’adjudica.',
+    senseDiners: 'No tens prou diners per a aquesta unitat',
+    senseConnexioDetall: 'Els botons s’activaran quan tornis a tenir connexió.'
   },
 
   // Estats de projecció (§7)
@@ -219,3 +228,108 @@ export const EXEMPLE_MERCAT_INDUSTRIAL = {
     }
   ]
 };
+
+/* Models d'activitat per començar amb un sol clic (v1.3).
+   Cada model és una configuració completa i editable. */
+const obj = (id, nom, descripcio, icona, quantitat, preuSortida, valor) => ({
+  id, nom, descripcio, icona, imatgeDataUrl: null, quantitat, preuSortida, valor
+});
+
+export const MODELS = [
+  {
+    id: 'mercat-industrial',
+    nom: 'Mercat industrial',
+    materia: 'Història i economia · 3r i 4t d’ESO',
+    consisteix: 'Cada equip és una fàbrica de la Revolució Industrial que compra matèries primeres per produir.',
+    treballa: 'Escassetat, oferta i demanda',
+    icona: 'maquina',
+    config: EXEMPLE_MERCAT_INDUSTRIAL
+  },
+  {
+    id: 'fira-medieval',
+    nom: 'Fira medieval',
+    materia: 'Història · 2n d’ESO',
+    consisteix: 'Els gremis d’una vila es disputen a la fira els productes per passar l’hivern i treballar.',
+    treballa: 'Economia feudal, comerç i gremis',
+    icona: 'blat',
+    config: {
+      titol: 'Fira medieval',
+      repte: 'Sou un gremi d’artesans de la vila. Necessiteu cereals, llana, ferro i fusta per passar l’hivern i treballar. Els sous que us sobrin també compten.',
+      pressupost: 500,
+      moneda: 'sous',
+      increment: 5,
+      puntuacioActiva: true,
+      bonificacioConjunt: 100,
+      objectes: [
+        obj('obj-cereals', 'Cereals', 'Gra per fer pa durant tot l’hivern.', 'blat', 4, 10, 90),
+        obj('obj-llana', 'Llana', 'Fibra per teixir draps i vestits.', 'coto', 3, 15, 110),
+        obj('obj-ferro', 'Ferro', 'Metall per a eines, arades i ferradures.', 'ferro', 3, 20, 120),
+        obj('obj-fusta', 'Fusta', 'Material per construir i escalfar-se.', 'fusta', 4, 5, 70)
+      ]
+    }
+  },
+  {
+    id: 'illa-deserta',
+    nom: 'Illa deserta',
+    materia: 'Economia · qualsevol curs',
+    consisteix: 'Grups de nàufrags decideixen què és imprescindible per sobreviure, perquè no ho podran tenir tot.',
+    treballa: 'Necessitats, prioritats i cost d’oportunitat',
+    icona: 'aigua',
+    config: {
+      titol: 'Illa deserta',
+      repte: 'Heu naufragat en una illa. Per sobreviure necessiteu aigua, aliment, refugi i foc. No ho podreu tenir tot: decidiu què és imprescindible.',
+      pressupost: 1000,
+      moneda: 'monedes',
+      increment: 10,
+      puntuacioActiva: true,
+      bonificacioConjunt: 300,
+      objectes: [
+        obj('obj-aigua', 'Aigua potable', 'Garrafes d’aigua per a una setmana.', 'aigua', 3, 30, 220),
+        obj('obj-aliment', 'Aliment', 'Provisions per a una setmana.', 'blat', 3, 20, 200),
+        obj('obj-refugi', 'Refugi', 'Fusta i cordes per fer una cabana.', 'fusta', 3, 20, 160),
+        obj('obj-foc', 'Foc', 'Encenedor per cuinar i escalfar-vos.', 'energia', 2, 20, 180)
+      ]
+    }
+  },
+  {
+    id: 'empresa',
+    nom: 'Llança la teva empresa',
+    materia: 'Emprenedoria · 4t d’ESO',
+    consisteix: 'Equips emprenedors inverteixen el capital inicial en els recursos per posar en marxa el seu projecte.',
+    treballa: 'Inversió, recursos i presa de decisions',
+    icona: 'estrella',
+    config: {
+      titol: 'Llança la teva empresa',
+      repte: 'Sou una empresa emergent amb 10.000 € de capital. Per llançar el producte necessiteu un local, maquinària, formació i una patent. El capital que no gasteu també compta.',
+      pressupost: 10000,
+      moneda: '€',
+      increment: 100,
+      puntuacioActiva: true,
+      bonificacioConjunt: 2000,
+      objectes: [
+        obj('obj-local', 'Local', 'Espai per treballar i atendre la clientela.', 'ciutat', 3, 300, 2000),
+        obj('obj-maquinaria', 'Maquinària', 'Equipament per fabricar el producte.', 'maquina', 3, 400, 2200),
+        obj('obj-formacio', 'Formació', 'Curs especialitzat per a tot l’equip.', 'llibre', 4, 200, 1500),
+        obj('obj-patent', 'Patent', 'Idea protegida que us diferencia de la competència.', 'estrella', 2, 500, 2500)
+      ]
+    }
+  },
+  {
+    id: 'en-blanc',
+    nom: 'Comença de zero',
+    materia: 'Qualsevol matèria',
+    consisteix: 'Un catàleg buit amb un objecte de mostra perquè hi posis els teus.',
+    treballa: 'El que tu vulguis',
+    icona: 'llibre',
+    config: {
+      titol: 'Subhasta a l’aula',
+      repte: '',
+      pressupost: 1000,
+      moneda: 'monedes',
+      increment: 10,
+      puntuacioActiva: false,
+      bonificacioConjunt: 0,
+      objectes: [obj('obj-1', 'Objecte 1', '', 'estrella', 3, 20, 0)]
+    }
+  }
+];

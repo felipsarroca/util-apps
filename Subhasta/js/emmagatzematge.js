@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* Capa de sincronització en temps real (Firebase Firestore + sincronització local entre pestanyes) i simulador de 40 participants */
 
-import { FIREBASE_CONFIG, LIMITS, STORAGE_KEYS } from './config.js?v=1.2.0';
-import { EXEMPLE_MERCAT_INDUSTRIAL, TEXTOS } from './textos.js?v=1.2.0';
+import { FIREBASE_CONFIG, LIMITS, STORAGE_KEYS } from './config.js?v=1.3.0';
+import { EXEMPLE_MERCAT_INDUSTRIAL, TEXTOS } from './textos.js?v=1.3.0';
 import {
   netejaText,
   clauAlies,
@@ -11,7 +11,7 @@ import {
   validaOferta,
   calculaMinimOferta,
   determinaSeguentObjecteId
-} from './domini.js?v=1.2.0';
+} from './domini.js?v=1.3.0';
 
 const FB_VER = '10.14.1';
 const FB_APP_URL = `https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`;
@@ -691,6 +691,155 @@ export class GestorSubhasta {
       const { db, fs } = await carregaFirebase();
       if (codi) await fs.deleteDoc(fs.doc(db, 'codis', codi)).catch(() => {});
       await fs.deleteDoc(fs.doc(db, 'sessions', sessioId)).catch(() => {});
+    } catch (_) {}
+  }
+
+  /* ============================================================
+     Configuracions desades amb nom (v1.3)
+     Es conserven DIES_CONFIGURACIO dies des de l'últim ús; cada ús en renova el termini.
+     Es desen en aquest navegador i, si hi ha connexió, al núvol a nom del propietari.
+     ============================================================ */
+  _llegeixConfigsLocals() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.CONFIGURACIONS);
+      const dades = raw ? JSON.parse(raw) : {};
+      return dades && typeof dades === 'object' ? dades : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  _escriuConfigsLocals(dades) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.CONFIGURACIONS, JSON.stringify(dades));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async llistaConfiguracions() {
+    const ara = Date.now();
+    const locals = this._llegeixConfigsLocals();
+    const uid = getUid();
+
+    try {
+      const { db, fs } = await carregaFirebase();
+      const snap = await fs.getDocs(
+        fs.query(fs.collection(db, 'configuracions'), fs.where('propietariUid', '==', uid))
+      );
+      snap.forEach((docSnap) => {
+        const c = docSnap.data();
+        if (!c?.id) return;
+        if ((c.expiraMs || 0) <= ara) {
+          fs.deleteDoc(docSnap.ref).catch(() => {});
+          return;
+        }
+        const local = locals[c.id];
+        if (!local || (local.usatMs || 0) < (c.usatMs || 0)) locals[c.id] = c;
+      });
+    } catch (_) {}
+
+    for (const [id, c] of Object.entries(locals)) {
+      if (!c?.cfg || (c.expiraMs || 0) <= ara) delete locals[id];
+    }
+    this._escriuConfigsLocals(locals);
+    return Object.values(locals).sort((a, b) => (b.usatMs || 0) - (a.usatMs || 0));
+  }
+
+  /**
+   * Desa la configuració d'una subhasta amb un nom. Si ja n'hi ha una amb el mateix nom, la substitueix.
+   */
+  async desaConfiguracio(nomRaw, cfg) {
+    const nom = netejaText(nomRaw, LIMITS.MAX_NOM_CONFIGURACIO);
+    if (!nom) throw new Error('Escriu un nom per a la configuració.');
+    const val = validaConfiguracio(cfg);
+    if (!val.valid) throw new Error('Revisa els camps marcats abans de desar la configuració.');
+
+    const existents = await this.llistaConfiguracions();
+    const mateixNom = existents.find((c) => c.nom.toLocaleLowerCase('ca-ES') === nom.toLocaleLowerCase('ca-ES'));
+    if (!mateixNom && existents.length >= LIMITS.MAX_CONFIGURACIONS) {
+      throw new Error(`Ja tens ${LIMITS.MAX_CONFIGURACIONS} configuracions desades. Elimina’n alguna per desar-ne una de nova.`);
+    }
+
+    const ara = Date.now();
+    const objectes = cfg.objectes.map((o, idx) => ({
+      id: o.id || `obj_${idx + 1}_${generaHex(2)}`,
+      nom: netejaText(o.nom, LIMITS.MAX_NOM_OBJECTE),
+      descripcio: netejaText(o.descripcio ?? '', LIMITS.MAX_DESCRIPCIO),
+      icona: o.icona || 'carbo',
+      imatgeDataUrl: o.imatgeDataUrl || null,
+      quantitat: Number(o.quantitat),
+      preuSortida: Number(o.preuSortida),
+      valor: Number(o.valor) || 0
+    }));
+    // Un document de Firestore no pot superar 1 MB: si les fotos ocupen massa, es desen sense
+    let senseFotos = false;
+    if (JSON.stringify(objectes).length > 700000) {
+      objectes.forEach((o) => { o.imatgeDataUrl = null; });
+      senseFotos = true;
+    }
+
+    const doc = {
+      id: mateixNom?.id || 'cfg_' + generaHex(6),
+      propietariUid: getUid(),
+      nom,
+      cfg: {
+        titol: netejaText(cfg.titol, LIMITS.MAX_TITOL),
+        repte: netejaText(cfg.repte ?? '', LIMITS.MAX_REPTE),
+        pressupost: Number(cfg.pressupost),
+        moneda: netejaText(cfg.moneda || 'monedes', LIMITS.MAX_MONEDA),
+        increment: Number(cfg.increment),
+        puntuacioActiva: Boolean(cfg.puntuacioActiva),
+        bonificacioConjunt: Number(cfg.bonificacioConjunt ?? 0),
+        objectes
+      },
+      creatMs: mateixNom?.creatMs || ara,
+      usatMs: ara,
+      expiraMs: ara + LIMITS.DIES_CONFIGURACIO * 24 * 3600 * 1000
+    };
+
+    const locals = this._llegeixConfigsLocals();
+    locals[doc.id] = doc;
+    const desatLocal = this._escriuConfigsLocals(locals);
+
+    let desatNuvol = false;
+    try {
+      const { db, fs } = await carregaFirebase();
+      await fs.setDoc(fs.doc(db, 'configuracions', doc.id), doc);
+      desatNuvol = true;
+    } catch (_) {}
+
+    if (!desatLocal && !desatNuvol) throw new Error('No s’ha pogut desar la configuració. Torna-ho a provar.');
+    return { ...doc, senseFotos, substituida: Boolean(mateixNom), desatNuvol };
+  }
+
+  /**
+   * Marca una configuració com a usada: en renova el termini de conservació.
+   */
+  async renovaConfiguracio(id) {
+    const locals = this._llegeixConfigsLocals();
+    const c = locals[id];
+    if (!c) return;
+    const ara = Date.now();
+    c.usatMs = ara;
+    c.expiraMs = ara + LIMITS.DIES_CONFIGURACIO * 24 * 3600 * 1000;
+    this._escriuConfigsLocals(locals);
+    try {
+      const { db, fs } = await carregaFirebase();
+      if (c.propietariUid === getUid()) {
+        await fs.setDoc(fs.doc(db, 'configuracions', id), c);
+      }
+    } catch (_) {}
+  }
+
+  async eliminaConfiguracio(id) {
+    const locals = this._llegeixConfigsLocals();
+    delete locals[id];
+    this._escriuConfigsLocals(locals);
+    try {
+      const { db, fs } = await carregaFirebase();
+      await fs.deleteDoc(fs.doc(db, 'configuracions', id));
     } catch (_) {}
   }
 

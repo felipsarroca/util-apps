@@ -8,8 +8,8 @@
   <title>Subhasta · Subhasta oberta en temps real per a l’aula</title>
   <meta name="description" content="Aplicació educativa de subhastes angleses obertes en temps real per treballar l’escassetat, l’oferta i la demanda, el pressupost i el cost d’oportunitat a l’aula.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/estil.css?v=1.2.1">
-  <script type="module" src="js/app.js?v=1.2.0"></script>
+  <link rel="stylesheet" href="css/estil.css?v=1.3.0">
+  <script type="module" src="js/app.js?v=1.3.0"></script>
 </head>
 <body>
   <a class="skip-link" href="#contingut-principal">Salta al contingut principal</a>
@@ -106,6 +106,17 @@
         </svg>
         <span>Sense connexió. Les dades poden ser antigues.</span>
       </div>
+
+      <!-- PASSOS GUIATS DE L'ORGANITZADOR (v1.3) -->
+      <nav id="passos-org" class="passos-org" aria-label="Passos per organitzar la subhasta" hidden>
+        <ol class="passos-org-llista">
+          <li data-pas="preparacio"><span class="passos-num">1</span><span>Catàleg</span></li>
+          <li data-pas="espera"><span class="passos-num">2</span><span>Sala d’espera</span></li>
+          <li data-pas="comandament"><span class="passos-num">3</span><span>Subhasta en directe</span></li>
+          <li data-pas="resultats"><span class="passos-num">4</span><span>Resultats</span></li>
+        </ol>
+        <p id="passos-org-ara" class="passos-org-ara" aria-live="polite"></p>
+      </nav>
 
       <!-- VISTA 1: INICI / PORTADA -->
       <section id="vista-inici" class="vista vista-inici">
@@ -259,13 +270,18 @@
             <span id="indicador-desament" class="indicador-desament" role="status" aria-live="polite">Desat automàticament ✓</span>
           </div>
           <div class="capcalera-vista-accions">
-            <button type="button" class="btn btn-suau btn-sm" id="btn-carrega-exemple">
+            <button type="button" class="btn btn-suau btn-sm" id="btn-canvia-model">
               <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
               </svg>
-              <span>Carrega «Mercat industrial»</span>
+              <span>Canvia de model</span>
             </button>
-            <button type="button" class="btn btn-suau btn-sm" id="btn-prep-meves">Les meves subhastes</button>
+            <button type="button" class="btn btn-secundari btn-sm" id="btn-desa-config">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/>
+              </svg>
+              <span>Desa la configuració</span>
+            </button>
             <button type="button" class="btn btn-primari" id="btn-anar-sala-espera">
               <span>Obre la sala d’espera →</span>
             </button>
@@ -325,6 +341,19 @@
                 <span class="subtext">punts</span>
               </div>
             </div>
+
+            <div class="caixa-grup-previst">
+              <div class="fila-equips-previstos">
+                <label for="prep-equips">Quants equips hi haurà?</label>
+                <div class="grup-pas-mini">
+                  <button type="button" class="btn-pas-mini" id="btn-equips-menys" aria-label="Un equip menys">−</button>
+                  <input id="prep-equips" class="tabular" type="number" min="2" max="40" step="1" value="8">
+                  <button type="button" class="btn-pas-mini" id="btn-equips-mes" aria-label="Un equip més">+</button>
+                </div>
+              </div>
+              <p id="recomanacio-unitats" class="recomanacio-unitats" aria-live="polite"></p>
+              <button type="button" class="btn btn-suau btn-sm" id="btn-ajusta-unitats">Ajusta les unitats al grup</button>
+            </div>
           </div>
 
           <!-- Taula d'objectes -->
@@ -334,7 +363,7 @@
                 <h2>2. Catàleg d’objectes a subhastar</h2>
                 <p id="resum-capacitat-prep" class="subtext tabular">4 objectes · 14 unitats totals (màxim 12 objectes i 60 unitats)</p>
               </div>
-              <button type="button" class="btn btn-secundari btn-sm" id="btn-afegir-objecte">+ Afegeix un objecte</button>
+              <button type="button" class="btn btn-secundari btn-sm btn-no-trenca" id="btn-afegir-objecte">+ Afegeix un objecte</button>
             </div>
 
             <p id="err-prep-objectes" class="missatge-error" role="alert" hidden></p>
@@ -345,7 +374,7 @@
                   <tr>
                     <th scope="col" class="col-icona">Icona / imatge</th>
                     <th scope="col">Nom i descripció breu</th>
-                    <th scope="col" class="col-num">Unitats</th>
+                    <th scope="col" class="col-num col-unitats">Unitats</th>
                     <th scope="col" class="col-num">Sortida</th>
                     <th scope="col" class="col-num" id="th-valor-punts">Valor (opc.)</th>
                     <th scope="col" class="col-accions"><span class="sr-only">Accions</span></th>
@@ -595,6 +624,7 @@
 
             <!-- Missatge d'estat persistent (§7: es manté a la pantalla, no depèn d'avisos efímers) -->
             <div id="term-missatge-estat" class="term-missatge-estat" role="status" aria-live="polite"></div>
+            <div id="term-ultimes-ofertes" class="term-ultimes-ofertes" hidden></div>
 
             <!-- Zona de botons d'oferta (3 botons + selector - / +) -->
             <div id="term-zona-botons" class="term-zona-botons">
@@ -729,6 +759,30 @@
       </div>
     </footer>
   </div>
+
+  <!-- MODAL: MODELS D'ACTIVITAT I CONFIGURACIONS DESADES (v1.3) -->
+  <dialog id="modal-models" class="modal-dialeg modal-models" aria-labelledby="titol-modal-models">
+    <div class="modal-caixa">
+      <div class="modal-cap">
+        <div>
+          <h2 id="titol-modal-models">Com vols començar?</h2>
+          <p id="subtitol-modal-models" class="subtext">Tria un model ja preparat o una configuració teva. Després podràs canviar-ne tots els detalls.</p>
+        </div>
+        <button type="button" class="btn-tancar-modal" data-tanca="modal-models" aria-label="Tanca la finestra">✕</button>
+      </div>
+      <div class="modal-cos">
+        <p class="com-funciona-models"><strong>Tots funcionen igual:</strong> cada equip rep uns diners i, des del seu ordinador, fa ofertes per cada unitat en directe. Tu decideixes quan s’atura i a qui s’adjudica. El model només canvia què se subhasta i el repte.</p>
+        <section id="bloc-configs-desades" class="bloc-models" hidden>
+          <h3>Les meves configuracions</h3>
+          <div id="llista-configs-desades" class="graella-configs"></div>
+        </section>
+        <section class="bloc-models">
+          <h3>Models d’activitat</h3>
+          <div id="graella-models" class="graella-models"></div>
+        </section>
+      </div>
+    </div>
+  </dialog>
 
   <!-- MODAL: GUIA DOCENT, REGLES I PRIVACITAT -->
   <dialog id="modal-guia" class="modal-dialeg" aria-labelledby="titol-modal-guia">

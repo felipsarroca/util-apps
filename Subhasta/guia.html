@@ -8,7 +8,7 @@
   <title>Guia pas a pas · Subhasta</title>
   <meta name="description" content="Guia visual per crear i dirigir una subhasta a l’aula amb Subhasta: catàleg, unitats, sala d’espera, projecció, adjudicació i resultats.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/guia.css?v=1.2.0">
+  <link rel="stylesheet" href="css/guia.css?v=1.3.0">
   <script>
     // Aplica el mateix estil visual que l'app abans de pintar la pàgina
     try {
@@ -16,7 +16,7 @@
       if (t === 'mercat' || t === 'llotja' || t === 'fosca') document.documentElement.setAttribute('data-theme', t);
     } catch (e) {}
   </script>
-  <script type="module" src="js/guia.js?v=1.2.0"></script>
+  <script type="module" src="js/guia.js?v=1.3.0"></script>
 </head>
 <body>
   <!-- Icones de línia -->
@@ -160,7 +160,7 @@
           <figcaption>Passa el ratolí per sobre de cada número per veure on és. Fes clic a una captura per veure-la a mida real.</figcaption>
         </figure>
         <ol class="llegenda">
-          <li data-n="1"><span class="n">1</span><span class="d"><strong>Crea una subhasta nova.</strong> Comença amb l’exemple «Mercat industrial» ja omplert, que pots canviar del tot.</span></li>
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Crea una subhasta nova.</strong> Tria un model d’activitat ja preparat o una configuració que hagis desat; després el pots canviar del tot.</span></li>
           <li data-n="2"><span class="n">2</span><span class="d"><strong>Assaig ràpid amb simulador.</strong> Crea una subhasta de prova amb participants virtuals que fan ofertes sols. Ideal per entendre-ho tot en dos minuts.</span></li>
           <li data-n="3"><span class="n">3</span><span class="d"><strong>Les meves subhastes.</strong> Les que has creat en aquest navegador: obrir, duplicar o eliminar.</span></li>
           <li data-n="4"><span class="n">4</span><span class="d"><strong>Vincula-les a Google</strong> (opcional). Per dirigir-les també des d’un altre ordinador.</span></li>
@@ -185,44 +185,62 @@
         </div>
       </div>
 
+      <h3>Tria com vols començar</h3>
+      <p>En prémer <span class="boto-app">Crea una subhasta nova</span> s’obre aquesta finestra. <strong>Tots els models funcionen igual</strong>: només canvien què se subhasta i el repte. Cada targeta diu per a quina matèria i curs és, en què consisteix, què es treballa, quants objectes i unitats té i quant dura, aproximadament. Amb un clic es crea la subhasta i s’obre la preparació ja plena.</p>
+      <figure class="figura-simple">
+        <div class="marc-captura">
+          <img src="docs/images/guia/models.png" width="954" height="586" alt="Finestra «Com vols començar?» amb les configuracions desades i els models d’activitat">
+        </div>
+        <figcaption>A dalt, les teves configuracions desades («Fes-la servir →»); a sota, els models: Mercat industrial, Fira medieval, Illa deserta, Llança la teva empresa i Comença de zero.</figcaption>
+      </figure>
+
+      <h3>Revisa el catàleg</h3>
       <div class="anotada ample">
         <figure>
           <div class="marc-captura">
-            <img src="docs/images/guia/preparacio-retall.png" width="1366" height="525" alt="Pantalla de preparació: dades generals a l’esquerra i catàleg d’objectes a la dreta">
-            <span class="punt" data-n="1" style="--x:3.8%;--y:23%">1</span>
-            <span class="punt" data-n="2" style="--x:3.8%;--y:36.4%">2</span>
-            <span class="punt" data-n="3" style="--x:16.9%;--y:36.4%">3</span>
-            <span class="punt" data-n="4" style="--x:30%;--y:36.4%">4</span>
-            <span class="punt" data-n="5" style="--x:3.8%;--y:49.7%">5</span>
-            <span class="punt" data-n="6" style="--x:5.2%;--y:69.7%">6</span>
-            <span class="punt" data-n="7" style="--x:85.4%;--y:19%">7</span>
-            <span class="punt" data-n="8" style="--x:56.5%;--y:42.1%">8</span>
-            <span class="punt" data-n="9" style="--x:76.2%;--y:37.7%">9</span>
-            <span class="punt" data-n="10" style="--x:82.8%;--y:37.7%">10</span>
-            <span class="punt" data-n="11" style="--x:88.2%;--y:37.7%">11</span>
-            <span class="punt" data-n="12" style="--x:93.4%;--y:37.7%">12</span>
-            <span class="punt" data-n="13" style="--x:97.6%;--y:34.7%">13</span>
-            <span class="punt" data-n="14" style="--x:56.7%;--y:3%">14</span>
-            <span class="punt" data-n="15" style="--x:84%;--y:3%">15</span>
+            <img src="docs/images/guia/preparacio-retall.png" width="1366" height="645" alt="Pantalla de preparació: barra de passos, dades generals i equips a l’esquerra i catàleg d’objectes a la dreta">
+            <span class="punt" data-n="1" style="--x:3.2%;--y:3.7%">1</span>
+            <span class="punt" data-n="2" style="--x:3.8%;--y:29.9%">2</span>
+            <span class="punt" data-n="3" style="--x:3.8%;--y:40.8%">3</span>
+            <span class="punt" data-n="4" style="--x:16.9%;--y:40.8%">4</span>
+            <span class="punt" data-n="5" style="--x:30%;--y:40.8%">5</span>
+            <span class="punt" data-n="6" style="--x:3.8%;--y:53%">6</span>
+            <span class="punt" data-n="7" style="--x:4.9%;--y:63.1%">7</span>
+            <span class="punt" data-n="8" style="--x:4.6%;--y:79.9%">8</span>
+            <span class="punt" data-n="9" style="--x:4.6%;--y:92.4%">9</span>
+            <span class="punt" data-n="10" style="--x:85.4%;--y:21.7%">10</span>
+            <span class="punt" data-n="11" style="--x:49.1%;--y:36.2%">11</span>
+            <span class="punt" data-n="12" style="--x:56.8%;--y:36.9%">12</span>
+            <span class="punt sota" data-n="13" style="--x:78.6%;--y:38.9%">13</span>
+            <span class="punt sota" data-n="14" style="--x:85.3%;--y:38.9%">14</span>
+            <span class="punt sota" data-n="15" style="--x:90.7%;--y:38.9%">15</span>
+            <span class="punt sota" data-n="16" style="--x:94.4%;--y:38.4%">16</span>
+            <span class="punt sota" data-n="17" style="--x:65.4%;--y:13.3%">17</span>
+            <span class="punt sota" data-n="18" style="--x:77.3%;--y:13.3%">18</span>
+            <span class="punt sota" data-n="19" style="--x:90.7%;--y:13.3%">19</span>
           </div>
-          <figcaption>Pantalla de preparació (exemple «Mercat industrial»).</figcaption>
+          <figcaption>Pantalla de preparació (model «Mercat industrial», amb 8 equips).</figcaption>
         </figure>
         <ol class="llegenda">
-          <li data-n="1"><span class="n">1</span><span class="d"><strong>Títol</strong> de la subhasta (es veu a la projecció).</span></li>
-          <li data-n="2"><span class="n">2</span><span class="d"><strong>Pressupost inicial:</strong> les monedes que rep cada equip.</span></li>
-          <li data-n="3"><span class="n">3</span><span class="d"><strong>Increment mínim:</strong> quant ha de pujar, com a mínim, cada oferta.</span></li>
-          <li data-n="4"><span class="n">4</span><span class="d"><strong>Moneda:</strong> el nom dels diners (monedes, lliures, crèdits…).</span></li>
-          <li data-n="5"><span class="n">5</span><span class="d"><strong>Repte:</strong> l’objectiu de cada equip. Es veu a tots els terminals.</span></li>
-          <li data-n="6"><span class="n">6</span><span class="d"><strong>Puntuació final</strong> (opcional), per saber qui ha comprat millor.</span></li>
-          <li data-n="7"><span class="n">7</span><span class="d"><strong>Afegeix un objecte:</strong> una fila nova al catàleg.</span></li>
-          <li data-n="8"><span class="n">8</span><span class="d"><strong>Icona o foto</strong> de l’objecte.</span></li>
-          <li data-n="9"><span class="n">9</span><span class="d"><strong>Nom i descripció breu</strong> de l’objecte.</span></li>
-          <li data-n="10"><span class="n">10</span><span class="d"><strong>Unitats:</strong> quantes se’n subhasten, d’una en una.</span></li>
-          <li data-n="11"><span class="n">11</span><span class="d"><strong>Sortida:</strong> el preu mínim de la primera oferta.</span></li>
-          <li data-n="12"><span class="n">12</span><span class="d"><strong>Valor</strong> en punts (opcional).</span></li>
-          <li data-n="13"><span class="n">13</span><span class="d"><strong>×</strong> treu l’objecte del catàleg.</span></li>
-          <li data-n="14"><span class="n">14</span><span class="d"><strong>Carrega «Mercat industrial»:</strong> torna a l’exemple inicial.</span></li>
-          <li data-n="15"><span class="n">15</span><span class="d"><strong>Obre la sala d’espera</strong> quan el catàleg estigui a punt.</span></li>
+          <li data-n="1"><span class="n">1</span><span class="d"><strong>Barra de passos:</strong> on ets (Catàleg → Sala d’espera → Subhasta en directe → Resultats) i, a la línia «Ara:», què has de fer tot seguit.</span></li>
+          <li data-n="2"><span class="n">2</span><span class="d"><strong>Títol</strong> de la subhasta (es veu a la projecció).</span></li>
+          <li data-n="3"><span class="n">3</span><span class="d"><strong>Pressupost inicial:</strong> els diners que rep cada equip.</span></li>
+          <li data-n="4"><span class="n">4</span><span class="d"><strong>Increment mínim:</strong> quant ha de pujar, com a mínim, cada oferta.</span></li>
+          <li data-n="5"><span class="n">5</span><span class="d"><strong>Moneda:</strong> el nom dels diners (monedes, sous, euros…).</span></li>
+          <li data-n="6"><span class="n">6</span><span class="d"><strong>Repte:</strong> l’objectiu de cada equip. Es veu a tots els terminals.</span></li>
+          <li data-n="7"><span class="n">7</span><span class="d"><strong>Puntuació final</strong> (opcional), per saber qui ha comprat millor.</span></li>
+          <li data-n="8"><span class="n">8</span><span class="d"><strong>Quants equips hi haurà?</strong> Calcula les unitats totals i la durada, i avisa si algun objecte té tantes unitats com equips (llavors no hi ha competència).</span></li>
+          <li data-n="9"><span class="n">9</span><span class="d"><strong>Posa N unitats a cada objecte:</strong> aplica amb un clic la quantitat recomanada per al nombre d’equips.</span></li>
+          <li data-n="10"><span class="n">10</span><span class="d"><strong>Afegeix un objecte:</strong> una fila nova al catàleg (màxim 12).</span></li>
+          <li data-n="11"><span class="n">11</span><span class="d"><strong>Icona o foto</strong> de l’objecte.</span></li>
+          <li data-n="12"><span class="n">12</span><span class="d"><strong>Nom i descripció breu</strong> de l’objecte.</span></li>
+          <li data-n="13"><span class="n">13</span><span class="d"><strong>Unitats:</strong> quantes se’n subhasten, d’una en una. Canvia-les amb − i + o escriu-hi el número.</span></li>
+          <li data-n="14"><span class="n">14</span><span class="d"><strong>Sortida:</strong> el preu mínim de la primera oferta.</span></li>
+          <li data-n="15"><span class="n">15</span><span class="d"><strong>Valor</strong> en punts (opcional).</span></li>
+          <li data-n="16"><span class="n">16</span><span class="d"><strong>×</strong> treu l’objecte del catàleg.</span></li>
+          <li data-n="17"><span class="n">17</span><span class="d"><strong>Canvia de model:</strong> substitueix el catàleg per un altre model o per una configuració desada.</span></li>
+          <li data-n="18"><span class="n">18</span><span class="d"><strong>Desa la configuració:</strong> la guarda amb un nom per fer-la servir amb altres grups. Es conserva un any des de l’últim ús.</span></li>
+          <li data-n="19"><span class="n">19</span><span class="d"><strong>Obre la sala d’espera</strong> quan el catàleg estigui a punt.</span></li>
         </ol>
       </div>
 
@@ -274,7 +292,7 @@
       <h3>Quantes unitats i quins preus hi poso?</h3>
       <div class="dues">
         <div>
-          <p class="text-justificat">La clau és l’<strong>escassetat</strong>: si n’hi ha per a tothom, ningú no competeix. Posa <strong>menys unitats de cada objecte que equips</strong>, i un total d’entre 12 i 20 unitats perquè la subhasta duri uns 20 minuts.</p>
+          <p class="text-justificat">La clau és l’<strong>escassetat</strong>: si n’hi ha per a tothom, ningú no competeix. Posa <strong>menys unitats de cada objecte que equips</strong>, i un total d’entre 12 i 20 unitats perquè la subhasta duri uns 20 minuts. No cal calcular-ho: escriu els equips a «Quants equips hi haurà?» i prem el botó que posa les unitats recomanades.</p>
           <table class="taula-guia">
             <thead><tr><th>Grup</th><th>Objectes</th><th>Unitats per objecte</th><th class="num">Total</th></tr></thead>
             <tbody>

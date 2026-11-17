@@ -12,11 +12,13 @@ Aplicació educativa de **subhastes angleses obertes en temps real** per treball
 
 ## Captures de pantalla
 
-### Portada i preparació (1366 × 768)
+### Portada, models i preparació (1366 × 768)
 
 ![Portada de Subhasta a 1366x768](docs/images/portada-1366x768.png)
 
-![Preparació en una sola pantalla a 1366x768](docs/images/preparacio-1366x768.png)
+![Finestra «Com vols començar?» amb les configuracions desades i els models d'activitat](docs/images/models-1366x768.png)
+
+![Preparació amb la barra de passos, el càlcul d'equips i el catàleg a 1366x768](docs/images/preparacio-1366x768.png)
 
 ### Sala d'espera i comandament de l'organitzador (1366 × 768)
 
@@ -32,7 +34,7 @@ Aplicació educativa de **subhastes angleses obertes en temps real** per treball
 
 ### Terminal de l'alumnat en portàtil o Chromebook (1366 × 768) i mòbil (390 × 844)
 
-![Terminal del participant a 1366x768](docs/images/terminal-1366x768.png)
+![Terminal del participant a 1366x768: l'estat propi destacat («T'han superat»), últimes ofertes, compres i catàleg amb l'objecte en joc](docs/images/terminal-1366x768.png)
 
 <p align="center">
   <img src="docs/images/terminal-mobil-390x844.png" alt="Terminal del participant en mòbil 390x844" width="320">
@@ -101,3 +103,11 @@ Activitat alineada amb el **Decret 175/2022, de 27 de setembre, d'ordenació del
 - **Canvi d'aparell entre ordinadors diferents:** el traspàs de la cartera es fa al núvol i les regles comproven el codi.
 - **Balanç projectat a tots els aparells** quan l'organitzador ho decideix.
 - **Guia visual pas a pas** ([guia.html](guia.html)), enllaçada des de la portada i des del botó «Guia»: captures comentades de cada pantalla, com omplir el catàleg (unitats, preu de sortida, valor), quantitats recomanades segons el grup, puntuació, projecció, cicle d'adjudicació, resultats i preguntes freqüents.
+
+## Novetats de la versió 1.3 (17-11-2026)
+
+- **Començar amb pocs clics:** «Crea una subhasta nova» mostra cinc models d'activitat (Mercat industrial, Fira medieval, Illa deserta, Llança la teva empresa i Comença de zero) amb la matèria, en què consisteix, què es treballa i la durada orientativa. Un clic i la preparació ja és plena.
+- **Configuracions desades amb nom:** «Desa la configuració» guarda títol, repte, diners i catàleg per fer-los servir amb altres grups. Es conserven un any des de l'últim ús (màxim 20 per persona) i després s'esborren soles, per no omplir el servidor.
+- **Recorregut guiat per a qui organitza:** barra de quatre passos (Catàleg → Sala d'espera → Subhasta en directe → Resultats) i una línia «Ara:» que diu què toca fer en cada moment, també durant cada unitat.
+- **Quantitats fàcils:** botons − i + a cada objecte i un bloc «Quants equips hi haurà?» que calcula les unitats, la durada i, amb un clic, posa a cada objecte les unitats recomanades perquè hi hagi competència.
+- **Terminal de l'alumnat més clar:** l'estat propi («Pots oferir…», «Vas primer…», «T'han superat…») destaca amb icona, color i una explicació del que pot fer; s'hi veuen les últimes ofertes, les compres agrupades per objecte, el progrés cap al conjunt complet i l'objecte «En joc» al catàleg.
