@@ -35,21 +35,23 @@
       const card = document.createElement("article");
       card.className = "app-card";
       card.style.setProperty("--tint", `var(${app.tint})`);
-      card.innerHTML = `<div class="card-top"><img src="${app.dir}/favicon.svg" alt="" width="76" height="76" /><span class="card-arrow" aria-hidden="true">→</span></div><h3><a class="card-link" href="https://ja.cat/${app.link}">${app.name}<span>.</span></a></h3><p></p><div class="short-link"><span>Enllaç curt: <code>ja.cat/${app.link}</code></span><button type="button" class="copy-link" aria-label="Copia l’enllaç ja.cat/${app.link}">Copia</button></div>`;
+      card.innerHTML = `<div class="card-top"><img src="${app.dir}/favicon.svg" alt="" width="76" height="76" /><span class="card-arrow" aria-hidden="true">→</span></div><h3><a class="card-link" href="https://ja.cat/${app.link}" data-local="${app.dir}/">${app.name}<span>.</span></a></h3><p></p><div class="short-link"><span>Enllaç curt: <code>ja.cat/${app.link}</code></span><button type="button" class="copy-link" aria-label="Copia l’enllaç ja.cat/${app.link}">Copia</button></div>`;
       card.querySelector("p").textContent = app.text;
-      // Sense connexió, ja.cat no respon: obre la còpia local de l'app.
-      card.querySelector(".card-link").addEventListener("click", (e) => {
-        if (!navigator.onLine) {
-          e.preventDefault();
-          location.href = `${app.dir}/`;
-        }
-      });
       card.querySelector(".copy-link").addEventListener("click", () => A.copyText(`https://ja.cat/${app.link}`));
       cards.append(card);
     }
     section.append(h2, cards);
     host.append(section);
   }
+
+  // Targetes i taula enllacen a ja.cat; sense connexió, ja.cat no respon i s'obre la còpia local de l'app.
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-local]");
+    if (a && !navigator.onLine) {
+      e.preventDefault();
+      location.href = a.dataset.local;
+    }
+  });
 
   /* Còpia de seguretat de les dades de totes les apps (només claus pròpies d'Atzar). */
   const OWN = /^felip\.(atzar|ruleta)\./,
