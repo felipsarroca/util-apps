@@ -136,13 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             name: 'Rentabilitat Híbrid',
-            path: 'RentabilitatHibrid/',
+            path: 'https://ja.cat/rentabilitat',
+            icon: 'RentabilitatHibrid/favicon.svg',
             description: 'Calculadora per comparar el cost entre combustible i electricitat.',
             category: 'Finances i càlculs'
         },
         {
             name: 'Tiquets Bon Preu',
-            path: 'TicketsBonPreu/',
+            path: 'https://ja.cat/tiquets',
+            icon: 'TicketsBonPreu/favicon.svg',
             description: 'Analitzador de tiquets de compra per OCR per gestionar despeses.',
             category: 'Finances i càlculs'
         }
