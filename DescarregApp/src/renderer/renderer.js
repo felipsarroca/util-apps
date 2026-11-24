@@ -145,7 +145,13 @@ function getSummaryText(items) {
   const downloading = items.filter((item) => item.status === "downloading").length;
   const pending = items.filter((item) => item.status === "pending").length;
 
-  return `${items.length} element(s): ${completed} completat(s), ${errors} error(s), ${canceled} cancel·lat(s), ${downloading} en curs, ${pending} pendent(s).`;
+  return [
+    completed && `${completed} ${completed === 1 ? "completat" : "completats"}`,
+    downloading && `${downloading} en curs`,
+    pending && `${pending} ${pending === 1 ? "pendent" : "pendents"}`,
+    errors && `${errors} ${errors === 1 ? "error" : "errors"}`,
+    canceled && `${canceled} ${canceled === 1 ? "cancel·lat" : "cancel·lats"}`
+  ].filter(Boolean).join(" · ");
 }
 
 function renderResults() {
@@ -166,10 +172,18 @@ function renderResults() {
     title.textContent = item.title || item.url;
 
     const message = document.createElement("p");
-    message.className = "result-message";
+    message.className = item.status === "downloading" ? "result-message stage-message" : "result-message";
     message.textContent = item.message || "";
 
     details.append(title, message);
+
+    if (item.fileName) {
+      const fileName = document.createElement("p");
+      fileName.className = "result-file-name";
+      fileName.textContent = item.fileName;
+      fileName.title = item.fileName;
+      details.append(fileName);
+    }
 
     if (item.options) {
       const settings = document.createElement("p");
@@ -192,6 +206,16 @@ function renderResults() {
 
       errorDetails.append(summary, pre);
       details.append(errorDetails);
+
+      const copyButton = document.createElement("button");
+      copyButton.type = "button";
+      copyButton.className = "secondary-button compact-button copy-error-button";
+      copyButton.textContent = "Copiar l'error";
+      copyButton.addEventListener("click", () => {
+        window.descarregApp.copyText(item.details);
+        copyButton.textContent = "Copiat";
+      });
+      details.append(copyButton);
     }
 
     const statusArea = document.createElement("div");
@@ -206,6 +230,19 @@ function renderResults() {
     percent.textContent = `${Math.round(item.progress || 0)}%`;
 
     statusArea.append(status, percent);
+
+    if (item.status === "completed" && item.filePath) {
+      const openButton = document.createElement("button");
+      openButton.type = "button";
+      openButton.className = "secondary-button compact-button";
+      openButton.textContent = "Obrir";
+      openButton.setAttribute("aria-label", `Obrir ${item.fileName}`);
+      openButton.addEventListener("click", async () => {
+        const result = await window.descarregApp.openFile(item.filePath);
+        if (result) globalStatus.textContent = result;
+      });
+      statusArea.append(openButton);
+    }
 
     if (item.status === "error" || item.status === "canceled") {
       const retryButton = document.createElement("button");
@@ -332,7 +369,8 @@ async function startDownloads() {
 async function retryDownload(id) {
   const item = state.items.get(id);
   if (!item || !["error", "canceled"].includes(item.status)) return;
-  const retried = { ...item, status: "pending", progress: 0, details: "", message: "Esperant torn" };
+  const retried = { ...item, status: "pending", progress: 0, details: "", message: "Esperant torn",
+    filePath: "", fileName: "" };
   state.items.set(id, retried);
   state.isRunning = true;
   globalStatus.textContent = "Reintent afegit a la cua";

@@ -7,6 +7,8 @@ const { attachAdaptiveLayout } = require("../src/window-layout");
 
 app.disableHardwareAcceleration();
 app.commandLine.appendSwitch("disable-gpu");
+app.commandLine.appendSwitch("disable-gpu-compositing");
+app.commandLine.appendSwitch("disable-gpu-sandbox");
 const output = path.join(__dirname, "../out/layout-check");
 app.setPath("userData", path.join(app.getPath("temp"), "descarregapp-layout-profile"));
 
@@ -43,10 +45,14 @@ app.whenReady().then(async () => {
       applyDownloadUpdate({id: item.id, status: 'downloading', progress: 50, message: 'Descarregant'});
       if (document.querySelector('.progress-bar') !== bar) throw new Error('Progress bar replaced');
       if (state.items.get(item.id).progress !== 55) throw new Error('Progress went backwards');
-      applyDownloadUpdate({id: item.id, status: 'completed', progress: 100, message: 'Completat'});
+      applyDownloadUpdate({id: item.id, status: 'completed', progress: 100, message: 'Completat',
+        filePath: 'C:/Downloads/video.mp4', fileName: 'video.mp4'});
       if (!document.querySelector('.status-completed')) throw new Error('Completed status missing');
+      if (document.querySelector('.result-file-name')?.textContent !== 'video.mp4') throw new Error('Final file name missing');
+      if (!document.querySelector('.result-status button')?.textContent.includes('Obrir')) throw new Error('Open button missing');
       applyDownloadUpdate({id: item.id, status: 'error', progress: 100,
         message: 'Ha fallat el processament final del fitxer.', details: 'Conversion failed'});
+      if (!document.querySelector('.copy-error-button')) throw new Error('Copy error button missing');
       applyDownloadUpdate({status: 'queue-completed', message: ''});
       state.videoFormat = 'mkv';
     })()`);

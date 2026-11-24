@@ -62,6 +62,8 @@ const execFile = promisify(require("node:child_process").execFile);
           audioBitrate: "320", videoFormat } }, toolPaths)`, context);
       const output = path.join(outputDir, `source.${extension}`);
       assert.equal(events.at(-1).status, "completed", `${extension} did not finish: ${events.at(-1).details || events.at(-1).message}`);
+      assert.equal(events.at(-1).filePath, output);
+      assert.equal(events.at(-1).fileName, `source.${extension}`);
       assert.ok(fs.statSync(output).size > 0, `${extension} output is empty`);
       assert.equal(events.at(-1).progress, 100);
       assert.ok(events.filter(event => event.status === "downloading")

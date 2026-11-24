@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, clipboard } = require("electron");
 
 contextBridge.exposeInMainWorld("descarregApp", {
   getAppInfo: () => ipcRenderer.invoke("app:info"),
@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld("descarregApp", {
   savePreferences: (preferences) => ipcRenderer.invoke("preferences:save", preferences),
   selectFolder: () => ipcRenderer.invoke("folder:select"),
   openFolder: (folder) => ipcRenderer.invoke("folder:open", folder),
+  openFile: (filePath) => ipcRenderer.invoke("file:open", filePath),
+  copyText: (value) => clipboard.writeText(String(value)),
   startDownloads: (payload) => ipcRenderer.invoke("downloads:start", payload),
   cancelDownloads: () => ipcRenderer.invoke("downloads:cancel"),
   getToolsStatus: () => ipcRenderer.invoke("tools:status"),

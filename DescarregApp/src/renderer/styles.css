@@ -407,6 +407,24 @@ select:focus {
   line-height: 1.25;
 }
 
+.result-file-name {
+  overflow-wrap: anywhere;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.stage-message {
+  margin-top: 3px;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.copy-error-button {
+  margin-top: 8px;
+}
+
 .result-status {
   display: grid;
   justify-items: end;

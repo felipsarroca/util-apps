@@ -21,6 +21,7 @@ let cancelRequested = false;
 let activeDownload = null;
 let updateRunning = false;
 const downloadQueue = [];
+const completedFiles = new Set();
 
 function getPlatformFolder() {
   if (process.platform === "win32") {
@@ -714,8 +715,11 @@ async function finalizeMedia(item, options, sourcePath, tempDir, tools, knownDur
           await cleanTemporaryDownload(tempDir, options.destinationFolder);
           sendDownloadEvent({ id: item.id, status: "error", message: cleanError(errorText) || "El processament final ha fallat.", details: errorText });
         } else {
+          sendDownloadEvent({ id: item.id, status: "downloading", message: "Desant el fitxer" });
           await fs.promises.rename(converting, target);
-          sendDownloadEvent({ id: item.id, status: "completed", progress: 100, message: "Completat" });
+          completedFiles.add(path.resolve(target));
+          sendDownloadEvent({ id: item.id, status: "completed", progress: 100,
+            message: "Completat", filePath: target, fileName: path.basename(target) });
           cleanTemporaryDownload(tempDir, options.destinationFolder).catch((error) => {
             console.warn("No s'ha pogut netejar la carpeta temporal:", error);
           });
@@ -1163,6 +1167,13 @@ ipcMain.handle("folder:open", async (_event, folder) => {
   }
 
   return shell.openPath(folder);
+});
+
+ipcMain.handle("file:open", async (_event, filePath) => {
+  if (typeof filePath !== "string" || !completedFiles.has(path.resolve(filePath)) || !fs.existsSync(filePath)) {
+    return "No s'ha trobat el fitxer descarregat.";
+  }
+  return shell.openPath(filePath);
 });
 
 ipcMain.handle("downloads:start", async (_event, payload) => {
