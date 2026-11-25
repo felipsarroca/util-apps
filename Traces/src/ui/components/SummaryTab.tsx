@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { DocumentAnalysis } from '../../types';
-import { formatDuration } from '../../core/exporters';
+import { formatDateTime, formatDuration } from '../../core/exporters';
 import { EvolutionChart } from './EvolutionChart';
 import { Icon } from './Icon';
 
@@ -20,6 +20,10 @@ export function SummaryTab({
   const keptBulks = analysis.bulkInsertions.filter((b) => b.status === 'conservat').length;
   const reworkedBulks = analysis.bulkInsertions.filter((b) => b.status === 'reelaborat').length;
   const deletedBulks = analysis.bulkInsertions.filter((b) => b.status === 'eliminat').length;
+  const wordsPerMin =
+    analysis.totalActiveSeconds > 0
+      ? Math.round(analysis.finalWordCount / Math.max(0.4, analysis.totalActiveSeconds / 60))
+      : 0;
 
   // Objective process profile badge
   let profileTone: 'calm' | 'mixed' | 'attention' = 'calm';
@@ -214,11 +218,24 @@ export function SummaryTab({
       <section className="panel-card">
         <div className="card-head">
           <h2>Evolució de paraules</h2>
-          <span className="subtle-badge tabular">
-            {analysis.sessions.length}{' '}
-            {analysis.sessions.length === 1 ? 'sessió' : 'sessions'}
-          </span>
+          <div className="head-badges">
+            {wordsPerMin > 0 && (
+              <span className="subtle-badge tabular" title="Ritme aparent (paraules finals / minut actiu)">
+                ~{wordsPerMin} par./min
+              </span>
+            )}
+            <span className="subtle-badge tabular">
+              {analysis.sessions.length}{' '}
+              {analysis.sessions.length === 1 ? 'sessió' : 'sessions'}
+            </span>
+          </div>
         </div>
+        {analysis.firstEditTime && analysis.lastEditTime && (
+          <div className="timespan-strip tabular">
+            <span>Inici: {formatDateTime(analysis.firstEditTime)}</span>
+            <span>Darrera edició: {formatDateTime(analysis.lastEditTime)}</span>
+          </div>
+        )}
         <EvolutionChart
           points={analysis.timeline}
           onSelectBulkInsertion={(opId) => onJumpToInsertions(opId)}

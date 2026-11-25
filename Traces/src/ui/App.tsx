@@ -11,6 +11,7 @@ import { DEMO_SCENARIOS } from '../core/demoData';
 import {
   exportAnalysisCsv,
   exportRawJson,
+  formatDuration,
   printAnalysisReport,
 } from '../core/exporters';
 import {
@@ -22,6 +23,7 @@ import {
   type ExtractionProgress,
 } from '../extractor/gdocsExtractor';
 import { Icon } from './components/Icon';
+import { checkForUpdate, getCurrentVersion, type UpdateInfo } from '../core/updateCheck';
 import { SummaryTab } from './components/SummaryTab';
 import { InsertionsTab } from './components/InsertionsTab';
 import { DocumentMapTab } from './components/DocumentMapTab';
@@ -45,7 +47,7 @@ async function loadStoredSettings(): Promise<AnalysisSettings> {
       if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
     }
   } catch {
-    // Ignore storage read errors
+    // Ignora errors de lectura
   }
   return DEFAULT_SETTINGS;
 }
@@ -58,11 +60,16 @@ async function saveStoredSettings(settings: AnalysisSettings): Promise<void> {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     }
   } catch {
-    // Ignore storage write errors
+    // Ignora errors d'escriptura
   }
 }
 
 export function App() {
+  const isEmbeddedInDoc = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('embedded') === '1' && isChromeExtensionContext();
+  }, []);
+
   const [settings, setSettings] = useState<AnalysisSettings>(DEFAULT_SETTINGS);
   const [rawHistory, setRawHistory] = useState<RawDocumentHistory | null>(null);
   const [activeDocCandidate, setActiveDocCandidate] =
@@ -82,11 +89,18 @@ export function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [copiedSummary, setCopiedSummary] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!isChromeExtensionContext()) return;
+    void checkForUpdate(getCurrentVersion()).then(setUpdateInfo);
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const lastAnalyzedDocKeyRef = useRef<string>('');
 
-  // Recompute instant analysis whenever rawHistory or settings change (0 network requests!)
   const analysis: DocumentAnalysis | null = useMemo(() => {
     if (!rawHistory) return null;
     return analyzeDocumentHistory(rawHistory, settings);
@@ -135,7 +149,6 @@ export function App() {
     }
   }, []);
 
-  // Initial boot: load settings & detect active Google Doc
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -147,11 +160,10 @@ export function App() {
         const candidate = await detectActiveGoogleDoc();
         if (!mounted) return;
         setActiveDocCandidate(candidate);
-        if (candidate) {
+        if (candidate || isEmbeddedInDoc) {
           void runLiveExtraction();
         }
       } else {
-        // Standalone preview mode (outside Chrome extension): load realistic Classroom demo immediately
         setRawHistory(DEMO_SCENARIOS[0].build());
       }
     })();
@@ -159,14 +171,24 @@ export function App() {
     return () => {
       mounted = false;
     };
-  }, [runLiveExtraction]);
+  }, [runLiveExtraction, isEmbeddedInDoc]);
 
-  // React to tab/student switches in Chrome
+  useEffect(() => {
+    const onWindowMessage = (ev: MessageEvent) => {
+      if (ev.data?.type === 'TRACES_REFRESH_REQUEST' && !rawHistory && !loading) {
+        void runLiveExtraction();
+      }
+    };
+    window.addEventListener('message', onWindowMessage);
+    return () => window.removeEventListener('message', onWindowMessage);
+  }, [rawHistory, loading, runLiveExtraction]);
+
   useEffect(() => {
     if (!isChromeExtensionContext() || !chrome.runtime?.onMessage) return;
 
     const listener = (msg: { type?: string }) => {
       if (msg?.type !== 'TRACES_TAB_CHANGED') return;
+      if (isEmbeddedInDoc) return; // L'iframe incrustat pertany al seu propi document
       void (async () => {
         const candidate = await detectActiveGoogleDoc();
         setActiveDocCandidate(candidate);
@@ -186,7 +208,7 @@ export function App() {
     return () => {
       chrome.runtime.onMessage.removeListener(listener);
     };
-  }, [settings.autoAnalyzeOnSwitch, runLiveExtraction]);
+  }, [settings.autoAnalyzeOnSwitch, runLiveExtraction, isEmbeddedInDoc]);
 
   const loadDemoScenario = (id: string) => {
     const found = DEMO_SCENARIOS.find((d) => d.id === id) ?? DEMO_SCENARIOS[0];
@@ -195,6 +217,27 @@ export function App() {
     setFocusedParagraph(null);
     setRawHistory(found.build());
     setActiveTab('resum');
+  };
+
+  const handleCopyQuickSummary = async () => {
+    if (!analysis) return;
+    const summaryLine =
+      `Traces (${analysis.title}): Temps actiu ${formatDuration(
+        analysis.totalActiveSeconds
+      )} en ${analysis.sessionCount} ${
+        analysis.sessionCount === 1 ? 'sessió' : 'sessions'
+      } · ${analysis.finalWordCount} paraules · ${
+        analysis.progressivePct
+      }% progressiu / ${analysis.bulkPct}% en bloc (${
+        analysis.bulkInsertions.length
+      } blocs >=${analysis.settings.bulkThresholdChars} car.)`;
+    try {
+      await navigator.clipboard.writeText(summaryLine);
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 1800);
+    } catch {
+      // Ignora si no hi ha porta-retalls
+    }
   };
 
   const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,6 +272,7 @@ export function App() {
   };
 
   const pendingDifferentDoc =
+    !isEmbeddedInDoc &&
     activeDocCandidate &&
     (!rawHistory ||
       rawHistory.isDemo ||
@@ -237,11 +281,10 @@ export function App() {
 
   return (
     <div className="app-shell">
-      {/* Compact top bar */}
       <header className="topbar">
         <div className="brand-block">
           <span className="brand-mark" aria-hidden="true">
-            <Icon name="traces" size={17} />
+            <img src="./favicon.svg" alt="" width="28" height="28" />
           </span>
           <div className="brand-titles">
             <span className="brand-name">Traces</span>
@@ -264,6 +307,22 @@ export function App() {
               aria-label="Torna a analitzar"
             >
               <Icon name="refresh" size={15} />
+            </button>
+          )}
+
+          {analysis && (
+            <button
+              type="button"
+              className={`icon-btn ${copiedSummary ? 'icon-btn-ok' : ''}`}
+              onClick={() => void handleCopyQuickSummary()}
+              title={
+                copiedSummary
+                  ? 'Resum copiat al porta-retalls!'
+                  : 'Copia una síntesi en text per a les teves notes'
+              }
+              aria-label="Copia el resum"
+            >
+              <Icon name={copiedSummary ? 'check-circle' : 'copy'} size={15} />
             </button>
           )}
 
@@ -334,10 +393,62 @@ export function App() {
           >
             <Icon name="help" size={15} />
           </button>
+
+          {isEmbeddedInDoc && (
+            <>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() =>
+                  window.parent.postMessage({ type: 'TRACES_TOGGLE_WIDTH' }, '*')
+                }
+                title="Alterna entre amplada normal (480 px) i vista ampla (660 px)"
+                aria-label="Canvia l'amplada del panell"
+              >
+                <Icon name="maximize" size={14} />
+              </button>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() =>
+                  window.parent.postMessage({ type: 'TRACES_CLOSE_DRAWER' }, '*')
+                }
+                title="Tanca el panell de Traces"
+                aria-label="Tanca el panell"
+              >
+                <Icon name="x" size={16} />
+              </button>
+            </>
+          )}
         </div>
       </header>
 
-      {/* Prompt bar if user switched to another Google Doc while viewing demo or previous doc */}
+      {updateInfo && !updateDismissed && (
+        <div className="update-bar" role="status">
+          <div className="update-info">
+            <strong>Nova versió {updateInfo.version} disponible</strong>
+            {updateInfo.notes[0] && <span className="truncate">{updateInfo.notes[0]}</span>}
+          </div>
+          <a
+            className="btn btn-primary btn-xs"
+            href={updateInfo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Com actualitzar
+          </a>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => setUpdateDismissed(true)}
+            aria-label="Amaga l'avís"
+            title="Amaga l'avís"
+          >
+            <Icon name="x" size={14} />
+          </button>
+        </div>
+      )}
+
       {pendingDifferentDoc && !loading && (
         <div className="switch-doc-bar">
           <div className="switch-doc-info">
@@ -357,7 +468,6 @@ export function App() {
         </div>
       )}
 
-      {/* Demo mode switcher bar when inspecting demo scenarios */}
       {analysis?.isDemo && !loading && (
         <div className="demo-bar">
           <div className="demo-bar-top">
@@ -398,7 +508,6 @@ export function App() {
         onChange={handleImportJson}
       />
 
-      {/* Loading state */}
       {loading && (
         <main className="center-state">
           <div className="loader-card">
@@ -415,7 +524,6 @@ export function App() {
         </main>
       )}
 
-      {/* Error banner */}
       {!loading && error && (
         <div className="error-box" role="alert">
           <div className="error-head">
@@ -450,16 +558,15 @@ export function App() {
         </div>
       )}
 
-      {/* Empty welcome state when opened on a non-Docs tab without active analysis */}
       {!loading && !analysis && !error && (
         <main className="center-state">
           <div className="welcome-card">
             <div className="welcome-icon">
-              <Icon name="traces" size={28} />
+              <img src="./favicon.svg" alt="" width="52" height="52" />
             </div>
             <h1>Obriu un document de Google Docs</h1>
             <p>
-              Entreu a qualsevol treball de Google Docs o al qualificador de Google Classroom i premeu <strong>Analitza</strong> per veure el temps actiu, les sessions i les insercions en bloc.
+              Entreu a qualsevol treball de Google Docs o al qualificador de Google Classroom i premeu el botó <strong>Traces</strong> de dalt a la dreta per veure el temps actiu, les sessions i les insercions en bloc.
             </p>
 
             <div className="welcome-actions">
@@ -489,7 +596,6 @@ export function App() {
         </main>
       )}
 
-      {/* Main tabbed analysis dashboard */}
       {!loading && analysis && (
         <>
           <nav className="tabs-nav" aria-label="Apartats de l'anàlisi">
@@ -590,7 +696,7 @@ export function App() {
         />
       )}
 
-      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+      {showHelp && <HelpModal version={getCurrentVersion()} onClose={() => setShowHelp(false)} />}
     </div>
   );
 }

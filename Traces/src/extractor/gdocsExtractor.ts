@@ -31,11 +31,18 @@ export class ExtractionError extends Error {
   }
 }
 
-export function isChromeExtensionContext(): boolean {
+export function hasDirectScriptingAccess(): boolean {
   return (
     typeof chrome !== 'undefined' &&
     Boolean(chrome.tabs) &&
     Boolean(chrome.scripting)
+  );
+}
+
+export function isChromeExtensionContext(): boolean {
+  return (
+    typeof chrome !== 'undefined' &&
+    Boolean(chrome.runtime?.id)
   );
 }
 
@@ -49,10 +56,6 @@ interface FrameProbeResult {
   isViewOnlyHint: boolean;
 }
 
-/**
- * S'executa sota demanda en el context MAIN de cada frame de la pestanya activa
- * per detectar tant Google Docs oberts directament com Google Docs incrustats al qualificador de Classroom.
- */
 function probeGoogleDocInMainWorld(): FrameProbeResult | null {
   try {
     if (location.hostname !== 'docs.google.com') return null;
@@ -73,7 +76,6 @@ function probeGoogleDocInMainWorld(): FrameProbeResult | null {
         .trim() ||
       'Document de Google Docs';
 
-    // Extract XSRF session token from _docs_flag_initialData
     let token = '';
     const win = window as unknown as Record<string, unknown>;
     const initialData = win._docs_flag_initialData as Record<string, unknown> | undefined;
@@ -127,14 +129,28 @@ function probeGoogleDocInMainWorld(): FrameProbeResult | null {
   }
 }
 
-export async function detectActiveGoogleDoc(): Promise<ActiveDocCandidate | null> {
-  if (!isChromeExtensionContext()) return null;
+export async function detectGoogleDocForTab(
+  explicitTabId?: number
+): Promise<ActiveDocCandidate | null> {
+  if (!hasDirectScriptingAccess()) {
+    if (isChromeExtensionContext()) {
+      const resp = await chrome.runtime.sendMessage({ type: 'TRACES_BG_DETECT_DOC' });
+      return resp?.ok ? (resp.candidate as ActiveDocCandidate | null) : null;
+    }
+    return null;
+  }
 
-  const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-  const activeTab = tabs[0];
-  if (!activeTab?.id) return null;
+  let targetTab: chrome.tabs.Tab | undefined;
+  if (typeof explicitTabId === 'number') {
+    targetTab = await chrome.tabs.get(explicitTabId).catch(() => undefined);
+  } else {
+    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    targetTab = tabs[0];
+  }
 
-  const tabUrl = activeTab.url || '';
+  if (!targetTab?.id) return null;
+
+  const tabUrl = targetTab.url || '';
   const isDocsUrl = tabUrl.startsWith('https://docs.google.com/document/');
   const isClassroomUrl = tabUrl.startsWith('https://classroom.google.com/');
   if (!isDocsUrl && !isClassroomUrl) {
@@ -143,7 +159,7 @@ export async function detectActiveGoogleDoc(): Promise<ActiveDocCandidate | null
 
   try {
     const results = await chrome.scripting.executeScript({
-      target: { tabId: activeTab.id, allFrames: true },
+      target: { tabId: targetTab.id, allFrames: true },
       world: 'MAIN',
       func: probeGoogleDocInMainWorld,
     });
@@ -151,7 +167,7 @@ export async function detectActiveGoogleDoc(): Promise<ActiveDocCandidate | null
     for (const res of results) {
       if (res.result && res.result.isGoogleDoc) {
         return {
-          tabId: activeTab.id,
+          tabId: targetTab.id,
           frameId: res.frameId,
           docId: res.result.docId,
           title: res.result.title,
@@ -162,14 +178,13 @@ export async function detectActiveGoogleDoc(): Promise<ActiveDocCandidate | null
       }
     }
   } catch {
-    // Fallback URL-only parsing if frame is still loading
     const m = tabUrl.match(/\/document\/(?:(u\/\d+)\/)?d\/([a-zA-Z0-9_-]+)/);
     if (m) {
       return {
-        tabId: activeTab.id,
+        tabId: targetTab.id,
         frameId: 0,
         docId: m[2],
-        title: (activeTab.title || 'Document de Google Docs')
+        title: (targetTab.title || 'Document de Google Docs')
           .replace(/\s*-\s*Documents de Google.*$/i, '')
           .replace(/\s*-\s*Google Docs.*$/i, '')
           .trim(),
@@ -181,6 +196,10 @@ export async function detectActiveGoogleDoc(): Promise<ActiveDocCandidate | null
   }
 
   return null;
+}
+
+export async function detectActiveGoogleDoc(): Promise<ActiveDocCandidate | null> {
+  return detectGoogleDocForTab();
 }
 
 interface InPageFetchPayload {
@@ -258,14 +277,31 @@ interface LoadResponse {
   chunkedSnapshot?: RawDocumentHistory['chunkedSnapshot'];
 }
 
-export async function extractGoogleDocHistory(
+export async function extractGoogleDocForTab(
+  explicitTabId?: number,
   onProgress?: (p: ExtractionProgress) => void
 ): Promise<RawDocumentHistory> {
-  if (!isChromeExtensionContext()) {
-    throw new ExtractionError(
-      'EXTENSION_ENV',
-      'Aquesta funció requereix obrir Traces com a extensió de Google Chrome sobre un document.'
-    );
+  // Quan s'executa dins l'iframe incrustat de Google Docs, delega al Service Worker de l'extensió
+  if (!hasDirectScriptingAccess()) {
+    if (!isChromeExtensionContext()) {
+      throw new ExtractionError(
+        'EXTENSION_ENV',
+        'Aquesta funció requereix obrir Traces com a extensió de Google Chrome sobre un document.'
+      );
+    }
+    onProgress?.({
+      phase: 'historial',
+      message: 'Consultant i reconstruint les revisions del document…',
+      percent: 45,
+    });
+    const resp = await chrome.runtime.sendMessage({ type: 'TRACES_BG_EXTRACT_DOC' });
+    if (!resp?.ok) {
+      throw new ExtractionError(
+        resp?.code || 'NETWORK',
+        resp?.message || 'No s’ha pogut extreure l’historial del document.'
+      );
+    }
+    return resp.history as RawDocumentHistory;
   }
 
   onProgress?.({
@@ -274,7 +310,7 @@ export async function extractGoogleDocHistory(
     percent: 10,
   });
 
-  const candidate = await detectActiveGoogleDoc();
+  const candidate = await detectGoogleDocForTab(explicitTabId);
   if (!candidate) {
     throw new ExtractionError(
       'NO_DOC',
@@ -324,7 +360,6 @@ export async function extractGoogleDocHistory(
     percent: 24,
   });
 
-  // 1. Fetch revisions/tiles (with automatic tab parameter fallback)
   let useTabParam = true;
   let userMap: Record<string, RawUserInfo> = {};
   let firstRev = 1;
@@ -367,7 +402,6 @@ export async function extractGoogleDocHistory(
         firstRev = tiles[0].start;
       }
 
-      // Paginate tiles if very large history
       let guard = 0;
       let cursorStart = lastRev + 1;
       while (tiles.length >= 400 && guard < 15) {
@@ -397,7 +431,6 @@ export async function extractGoogleDocHistory(
     }
   }
 
-  // Fallback binary search if tiles did not yield lastRev
   if (lastRev < 1) {
     const probeOne = await fetchInsideDocFrame(
       candidate.tabId,
@@ -445,7 +478,6 @@ export async function extractGoogleDocHistory(
     lastRev = low;
   }
 
-  // 2. Download detailed changelog in reliable batches
   const CHUNK_SIZE = 2500;
   const totalRevs = Math.max(1, lastRev - firstRev + 1);
   const allChangelog: RawDocumentHistory['changelog'] = [];
@@ -470,7 +502,6 @@ export async function extractGoogleDocHistory(
       buildQuery('revisions/load', { start: batchStart, end: batchEnd }, useTabParam)
     );
 
-    // Retry with smaller sub-batches if Google returns 500 on a huge batch
     if (!loadResp.ok && batchEnd > batchStart + 200) {
       const smallerEnd = Math.min(lastRev, batchStart + 500 - 1);
       loadResp = await fetchInsideDocFrame(
@@ -494,15 +525,12 @@ export async function extractGoogleDocHistory(
     if (loadResp.status === 401 || loadResp.status === 403) {
       throw new ExtractionError(
         'NO_PERMISSION',
-        ' Google Docs ha denegat l’accés a les revisions detallades. Cal permís d’edició sobre el document.'
+        'Google Docs ha denegat l’accés a les revisions detallades. Cal permís d’edició sobre el document.'
       );
     }
 
     if (!loadResp.ok) {
-      if (allChangelog.length > 0) {
-        // Return partial history rather than failing completely
-        break;
-      }
+      if (allChangelog.length > 0) break;
       throw new ExtractionError(
         'NETWORK',
         `Google Docs ha retornat un error (codi ${loadResp.status}) en carregar l’historial.`
@@ -537,4 +565,10 @@ export async function extractGoogleDocHistory(
     chunkedSnapshot: initialSnapshot,
     changelog: allChangelog,
   };
+}
+
+export async function extractGoogleDocHistory(
+  onProgress?: (p: ExtractionProgress) => void
+): Promise<RawDocumentHistory> {
+  return extractGoogleDocForTab(undefined, onProgress);
 }

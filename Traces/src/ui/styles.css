@@ -80,10 +80,10 @@ body {
 /* App Shell */
 .app-shell {
   width: 100%;
-  max-width: 680px;
+  max-width: 760px;
   min-width: 0;
   margin: 0 auto;
-  min-height: calc(100vh - 62px);
+  min-height: calc(100vh - 54px);
   display: flex;
   flex-direction: column;
 }
@@ -115,12 +115,44 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: var(--brand-dark);
-  color: #38bdf8;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.brand-mark img,
+.welcome-icon img {
+  display: block;
+}
+
+.update-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 12px;
+  background: #fffbeb;
+  border-bottom: 1px solid #fde68a;
+  font-size: 12px;
+  color: #78350f;
+}
+
+.update-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.25;
+}
+
+.update-info span {
+  font-size: 11px;
+  color: #92400e;
+}
+
+.update-bar .btn {
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .brand-titles {
@@ -175,6 +207,11 @@ body {
 .icon-btn:disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+.icon-btn-ok {
+  color: #059669 !important;
+  background: #ecfdf5 !important;
 }
 
 /* Export dropdown */
@@ -422,11 +459,17 @@ body {
   background: var(--bulk-border);
 }
 
-/* KPI Grid */
+/* KPI Grid: 2x2 en panell estret, 4x1 horitzontal al panell ample (>= 440 px) */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
+}
+
+@media (min-width: 440px) {
+  .kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .kpi-card {
@@ -522,6 +565,24 @@ body {
   padding: 2px 7px;
   border-radius: 99px;
   border: 1px solid var(--border-soft);
+}
+
+.head-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.timespan-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: -2px 0 6px;
 }
 
 /* Composition Stacked Bar */
@@ -1209,12 +1270,9 @@ body {
 }
 
 .welcome-icon {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   margin: 0 auto 10px;
-  border-radius: 12px;
-  background: var(--brand-dark);
-  color: #38bdf8;
   display: flex;
   align-items: center;
   justify-content: center;

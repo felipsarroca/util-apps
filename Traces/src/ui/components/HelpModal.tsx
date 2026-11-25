@@ -2,10 +2,11 @@
 import { Icon } from './Icon';
 
 interface HelpModalProps {
+  version: string;
   onClose: () => void;
 }
 
-export function HelpModal({ onClose }: HelpModalProps) {
+export function HelpModal({ version, onClose }: HelpModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
@@ -46,6 +47,18 @@ export function HelpModal({ onClose }: HelpModalProps) {
           </p>
           <p>
             Tot el processament es fa <strong>100 % en local al navegador</strong>, només quan el docent ho demana i sense enviar cap text ni dada personal a servidors externs.
+          </p>
+
+          <h3>Versió i actualitzacions</h3>
+          <p>
+            Versió instal·lada: <strong>{version === '0.0.0' ? 'demostració web' : version}</strong>. Quan es publica una versió nova, Traces mostra un avís a dalt del panell i una fletxa taronja a la icona.{' '}
+            <a
+              href="https://felipsarroca.github.io/util-apps/Traces/#actualitzar"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Com actualitzar
+            </a>
           </p>
         </div>
       </div>

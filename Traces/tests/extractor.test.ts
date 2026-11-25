@@ -15,6 +15,7 @@ describe('Traces — Extractor de Google Docs i Classroom (simulació API Chrome
     const requestedUrls: string[] = [];
 
     const mockChrome = {
+      runtime: { id: 'mock-ext-id' },
       tabs: {
         query: vi.fn().mockResolvedValue([
           {
@@ -140,6 +141,7 @@ describe('Traces — Extractor de Google Docs i Classroom (simulació API Chrome
     let simulateForbidden = false;
 
     const mockChrome = {
+      runtime: { id: 'mock-ext-id' },
       tabs: {
         query: vi.fn().mockResolvedValue([
           { id: 7, url: 'https://docs.google.com/document/d/LEGACY_DOC/edit', title: 'Doc antic' },

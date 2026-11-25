@@ -14,12 +14,12 @@ export default defineConfig({
       input: {
         sidepanel: resolve(__dirname, 'sidepanel.html'),
         background: resolve(__dirname, 'src/background/background.ts'),
+        content: resolve(__dirname, 'src/content/docsToolbarButton.ts'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
-          if (chunkInfo.name === 'background') {
-            return 'background.js';
-          }
+          if (chunkInfo.name === 'background') return 'background.js';
+          if (chunkInfo.name === 'content') return 'content.js';
           return 'assets/[name]-[hash].js';
         },
         chunkFileNames: 'assets/[name]-[hash].js',

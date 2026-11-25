@@ -23,6 +23,7 @@ export type IconName =
   | 'eye'
   | 'upload'
   | 'beaker'
+  | 'maximize'
   | 'x';
 
 interface IconProps extends SVGProps<SVGSVGElement> {
@@ -207,6 +208,15 @@ export function Icon({ name, size = 16, className = '', ...rest }: IconProps) {
           <path d="M9 3h6" />
           <path d="M10 3v5.4L4.8 18.2A2 2 0 0 0 6.6 21h10.8a2 2 0 0 0 1.8-2.8L14 8.4V3" />
           <path d="M7.5 14h9" />
+        </svg>
+      );
+    case 'maximize':
+      return (
+        <svg {...common}>
+          <polyline points="15 3 21 3 21 9" />
+          <polyline points="9 21 3 21 3 15" />
+          <line x1="21" y1="3" x2="14" y2="10" />
+          <line x1="3" y1="21" x2="10" y2="14" />
         </svg>
       );
     case 'x':

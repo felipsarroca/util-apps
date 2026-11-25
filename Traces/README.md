@@ -15,7 +15,7 @@
 - **Sessions i autors:** cronologia d'estones de treball i participació de cada editor sense duplicar intervals simultanis.
 - **Exportació docent:** informe llest per imprimir o desar en PDF, taula CSV i exportació/importació d'historials JSON.
 
-### Vista del panell lateral (380 px)
+### Vista del panell lateral (480 px)
 
 | Resum i evolució | Insercions en bloc | Mapa d'origen | Sessions i autors |
 |---|---|---|---|
@@ -44,9 +44,13 @@ La carpeta [`extension/`](./extension) ja conté l'extensió compilada i llesta 
 ## Com fer-la servir
 
 1. Obriu qualsevol treball de **Google Docs** (en què tingueu permís d'edició, com els treballs lliurats a **Google Classroom**) o bé obriu-lo directament dins la pantalla de correcció de Classroom.
-2. Feu **un clic a la icona de Traces** a dalt a la dreta de Chrome.
-3. S'obrirà el panell lateral a la dreta amb el diagnòstic visual del document.
+2. Feu clic al botó **Traces** que apareix a la barra superior de Google Docs (o a la icona de Traces a dalt a la dreta de Chrome).
+3. S'obrirà el panell lateral ample (480 px, ampliable fins a 660 px o arrossegant la vora) amb el diagnòstic visual del document.
 4. Si passeu al document del següent alumne amb el panell obert, Traces ho detectarà i l'analitzarà automàticament.
+
+## Com actualitzar-la
+
+Quan hi hagi una versió nova publicada, Traces us avisarà amb una fletxa taronja a la icona i un avís a dalt del panell. Per actualitzar-la, descarregueu de nou `Traces-Chrome.zip` des de <https://ja.cat/app-traces>, substituïu el contingut de la vostra carpeta `Traces` i premeu el botó de recarregar (`↻`) a `chrome://extensions`.
 
 > **Nota pedagògica i de privadesa:** Traces mostra evidències objectives sobre el procés temporal d'escriptura i no és un detector d'IA. Una inserció en bloc pot correspondre a copiar i enganxar, però també a un esborrany previ fet en un altre document, dictat per veu, traducció o sincronització fora de línia. Cap dada ni cap fragment de text surt mai del vostre navegador.
 
@@ -68,8 +72,7 @@ Després de compilar, premeu el botó de recarregar (`↻`) a la targeta de **Tr
 
 ## Autoria i llicència
 
-Aplicació creada per [Felip Sarroca](https://ja.cat/felipsarroca) amb assistència de la IA.
+Extensió de [Felip Sarroca](https://ja.cat/felipsarroca).
 
 - **Codi font:** [GNU AGPLv3 o posterior](./LICENSE)
 - **Continguts, textos i disseny gràfic:** [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca)
-- **Suggeriments i errors:** [Formulari d'incidències de Traces](https://github.com/felipsarroca/util-apps/issues/new?template=traces.yml)

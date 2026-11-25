@@ -4,6 +4,16 @@ import { analyzeDocumentHistory } from '../src/core/metrics';
 import { stripXssiPrefix } from '../src/core/parser';
 import { DEMO_SCENARIOS } from '../src/core/demoData';
 import type { RawDocumentHistory } from '../src/types';
+import { compareVersions } from '../src/core/updateCheck';
+
+describe('Traces — Comparació de versions', () => {
+  it('detecta correctament versions noves, iguals i antigues', () => {
+    expect(compareVersions('1.1.0', '1.0.0')).toBeGreaterThan(0);
+    expect(compareVersions('1.10.0', '1.9.3')).toBeGreaterThan(0);
+    expect(compareVersions('1.1.0', '1.1.0')).toBe(0);
+    expect(compareVersions('1.0.9', '1.1')).toBeLessThan(0);
+  });
+});
 
 describe('Traces — Motor d’interpretació i mètriques', () => {
   it('elimina correctament el prefix de seguretat XSSI de Google Docs', () => {
