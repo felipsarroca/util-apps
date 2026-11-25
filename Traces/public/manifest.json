@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Traces — Procés d'elaboració a Google Docs",
+  "name": "Traces — Com s'ha elaborat un treball de Google",
   "short_name": "Traces",
-  "version": "1.1.0",
-  "description": "Analitza de manera visual, local i en català com s'ha elaborat un treball a Google Docs: temps actiu, sessions, autors i insercions en bloc.",
+  "version": "2.0.0",
+  "description": "Mostra al professorat, de manera visual i local, com s'ha elaborat un treball a Google Docs, Presentacions o Fulls de càlcul, també des de Classroom.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -11,7 +11,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "Obre Traces per analitzar el document"
+    "default_title": "Obre Traces"
   },
   "side_panel": {
     "default_path": "sidepanel.html"
@@ -23,12 +23,24 @@
   "content_scripts": [
     {
       "matches": [
-        "https://docs.google.com/document/d/*",
-        "https://docs.google.com/document/u/*/d/*"
+        "https://docs.google.com/document/*",
+        "https://docs.google.com/presentation/*",
+        "https://docs.google.com/spreadsheets/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle",
       "all_frames": true
+    },
+    {
+      "matches": [
+        "https://classroom.google.com/*"
+      ],
+      "js": [
+        "classroom.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
@@ -52,7 +64,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://docs.google.com/document/*",
+    "https://docs.google.com/*",
     "https://classroom.google.com/*",
     "https://felipsarroca.github.io/*"
   ]

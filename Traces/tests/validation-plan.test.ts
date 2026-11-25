@@ -77,7 +77,7 @@ describe('Pla de validació (Apartat 10 — Documents A fins M)', () => {
 
   it('Doc C: Escriure 150 paraules i enganxar-ne 150 -> ~50% / ~50% i paràgraf exacte', () => {
     const partManual = makeWordBlock(150, 'redaccio');
-    const partEnganxada = makeWordBlock(150, 'redaccio');
+    const partEnganxada = makeWordBlock(150, 'enganxat');
     const typed = typeWordByWord(partManual, 1, T0, 'alumneC');
 
     const changelog: RawChangelogEntry[] = [
@@ -209,6 +209,14 @@ describe('Pla de validació (Apartat 10 — Documents A fins M)', () => {
     expect(res.finalPlainText).toBe((p2 + p1).trimEnd());
     expect(res.paragraphs[0].plainText).toBe(p2.trim());
     expect(res.paragraphs[1].plainText).toBe(p1.trim());
+    // Moure text propi no és una inserció en bloc: conserva l'origen progressiu
+    expect(res.movedInsertionsCount).toBe(1);
+    expect(res.bulkInsertions).toHaveLength(0);
+    expect(res.allCandidateInsertions).toHaveLength(0);
+    expect(res.progressivePct).toBe(100);
+    expect(res.paragraphs[0].segments.every((s) => s.origin === 'progressive')).toBe(true);
+    // El moviment no compta com a correcció
+    expect(res.revision.deletionPct).toBeLessThan(5);
   });
 
   it('Doc I: Dictat per veu (ràfegues de 30–40 caràcters) es distingeix segons el llindar configurable', () => {

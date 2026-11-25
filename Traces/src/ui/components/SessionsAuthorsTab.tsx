@@ -18,7 +18,7 @@ export function SessionsAuthorsTab({ analysis }: SessionsAuthorsTabProps) {
       {/* Authors section */}
       <section className="panel-card">
         <div className="card-head">
-          <h2>Autors identificats ({analysis.authors.length})</h2>
+          <h2>Autors ({analysis.authors.length})</h2>
         </div>
 
         <div className="authors-list">
@@ -42,7 +42,7 @@ export function SessionsAuthorsTab({ analysis }: SessionsAuthorsTabProps) {
                 </div>
                 <div className="author-pct tabular" title="Presència al text final">
                   <strong>{author.survivingSharePct}{'\u00A0'}%</strong>
-                  <span>del text</span>
+                  <span>del final</span>
                 </div>
               </div>
 
@@ -57,13 +57,27 @@ export function SessionsAuthorsTab({ analysis }: SessionsAuthorsTabProps) {
               </div>
 
               <div className="author-metrics tabular">
-                <span>Progressiu: +{author.progressiveCharsInserted} car.</span>
-                {author.bulkCharsInserted > 0 && (
-                  <span className="text-amber">
-                    En bloc: +{author.bulkCharsInserted} car.
-                  </span>
+                {analysis.kind === 'spreadsheet' ? (
+                  <>
+                    <span>{author.cellsTyped ?? 0} cel·les a mà</span>
+                    {(author.cellsPasted ?? 0) > 0 && (
+                      <span className="text-amber">{author.cellsPasted} enganxades</span>
+                    )}
+                    <span>{author.formulas ?? 0} fórmules</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Escrit: {author.progressiveCharsInserted} car.</span>
+                    {author.bulkCharsInserted > 0 && (
+                      <span className="text-amber">Enganxat: {author.bulkCharsInserted} car.</span>
+                    )}
+                    {author.slidesTouched !== undefined && (
+                      <span>
+                        {author.slidesTouched} {author.slidesTouched === 1 ? 'diapositiva' : 'diapositives'}
+                      </span>
+                    )}
+                  </>
                 )}
-                <span>{author.operationCount} edicions</span>
               </div>
             </div>
           ))}
@@ -71,7 +85,7 @@ export function SessionsAuthorsTab({ analysis }: SessionsAuthorsTabProps) {
 
         {analysis.authors.length > 1 && (
           <p className="pedagogical-hint">
-            El percentatge d’edicions o de text escrit al teclat no equival necessàriament a l’aportació intel·lectual quan dos alumnes treballen junts en un mateix ordinador.
+            Qui tecleja no sempre és qui pensa: si treballen junts en un ordinador, tot apareix a nom d’un sol alumne.
           </p>
         )}
       </section>
@@ -79,7 +93,7 @@ export function SessionsAuthorsTab({ analysis }: SessionsAuthorsTabProps) {
       {/* Sessions chronology */}
       <section className="panel-card">
         <div className="card-head">
-          <h2>Sessions de treball ({analysis.sessions.length})</h2>
+          <h2>Sessions ({analysis.sessions.length})</h2>
           <span className="subtle-badge">
             Pausa &gt; {analysis.settings.sessionGapMinutes} min
           </span>
@@ -117,7 +131,6 @@ export function SessionsAuthorsTab({ analysis }: SessionsAuthorsTabProps) {
                 </div>
 
                 <div className="session-row-bottom tabular">
-                  <span>{sess.operationCount} edicions</span>
                   <span>
                     {sess.wordsAddedApprox >= 0
                       ? `+${sess.wordsAddedApprox} par. aprox.`

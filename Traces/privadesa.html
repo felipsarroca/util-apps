@@ -1,0 +1,135 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later AND CC-BY-NC-SA-4.0 -->
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Traces — Privadesa i informació per a famílies</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <style>
+      :root { --brand: #0284c7; --ink: #0f172a; --muted: #475569; --line: #e2e8f0; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f4f6fb; color: var(--ink); font: 15px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      main { max-width: 820px; margin: 0 auto; padding: 28px 20px 40px; }
+      .head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+      .head img { width: 44px; height: 44px; }
+      h1 { font-size: 24px; margin: 0; }
+      .head p { margin: 0; color: var(--muted); }
+      nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+      nav a { padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--brand); text-decoration: none; font-weight: 600; font-size: 14px; }
+      section { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+      h2 { font-size: 18px; margin: 0 0 10px; }
+      h3 { font-size: 15px; margin: 16px 0 4px; }
+      p, li { text-align: justify; }
+      ul { padding-left: 20px; }
+      .sheet { border: 2px solid var(--brand); }
+      .sheet .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 10px; }
+      .print-btn { border: 1px solid var(--line); background: #f8fafc; border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+      .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 18px; }
+      .sign div { border-top: 1px solid #94a3b8; padding-top: 4px; font-size: 13px; color: var(--muted); }
+      footer { text-align: center; font-size: 12.5px; color: var(--muted); padding: 10px; }
+      footer a { color: var(--muted); }
+      @media print {
+        body { background: #fff; }
+        main { padding: 0; }
+        .head, nav, .no-print, footer { display: none !important; }
+        section { border: none; padding: 0; }
+        .sheet { border: none; }
+        body.print-sheet section:not(.sheet) { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="head">
+        <img src="./favicon.svg" alt="" />
+        <div>
+          <h1>Privadesa</h1>
+          <p>Traces, extensió de Chrome per al professorat</p>
+        </div>
+      </div>
+
+      <nav>
+        <a href="#politica">Política de privadesa</a>
+        <a href="#full">Full per a l'alumnat i les famílies</a>
+        <a href="./">Tornar a Traces</a>
+      </nav>
+
+      <section id="politica">
+        <h2>Política de privadesa</h2>
+        <p><em>Darrera actualització: 25 de novembre de 2026.</em></p>
+
+        <h3>Què fa Traces</h3>
+        <p>Traces mostra al docent com s'ha elaborat un document, una presentació o un full de càlcul de Google a partir de l'historial de versions que Google ja desa per a cada fitxer. Només funciona amb fitxers que el docent pot editar, com els treballs lliurats a Google Classroom.</p>
+
+        <h3>Quines dades llegeix</h3>
+        <ul>
+          <li>L'historial d'edicions del fitxer obert (quan i qui hi ha escrit, esborrat o enganxat), només quan el docent prem el botó de Traces o «Analitza la classe».</li>
+          <li>A Classroom, els enllaços als fitxers de la tasca i la data de lliurament que mostra la pàgina.</li>
+        </ul>
+
+        <h3>On es processen</h3>
+        <p>Tot el càlcul es fa dins del navegador del docent. Traces no té servidors, no envia cap text ni cap dada a tercers, no fa servir analítica ni publicitat i no s'executa en segon pla.</p>
+
+        <h3>Què es desa i on</h3>
+        <ul>
+          <li>Les preferències del panell.</li>
+          <li>Per a la taula de la classe, un resum numèric de cada treball analitzat (nom de l'autor, títol, temps, sessions, dies i percentatges). Mai el text de l'alumne.</li>
+          <li>Les dates de lliurament llegides a Classroom o introduïdes pel docent.</li>
+        </ul>
+        <p>Aquestes dades queden només a l'emmagatzematge local de Chrome del docent. Es poden esborrar des de la taula de la classe (botó de paperera) o desinstal·lant l'extensió. Com a màxim es conserven 600 resums: els més antics s'eliminen sols.</p>
+
+        <h3>Única connexió externa</h3>
+        <p>Traces consulta un fitxer públic (<code>version.json</code>) a GitHub Pages per saber si hi ha una versió nova. Aquesta consulta no inclou cap dada de l'usuari.</p>
+
+        <h3>Base legal i bones pràctiques</h3>
+        <p>L'ús de Traces forma part de la funció avaluadora del docent sobre treballs lliurats en l'entorn digital del centre. Es recomana informar-ne l'alumnat i les famílies (vegeu el full següent), fer-lo servir com a suport per a la conversa i no com a única prova, i no desar els resultats fora dels canals del centre.</p>
+
+        <h3>Contacte</h3>
+        <p>Per a dubtes o errors: <a href="https://github.com/felipsarroca/util-apps/issues/new?template=traces.yml">formulari d'errors i suggeriments</a>.</p>
+      </section>
+
+      <section id="full" class="sheet">
+        <div class="top">
+          <h2>Com revisarem el procés dels vostres treballs</h2>
+          <button type="button" class="print-btn no-print" id="print-sheet">Imprimeix el full</button>
+        </div>
+        <p>Benvolgudes famílies, benvolgut alumnat:</p>
+        <p>Quan lliureu un treball fet amb Google Docs, Presentacions o Fulls de càlcul, el professorat pot consultar com s'ha elaborat. Google ja desa automàticament l'historial de versions de cada fitxer; l'extensió <strong>Traces</strong> el mostra de manera visual.</p>
+        <h3>Què veu el professorat</h3>
+        <ul>
+          <li>Quant de temps s'hi ha treballat i en quants dies.</li>
+          <li>Quina part del text s'ha escrit pas a pas i quina s'ha enganxat d'un sol cop.</li>
+          <li>Com ha anat creixent el treball, i qui hi ha participat en els treballs de grup.</li>
+        </ul>
+        <h3>Per què ho fem</h3>
+        <p>Volem valorar també el procés, no només el resultat: l'esforç, l'organització del temps i la feina pròpia. Enganxar text no és cap falta en si: pot ser un esborrany propi, una cita o un dictat. Si alguna cosa ens crida l'atenció, en parlarem amb l'alumne abans de treure cap conclusió.</p>
+        <h3>Privadesa</h3>
+        <p>L'anàlisi es fa només a l'ordinador del docent. No s'envia cap treball ni cap dada a cap empresa ni servidor extern, i no es fa servir cap sistema d'intel·ligència artificial per valorar-vos.</p>
+        <h3>Consells per a l'alumnat</h3>
+        <ul>
+          <li>Treballeu directament al fitxer de Classroom i en diversos dies.</li>
+          <li>Si feu un esborrany en un altre lloc, comenteu-ho al lliurament.</li>
+          <li>Si treballeu en grup, que cadascú escrigui des del seu compte.</li>
+        </ul>
+        <div class="sign">
+          <div>Signatura de la família</div>
+          <div>Signatura de l'alumne/a</div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <a href="https://ja.cat/felipsarroca">Felip Sarroca</a> · Codi: AGPLv3 · Continguts: CC BY-NC-SA 4.0
+    </footer>
+
+    <script>
+      document.getElementById('print-sheet').addEventListener('click', function () {
+        document.getElementById('full').classList.add('print-me');
+        document.body.classList.add('print-sheet');
+        window.print();
+        document.body.classList.remove('print-sheet');
+      });
+    </script>
+  </body>
+</html>

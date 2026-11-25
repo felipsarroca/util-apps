@@ -35,6 +35,7 @@ describe('Traces — Extractor de Google Docs i Classroom (simulació API Chrome
                 frameId: 4,
                 result: {
                   isGoogleDoc: true,
+                  kind: 'document',
                   docId: 'DOC_CLASSROOM_99',
                   title: 'Treball de Socials — Alumne Prova',
                   userPrefix: 'u/1',
@@ -53,6 +54,7 @@ describe('Traces — Extractor de Google Docs i Classroom (simulació API Chrome
                 frameId: 4,
                 result: {
                   isGoogleDoc: true,
+                  kind: 'document',
                   docId: 'DOC_CLASSROOM_99',
                   title: 'Treball de Socials — Alumne Prova',
                   userPrefix: 'u/1',
@@ -155,6 +157,7 @@ describe('Traces — Extractor de Google Docs i Classroom (simulació API Chrome
                 frameId: 0,
                 result: {
                   isGoogleDoc: true,
+                  kind: 'document',
                   docId: 'LEGACY_DOC',
                   title: 'Doc antic',
                   userPrefix: '',

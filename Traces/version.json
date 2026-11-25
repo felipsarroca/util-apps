@@ -1,11 +1,12 @@
 {
-  "version": "1.1.0",
+  "version": "2.0.0",
   "date": "2026-11-25",
   "notes": [
-    "Botó «Traces» dins de Google Docs amb panell lateral ample i ajustable",
-    "Icona nova, més clara",
-    "Avís automàtic quan hi ha una versió nova",
-    "Botó per copiar un resum de l'anàlisi"
+    "Funciona també amb Presentacions i Fulls de càlcul",
+    "Classroom: analitza tota la classe d'un clic i taula comparativa",
+    "Fitxa d'un cop d'ull, dies de treball i data de lliurament",
+    "Informe d'una pàgina i comentari privat a Classroom",
+    "Analitza totes les pestanyes dels documents"
   ],
   "url": "https://felipsarroca.github.io/util-apps/Traces/#actualitzar"
 }

@@ -8,7 +8,7 @@ import type {
   RetentionStatus,
   TextSegment,
 } from '../types';
-import { countWords } from './parser';
+import { countWords, TEMPLATE_USER } from './parser';
 
 const AUTHOR_PALETTE = [
   '#0284C7', // blau oceà
@@ -22,6 +22,10 @@ const AUTHOR_PALETTE = [
 ];
 
 export const MIN_CANDIDATE_INSERT_CHARS = 25;
+/** Temps màxim entre retallar i enganxar perquè es consideri un moviment intern. */
+const MOVE_WINDOW_MS = 2 * 60 * 60_000;
+/** Mida mínima perquè un fragment esborrat es recordi com a possible origen d'un moviment. */
+const MIN_REMEMBERED_DELETE = 12;
 
 export interface ResolvedAuthor {
   userId: string;
@@ -37,7 +41,7 @@ export function resolveAuthorResolver(
   let anonIndex = 1;
 
   return (userId: string): ResolvedAuthor => {
-    if (userId === '__plantilla__') {
+    if (userId === TEMPLATE_USER) {
       return {
         userId,
         name: 'Plantilla inicial',
@@ -70,11 +74,22 @@ export function resolveAuthorResolver(
 
 export interface TrackedChar {
   ch: string;
-  opId: number; // 0 = baseline template snapshot
+  opId: number; // 0 = plantilla inicial
   userId: string;
   timestamp: number;
-  insertedLength: number; // length of the original insert op
+  insertedLength: number; // mida de la inserció original
+  moved?: boolean;
 }
+
+/** Com es col·loca cada objecte de text al resultat final (null = no visible, p. ex. dissenys). */
+export interface ObjectPlacement {
+  order: number;
+  slideNumber?: number;
+  isNotes?: boolean;
+  tabName?: string;
+}
+
+export type PlacementResolver = (objectId: string) => ObjectPlacement | null;
 
 export interface ReconstructionResult {
   finalChars: TrackedChar[];
@@ -90,6 +105,11 @@ export interface ReconstructionResult {
     charCount: number;
   }>;
   deletedCharsByAuthor: Map<string, number>;
+  /** Insercions identificades com a text mogut o duplicat dins del mateix fitxer. */
+  movedOpIds: Set<number>;
+  movedChars: number;
+  /** Caràcters finals per objecte (per a estadístiques de diapositives). */
+  finalCharsByObject: Map<string, TrackedChar[]>;
 }
 
 function classifyRetention(ratio: number, survivingChars: number): RetentionStatus {
@@ -104,57 +124,132 @@ function buildPreviewSnippet(text: string, maxLen = 180): string {
   return `${clean.slice(0, maxLen).trimEnd()}…`;
 }
 
+const defaultPlacement: PlacementResolver = () => ({ order: 0 });
+
+function stripTrailingNewlines(chars: TrackedChar[]): TrackedChar[] {
+  let len = chars.length;
+  while (len > 0 && chars[len - 1].ch === '\n') len--;
+  return chars.slice(0, len);
+}
+
+function charsToText(chars: TrackedChar[]): string {
+  let s = '';
+  for (let i = 0; i < chars.length; i++) s += chars[i].ch;
+  return s;
+}
+
 export function reconstructDocument(
-  baselineText: string,
+  baseline: string | Map<string, string>,
   operations: NormalizedOp[],
   bulkThresholdChars: number,
-  getAuthor: (userId: string) => ResolvedAuthor
+  getAuthor: (userId: string) => ResolvedAuthor,
+  placement: PlacementResolver = defaultPlacement
 ): ReconstructionResult {
-  // EndOfBody sentinel kept at the end, matching Google Docs 1-based OT semantics
-  const buffer: TrackedChar[] = [];
+  const buffers = new Map<string, TrackedChar[]>();
+  const getBuffer = (objectId: string): TrackedChar[] => {
+    let b = buffers.get(objectId);
+    if (!b) {
+      b = [];
+      buffers.set(objectId, b);
+    }
+    return b;
+  };
 
-  if (baselineText.length > 0) {
-    for (let i = 0; i < baselineText.length; i++) {
-      buffer.push({
-        ch: baselineText[i],
-        opId: 0,
-        userId: '__plantilla__',
-        timestamp: 0,
-        insertedLength: baselineText.length,
-      });
+  const baselineMap =
+    typeof baseline === 'string' ? new Map(baseline ? [['', baseline]] : []) : baseline;
+  for (const [objectId, text] of baselineMap) {
+    const buf = getBuffer(objectId);
+    for (let i = 0; i < text.length; i++) {
+      buf.push({ ch: text[i], opId: 0, userId: TEMPLATE_USER, timestamp: 0, insertedLength: text.length });
     }
   }
 
+  const hasMultipleObjects = () => buffers.size > 1;
+
+  const visibleObjects = (): Array<{ id: string; place: ObjectPlacement }> => {
+    const list: Array<{ id: string; place: ObjectPlacement }> = [];
+    for (const id of buffers.keys()) {
+      const place = placement(id);
+      if (place) list.push({ id, place });
+    }
+    list.sort((a, b) => a.place.order - b.place.order);
+    return list;
+  };
+
+  const composeCurrentText = (): string => {
+    if (!hasMultipleObjects()) {
+      const only = buffers.keys().next().value;
+      if (only === undefined || !placement(only)) return '';
+      return charsToText(buffers.get(only) ?? []).replace(/\n+$/, '');
+    }
+    const parts: string[] = [];
+    let lastHeader = '';
+    for (const { id, place } of visibleObjects()) {
+      const text = charsToText(buffers.get(id) ?? []).replace(/\n+$/, '').trim();
+      if (!text) continue;
+      const header =
+        place.slideNumber !== undefined
+          ? `— Diapositiva ${place.slideNumber}${place.isNotes ? ' (notes)' : ''} —`
+          : place.tabName
+            ? `— ${place.tabName} —`
+            : '';
+      if (header && header !== lastHeader) {
+        parts.push(header);
+        lastHeader = header;
+      }
+      parts.push(text);
+    }
+    return parts.join('\n');
+  };
+
   let clampedOperations = 0;
   const candidateOps: NormalizedOp[] = [];
+  const movedOpIds = new Set<number>();
+  let movedChars = 0;
   const opTimelineStates: Array<{ op: NormalizedOp; wordCount: number; charCount: number }> = [];
   const deletedCharsByAuthor = new Map<string, number>();
+  const recentDeletes: Array<{ chars: TrackedChar[]; text: string; timestamp: number }> = [];
 
-  // Prepare checkpoints (~80 max steps for smooth, lightweight slider replay)
   const checkpointStride = Math.max(1, Math.ceil(operations.length / 80));
   const replayCheckpoints: ReplayCheckpoint[] = [];
 
-  if (baselineText.length > 0) {
-    const cleanBase = baselineText.replace(/\n+$/, '');
+  const initialText = composeCurrentText();
+  if (initialText.trim().length > 0) {
     replayCheckpoints.push({
       stepIndex: 0,
       revisionId: 0,
-      timestamp: operations[0]?.timestamp ?? Date.now(),
-      userId: '__plantilla__',
+      timestamp: operations.find((o) => !o.isTemplate)?.timestamp ?? Date.now(),
+      userId: TEMPLATE_USER,
       authorName: 'Plantilla inicial',
-      wordCount: countWords(cleanBase),
-      charCount: cleanBase.length,
-      text: cleanBase,
+      wordCount: countWords(initialText),
+      charCount: initialText.length,
+      text: initialText,
       isBulkStep: false,
-      deltaSummary: `Plantilla base (${countWords(cleanBase)} paraules)`,
+      deltaSummary: `Plantilla base (${countWords(initialText)} paraules)`,
     });
   }
 
-  // Rolling word/char count maintenance without re-joining huge strings on every single keystroke
-  let currentCharCount = buffer.length;
+  let totalCharCount = Array.from(buffers.values()).reduce((a, b) => a + b.length, 0);
+
+  /** Cerca si un text inserit ja existia al fitxer (esborrat fa poc o duplicat). */
+  const findInternalSource = (core: string, now: number): TrackedChar[] | null => {
+    for (let d = recentDeletes.length - 1; d >= 0; d--) {
+      const del = recentDeletes[d];
+      if (now - del.timestamp > MOVE_WINDOW_MS) continue;
+      const at = del.text.indexOf(core);
+      if (at >= 0) return del.chars.slice(at, at + core.length);
+    }
+    // Un text que ja era al fitxer i es torna a enganxar (duplicat intern)
+    for (const buf of buffers.values()) {
+      const at = charsToText(buf).indexOf(core);
+      if (at >= 0) return buf.slice(at, at + core.length);
+    }
+    return null;
+  };
 
   for (let idx = 0; idx < operations.length; idx++) {
     const op = operations[idx];
+    const buffer = getBuffer(op.objectId);
 
     if (op.type === 'insert') {
       const text = op.text ?? '';
@@ -165,22 +260,39 @@ export function reconstructDocument(
       }
 
       const trimmedLen = text.trim().length;
-      if (trimmedLen >= MIN_CANDIDATE_INSERT_CHARS) {
-        candidateOps.push(op);
+      let source: TrackedChar[] | null = null;
+      let coreOffset = 0;
+      if (!op.isTemplate && trimmedLen >= MIN_CANDIDATE_INSERT_CHARS) {
+        const core = text.trim();
+        coreOffset = text.indexOf(core);
+        source = findInternalSource(core, op.timestamp);
+        if (source) {
+          movedOpIds.add(op.id);
+          movedChars += trimmedLen;
+        } else {
+          candidateOps.push(op);
+        }
       }
 
       const newItems: TrackedChar[] = new Array(text.length);
       for (let c = 0; c < text.length; c++) {
-        newItems[c] = {
-          ch: text[c],
-          opId: op.id,
-          userId: op.userId,
-          timestamp: op.timestamp,
-          insertedLength: trimmedLen,
-        };
+        const src = source ? source[c - coreOffset] : undefined;
+        if (src && src.ch === text[c]) {
+          newItems[c] = { ...src, moved: true };
+        } else if (op.isTemplate) {
+          newItems[c] = { ch: text[c], opId: 0, userId: TEMPLATE_USER, timestamp: 0, insertedLength: trimmedLen };
+        } else {
+          newItems[c] = {
+            ch: text[c],
+            opId: op.id,
+            userId: op.userId,
+            timestamp: op.timestamp,
+            // Els caràcters d'un moviment intern que no coincideixen compten com a escriptura pròpia
+            insertedLength: source ? 1 : trimmedLen,
+          };
+        }
       }
 
-      // Splice safely even for large pastes (avoid argument limit of spread operator)
       if (newItems.length < 4000) {
         buffer.splice(insertPos, 0, ...newItems);
       } else {
@@ -188,10 +300,10 @@ export function reconstructDocument(
         for (let k = 0; k < newItems.length; k++) buffer.push(newItems[k]);
         for (let k = 0; k < tail.length; k++) buffer.push(tail[k]);
       }
-      currentCharCount = buffer.length;
+      totalCharCount += newItems.length;
     } else {
       const rawStart = op.index - 1;
-      const rawEndExclusive = op.endIndex ?? op.index; // 1-based inclusive endIndex == 0-based exclusive!
+      const rawEndExclusive = op.endIndex ?? op.index; // 1-based inclusiu == 0-based exclusiu
       const start = Math.max(0, Math.min(rawStart, buffer.length));
       const endExclusive = Math.max(start, Math.min(rawEndExclusive, buffer.length));
 
@@ -201,36 +313,40 @@ export function reconstructDocument(
 
       const removedCount = endExclusive - start;
       if (removedCount > 0) {
-        buffer.splice(start, removedCount);
-        deletedCharsByAuthor.set(
-          op.userId,
-          (deletedCharsByAuthor.get(op.userId) ?? 0) + removedCount
-        );
+        const removed = buffer.splice(start, removedCount);
+        totalCharCount -= removedCount;
+        if (!op.isTemplate) {
+          deletedCharsByAuthor.set(op.userId, (deletedCharsByAuthor.get(op.userId) ?? 0) + removedCount);
+        }
+        if (removedCount >= MIN_REMEMBERED_DELETE) {
+          recentDeletes.push({ chars: removed, text: charsToText(removed), timestamp: op.timestamp });
+          if (recentDeletes.length > 60) recentDeletes.shift();
+        }
       }
-      currentCharCount = buffer.length;
     }
 
     const isBulkOp =
-      op.type === 'insert' && (op.text?.trim().length ?? 0) >= bulkThresholdChars;
+      op.type === 'insert' &&
+      !op.isTemplate &&
+      !movedOpIds.has(op.id) &&
+      (op.text?.trim().length ?? 0) >= bulkThresholdChars;
     const isCheckpoint =
       isBulkOp || idx === 0 || idx === operations.length - 1 || idx % checkpointStride === 0;
 
     if (isCheckpoint) {
-      const currentText = buffer.map((x) => x.ch).join('').replace(/\n+$/, '');
+      const currentText = composeCurrentText();
       const wc = countWords(currentText);
-      const author = getAuthor(op.userId);
-      opTimelineStates.push({
-        op,
-        wordCount: wc,
-        charCount: currentText.length,
-      });
+      const author = getAuthor(op.isTemplate ? TEMPLATE_USER : op.userId);
+      opTimelineStates.push({ op, wordCount: wc, charCount: currentText.length });
 
       const deltaSummary =
         op.type === 'insert'
           ? isBulkOp
-            ? `Inserció en bloc (+${op.wordCount} par. / ${op.charCount} car.)`
-            : `+${op.charCount} car.`
-          : `Supressió (−${op.charCount} car.)`;
+            ? `Inserció en bloc (+${op.wordCount} paraules)`
+            : movedOpIds.has(op.id)
+              ? `Text reubicat (${op.wordCount} paraules)`
+              : `+${op.charCount} caràcters`
+          : `Esborrat (−${op.charCount} caràcters)`;
 
       replayCheckpoints.push({
         stepIndex: replayCheckpoints.length,
@@ -245,57 +361,46 @@ export function reconstructDocument(
         deltaSummary,
       });
     } else {
-      // Lightweight word approximation between checkpoints
       const prevWc =
-        opTimelineStates.length > 0
-          ? opTimelineStates[opTimelineStates.length - 1].wordCount
-          : 0;
+        opTimelineStates.length > 0 ? opTimelineStates[opTimelineStates.length - 1].wordCount : 0;
       const deltaW =
-        op.type === 'insert'
-          ? op.wordCount
-          : -Math.max(0, Math.round(op.charCount / 6));
+        op.type === 'insert' ? op.wordCount : -Math.max(0, Math.round(op.charCount / 6));
       opTimelineStates.push({
         op,
         wordCount: Math.max(0, prevWc + deltaW),
-        charCount: currentCharCount,
+        charCount: totalCharCount,
       });
     }
   }
 
-  // Strip trailing structural newline(s) from final buffer for presentation
-  let effectiveLen = buffer.length;
-  while (effectiveLen > 0 && buffer[effectiveLen - 1].ch === '\n') {
-    effectiveLen--;
-  }
-  const finalChars = buffer.slice(0, effectiveLen);
-  const finalPlainText = finalChars.map((c) => c.ch).join('');
+  // Resultat final: objectes visibles en ordre, separats per salts de línia
+  const finalCharsByObject = new Map<string, TrackedChar[]>();
+  const orderedObjects = visibleObjects();
 
-  // Map each surviving character to its 1-based non-empty paragraph number & count surviving non-whitespace chars per opId
+  const finalChars: TrackedChar[] = [];
+  const paragraphs: ParagraphBlock[] = [];
   const survivingByOpId = new Map<number, number>();
   const firstParagraphByOpId = new Map<number, number>();
-
-  const paragraphs: ParagraphBlock[] = [];
-  let rawParagraphChars: TrackedChar[] = [];
+  const firstSlideByOpId = new Map<number, number>();
   let paragraphCounter = 0;
 
-  const flushParagraph = (charsInPara: TrackedChar[]) => {
-    const plain = charsInPara.map((c) => c.ch).join('');
+  const flushParagraph = (charsInPara: TrackedChar[], place: ObjectPlacement) => {
+    const plain = charsToText(charsInPara);
     if (plain.trim().length === 0) return;
 
     paragraphCounter++;
     const pNum = paragraphCounter;
 
-    // Record surviving stats per opId
     for (const item of charsInPara) {
       if (/\S/.test(item.ch)) {
         survivingByOpId.set(item.opId, (survivingByOpId.get(item.opId) ?? 0) + 1);
         if (!firstParagraphByOpId.has(item.opId)) {
           firstParagraphByOpId.set(item.opId, pNum);
+          if (place.slideNumber !== undefined) firstSlideByOpId.set(item.opId, place.slideNumber);
         }
       }
     }
 
-    // Group contiguous chars into clean visual segments
     const segments: TextSegment[] = [];
     let hasBulk = false;
 
@@ -315,7 +420,8 @@ export function reconstructDocument(
         prev &&
         prev.origin === origin &&
         prev.bulkOpId === bulkOpId &&
-        prev.authorId === item.userId
+        prev.authorId === item.userId &&
+        Boolean(prev.moved) === Boolean(item.moved)
       ) {
         prev.text += item.ch;
       } else {
@@ -328,6 +434,7 @@ export function reconstructDocument(
           authorName: author.name,
           authorColor: author.color,
           timestamp: item.timestamp,
+          moved: item.moved || undefined,
         });
       }
     }
@@ -337,27 +444,40 @@ export function reconstructDocument(
       segments,
       plainText: plain,
       hasBulk,
+      slideNumber: place.slideNumber,
+      isNotes: place.isNotes,
+      tabName: place.tabName,
     });
   };
 
-  for (let i = 0; i < finalChars.length; i++) {
-    const item = finalChars[i];
-    if (item.ch === '\n') {
-      flushParagraph(rawParagraphChars);
-      rawParagraphChars = [];
-    } else {
-      rawParagraphChars.push(item);
+  for (const { id, place } of orderedObjects) {
+    const chars = stripTrailingNewlines(buffers.get(id) ?? []);
+    finalCharsByObject.set(id, chars);
+    if (chars.length === 0) continue;
+    if (finalChars.length > 0) {
+      finalChars.push({ ch: '\n', opId: 0, userId: TEMPLATE_USER, timestamp: 0, insertedLength: 0 });
     }
-  }
-  flushParagraph(rawParagraphChars);
+    for (const c of chars) finalChars.push(c);
 
-  // Build candidate & thresholded bulk insertions
+    let current: TrackedChar[] = [];
+    for (const item of chars) {
+      if (item.ch === '\n' || item.ch === '\u000b') {
+        flushParagraph(current, place);
+        current = [];
+      } else {
+        current.push(item);
+      }
+    }
+    flushParagraph(current, place);
+  }
+
+  const finalPlainText = charsToText(finalChars);
+
   const allCandidateInsertions: BulkInsertion[] = candidateOps.map((op) => {
     const rawText = op.text ?? '';
     const nonWsOriginal = rawText.replace(/\s+/g, '').length;
     const survivingNonWs = survivingByOpId.get(op.id) ?? 0;
-    const ratio =
-      nonWsOriginal > 0 ? Math.min(1, survivingNonWs / nonWsOriginal) : 0;
+    const ratio = nonWsOriginal > 0 ? Math.min(1, survivingNonWs / nonWsOriginal) : 0;
     const status = classifyRetention(ratio, survivingNonWs);
     const author = getAuthor(op.userId);
 
@@ -375,6 +495,7 @@ export function reconstructDocument(
       retentionRatio: ratio,
       status,
       paragraphNumber: status === 'eliminat' ? null : (firstParagraphByOpId.get(op.id) ?? null),
+      slideNumber: status === 'eliminat' ? null : (firstSlideByOpId.get(op.id) ?? null),
       previewSnippet: buildPreviewSnippet(rawText),
     };
   });
@@ -393,5 +514,8 @@ export function reconstructDocument(
     replayCheckpoints,
     opTimelineStates,
     deletedCharsByAuthor,
+    movedOpIds,
+    movedChars,
+    finalCharsByObject,
   };
 }

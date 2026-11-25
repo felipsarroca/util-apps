@@ -24,7 +24,19 @@ export type IconName =
   | 'upload'
   | 'beaker'
   | 'maximize'
-  | 'x';
+  | 'x'
+  | 'table'
+  | 'message'
+  | 'calendar'
+  | 'image'
+  | 'grid'
+  | 'skip-forward'
+  | 'shield'
+  | 'move'
+  | 'external'
+  | 'more'
+  | 'trash'
+  | 'slides';
 
 interface IconProps extends SVGProps<SVGSVGElement> {
   name: IconName;
@@ -217,6 +229,103 @@ export function Icon({ name, size = 16, className = '', ...rest }: IconProps) {
           <polyline points="9 21 3 21 3 15" />
           <line x1="21" y1="3" x2="14" y2="10" />
           <line x1="3" y1="21" x2="10" y2="14" />
+        </svg>
+      );
+    case 'table':
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <line x1="3" y1="9.5" x2="21" y2="9.5" />
+          <line x1="3" y1="15" x2="21" y2="15" />
+          <line x1="9" y1="9.5" x2="9" y2="20" />
+        </svg>
+      );
+    case 'message':
+      return (
+        <svg {...common}>
+          <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z" />
+          <line x1="8.5" y1="10.5" x2="15.5" y2="10.5" />
+          <line x1="8.5" y1="14" x2="13" y2="14" />
+        </svg>
+      );
+    case 'calendar':
+      return (
+        <svg {...common}>
+          <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+          <line x1="3.5" y1="10" x2="20.5" y2="10" />
+          <line x1="8" y1="3" x2="8" y2="7" />
+          <line x1="16" y1="3" x2="16" y2="7" />
+        </svg>
+      );
+    case 'image':
+      return (
+        <svg {...common}>
+          <rect x="3" y="4.5" width="18" height="15" rx="2" />
+          <circle cx="8.5" cy="9.5" r="1.6" />
+          <polyline points="21 16 15.5 11 6 19.5" />
+        </svg>
+      );
+    case 'grid':
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <line x1="3" y1="9" x2="21" y2="9" />
+          <line x1="3" y1="15" x2="21" y2="15" />
+          <line x1="9" y1="3" x2="9" y2="21" />
+          <line x1="15" y1="3" x2="15" y2="21" />
+        </svg>
+      );
+    case 'slides':
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="12" rx="1.6" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+          <line x1="8.5" y1="21" x2="15.5" y2="21" />
+        </svg>
+      );
+    case 'skip-forward':
+      return (
+        <svg {...common}>
+          <polygon points="5 5 14 12 5 19 5 5" />
+          <line x1="18" y1="5" x2="18" y2="19" />
+        </svg>
+      );
+    case 'shield':
+      return (
+        <svg {...common}>
+          <path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.1 7.5 9.5 4.3-1.4 7.5-4.9 7.5-9.5V6z" />
+          <polyline points="8.8 12 11.2 14.4 15.5 9.8" />
+        </svg>
+      );
+    case 'move':
+      return (
+        <svg {...common}>
+          <path d="M5 9h11.5a3.5 3.5 0 0 1 0 7H9" />
+          <polyline points="8 6 5 9 8 12" />
+        </svg>
+      );
+    case 'external':
+      return (
+        <svg {...common}>
+          <path d="M18 13.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5.5" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
+        </svg>
+      );
+    case 'more':
+      return (
+        <svg {...common}>
+          <circle cx="5.5" cy="12" r="1.3" fill="currentColor" />
+          <circle cx="12" cy="12" r="1.3" fill="currentColor" />
+          <circle cx="18.5" cy="12" r="1.3" fill="currentColor" />
+        </svg>
+      );
+    case 'trash':
+      return (
+        <svg {...common}>
+          <polyline points="4 7 20 7" />
+          <path d="M18 7l-1 13H7L6 7" />
+          <path d="M9.5 7V4.5h5V7" />
         </svg>
       );
     case 'x':

@@ -1,17 +1,22 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 /**
- * Content script lleuger per a Google Docs:
- * - NO llegeix ni analitza cap dada del document en segon pla.
- * - Afegeix un botó integrat «Traces» a la barra superior de Google Docs.
+ * Content script lleuger per a Google Docs, Presentacions i Sheets:
+ * - NO llegeix ni analitza cap dada del fitxer en segon pla.
+ * - Afegeix un botó integrat «Traces» a la barra superior.
  * - En fer-hi clic, desplega un panell lateral ample (480 px per defecte, ampliable a 660 px
- *   o redimensionable arrossegant la vora) amb tota la informació clara i còmoda de llegir.
+ *   o redimensionable arrossegant la vora). Si hi ha prou espai, el fitxer s'estreny per
+ *   fer-hi lloc en lloc de quedar tapat.
  */
 
 const BUTTON_ID = 'traces-gdocs-toolbar-btn';
 const DRAWER_ID = 'traces-gdocs-drawer-root';
 const STYLE_ID = 'traces-gdocs-injected-styles';
+const PUSH_STYLE_ID = 'traces-gdocs-push-styles';
 const WIDTH_STORAGE_KEY = 'traces_drawer_width_v1';
+const SETTINGS_STORAGE_KEY = 'traces_settings_v1';
+/** Amplada mínima de finestra perquè valgui la pena estrènyer el fitxer. */
+const MIN_WINDOW_FOR_PUSH = 1000;
 
 const DEFAULT_WIDTH = 480;
 const WIDE_WIDTH = 660;
@@ -20,9 +25,10 @@ const MAX_WIDTH = 780;
 
 let drawerWidth = DEFAULT_WIDTH;
 let isExpandedWide = false;
+let pushDocument = true;
 
 function isRealDocEditorFrame(): boolean {
-  if (!/\/document\/(?:u\/\d+\/)?d\/[a-zA-Z0-9_-]+/.test(location.pathname)) {
+  if (!/\/(?:document|presentation|spreadsheets)\/(?:u\/\d+\/)?d\/[a-zA-Z0-9_-]+/.test(location.pathname)) {
     return false;
   }
   // Evita injectar en iframes interns ocults de Google Docs (com sandbox d'impressió o xat)
@@ -70,9 +76,10 @@ function injectStyles(): void {
     }
     #${BUTTON_ID}.traces-btn-floating {
       position: fixed;
-      top: 12px;
-      right: 16px;
+      bottom: 18px;
+      right: 18px;
       z-index: 2147483645;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
     }
     #${BUTTON_ID} .traces-btn-badge {
       width: 20px;
@@ -160,6 +167,41 @@ function saveWidth(w: number): void {
   }
 }
 
+function loadPushSetting(): void {
+  try {
+    chrome.storage?.local?.get(SETTINGS_STORAGE_KEY, (res) => {
+      const v = res?.[SETTINGS_STORAGE_KEY]?.pushDocument;
+      if (typeof v === 'boolean') pushDocument = v;
+    });
+  } catch {
+    // Ignora si el context s'ha invalidat
+  }
+}
+
+/** Estreny el fitxer perquè el panell no en tapi el contingut (Google el redistribueix sol). */
+function applyPush(open: boolean): void {
+  let style = document.getElementById(PUSH_STYLE_ID) as HTMLStyleElement | null;
+  const shouldPush = open && pushDocument && window.innerWidth >= MIN_WINDOW_FOR_PUSH;
+  if (!shouldPush) {
+    if (style) {
+      style.remove();
+      window.dispatchEvent(new Event('resize'));
+    }
+    return;
+  }
+  if (!style) {
+    style = document.createElement('style');
+    style.id = PUSH_STYLE_ID;
+    (document.head || document.documentElement).appendChild(style);
+  }
+  style.textContent = `html { width: calc(100% - ${Math.round(drawerWidth)}px) !important; overflow-x: hidden !important; }`;
+  window.dispatchEvent(new Event('resize'));
+}
+
+function isDrawerOpen(): boolean {
+  return Boolean(document.getElementById(DRAWER_ID)?.classList.contains('traces-drawer-open'));
+}
+
 function ensureDrawer(): HTMLElement {
   let drawer = document.getElementById(DRAWER_ID);
   if (drawer) return drawer;
@@ -192,6 +234,7 @@ function ensureDrawer(): HTMLElement {
       );
       drawerWidth = nextW;
       drawer.style.width = `${nextW}px`;
+      applyPush(true);
     };
 
     const onUp = () => {
@@ -218,6 +261,7 @@ function setDrawerOpen(open: boolean): void {
     const existing = document.getElementById(DRAWER_ID);
     if (existing) existing.classList.remove('traces-drawer-open');
     if (btn) btn.classList.remove('traces-btn-active');
+    applyPush(false);
     return;
   }
 
@@ -225,6 +269,7 @@ function setDrawerOpen(open: boolean): void {
   const wasClosed = !drawer.classList.contains('traces-drawer-open');
   drawer.classList.add('traces-drawer-open');
   if (btn) btn.classList.add('traces-btn-active');
+  applyPush(true);
 
   // Quan es torna a obrir, demana a l'iframe que refresqui si cal
   if (wasClosed) {
@@ -243,7 +288,7 @@ function createToolbarButton(): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.id = BUTTON_ID;
-  btn.title = 'Analitza l’historial d’elaboració amb Traces';
+  btn.title = 'Analitza com s’ha elaborat aquest fitxer amb Traces';
   const iconUrl = chrome.runtime.getURL('icons/icon32.png');
   btn.innerHTML = `
     <img class="traces-btn-badge" src="${iconUrl}" width="20" height="20" alt="" aria-hidden="true" />
@@ -262,6 +307,7 @@ function mountToolbarButton(): void {
 
   injectStyles();
   loadSavedWidth();
+  loadPushSetting();
 
   const btn = createToolbarButton();
   const shareContainer =
@@ -280,6 +326,9 @@ function mountToolbarButton(): void {
 window.addEventListener('message', (event) => {
   const data = event.data;
   if (!data || typeof data !== 'object') return;
+  // Només s'accepten ordres del panell de Traces incrustat
+  const frame = document.querySelector(`#${DRAWER_ID} iframe`) as HTMLIFrameElement | null;
+  if (!frame || event.source !== frame.contentWindow) return;
 
   if (data.type === 'TRACES_CLOSE_DRAWER') {
     setDrawerOpen(false);
@@ -290,7 +339,18 @@ window.addEventListener('message', (event) => {
     drawerWidth = isExpandedWide ? WIDE_WIDTH : DEFAULT_WIDTH;
     drawer.style.width = `${drawerWidth}px`;
     saveWidth(drawerWidth);
+    applyPush(true);
+  } else if (data.type === 'TRACES_SET_PUSH') {
+    pushDocument = Boolean(data.value);
+    applyPush(isDrawerOpen());
   }
+});
+
+window.addEventListener('resize', () => {
+  // Si la finestra canvia de mida, decideix de nou si cal estrènyer el fitxer (sense bucles)
+  if (!isDrawerOpen()) return;
+  const should = pushDocument && window.innerWidth >= MIN_WINDOW_FOR_PUSH;
+  if (should !== Boolean(document.getElementById(PUSH_STYLE_ID))) applyPush(true);
 });
 
 if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {

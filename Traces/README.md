@@ -1,72 +1,73 @@
-# Traces — Procés d'elaboració a Google Docs
+# Traces — Com s'ha elaborat un treball de Google
 
-- **Pàgina web, descàrrega directa (.zip) i demostració interactiva:** <https://ja.cat/app-traces>
+- **Pàgina web, descàrrega (.zip) i demostració:** <https://ja.cat/app-traces>
+- **Privadesa i full per a famílies:** <https://felipsarroca.github.io/util-apps/Traces/privadesa.html>
+- **Errors i suggeriments:** [formulari](https://github.com/felipsarroca/util-apps/issues/new?template=traces.yml)
 
-**Traces** és una extensió de Google Chrome en català, gratuïta i de codi obert pensada per al professorat. Permet analitzar amb un sol clic com s'ha elaborat un document de Google Docs (també directament des del qualificador de Google Classroom), sense que l'alumnat hagi d'instal·lar res prèviament i processant totes les dades **100 % en local al navegador**.
-
----
-
-## Què permet veure d'un cop d'ull
-
-- **Resum visual immediat:** temps actiu estimat, nombre de sessions, paraules finals, autors i proporció exacta del text final escrita **progressivament**, **inserida en bloc** o provinent d'una **plantilla inicial** (com ara un enunciat de Google Classroom).
-- **Gràfic d'evolució de paraules:** línia temporal interactiva amb separació de sessions i punts taronja clicables allà on s'han produït insercions massives.
-- **Inspecció d'insercions en bloc:** filtres instantanis (`25 · 50 · 100 · 500 · 1000` caràcters) i classificació automàtica de cada fragment segons si al document final s'ha **conservat**, **reelaborat** o **eliminat**.
-- **Mapa d'origen del text i reproductor:** vista completa del treball amb els fragments inserits en bloc ressaltats en context paràgraf a paràgraf, més un reproductor pas a pas (`1× · 4× · 12×`) per observar com s'ha construït el document.
-- **Sessions i autors:** cronologia d'estones de treball i participació de cada editor sense duplicar intervals simultanis.
-- **Exportació docent:** informe llest per imprimir o desar en PDF, taula CSV i exportació/importació d'historials JSON.
-
-### Vista del panell lateral (480 px)
-
-| Resum i evolució | Insercions en bloc | Mapa d'origen | Sessions i autors |
-|---|---|---|---|
-| ![Resum](./captures/resum.png) | ![Insercions](./captures/insercions.png) | ![Mapa del text](./captures/mapa-text.png) | ![Sessions i autors](./captures/sessions-autors.png) |
+**Traces** és una extensió de Google Chrome en català, gratuïta i de codi obert, per al professorat. Mostra d'un cop d'ull com s'ha elaborat un treball de **Google Docs**, **Presentacions** o **Fulls de càlcul**, dins del mateix fitxer o des de **Google Classroom**. Tot es calcula al navegador: no s'envia res a cap servidor.
 
 ---
 
-## Com instal·lar-la a Google Chrome (pas a pas)
+## Què mostra
 
-La carpeta [`extension/`](./extension) ja conté l'extensió compilada i llesta per carregar a qualsevol ordinador sense necessitat d'instal·lar res més:
+- **Fitxa de l'alumne:** temps de treball, percentatge escrit pas a pas i percentatge enganxat, amb una franja dels dies treballats.
+- **Senyals breus:** poques correccions, tot fet l'últim dia, ritme d'escriptura molt alt, fragments moguts (text propi retallat i enganxat, que no compta com a enganxat) i nombre d'autors.
+- **Data de lliurament:** la llegeix de Classroom (o l'escriviu vosaltres) i indica quan es va començar, quina part es va fer les últimes 24 h i si hi ha feina fora de termini.
+- **Evolució sobre el temps real de treball:** les pauses no ocupen espai, de manera que un salt vertical vol dir molt text en poc temps.
+- **Pestanya Text:** fragments enganxats (conservats, reelaborats o eliminats), mapa acolorit del text final i reproducció pas a pas amb el botó «Següent enganxat».
+- **Presentacions:** diapositives amb paraules, imatges, enganxats i qui hi ha participat.
+- **Fulls de càlcul:** cel·les escrites a mà, enganxades i fórmules, per autor, i llista de dades enganxades.
+- **Documents amb pestanyes:** analitza totes les pestanyes.
+- **Classroom:** botó **Analitza la classe** a la pàgina de la tasca, etiquetes al costat de cada treball i taula comparativa ordenable (exportable en CSV). Al qualificador, botó **Al comentari privat**, que escriu el resum sense enviar-lo.
+- **Informe d'una pàgina** per imprimir o desar en PDF.
+- **Segell de fiabilitat** sempre visible i avís clar si Google canvia el format intern.
 
-1. Obriu Google Chrome i escriviu a la barra d'adreces:
-   ```text
-   chrome://extensions
-   ```
-2. A la cantonada superior dreta, activeu l'interruptor **Mode de desenvolupador** (*Developer mode*).
-3. Feu clic al botó **Carrega descomprimida** (*Load unpacked*) que apareix a dalt a l'esquerra.
-4. Seleccioneu la carpeta **`extension`** de dins d'aquest projecte:
-   ```text
-   W:\La meva unitat\Github\util-apps\Traces\extension
-   ```
-5. Feu clic a la icona de la peça de trencaclosques (Extensions) de la barra superior de Chrome i **fixeu la icona de Traces** (la xinxeta) perquè quedi sempre a la vista.
+| Resum | Text | Sessions |
+|---|---|---|
+| ![Resum](./captures/resum.png) | ![Text](./captures/text.png) | ![Sessions i autors](./captures/sessions-autors.png) |
 
 ---
+
+## Com instal·lar-la (pas a pas)
+
+1. Descarregueu `Traces-Chrome.zip` des de <https://ja.cat/app-traces> i descomprimiu-lo.
+2. Obriu Chrome i escriviu a la barra d'adreces `chrome://extensions`.
+3. Activeu **Mode de desenvolupador** (a dalt a la dreta).
+4. Premeu **Carrega descomprimida** i trieu la carpeta descomprimida (en aquest repositori, `Traces/extension`).
+5. A la icona de la peça de trencaclosques, fixeu la icona de Traces.
+
+Per evitar el mode de desenvolupador o instal·lar-la a tot el claustre, vegeu [PUBLICACIO.md](./PUBLICACIO.md) (Chrome Web Store no llistada i consola d'administració de Google Workspace).
 
 ## Com fer-la servir
 
-1. Obriu qualsevol treball de **Google Docs** (en què tingueu permís d'edició, com els treballs lliurats a **Google Classroom**) o bé obriu-lo directament dins la pantalla de correcció de Classroom.
-2. Feu clic al botó **Traces** que apareix a la barra superior de Google Docs (o a la icona de Traces a dalt a la dreta de Chrome).
-3. S'obrirà el panell lateral ample (480 px, ampliable fins a 660 px o arrossegant la vora) amb el diagnòstic visual del document.
-4. Si passeu al document del següent alumne amb el panell obert, Traces ho detectarà i l'analitzarà automàticament.
+- **Un treball:** obriu el fitxer (cal permís d'edició) i premeu el botó **Traces** de dalt a la dreta. Si la finestra és prou ampla, el fitxer s'estreny per fer lloc al panell.
+- **Al qualificador de Classroom:** el botó apareix a baix a la dreta del treball. En passar a l'alumne següent, Traces l'analitza sol.
+- **Tota la classe:** obriu la tasca a Classroom (pestanya *Treball de l'alumnat*) i premeu **Analitza la classe**. La taula es consulta amb la icona de taula del panell.
 
 ## Com actualitzar-la
 
-Quan hi hagi una versió nova publicada, Traces us avisarà amb una fletxa taronja a la icona i un avís a dalt del panell. Per actualitzar-la, descarregueu de nou `Traces-Chrome.zip` des de <https://ja.cat/app-traces>, substituïu el contingut de la vostra carpeta `Traces` i premeu el botó de recarregar (`↻`) a `chrome://extensions`.
+Quan hi ha una versió nova, Traces ho avisa amb una fletxa taronja a la icona. Descarregueu de nou el `.zip`, substituïu el contingut de la mateixa carpeta i premeu **↻** a `chrome://extensions`.
 
-> **Nota pedagògica i de privadesa:** Traces mostra evidències objectives sobre el procés temporal d'escriptura i no és un detector d'IA. Una inserció en bloc pot correspondre a copiar i enganxar, però també a un esborrany previ fet en un altre document, dictat per veu, traducció o sincronització fora de línia. Cap dada ni cap fragment de text surt mai del vostre navegador.
+> **Criteri pedagògic:** Traces no és un detector d'IA ni prova res per si sol. «Enganxat» vol dir que un fragment va entrar d'un sol cop: pot ser copiat, però també un esborrany propi, un dictat o una traducció. És un punt de partida per parlar amb l'alumne.
 
 ---
 
-## Desenvolupament i proves (opcional)
-
-Si modifiqueu el codi font TypeScript/React de [`src/`](./src):
+## Desenvolupament
 
 ```bash
 npm install
-npm test          # Executa les proves automatitzades amb Vitest
-npm run build     # Compila l'extensió actualitzada dins d'extension/
+npm test          # proves amb Vitest
+npm run build     # compila l'extensió a extension/
 ```
 
-Després de compilar, premeu el botó de recarregar (`↻`) a la targeta de **Traces** dins de `chrome://extensions`.
+Estructura:
+
+- `src/extractor/` lectura de l'historial (Docs, Presentacions i Sheets).
+- `src/core/` intèrprets dels formats interns, reconstrucció del text i mètriques.
+- `src/content/` botó dins dels fitxers (`docsToolbarButton.ts`) i integració amb Classroom (`classroom.ts`).
+- `src/ui/` panell (React).
+
+Si Google canvia el format intern, el segell de fiabilitat passa a vermell i les proves de `tests/` ajuden a localitzar el canvi.
 
 ---
 

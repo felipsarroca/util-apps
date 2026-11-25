@@ -1,5 +1,5 @@
-const i="traces-gdocs-toolbar-btn",o="traces-gdocs-drawer-root",b="traces-gdocs-injected-styles",l="traces_drawer_width_v1";let s=480,c=!1;function f(){return!(!/\/document\/(?:u\/\d+\/)?d\/[a-zA-Z0-9_-]+/.test(location.pathname)||window.innerWidth<300||window.innerHeight<200)}function x(){if(document.getElementById(b))return;const e=document.createElement("style");e.id=b,e.textContent=`
-    #${i} {
+const s="traces-gdocs-toolbar-btn",r="traces-gdocs-drawer-root",g="traces-gdocs-injected-styles",f="traces-gdocs-push-styles",m="traces_drawer_width_v1",E="traces_settings_v1";let a=480,u=!1,l=!0;function h(){return!(!/\/(?:document|presentation|spreadsheets)\/(?:u\/\d+\/)?d\/[a-zA-Z0-9_-]+/.test(location.pathname)||window.innerWidth<300||window.innerHeight<200)}function D(){if(document.getElementById(g))return;const e=document.createElement("style");e.id=g,e.textContent=`
+    #${s} {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -21,28 +21,29 @@ const i="traces-gdocs-toolbar-btn",o="traces-gdocs-drawer-root",b="traces-gdocs-
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
       z-index: 999;
     }
-    #${i}:hover {
+    #${s}:hover {
       background: #e0f2fe;
       border-color: #7dd3fc;
     }
-    #${i}.traces-btn-active {
+    #${s}.traces-btn-active {
       background: #1e293b;
       border-color: #1e293b;
       color: #ffffff;
     }
-    #${i}.traces-btn-floating {
+    #${s}.traces-btn-floating {
       position: fixed;
-      top: 12px;
-      right: 16px;
+      bottom: 18px;
+      right: 18px;
       z-index: 2147483645;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
     }
-    #${i} .traces-btn-badge {
+    #${s} .traces-btn-badge {
       width: 20px;
       height: 20px;
       display: block;
       flex-shrink: 0;
     }
-    #${o} {
+    #${r} {
       position: fixed;
       top: 0;
       right: 0;
@@ -56,10 +57,10 @@ const i="traces-gdocs-toolbar-btn",o="traces-gdocs-drawer-root",b="traces-gdocs-
       display: none;
       flex-direction: column;
     }
-    #${o}.traces-drawer-open {
+    #${r}.traces-drawer-open {
       display: flex;
     }
-    #${o} .traces-resize-handle {
+    #${r} .traces-resize-handle {
       position: absolute;
       top: 0;
       left: -4px;
@@ -68,7 +69,7 @@ const i="traces-gdocs-toolbar-btn",o="traces-gdocs-drawer-root",b="traces-gdocs-
       cursor: ew-resize;
       z-index: 2;
     }
-    #${o} .traces-resize-handle::after {
+    #${r} .traces-resize-handle::after {
       content: '';
       position: absolute;
       top: 50%;
@@ -81,17 +82,17 @@ const i="traces-gdocs-toolbar-btn",o="traces-gdocs-drawer-root",b="traces-gdocs-
       opacity: 0;
       transition: opacity 0.15s;
     }
-    #${o} .traces-resize-handle:hover::after {
+    #${r} .traces-resize-handle:hover::after {
       opacity: 0.85;
     }
-    #${o} iframe {
+    #${r} iframe {
       width: 100%;
       height: 100%;
       border: none;
       background: #f4f6fb;
       display: block;
     }
-  `,(document.head||document.documentElement).appendChild(e)}function T(){var e;try{typeof chrome<"u"&&((e=chrome.storage)!=null&&e.local)&&chrome.storage.local.get(l,t=>{const n=Number(t==null?void 0:t[l]);if(Number.isFinite(n)&&n>=360&&n<=780){s=n;const a=document.getElementById(o);a&&(a.style.width=`${s}px`)}})}catch{}}function g(e){var t;try{typeof chrome<"u"&&((t=chrome.storage)!=null&&t.local)&&chrome.storage.local.set({[l]:Math.round(e)})}catch{}}function v(){let e=document.getElementById(o);if(e)return e;e=document.createElement("aside"),e.id=o,e.setAttribute("aria-label","Panell lateral de Traces"),e.style.width=`${s}px`;const t=document.createElement("div");t.className="traces-resize-handle",t.title="Arrossega per ajustar l’amplada del panell";const n=document.createElement("iframe");n.src=chrome.runtime.getURL("sidepanel.html?embedded=1"),n.allow="clipboard-write";let a=!1;return t.addEventListener("mousedown",d=>{d.preventDefault(),a=!0,n.style.pointerEvents="none";const r=y=>{if(!a||!e)return;const p=Math.max(360,Math.min(780,window.innerWidth-y.clientX));s=p,e.style.width=`${p}px`},m=()=>{a=!1,n.style.pointerEvents="",g(s),window.removeEventListener("mousemove",r),window.removeEventListener("mouseup",m)};window.addEventListener("mousemove",r),window.addEventListener("mouseup",m)}),e.appendChild(t),e.appendChild(n),document.body.appendChild(e),e}function w(e){var d;const t=document.getElementById(i);if(!e){const r=document.getElementById(o);r&&r.classList.remove("traces-drawer-open"),t&&t.classList.remove("traces-btn-active");return}const n=v(),a=!n.classList.contains("traces-drawer-open");if(n.classList.add("traces-drawer-open"),t&&t.classList.add("traces-btn-active"),a){const r=n.querySelector("iframe");(d=r==null?void 0:r.contentWindow)==null||d.postMessage({type:"TRACES_REFRESH_REQUEST"},"*")}}function E(){const e=document.getElementById(o),t=!!(e!=null&&e.classList.contains("traces-drawer-open"));w(!t)}function I(){const e=document.createElement("button");e.type="button",e.id=i,e.title="Analitza l’historial d’elaboració amb Traces";const t=chrome.runtime.getURL("icons/icon32.png");return e.innerHTML=`
+  `,(document.head||document.documentElement).appendChild(e)}function W(){var e;try{typeof chrome<"u"&&((e=chrome.storage)!=null&&e.local)&&chrome.storage.local.get(m,t=>{const n=Number(t==null?void 0:t[m]);if(Number.isFinite(n)&&n>=360&&n<=780){a=n;const o=document.getElementById(r);o&&(o.style.width=`${a}px`)}})}catch{}}function x(e){var t;try{typeof chrome<"u"&&((t=chrome.storage)!=null&&t.local)&&chrome.storage.local.set({[m]:Math.round(e)})}catch{}}function L(){var e,t;try{(t=(e=chrome.storage)==null?void 0:e.local)==null||t.get(E,n=>{var d;const o=(d=n==null?void 0:n[E])==null?void 0:d.pushDocument;typeof o=="boolean"&&(l=o)})}catch{}}function c(e){let t=document.getElementById(f);if(!(e&&l&&window.innerWidth>=1e3)){t&&(t.remove(),window.dispatchEvent(new Event("resize")));return}t||(t=document.createElement("style"),t.id=f,(document.head||document.documentElement).appendChild(t)),t.textContent=`html { width: calc(100% - ${Math.round(a)}px) !important; overflow-x: hidden !important; }`,window.dispatchEvent(new Event("resize"))}function _(){var e;return!!((e=document.getElementById(r))!=null&&e.classList.contains("traces-drawer-open"))}function S(){let e=document.getElementById(r);if(e)return e;e=document.createElement("aside"),e.id=r,e.setAttribute("aria-label","Panell lateral de Traces"),e.style.width=`${a}px`;const t=document.createElement("div");t.className="traces-resize-handle",t.title="Arrossega per ajustar l’amplada del panell";const n=document.createElement("iframe");n.src=chrome.runtime.getURL("sidepanel.html?embedded=1"),n.allow="clipboard-write";let o=!1;return t.addEventListener("mousedown",d=>{d.preventDefault(),o=!0,n.style.pointerEvents="none";const i=T=>{if(!o||!e)return;const w=Math.max(360,Math.min(780,window.innerWidth-T.clientX));a=w,e.style.width=`${w}px`,c(!0)},b=()=>{o=!1,n.style.pointerEvents="",x(a),window.removeEventListener("mousemove",i),window.removeEventListener("mouseup",b)};window.addEventListener("mousemove",i),window.addEventListener("mouseup",b)}),e.appendChild(t),e.appendChild(n),document.body.appendChild(e),e}function I(e){var d;const t=document.getElementById(s);if(!e){const i=document.getElementById(r);i&&i.classList.remove("traces-drawer-open"),t&&t.classList.remove("traces-btn-active"),c(!1);return}const n=S(),o=!n.classList.contains("traces-drawer-open");if(n.classList.add("traces-drawer-open"),t&&t.classList.add("traces-btn-active"),c(!0),o){const i=n.querySelector("iframe");(d=i==null?void 0:i.contentWindow)==null||d.postMessage({type:"TRACES_REFRESH_REQUEST"},"*")}}function v(){const e=document.getElementById(r),t=!!(e!=null&&e.classList.contains("traces-drawer-open"));I(!t)}function R(){const e=document.createElement("button");e.type="button",e.id=s,e.title="Analitza com s’ha elaborat aquest fitxer amb Traces";const t=chrome.runtime.getURL("icons/icon32.png");return e.innerHTML=`
     <img class="traces-btn-badge" src="${t}" width="20" height="20" alt="" aria-hidden="true" />
     <span>Traces</span>
-  `,e.addEventListener("click",n=>{n.stopPropagation(),E()}),e}function u(){var n;if(!f()||document.getElementById(i))return;x(),T();const e=I(),t=document.querySelector(".docs-titlebar-buttons")||((n=document.getElementById("docs-titlebar-share-client-button"))==null?void 0:n.parentElement);t?t.insertBefore(e,t.firstChild):document.body&&(e.classList.add("traces-btn-floating"),document.body.appendChild(e))}window.addEventListener("message",e=>{const t=e.data;if(!(!t||typeof t!="object")){if(t.type==="TRACES_CLOSE_DRAWER")w(!1);else if(t.type==="TRACES_TOGGLE_WIDTH"){const n=document.getElementById(o);if(!n)return;c=!c,s=c?660:480,n.style.width=`${s}px`,g(s)}}});var h;typeof chrome<"u"&&((h=chrome.runtime)!=null&&h.onMessage)&&chrome.runtime.onMessage.addListener((e,t,n)=>(e==null?void 0:e.type)==="TRACES_TOGGLE_IN_PAGE_DRAWER"&&f()?(u(),E(),n({handled:!0}),!0):!1);function _(){if(!f())return;u();const e=new MutationObserver(()=>{const t=document.getElementById(i);if(!t)u();else if(t.classList.contains("traces-btn-floating")){const n=document.querySelector(".docs-titlebar-buttons");n&&(t.classList.remove("traces-btn-floating"),n.insertBefore(t,n.firstChild))}});document.body&&e.observe(document.body,{childList:!0,subtree:!0})}_();
+  `,e.addEventListener("click",n=>{n.stopPropagation(),v()}),e}function p(){var n;if(!h()||document.getElementById(s))return;D(),W(),L();const e=R(),t=document.querySelector(".docs-titlebar-buttons")||((n=document.getElementById("docs-titlebar-share-client-button"))==null?void 0:n.parentElement);t?t.insertBefore(e,t.firstChild):document.body&&(e.classList.add("traces-btn-floating"),document.body.appendChild(e))}window.addEventListener("message",e=>{const t=e.data;if(!t||typeof t!="object")return;const n=document.querySelector(`#${r} iframe`);if(!(!n||e.source!==n.contentWindow))if(t.type==="TRACES_CLOSE_DRAWER")I(!1);else if(t.type==="TRACES_TOGGLE_WIDTH"){const o=document.getElementById(r);if(!o)return;u=!u,a=u?660:480,o.style.width=`${a}px`,x(a),c(!0)}else t.type==="TRACES_SET_PUSH"&&(l=!!t.value,c(_()))});window.addEventListener("resize",()=>{if(!_())return;(l&&window.innerWidth>=1e3)!==!!document.getElementById(f)&&c(!0)});var y;typeof chrome<"u"&&((y=chrome.runtime)!=null&&y.onMessage)&&chrome.runtime.onMessage.addListener((e,t,n)=>(e==null?void 0:e.type)==="TRACES_TOGGLE_IN_PAGE_DRAWER"&&h()?(p(),v(),n({handled:!0}),!0):!1);function A(){if(!h())return;p();const e=new MutationObserver(()=>{const t=document.getElementById(s);if(!t)p();else if(t.classList.contains("traces-btn-floating")){const n=document.querySelector(".docs-titlebar-buttons");n&&(t.classList.remove("traces-btn-floating"),n.insertBefore(t,n.firstChild))}});document.body&&e.observe(document.body,{childList:!0,subtree:!0})}A();

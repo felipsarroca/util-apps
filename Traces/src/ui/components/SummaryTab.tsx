@@ -1,246 +1,344 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { useState } from 'react';
 import type { DocumentAnalysis } from '../../types';
+import type { DeadlineStats } from '../../core/metrics';
 import { formatDateTime, formatDuration } from '../../core/exporters';
 import { EvolutionChart } from './EvolutionChart';
+import { DayStrip } from './DayStrip';
 import { Icon } from './Icon';
+
+export const SUGGESTIONS_URL = 'https://github.com/felipsarroca/util-apps/issues/new?template=traces.yml';
 
 interface SummaryTabProps {
   analysis: DocumentAnalysis;
-  onJumpToInsertions: (opId?: number) => void;
-  onJumpToMap: () => void;
+  deadline: DeadlineStats | null;
+  deadlineSource: 'classroom' | 'manual' | null;
+  onSetDeadline: (ts: number | null) => void;
+  canComment: boolean;
+  onComment: () => Promise<boolean>;
+  onJumpToText: (opId?: number) => void;
   onJumpToSessions: () => void;
 }
 
+type Signal = { tone: 'calm' | 'info' | 'attention'; icon: Parameters<typeof Icon>[0]['name']; label: string; hint: string };
+
+function toLocalInput(ts: number): string {
+  const d = new Date(ts - new Date(ts).getTimezoneOffset() * 60_000);
+  return d.toISOString().slice(0, 16);
+}
+
+function buildSignals(a: DocumentAnalysis): Signal[] {
+  const out: Signal[] = [];
+  if (a.kind !== 'spreadsheet' && a.revision.fewCorrections) {
+    out.push({
+      tone: 'attention',
+      icon: 'alert-triangle',
+      label: 'Poques correccions',
+      hint: `Text llarg escrit pas a pas gairebé sense esborrar (${a.revision.deletionPct} %). És poc habitual quan es redacta de memòria: pot ser una còpia teclejada.`,
+    });
+  } else if (a.kind !== 'spreadsheet' && a.revision.level === 'moltes') {
+    out.push({
+      tone: 'calm',
+      icon: 'check-circle',
+      label: 'Text revisat',
+      hint: `S’ha esborrat o corregit el ${a.revision.deletionPct} % del que s’havia escrit.`,
+    });
+  }
+  if (a.workDays.length === 1 && a.totalActiveSeconds > 20 * 60) {
+    out.push({ tone: 'info', icon: 'calendar', label: 'Tot en un dia', hint: 'Tot el treball es va fer el mateix dia.' });
+  } else if (a.workDays.length > 1 && a.lastDaySharePct >= 70) {
+    out.push({
+      tone: 'info',
+      icon: 'calendar',
+      label: `${a.lastDaySharePct} % l’últim dia`,
+      hint: 'La major part del temps de treball es concentra en l’últim dia.',
+    });
+  }
+  if (a.kind !== 'spreadsheet' && a.ownWordsPerMinute > 35) {
+    out.push({
+      tone: 'attention',
+      icon: 'clock',
+      label: `${a.ownWordsPerMinute} paraules/min`,
+      hint: 'Ritme molt alt per a text escrit pas a pas (habitualment, menys de 20 paraules per minut de treball).',
+    });
+  }
+  if (a.movedInsertionsCount > 0) {
+    out.push({
+      tone: 'calm',
+      icon: 'move',
+      label: `${a.movedInsertionsCount} ${a.movedInsertionsCount === 1 ? 'fragment mogut' : 'fragments moguts'}`,
+      hint: 'Text propi retallat i enganxat dins del mateix fitxer: no compta com a enganxat.',
+    });
+  }
+  if (a.authors.length > 1) {
+    out.push({
+      tone: 'info',
+      icon: 'users',
+      label: `${a.authors.length} autors`,
+      hint: a.authors.map((x) => `${x.name}: ${x.survivingSharePct} %`).join(' · '),
+    });
+  }
+  return out;
+}
+
 export function SummaryTab({
-  analysis,
-  onJumpToInsertions,
-  onJumpToMap,
+  analysis: a,
+  deadline,
+  deadlineSource,
+  onSetDeadline,
+  canComment,
+  onComment,
+  onJumpToText,
   onJumpToSessions,
 }: SummaryTabProps) {
-  const keptBulks = analysis.bulkInsertions.filter((b) => b.status === 'conservat').length;
-  const reworkedBulks = analysis.bulkInsertions.filter((b) => b.status === 'reelaborat').length;
-  const deletedBulks = analysis.bulkInsertions.filter((b) => b.status === 'eliminat').length;
-  const wordsPerMin =
-    analysis.totalActiveSeconds > 0
-      ? Math.round(analysis.finalWordCount / Math.max(0.4, analysis.totalActiveSeconds / 60))
-      : 0;
+  const [showCoverage, setShowCoverage] = useState(false);
+  const [editingDeadline, setEditingDeadline] = useState(false);
+  const [commentState, setCommentState] = useState<'idle' | 'ok' | 'fail'>('idle');
 
-  // Objective process profile badge
-  let profileTone: 'calm' | 'mixed' | 'attention' = 'calm';
-  let profileTitle = 'Redacció majoritàriament progressiva';
-  let profileDetail = `${analysis.progressivePct}\u00A0% del text final escrit pas a pas en ${analysis.sessionCount} ${
-    analysis.sessionCount === 1 ? 'sessió' : 'sessions'
-  }.`;
+  const isSheet = a.kind === 'spreadsheet';
+  const isSlides = a.kind === 'presentation';
+  const signals = buildSignals(a);
 
-  if (analysis.bulkPct >= 55) {
-    profileTone = 'attention';
-    profileTitle = 'Predomini d’insercions en bloc';
-    profileDetail = `El ${analysis.bulkPct}\u00A0% del text final prové de fragments incorporats de cop (temps actiu: ${formatDuration(
-      analysis.totalActiveSeconds
-    )}).`;
-  } else if (analysis.bulkPct >= 20 || analysis.bulkInsertions.length > 0) {
-    profileTone = 'mixed';
-    profileTitle = 'Procés mixt (escriptura i blocs)';
-    profileDetail =
-      reworkedBulks > 0
-        ? `Combina redacció pròpia (${analysis.progressivePct}\u00A0%) amb blocs, ${reworkedBulks} dels quals reelaborats.`
-        : `Combina redacció progressiva (${analysis.progressivePct}\u00A0%) i ${analysis.bulkInsertions.length} ${
-            analysis.bulkInsertions.length === 1 ? 'inserció' : 'insercions'
-          } en bloc (${analysis.bulkPct}\u00A0%).`;
-  }
+  const coverageLabel = a.coverage.formatUnrecognized ? 'Format no reconegut' : a.coverage.label;
+
+  const big = isSheet
+    ? [
+        { label: 'Treball', value: formatDuration(a.totalActiveSeconds), tone: '' },
+        { label: 'Cel·les a mà', value: String(a.sheet?.cellsTyped ?? 0), tone: 'prog' },
+        { label: 'Enganxades', value: String(a.sheet?.cellsPasted ?? 0), tone: (a.sheet?.cellsPasted ?? 0) > 0 ? 'bulk' : '' },
+      ]
+    : [
+        { label: 'Treball', value: formatDuration(a.totalActiveSeconds), tone: '' },
+        { label: 'Escrit pas a pas', value: `${a.progressivePct} %`, tone: 'prog' },
+        { label: 'Enganxat', value: `${a.bulkPct} %`, tone: a.bulkPct > 0 ? 'bulk' : '' },
+      ];
+
+  const meta: string[] = [];
+  if (!isSheet) meta.push(`${a.finalWordCount} paraules`);
+  if (isSlides && a.slides) meta.push(`${a.slides.length} diapositives`);
+  if (isSheet && a.sheet) meta.push(`${a.sheet.formulasTyped + a.sheet.formulasPasted} fórmules`);
+  meta.push(`${a.sessionCount} ${a.sessionCount === 1 ? 'sessió' : 'sessions'}`);
+  meta.push(`${a.workDays.length} ${a.workDays.length === 1 ? 'dia' : 'dies'}`);
 
   return (
     <div className="tab-stack">
-      {/* Coverage warning only when partial or notable */}
-      {analysis.coverage.notes.length > 0 && (
-        <div
-          className={`coverage-banner coverage-${analysis.coverage.level}`}
-          role="status"
-        >
-          <Icon
-            name={analysis.coverage.level === 'alta' ? 'check-circle' : 'alert-triangle'}
-            size={15}
-          />
+      {a.coverage.formatUnrecognized && (
+        <div className="coverage-banner coverage-limitada" role="alert">
+          <Icon name="alert-triangle" size={15} />
           <div>
-            {analysis.coverage.notes.map((n, i) => (
-              <p key={i}>{n}</p>
-            ))}
+            <p>
+              <strong>Google pot haver canviat el format intern.</strong> Les dades poden ser incompletes.
+            </p>
+            <a href={SUGGESTIONS_URL} target="_blank" rel="noopener noreferrer">
+              Avisa’ns
+            </a>
           </div>
         </div>
       )}
 
-      {/* Visual diagnostic strip */}
-      <div className={`process-banner tone-${profileTone}`}>
-        <div className="process-banner-head">
-          <span className="process-dot" />
-          <strong>{profileTitle}</strong>
-        </div>
-        <p>{profileDetail}</p>
-      </div>
-
-      {/* 4 compact KPI cards */}
-      <div className="kpi-grid">
-        <button
-          type="button"
-          className="kpi-card kpi-interactive"
-          onClick={onJumpToSessions}
-          title="Mostra el detall de sessions"
-        >
-          <div className="kpi-top">
-            <Icon name="clock" size={14} />
-            <span>Temps actiu</span>
-          </div>
-          <strong className="kpi-value tabular">
-            {formatDuration(analysis.totalActiveSeconds)}
-          </strong>
-          <span className="kpi-sub tabular">
-            {analysis.sessionCount}{' '}
-            {analysis.sessionCount === 1 ? 'sessió' : 'sessions'}
+      {/* Fitxa d'un cop d'ull */}
+      <section className="student-card">
+        <div className="student-head">
+          <span className="author-avatar" style={{ backgroundColor: a.authors[0]?.color || '#0284C7' }}>
+            {(a.mainAuthorName || '?').slice(0, 1).toUpperCase()}
           </span>
-        </button>
-
-        <button
-          type="button"
-          className="kpi-card kpi-interactive"
-          onClick={onJumpToMap}
-          title="Obre el mapa acolorit del text"
-        >
-          <div className="kpi-top">
-            <Icon name="file-text" size={14} />
-            <span>Paraules finals</span>
+          <div className="student-id">
+            <strong className="truncate">{a.mainAuthorName || 'Autor desconegut'}</strong>
+            <span className="student-meta tabular">{meta.join(' · ')}</span>
           </div>
-          <strong className="kpi-value tabular">{analysis.finalWordCount}</strong>
-          <span className="kpi-sub tabular">{analysis.totalOperations} edicions</span>
-        </button>
-
-        <button
-          type="button"
-          className="kpi-card kpi-interactive"
-          onClick={() => onJumpToInsertions()}
-          title="Inspecciona les insercions en bloc"
-        >
-          <div className="kpi-top">
-            <Icon name="scissors" size={14} />
-            <span>Blocs (&ge;{analysis.settings.bulkThresholdChars})</span>
-          </div>
-          <strong
-            className={`kpi-value tabular ${
-              analysis.bulkInsertions.length > 0 ? 'text-amber' : ''
-            }`}
+          <button
+            type="button"
+            className={`coverage-seal seal-${a.coverage.formatUnrecognized ? 'limitada' : a.coverage.level}`}
+            onClick={() => setShowCoverage((s) => !s)}
+            title="Fiabilitat de les dades"
+            aria-expanded={showCoverage}
           >
-            {analysis.bulkInsertions.length}
-          </strong>
-          <span className="kpi-sub tabular">
-            {analysis.bulkInsertions.length === 0
-              ? 'Cap bloc gran'
-              : `${keptBulks} cons. · ${reworkedBulks} reelab.${
-                  deletedBulks > 0 ? ` · ${deletedBulks} elim.` : ''
-                }`}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          className="kpi-card kpi-interactive"
-          onClick={onJumpToSessions}
-          title="Mostra l'activitat per autor"
-        >
-          <div className="kpi-top">
-            <Icon name="users" size={14} />
-            <span>Autors</span>
-          </div>
-          <strong className="kpi-value tabular">{analysis.authors.length}</strong>
-          <span className="kpi-sub truncate">
-            {analysis.authors[0]?.name || '—'}
-          </span>
-        </button>
-      </div>
-
-      {/* Stacked bar: Composition of final document */}
-      <section className="panel-card">
-        <div className="card-head">
-          <h2>Composició del text final</h2>
-          <button type="button" className="link-btn" onClick={onJumpToMap}>
-            Mapa del text <Icon name="chevron-right" size={13} />
+            <Icon name="shield" size={13} />
+            {coverageLabel}
           </button>
         </div>
 
-        <div
-          className="composition-bar"
-          role="img"
-          aria-label={`Progressiu ${analysis.progressivePct}%, en bloc ${analysis.bulkPct}%, plantilla ${analysis.templatePct}%`}
-        >
-          {analysis.progressivePct > 0 && (
-            <div
-              className="comp-seg comp-progressive"
-              style={{ width: `${analysis.progressivePct}%` }}
-              title={`Escriptura progressiva: ${analysis.progressivePct} %`}
-            />
-          )}
-          {analysis.bulkPct > 0 && (
-            <div
-              className="comp-seg comp-bulk"
-              style={{ width: `${analysis.bulkPct}%` }}
-              title={`Inserit en bloc i conservat: ${analysis.bulkPct} %`}
-            />
-          )}
-          {analysis.templatePct > 0 && (
-            <div
-              className="comp-seg comp-template"
-              style={{ width: `${analysis.templatePct}%` }}
-              title={`Plantilla inicial: ${analysis.templatePct} %`}
-            />
-          )}
-        </div>
-
-        <div className="comp-legend">
-          <div className="comp-item">
-            <span className="swatch swatch-progressive" />
-            <span>Progressiu</span>
-            <strong className="tabular">{analysis.progressivePct} %</strong>
-          </div>
-          <div className="comp-item">
-            <span className="swatch swatch-bulk" />
-            <span>En bloc</span>
-            <strong className="tabular">{analysis.bulkPct} %</strong>
-          </div>
-          {analysis.templatePct > 0 && (
-            <div className="comp-item">
-              <span className="swatch swatch-template" />
-              <span>Plantilla</span>
-              <strong className="tabular">{analysis.templatePct} %</strong>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Evolution SVG chart */}
-      <section className="panel-card">
-        <div className="card-head">
-          <h2>Evolució de paraules</h2>
-          <div className="head-badges">
-            {wordsPerMin > 0 && (
-              <span className="subtle-badge tabular" title="Ritme aparent (paraules finals / minut actiu)">
-                ~{wordsPerMin} par./min
-              </span>
+        {showCoverage && (
+          <ul className="coverage-notes">
+            {(a.coverage.notes.length ? a.coverage.notes : ['S’ha llegit tot l’historial d’edicions del fitxer.']).map(
+              (n, i) => (
+                <li key={i}>{n}</li>
+              )
             )}
-            <span className="subtle-badge tabular">
-              {analysis.sessions.length}{' '}
-              {analysis.sessions.length === 1 ? 'sessió' : 'sessions'}
-            </span>
-          </div>
+          </ul>
+        )}
+
+        <div className="big-numbers">
+          {big.map((b, i) => (
+            <button
+              key={b.label}
+              type="button"
+              className={`big-num ${b.tone ? `big-${b.tone}` : ''}`}
+              onClick={i === 0 ? onJumpToSessions : () => onJumpToText()}
+            >
+              <strong className="tabular">{b.value}</strong>
+              <span>{b.label}</span>
+            </button>
+          ))}
         </div>
-        {analysis.firstEditTime && analysis.lastEditTime && (
-          <div className="timespan-strip tabular">
-            <span>Inici: {formatDateTime(analysis.firstEditTime)}</span>
-            <span>Darrera edició: {formatDateTime(analysis.lastEditTime)}</span>
+
+        {!isSheet && (
+          <div
+            className="composition-bar"
+            role="img"
+            aria-label={`Escrit pas a pas ${a.progressivePct} %, enganxat ${a.bulkPct} %, plantilla ${a.templatePct} %`}
+          >
+            {a.progressivePct > 0 && <div className="comp-seg comp-progressive" style={{ width: `${a.progressivePct}%` }} />}
+            {a.bulkPct > 0 && <div className="comp-seg comp-bulk" style={{ width: `${a.bulkPct}%` }} />}
+            {a.templatePct > 0 && <div className="comp-seg comp-template" style={{ width: `${a.templatePct}%` }} />}
           </div>
         )}
+
+        <DayStrip days={a.workDays} deadline={deadline?.deadline ?? null} />
+
+        {signals.length > 0 && (
+          <div className="signal-row">
+            {signals.map((s) => (
+              <span key={s.label} className={`signal signal-${s.tone}`} title={s.hint}>
+                <Icon name={s.icon} size={12} />
+                {s.label}
+              </span>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Termini de lliurament */}
+      <section className="panel-card deadline-card">
+        {editingDeadline ? (
+          <div className="deadline-edit">
+            <Icon name="calendar" size={14} />
+            <input
+              type="datetime-local"
+              defaultValue={deadline ? toLocalInput(deadline.deadline) : ''}
+              onChange={(e) => {
+                const ts = e.target.value ? new Date(e.target.value).getTime() : null;
+                onSetDeadline(ts);
+              }}
+              aria-label="Data de lliurament"
+            />
+            <button type="button" className="btn btn-soft btn-xs" onClick={() => setEditingDeadline(false)}>
+              Fet
+            </button>
+          </div>
+        ) : deadline ? (
+          <div className="deadline-row">
+            <Icon name="calendar" size={14} />
+            <div className="deadline-text">
+              <strong className="tabular">Lliurament {formatDateTime(deadline.deadline)}</strong>
+              <span className="tabular">
+                {deadline.startedDaysBefore !== null && deadline.startedDaysBefore > 0
+                  ? `Començat ${deadline.startedDaysBefore} ${deadline.startedDaysBefore === 1 ? 'dia' : 'dies'} abans`
+                  : 'Començat el mateix dia'}
+                {' · '}
+                {deadline.last24hPct} % les últimes 24 h
+                {deadline.lateSeconds > 0 && (
+                  <span className="text-amber"> · {formatDuration(deadline.lateSeconds)} fora de termini</span>
+                )}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setEditingDeadline(true)}
+              title={deadlineSource === 'classroom' ? 'Data llegida de Classroom. Canvia-la' : 'Canvia la data'}
+              aria-label="Canvia la data de lliurament"
+            >
+              <Icon name="settings" size={13} />
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="link-btn" onClick={() => setEditingDeadline(true)}>
+            <Icon name="calendar" size={13} /> Afegeix la data de lliurament
+          </button>
+        )}
+      </section>
+
+      {/* Evolució sobre el temps real de treball */}
+      <section className="panel-card">
+        <div className="card-head">
+          <h2>{isSheet ? 'Cel·les amb contingut' : 'Evolució del text'}</h2>
+          {!isSheet && a.ownWordsPerMinute > 0 && (
+            <span className="subtle-badge tabular" title="Paraules escrites pas a pas per minut de treball">
+              {a.ownWordsPerMinute} par. pròpies/min
+            </span>
+          )}
+        </div>
         <EvolutionChart
-          points={analysis.timeline}
-          onSelectBulkInsertion={(opId) => onJumpToInsertions(opId)}
+          points={a.timeline}
+          totalActiveSeconds={a.totalActiveSeconds}
+          unitLabel={isSheet ? 'cel·les' : 'par.'}
+          onSelectBulkInsertion={(opId) => onJumpToText(opId)}
         />
       </section>
+
+      {isSlides && a.slides && a.slides.length > 0 && (
+        <section className="panel-card">
+          <div className="card-head">
+            <h2>Diapositives</h2>
+            {(a.imagesInserted ?? 0) > 0 && (
+              <span className="subtle-badge tabular">
+                <Icon name="image" size={11} /> {a.imagesInserted}
+              </span>
+            )}
+          </div>
+          <div className="slide-list">
+            {a.slides.map((s) => (
+              <div key={s.slideId} className="slide-row">
+                <span className="slide-num tabular">{s.number}</span>
+                <span className="slide-title truncate">{s.title || 'Sense títol'}</span>
+                <span className="slide-meta tabular">
+                  {s.words} par.
+                  {s.images > 0 && (
+                    <>
+                      {' · '}
+                      <Icon name="image" size={11} /> {s.images}
+                    </>
+                  )}
+                  {s.bulkCount > 0 && <span className="text-amber"> · {s.bulkCount} eng.</span>}
+                </span>
+                <span className="slide-authors">
+                  {s.authors.map((au) => (
+                    <span
+                      key={au.userId}
+                      className="author-dot"
+                      style={{ backgroundColor: au.color }}
+                      title={`${au.name}: ${au.chars} caràcters`}
+                    />
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="summary-actions">
+        {canComment && (
+          <button
+            type="button"
+            className={`btn btn-soft btn-sm ${commentState === 'ok' ? 'btn-ok' : ''}`}
+            onClick={async () => {
+              const ok = await onComment();
+              setCommentState(ok ? 'ok' : 'fail');
+              setTimeout(() => setCommentState('idle'), 2600);
+            }}
+            title="Escriu el resum al comentari privat de Classroom (sense enviar-lo)"
+          >
+            <Icon name={commentState === 'ok' ? 'check-circle' : 'message'} size={14} />
+            {commentState === 'ok'
+              ? 'Afegit: reviseu-lo i envieu'
+              : commentState === 'fail'
+                ? 'Copiat: enganxeu-lo al comentari'
+                : 'Al comentari privat'}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import type { RawDocumentHistory, RawTileInfo, RawUserInfo } from '../types';
+import type { DocKind, RawDocumentHistory, RawTileInfo, RawUserInfo } from '../types';
 import { stripXssiPrefix } from '../core/parser';
 
 export interface ActiveDocCandidate {
   tabId: number;
   frameId: number;
+  kind: DocKind;
   docId: string;
   title: string;
   userPrefix: string;
@@ -18,63 +19,101 @@ export interface ExtractionProgress {
   percent: number;
 }
 
-export class ExtractionError extends Error {
-  code: 'NO_DOC' | 'NO_PERMISSION' | 'NETWORK' | 'FORMAT_CHANGED' | 'EXTENSION_ENV';
+export type ExtractionErrorCode = 'NO_DOC' | 'NO_PERMISSION' | 'NETWORK' | 'FORMAT_CHANGED' | 'EXTENSION_ENV';
 
-  constructor(
-    code: 'NO_DOC' | 'NO_PERMISSION' | 'NETWORK' | 'FORMAT_CHANGED' | 'EXTENSION_ENV',
-    message: string
-  ) {
+export class ExtractionError extends Error {
+  code: ExtractionErrorCode;
+
+  constructor(code: ExtractionErrorCode, message: string) {
     super(message);
     this.name = 'ExtractionError';
     this.code = code;
   }
 }
 
+export const KIND_LABELS: Record<DocKind, { singular: string; article: string }> = {
+  document: { singular: 'document', article: 'el document' },
+  presentation: { singular: 'presentació', article: 'la presentació' },
+  spreadsheet: { singular: 'full de càlcul', article: 'el full de càlcul' },
+};
+
+const KIND_BY_PATH: Record<string, DocKind> = {
+  document: 'document',
+  presentation: 'presentation',
+  spreadsheets: 'spreadsheet',
+};
+const PATH_BY_KIND: Record<DocKind, string> = {
+  document: 'document',
+  presentation: 'presentation',
+  spreadsheet: 'spreadsheets',
+};
+
+export const DOC_URL_RE = /\/(document|presentation|spreadsheets)\/(?:(u\/\d+)\/)?d\/([a-zA-Z0-9_-]+)/;
+
+/** Reconeix l'adreça d'un document, presentació o full de càlcul de Google. */
+export function parseDocUrl(url: string): { kind: DocKind; docId: string; userPrefix: string } | null {
+  const m = url.match(DOC_URL_RE);
+  if (!m) return null;
+  return { kind: KIND_BY_PATH[m[1]], docId: m[3], userPrefix: m[2] || '' };
+}
+
+export function docBaseUrl(kind: DocKind, docId: string, userPrefix = ''): string {
+  return `https://docs.google.com/${PATH_BY_KIND[kind]}/${userPrefix ? `${userPrefix}/` : ''}d/${docId}`;
+}
+
+/** Treu el sufix del producte del títol de la pestanya («- Documents de Google», etc.). */
+export function cleanTitle(raw: string): string {
+  return raw
+    .replace(
+      /\s*[-–]\s*(Documents de Google|Google Docs|Documentos de Google|Presentacions de Google|Google Slides|Presentaciones de Google|Fulls de càlcul de Google|Google Sheets|Hojas de cálculo de Google)\s*$/i,
+      ''
+    )
+    .trim();
+}
+
 export function hasDirectScriptingAccess(): boolean {
-  return (
-    typeof chrome !== 'undefined' &&
-    Boolean(chrome.tabs) &&
-    Boolean(chrome.scripting)
-  );
+  return typeof chrome !== 'undefined' && Boolean(chrome.tabs) && Boolean(chrome.scripting);
 }
 
 export function isChromeExtensionContext(): boolean {
-  return (
-    typeof chrome !== 'undefined' &&
-    Boolean(chrome.runtime?.id)
-  );
+  return typeof chrome !== 'undefined' && Boolean(chrome.runtime?.id);
 }
 
 interface FrameProbeResult {
   isGoogleDoc: boolean;
+  kind: DocKind;
   docId: string;
   title: string;
   userPrefix: string;
   tabParam: string;
   token: string;
-  isViewOnlyHint: boolean;
 }
 
+/** S'executa dins de la pàgina de Google (món MAIN): ha de ser autocontinguda. */
 function probeGoogleDocInMainWorld(): FrameProbeResult | null {
   try {
     if (location.hostname !== 'docs.google.com') return null;
-    const match = location.pathname.match(/\/document\/(?:(u\/\d+)\/)?d\/([a-zA-Z0-9_-]+)/);
+    const match = location.pathname.match(
+      /\/(document|presentation|spreadsheets)\/(?:(u\/\d+)\/)?d\/([a-zA-Z0-9_-]+)/
+    );
     if (!match) return null;
+    const kinds: Record<string, 'document' | 'presentation' | 'spreadsheet'> = {
+      document: 'document',
+      presentation: 'presentation',
+      spreadsheets: 'spreadsheet',
+    };
 
-    const userPrefix = match[1] || '';
-    const docId = match[2];
     const params = new URLSearchParams(location.search);
-    const tabParam = params.get('tab') || '';
-
     const titleInput = document.querySelector('.docs-title-input') as HTMLInputElement | null;
     const rawTitle =
       (titleInput && titleInput.value && titleInput.value.trim()) ||
       document.title
-        .replace(/\s*-\s*Documents de Google.*$/i, '')
-        .replace(/\s*-\s*Google Docs.*$/i, '')
+        .replace(
+          /\s*[-–]\s*(Documents de Google|Google Docs|Documentos de Google|Presentacions de Google|Google Slides|Presentaciones de Google|Fulls de càlcul de Google|Google Sheets|Hojas de cálculo de Google).*$/i,
+          ''
+        )
         .trim() ||
-      'Document de Google Docs';
+      'Fitxer de Google';
 
     let token = '';
     const win = window as unknown as Record<string, unknown>;
@@ -83,19 +122,8 @@ function probeGoogleDocInMainWorld(): FrameProbeResult | null {
       const infoParams = initialData.info_params as Record<string, unknown> | undefined;
       if (infoParams && typeof infoParams.token === 'string') {
         token = infoParams.token;
-      } else {
-        for (const val of Object.values(initialData)) {
-          if (val && typeof val === 'object' && 'token' in (val as Record<string, unknown>)) {
-            const t = (val as Record<string, unknown>).token;
-            if (typeof t === 'string' && t.length > 4) {
-              token = t;
-              break;
-            }
-          }
-        }
       }
     }
-
     if (!token) {
       const scripts = document.querySelectorAll('script');
       for (let i = 0; i < scripts.length; i++) {
@@ -110,28 +138,21 @@ function probeGoogleDocInMainWorld(): FrameProbeResult | null {
       }
     }
 
-    const isViewOnlyHint = Boolean(
-      document.querySelector('#docs-access-level-indicator') &&
-        !document.querySelector('#docs-toolbar-mode-switcher')
-    );
-
     return {
       isGoogleDoc: true,
-      docId,
+      kind: kinds[match[1]],
+      docId: match[3],
       title: rawTitle,
-      userPrefix,
-      tabParam,
+      userPrefix: match[2] || '',
+      tabParam: params.get('tab') || '',
       token,
-      isViewOnlyHint,
     };
   } catch {
     return null;
   }
 }
 
-export async function detectGoogleDocForTab(
-  explicitTabId?: number
-): Promise<ActiveDocCandidate | null> {
+export async function detectGoogleDocForTab(explicitTabId?: number): Promise<ActiveDocCandidate | null> {
   if (!hasDirectScriptingAccess()) {
     if (isChromeExtensionContext()) {
       const resp = await chrome.runtime.sendMessage({ type: 'TRACES_BG_DETECT_DOC' });
@@ -151,11 +172,9 @@ export async function detectGoogleDocForTab(
   if (!targetTab?.id) return null;
 
   const tabUrl = targetTab.url || '';
-  const isDocsUrl = tabUrl.startsWith('https://docs.google.com/document/');
+  const parsedUrl = parseDocUrl(tabUrl);
   const isClassroomUrl = tabUrl.startsWith('https://classroom.google.com/');
-  if (!isDocsUrl && !isClassroomUrl) {
-    return null;
-  }
+  if (!parsedUrl && !isClassroomUrl) return null;
 
   try {
     const results = await chrome.scripting.executeScript({
@@ -169,6 +188,7 @@ export async function detectGoogleDocForTab(
         return {
           tabId: targetTab.id,
           frameId: res.frameId,
+          kind: res.result.kind,
           docId: res.result.docId,
           title: res.result.title,
           userPrefix: res.result.userPrefix,
@@ -178,17 +198,14 @@ export async function detectGoogleDocForTab(
       }
     }
   } catch {
-    const m = tabUrl.match(/\/document\/(?:(u\/\d+)\/)?d\/([a-zA-Z0-9_-]+)/);
-    if (m) {
+    if (parsedUrl) {
       return {
         tabId: targetTab.id,
         frameId: 0,
-        docId: m[2],
-        title: (targetTab.title || 'Document de Google Docs')
-          .replace(/\s*-\s*Documents de Google.*$/i, '')
-          .replace(/\s*-\s*Google Docs.*$/i, '')
-          .trim(),
-        userPrefix: m[1] || '',
+        kind: parsedUrl.kind,
+        docId: parsedUrl.docId,
+        title: cleanTitle(targetTab.title || 'Fitxer de Google'),
+        userPrefix: parsedUrl.userPrefix,
         tabParam: new URL(tabUrl).searchParams.get('tab') || '',
         isInsideClassroom: false,
       };
@@ -202,56 +219,41 @@ export async function detectActiveGoogleDoc(): Promise<ActiveDocCandidate | null
   return detectGoogleDocForTab();
 }
 
-interface InPageFetchPayload {
+export interface FetchPayload {
   ok: boolean;
   status: number;
   body: string;
   errorMessage?: string;
 }
 
-async function fetchInsideDocFrame(
-  tabId: number,
-  frameId: number,
-  url: string
-): Promise<InPageFetchPayload> {
-  const results = await chrome.scripting.executeScript({
-    target: { tabId, frameIds: [frameId] },
-    world: 'MAIN',
-    args: [url],
-    func: async (targetUrl: string): Promise<InPageFetchPayload> => {
-      try {
-        const resp = await fetch(targetUrl, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            Accept: '*/*',
-          },
-        });
-        const body = await resp.text();
-        return {
-          ok: resp.ok,
-          status: resp.status,
-          body,
-        };
-      } catch (err) {
-        return {
-          ok: false,
-          status: 0,
-          body: '',
-          errorMessage: err instanceof Error ? err.message : String(err),
-        };
-      }
-    },
-  });
+/** Funció que fa una petició GET amb la sessió de Google de l'usuari. */
+export type Fetcher = (url: string) => Promise<FetchPayload>;
 
-  const payload = results?.[0]?.result;
-  if (!payload) {
-    throw new ExtractionError(
-      'NETWORK',
-      'No s’ha pogut comunicar amb la pestanya de Google Docs. Recarregueu la pàgina (F5) i torneu-ho a provar.'
-    );
-  }
-  return payload;
+/** Executa fetch() dins d'un marc de docs.google.com (mateix origen i mateixa sessió). */
+export function makeFrameFetcher(tabId: number, frameId: number): Fetcher {
+  return async (url: string) => {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId, frameIds: [frameId] },
+      world: 'MAIN',
+      args: [url],
+      func: async (targetUrl: string) => {
+        try {
+          const resp = await fetch(targetUrl, { method: 'GET', credentials: 'include', headers: { Accept: '*/*' } });
+          return { ok: resp.ok, status: resp.status, body: await resp.text() };
+        } catch (err) {
+          return { ok: false, status: 0, body: '', errorMessage: err instanceof Error ? err.message : String(err) };
+        }
+      },
+    });
+    const payload = results?.[0]?.result as FetchPayload | undefined;
+    if (!payload) {
+      throw new ExtractionError(
+        'NETWORK',
+        'No s’ha pogut comunicar amb la pestanya de Google. Recarregueu la pàgina (F5) i torneu-ho a provar.'
+      );
+    }
+    return payload;
+  };
 }
 
 function parseGoogleJson<T>(rawBody: string): T {
@@ -277,63 +279,50 @@ interface LoadResponse {
   chunkedSnapshot?: RawDocumentHistory['chunkedSnapshot'];
 }
 
-export async function extractGoogleDocForTab(
-  explicitTabId?: number,
+export interface DocTarget {
+  kind: DocKind;
+  docId: string;
+  userPrefix: string;
+  token: string;
+  tabParam: string;
+  title: string;
+}
+
+/** Descodifica les entitats HTML d'un títol (funciona també al Service Worker, sense DOM). */
+export function decodeEntities(text: string): string {
+  const named: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, code: string) => {
+    if (code[0] === '#') {
+      const n = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10);
+      return Number.isFinite(n) ? String.fromCodePoint(n) : m;
+    }
+    return named[code.toLowerCase()] ?? m;
+  });
+}
+
+/** Llegeix el testimoni de sessió i el títol d'un fitxer a partir de la seva pàgina d'edició. */
+export async function resolveTargetFromEditPage(
+  fetcher: Fetcher,
+  kind: DocKind,
+  docId: string,
+  userPrefix: string
+): Promise<DocTarget> {
+  const resp = await fetcher(`${docBaseUrl(kind, docId, userPrefix)}/edit`);
+  if (resp.status === 401 || resp.status === 403 || resp.status === 404) {
+    throw new ExtractionError('NO_PERMISSION', 'No teniu accés d’edició a aquest fitxer.');
+  }
+  const token = resp.body.match(/"info_params"\s*:\s*\{[^}]*?"token"\s*:\s*"([^"]+)"/)?.[1] ?? '';
+  const titleRaw = resp.body.match(/<title>([^<]*)<\/title>/)?.[1] ?? '';
+  return { kind, docId, userPrefix, token, tabParam: '', title: cleanTitle(decodeEntities(titleRaw)) || 'Fitxer de Google' };
+}
+
+/** Descarrega l'índex d'autors i tot el registre de revisions d'un fitxer. */
+export async function fetchHistory(
+  fetcher: Fetcher,
+  target: DocTarget,
   onProgress?: (p: ExtractionProgress) => void
 ): Promise<RawDocumentHistory> {
-  // Quan s'executa dins l'iframe incrustat de Google Docs, delega al Service Worker de l'extensió
-  if (!hasDirectScriptingAccess()) {
-    if (!isChromeExtensionContext()) {
-      throw new ExtractionError(
-        'EXTENSION_ENV',
-        'Aquesta funció requereix obrir Traces com a extensió de Google Chrome sobre un document.'
-      );
-    }
-    onProgress?.({
-      phase: 'historial',
-      message: 'Consultant i reconstruint les revisions del document…',
-      percent: 45,
-    });
-    const resp = await chrome.runtime.sendMessage({ type: 'TRACES_BG_EXTRACT_DOC' });
-    if (!resp?.ok) {
-      throw new ExtractionError(
-        resp?.code || 'NETWORK',
-        resp?.message || 'No s’ha pogut extreure l’historial del document.'
-      );
-    }
-    return resp.history as RawDocumentHistory;
-  }
-
-  onProgress?.({
-    phase: 'detectant',
-    message: 'Connectant amb el document obert…',
-    percent: 10,
-  });
-
-  const candidate = await detectGoogleDocForTab(explicitTabId);
-  if (!candidate) {
-    throw new ExtractionError(
-      'NO_DOC',
-      'Obriu primer un document de Google Docs (o un treball dins del qualificador de Google Classroom) per analitzar-lo.'
-    );
-  }
-
-  const probeExec = await chrome.scripting.executeScript({
-    target: { tabId: candidate.tabId, frameIds: [candidate.frameId] },
-    world: 'MAIN',
-    func: probeGoogleDocInMainWorld,
-  });
-  const probe = probeExec?.[0]?.result;
-  if (!probe) {
-    throw new ExtractionError(
-      'NO_DOC',
-      'El document encara s’està carregant. Espereu uns segons i torneu a prémer «Analitza».'
-    );
-  }
-
-  const baseDocUrl = `https://docs.google.com/document/${
-    probe.userPrefix ? `${probe.userPrefix}/` : ''
-  }d/${probe.docId}`;
+  const baseDocUrl = docBaseUrl(target.kind, target.docId, target.userPrefix);
 
   const buildQuery = (
     endpoint: 'revisions/tiles' | 'revisions/load',
@@ -341,85 +330,54 @@ export async function extractGoogleDocForTab(
     includeTab: boolean
   ): string => {
     const qs = new URLSearchParams();
-    qs.set('id', probe.docId);
-    for (const [k, v] of Object.entries(extra)) {
-      qs.set(k, String(v));
-    }
-    if (probe.token) {
-      qs.set('token', probe.token);
-    }
-    if (includeTab) {
-      qs.set('tab', probe.tabParam || 't.0');
-    }
+    qs.set('id', target.docId);
+    for (const [k, v] of Object.entries(extra)) qs.set(k, String(v));
+    if (target.token) qs.set('token', target.token);
+    if (includeTab && target.kind === 'document') qs.set('tab', target.tabParam || 't.0');
     return `${baseDocUrl}/${endpoint}?${qs.toString()}`;
   };
 
-  onProgress?.({
-    phase: 'metadades',
-    message: 'Consultant l’índex de revisions i autors…',
-    percent: 24,
-  });
+  onProgress?.({ phase: 'metadades', message: 'Consultant l’índex de revisions i autors…', percent: 24 });
 
-  let useTabParam = true;
+  let useTabParam = target.kind === 'document';
   let userMap: Record<string, RawUserInfo> = {};
   let firstRev = 1;
   let lastRev = 0;
 
-  let tilesResp = await fetchInsideDocFrame(
-    candidate.tabId,
-    candidate.frameId,
-    buildQuery('revisions/tiles', { start: 1, showDetailedRevisions: 'true' }, true)
+  let tilesResp = await fetcher(
+    buildQuery('revisions/tiles', { start: 1, showDetailedRevisions: 'true' }, useTabParam)
   );
-
-  if (!tilesResp.ok && tilesResp.status === 400) {
+  if (!tilesResp.ok && tilesResp.status === 400 && useTabParam) {
     useTabParam = false;
-    tilesResp = await fetchInsideDocFrame(
-      candidate.tabId,
-      candidate.frameId,
-      buildQuery('revisions/tiles', { start: 1, showDetailedRevisions: 'true' }, false)
-    );
+    tilesResp = await fetcher(buildQuery('revisions/tiles', { start: 1, showDetailedRevisions: 'true' }, false));
   }
 
   if (tilesResp.status === 401 || tilesResp.status === 403) {
     throw new ExtractionError(
       'NO_PERMISSION',
-      'No teniu permís d’edició per consultar l’historial de versions d’aquest document (mode de només lectura o compte de Google diferent).'
+      'No teniu permís d’edició per consultar l’historial de versions (mode de només lectura o compte de Google diferent).'
     );
   }
 
   if (tilesResp.ok) {
     const firstBatch = parseGoogleJson<TilesResponse>(tilesResp.body);
-    if (firstBatch.userMap) {
-      userMap = { ...userMap, ...firstBatch.userMap };
-    }
-    if (typeof firstBatch.firstRev === 'number' && firstBatch.firstRev >= 1) {
-      firstRev = firstBatch.firstRev;
-    }
+    if (firstBatch.userMap) userMap = { ...userMap, ...firstBatch.userMap };
+    if (typeof firstBatch.firstRev === 'number' && firstBatch.firstRev >= 1) firstRev = firstBatch.firstRev;
     const tiles = firstBatch.tileInfo || [];
     if (tiles.length > 0) {
       lastRev = tiles[tiles.length - 1].end;
-      if (firstRev === 1 && tiles[0].start > 1) {
-        firstRev = tiles[0].start;
-      }
+      if (firstRev === 1 && tiles[0].start > 1) firstRev = tiles[0].start;
 
       let guard = 0;
       let cursorStart = lastRev + 1;
       while (tiles.length >= 400 && guard < 15) {
         guard++;
-        const nextResp = await fetchInsideDocFrame(
-          candidate.tabId,
-          candidate.frameId,
-          buildQuery(
-            'revisions/tiles',
-            { start: cursorStart, showDetailedRevisions: 'true' },
-            useTabParam
-          )
+        const nextResp = await fetcher(
+          buildQuery('revisions/tiles', { start: cursorStart, showDetailedRevisions: 'true' }, useTabParam)
         );
         if (!nextResp.ok) break;
         const nextData = parseGoogleJson<TilesResponse>(nextResp.body);
-        if (nextData.userMap) {
-          userMap = { ...userMap, ...nextData.userMap };
-        }
+        if (nextData.userMap) userMap = { ...userMap, ...nextData.userMap };
         const moreTiles = nextData.tileInfo || [];
         if (moreTiles.length === 0) break;
         const newEnd = moreTiles[moreTiles.length - 1].end;
@@ -432,48 +390,27 @@ export async function extractGoogleDocForTab(
   }
 
   if (lastRev < 1) {
-    const probeOne = await fetchInsideDocFrame(
-      candidate.tabId,
-      candidate.frameId,
-      buildQuery('revisions/load', { start: 1, end: 1 }, useTabParam)
-    );
-    if (probeOne.status === 401 || probeOne.status === 403) {
-      throw new ExtractionError(
-        'NO_PERMISSION',
-        'No teniu permís d’edició per accedir a l’historial de revisions d’aquest document.'
-      );
-    }
+    // Sense índex: troba l'última revisió per cerca binària
+    const probeOne = await fetcher(buildQuery('revisions/load', { start: 1, end: 1 }, useTabParam));
     if (!probeOne.ok) {
       throw new ExtractionError(
         'NO_PERMISSION',
-        'No s’ha pogut accedir al registre d’edicions d’aquest document. Verifiqueu que hi teniu permisos d’editor.'
+        'No s’ha pogut accedir al registre d’edicions. Verifiqueu que hi teniu permís d’editor.'
       );
     }
-
     let low = 1;
     let high = 64;
-    while (high < 200_000) {
-      const check = await fetchInsideDocFrame(
-        candidate.tabId,
-        candidate.frameId,
-        buildQuery('revisions/load', { start: high, end: high }, useTabParam)
-      );
+    while (high < 400_000) {
+      const check = await fetcher(buildQuery('revisions/load', { start: high, end: high }, useTabParam));
       if (!check.ok) break;
       low = high;
       high *= 2;
     }
     while (low < high - 1) {
       const mid = Math.floor((low + high) / 2);
-      const check = await fetchInsideDocFrame(
-        candidate.tabId,
-        candidate.frameId,
-        buildQuery('revisions/load', { start: mid, end: mid }, useTabParam)
-      );
-      if (check.ok) {
-        low = mid;
-      } else {
-        high = mid;
-      }
+      const check = await fetcher(buildQuery('revisions/load', { start: mid, end: mid }, useTabParam));
+      if (check.ok) low = mid;
+      else high = mid;
     }
     lastRev = low;
   }
@@ -492,31 +429,19 @@ export async function extractGoogleDocForTab(
       message:
         totalRevs > CHUNK_SIZE
           ? `Recuperant revisions (${batchStart}–${batchEnd} de ${lastRev})…`
-          : `Recuperant ${totalRevs} revisions del document…`,
+          : `Recuperant ${totalRevs} revisions…`,
       percent: Math.round(32 + doneRatio * 55),
     });
 
-    let loadResp = await fetchInsideDocFrame(
-      candidate.tabId,
-      candidate.frameId,
-      buildQuery('revisions/load', { start: batchStart, end: batchEnd }, useTabParam)
-    );
+    let loadResp = await fetcher(buildQuery('revisions/load', { start: batchStart, end: batchEnd }, useTabParam));
 
     if (!loadResp.ok && batchEnd > batchStart + 200) {
       const smallerEnd = Math.min(lastRev, batchStart + 500 - 1);
-      loadResp = await fetchInsideDocFrame(
-        candidate.tabId,
-        candidate.frameId,
-        buildQuery('revisions/load', { start: batchStart, end: smallerEnd }, useTabParam)
-      );
+      loadResp = await fetcher(buildQuery('revisions/load', { start: batchStart, end: smallerEnd }, useTabParam));
       if (loadResp.ok) {
         const parsedSub = parseGoogleJson<LoadResponse>(loadResp.body);
-        if (batchStart === firstRev && parsedSub.chunkedSnapshot) {
-          initialSnapshot = parsedSub.chunkedSnapshot;
-        }
-        if (Array.isArray(parsedSub.changelog)) {
-          allChangelog.push(...parsedSub.changelog);
-        }
+        if (batchStart === firstRev && parsedSub.chunkedSnapshot) initialSnapshot = parsedSub.chunkedSnapshot;
+        if (Array.isArray(parsedSub.changelog)) allChangelog.push(...parsedSub.changelog);
         batchStart = smallerEnd + 1;
         continue;
       }
@@ -525,39 +450,29 @@ export async function extractGoogleDocForTab(
     if (loadResp.status === 401 || loadResp.status === 403) {
       throw new ExtractionError(
         'NO_PERMISSION',
-        'Google Docs ha denegat l’accés a les revisions detallades. Cal permís d’edició sobre el document.'
+        'Google ha denegat l’accés a les revisions detallades. Cal permís d’edició.'
       );
     }
 
     if (!loadResp.ok) {
       if (allChangelog.length > 0) break;
-      throw new ExtractionError(
-        'NETWORK',
-        `Google Docs ha retornat un error (codi ${loadResp.status}) en carregar l’historial.`
-      );
+      throw new ExtractionError('NETWORK', `Google ha retornat un error (codi ${loadResp.status}) en carregar l’historial.`);
     }
 
     const parsedLoad = parseGoogleJson<LoadResponse>(loadResp.body);
-    if (batchStart === firstRev && parsedLoad.chunkedSnapshot) {
-      initialSnapshot = parsedLoad.chunkedSnapshot;
-    }
-    if (Array.isArray(parsedLoad.changelog)) {
-      allChangelog.push(...parsedLoad.changelog);
-    }
+    if (batchStart === firstRev && parsedLoad.chunkedSnapshot) initialSnapshot = parsedLoad.chunkedSnapshot;
+    if (Array.isArray(parsedLoad.changelog)) allChangelog.push(...parsedLoad.changelog);
 
     batchStart = batchEnd + 1;
   }
 
-  onProgress?.({
-    phase: 'processant',
-    message: 'Reconstruint el text i calculant mètriques…',
-    percent: 92,
-  });
+  onProgress?.({ phase: 'processant', message: 'Reconstruint el contingut i calculant mètriques…', percent: 92 });
 
   return {
-    docId: probe.docId,
-    title: probe.title,
-    tabId: probe.tabParam || undefined,
+    docId: target.docId,
+    title: target.title,
+    kind: target.kind,
+    tabId: target.tabParam || undefined,
     firstRev,
     lastRev,
     fetchedAt: Date.now(),
@@ -565,6 +480,60 @@ export async function extractGoogleDocForTab(
     chunkedSnapshot: initialSnapshot,
     changelog: allChangelog,
   };
+}
+
+export async function extractGoogleDocForTab(
+  explicitTabId?: number,
+  onProgress?: (p: ExtractionProgress) => void
+): Promise<RawDocumentHistory> {
+  // Dins de l'iframe incrustat al document, delega al Service Worker de l'extensió
+  if (!hasDirectScriptingAccess()) {
+    if (!isChromeExtensionContext()) {
+      throw new ExtractionError(
+        'EXTENSION_ENV',
+        'Aquesta funció requereix obrir Traces com a extensió de Google Chrome sobre un fitxer de Google.'
+      );
+    }
+    onProgress?.({ phase: 'historial', message: 'Consultant i reconstruint les revisions…', percent: 45 });
+    const resp = await chrome.runtime.sendMessage({ type: 'TRACES_BG_EXTRACT_DOC' });
+    if (!resp?.ok) {
+      throw new ExtractionError(resp?.code || 'NETWORK', resp?.message || 'No s’ha pogut extreure l’historial.');
+    }
+    return resp.history as RawDocumentHistory;
+  }
+
+  onProgress?.({ phase: 'detectant', message: 'Connectant amb el fitxer obert…', percent: 10 });
+
+  const candidate = await detectGoogleDocForTab(explicitTabId);
+  if (!candidate) {
+    throw new ExtractionError(
+      'NO_DOC',
+      'Obriu primer un document, una presentació o un full de càlcul de Google (o un treball dins del qualificador de Classroom).'
+    );
+  }
+
+  const probeExec = await chrome.scripting.executeScript({
+    target: { tabId: candidate.tabId, frameIds: [candidate.frameId] },
+    world: 'MAIN',
+    func: probeGoogleDocInMainWorld,
+  });
+  const probe = probeExec?.[0]?.result;
+  if (!probe) {
+    throw new ExtractionError('NO_DOC', 'El fitxer encara s’està carregant. Espereu uns segons i torneu-ho a provar.');
+  }
+
+  return fetchHistory(
+    makeFrameFetcher(candidate.tabId, candidate.frameId),
+    {
+      kind: probe.kind,
+      docId: probe.docId,
+      userPrefix: probe.userPrefix,
+      token: probe.token,
+      tabParam: probe.tabParam,
+      title: probe.title,
+    },
+    onProgress
+  );
 }
 
 export async function extractGoogleDocHistory(

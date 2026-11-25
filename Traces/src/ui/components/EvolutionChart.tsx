@@ -1,14 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useState } from 'react';
 import type { TimelinePoint } from '../../types';
-import { formatDateTime } from '../../core/exporters';
+import { formatDateTime, formatDuration } from '../../core/exporters';
 
 interface EvolutionChartProps {
   points: TimelinePoint[];
+  totalActiveSeconds: number;
+  unitLabel?: string;
   onSelectBulkInsertion: (opId: number) => void;
 }
 
-export function EvolutionChart({ points, onSelectBulkInsertion }: EvolutionChartProps) {
+/**
+ * Evolució sobre l'eix de temps de treball real: les pauses entre sessions no ocupen
+ * espai, de manera que un pendent fort vol dir molt text en poc temps actiu.
+ */
+export function EvolutionChart({ points, totalActiveSeconds, unitLabel = 'par.', onSelectBulkInsertion }: EvolutionChartProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   if (points.length === 0) {
@@ -32,9 +38,7 @@ export function EvolutionChart({ points, onSelectBulkInsertion }: EvolutionChart
   const niceMax = Math.ceil(maxWords / 10) * 10;
 
   const getX = (idx: number) =>
-    points.length === 1
-      ? padLeft + innerW / 2
-      : padLeft + (idx / (points.length - 1)) * innerW;
+    points.length === 1 ? padLeft + innerW / 2 : padLeft + Math.min(1, Math.max(0, points[idx].activeX)) * innerW;
 
   const getY = (wc: number) => padTop + innerH - (wc / niceMax) * innerH;
 
@@ -66,7 +70,7 @@ export function EvolutionChart({ points, onSelectBulkInsertion }: EvolutionChart
         viewBox={`0 0 ${width} ${height}`}
         className="evo-svg"
         role="img"
-        aria-label="Gràfic d'evolució de paraules del document"
+        aria-label="Evolució del text sobre el temps de treball"
         onMouseLeave={() => setHoveredIdx(null)}
       >
         <defs>
@@ -145,13 +149,14 @@ export function EvolutionChart({ points, onSelectBulkInsertion }: EvolutionChart
 
         {/* Interactive invisible columns for smooth hover */}
         {points.map((pt, idx) => {
-          const colW = Math.max(3, innerW / Math.max(1, points.length));
+          const left = idx === 0 ? padLeft : (getX(idx - 1) + getX(idx)) / 2;
+          const right = idx === points.length - 1 ? width - padRight : (getX(idx) + getX(idx + 1)) / 2;
           return (
             <rect
               key={pt.index}
-              x={getX(idx) - colW / 2}
+              x={left}
               y={padTop}
-              width={colW}
+              width={Math.max(0.5, right - left)}
               height={innerH}
               fill="transparent"
               onMouseEnter={() => setHoveredIdx(idx)}
@@ -205,27 +210,13 @@ export function EvolutionChart({ points, onSelectBulkInsertion }: EvolutionChart
 
         {/* X-axis labels */}
         <text x={padLeft} y={height - 5} fontSize="9.5" fill="#64748B">
-          Inici
+          0
         </text>
-        {sessionBreaks.length > 0 && (
-          <text
-            x={padLeft + innerW / 2}
-            y={height - 5}
-            textAnchor="middle"
-            fontSize="9"
-            fill="#94A3B8"
-          >
-            {sessionBreaks.length + 1} sessions (línies discontínues)
-          </text>
-        )}
-        <text
-          x={width - padRight}
-          y={height - 5}
-          textAnchor="end"
-          fontSize="9.5"
-          fill="#64748B"
-        >
-          Final
+        <text x={padLeft + innerW / 2} y={height - 5} textAnchor="middle" fontSize="9" fill="#94A3B8">
+          temps de treball
+        </text>
+        <text x={width - padRight} y={height - 5} textAnchor="end" fontSize="9.5" fill="#64748B" className="tabular">
+          {formatDuration(totalActiveSeconds)}
         </text>
       </svg>
 
@@ -233,21 +224,24 @@ export function EvolutionChart({ points, onSelectBulkInsertion }: EvolutionChart
       <div className="chart-caption">
         {hovered ? (
           <span className="chart-tooltip-inline tabular">
-            <strong>{hovered.wordCount} par.</strong> · Sessió {hovered.sessionIndex} ·{' '}
+            <strong>
+              {hovered.wordCount} {unitLabel}
+            </strong>{' '}
+            · Sessió {hovered.sessionIndex} ·{' '}
             {formatDateTime(hovered.timestamp)}
             {hovered.bulkInsertion && (
               <span className="tooltip-bulk-tag">
-                Blocs +{hovered.bulkInsertion.wordCount} par. (clica per obrir)
+                Enganxat +{hovered.bulkInsertion.wordCount} {unitLabel}
               </span>
             )}
           </span>
         ) : bulkPoints.length > 0 ? (
           <span className="chart-legend-inline">
-            <span className="legend-dot amber" /> Clica els punts taronja per inspeccionar cada inserció en bloc
+            <span className="legend-dot amber" /> Punts taronja: text enganxat (clica-hi)
           </span>
         ) : (
           <span className="chart-legend-inline">
-            <span className="legend-dot blue" /> Evolució contínua sense insercions en bloc
+            <span className="legend-dot blue" /> Les línies discontínues separen sessions
           </span>
         )}
       </div>

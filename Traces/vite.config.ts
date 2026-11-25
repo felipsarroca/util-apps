@@ -15,11 +15,13 @@ export default defineConfig({
         sidepanel: resolve(__dirname, 'sidepanel.html'),
         background: resolve(__dirname, 'src/background/background.ts'),
         content: resolve(__dirname, 'src/content/docsToolbarButton.ts'),
+        classroom: resolve(__dirname, 'src/content/classroom.ts'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.name === 'background') return 'background.js';
           if (chunkInfo.name === 'content') return 'content.js';
+          if (chunkInfo.name === 'classroom') return 'classroom.js';
           return 'assets/[name]-[hash].js';
         },
         chunkFileNames: 'assets/[name]-[hash].js',
