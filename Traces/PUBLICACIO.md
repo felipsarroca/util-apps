@@ -15,26 +15,8 @@ L'extensió no surt a les cerques: només qui té l'enllaç la pot instal·lar. 
 ### Pujar la versió
 
 1. Premeu **New item** i pugeu `Traces-Chrome.zip` (conté directament el `manifest.json`).
-2. **Store listing**
-   - Idioma: català.
-   - Nom: `Traces — Com s'ha elaborat un treball de Google`.
-   - Resum (132 caràcters com a màxim): `Mostra al professorat com s'ha elaborat un treball de Google Docs, Presentacions o Sheets, també des de Classroom.`
-   - Descripció: copieu la secció «Què mostra» del `README.md`.
-   - Categoria: **Educació**.
-   - Icona 128 px: `extension/icons/icon128.png`.
-   - Captures (1280 × 800): les de la carpeta `captures/`.
-3. **Privacy**
-   - Finalitat única: «Analitzar l'historial de versions d'un fitxer de Google per mostrar al docent com s'ha elaborat».
-   - Justificació dels permisos:
-     - `sidePanel`: mostrar l'anàlisi al panell lateral.
-     - `activeTab` i `scripting`: llegir l'historial del fitxer obert quan el docent ho demana.
-     - `storage`: desar preferències i els resums numèrics de la taula de la classe.
-     - Accés a `docs.google.com`: botó dins dels fitxers i lectura de l'historial.
-     - Accés a `classroom.google.com`: botó «Analitza la classe», data de lliurament i comentari privat.
-     - Accés a `felipsarroca.github.io`: comprovar si hi ha una versió nova.
-   - Codi remot: **No**.
-   - Dades: marqueu «Contingut del lloc web» i «Informació d'identificació personal» (noms d'autor del fitxer), i les tres certificacions (no es venen, no s'usen per a altres finalitats, no es fan servir per a crèdit).
-   - URL de la política de privadesa: `https://felipsarroca.github.io/util-apps/Traces/privadesa.html`.
+2. Ompliu la fitxa amb els textos i les imatges de [store/FITXA.md](./store/FITXA.md) (captures de 1280 × 800, mosaic de 440 × 280, finalitat única, justificació dels permisos i URL de la política de privadesa).
+3. Nota: si l'extensió s'ha instal·lat des de la botiga, Chrome l'actualitza sol i Traces no mostra l'avís de versió nova.
 4. **Distribution**: visibilitat **Unlisted** (No llistat).
 5. **Submit for review**. La revisió sol trigar d'un a pocs dies.
 

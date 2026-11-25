@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Traces — Com s'ha elaborat un treball de Google",
   "short_name": "Traces",
-  "version": "2.0.0",
-  "description": "Mostra al professorat, de manera visual i local, com s'ha elaborat un treball a Google Docs, Presentacions o Fulls de càlcul, també des de Classroom.",
+  "version": "2.0.1",
+  "description": "Mostra al professorat com s’ha elaborat un treball de Google Docs, Presentacions o Sheets, també des de Classroom.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",

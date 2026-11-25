@@ -29,8 +29,19 @@ export function getCurrentVersion(): string {
   }
 }
 
+/** Chrome afegeix «update_url» al manifest de les extensions instal·lades des de la botiga. */
+export function isStoreInstall(): boolean {
+  try {
+    return Boolean((chrome.runtime.getManifest() as { update_url?: string }).update_url);
+  } catch {
+    return false;
+  }
+}
+
 /** Consulta el fitxer públic version.json (no envia cap dada: és una simple lectura). */
 export async function checkForUpdate(currentVersion: string): Promise<UpdateInfo | null> {
+  // Instal·lada des de Chrome Web Store: Chrome l'actualitza sol, no cal avisar
+  if (isStoreInstall()) return null;
   try {
     const resp = await fetch(`${VERSION_URL}?t=${Date.now()}`, { cache: 'no-store' });
     if (!resp.ok) return null;
