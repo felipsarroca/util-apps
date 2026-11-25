@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- SPDX-License-Identifier: CC-BY-NC-SA-4.0 -->
+  <defs>
+    <linearGradient id="docGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0EA5E9"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="lensGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#E0F2FE" stop-opacity="0.92"/>
+    </linearGradient>
+  </defs>
+  <!-- Document blau amb cantonada doblegada -->
+  <path d="M20 8 H74 L98 32 V108 a10 10 0 0 1 -10 10 H20 a10 10 0 0 1 -10 -10 V18 a10 10 0 0 1 10 -10 Z" fill="url(#docGrad)"/>
+  <path d="M74 8 V24 a8 8 0 0 0 8 8 H98 Z" fill="#BAE6FD"/>
+  <!-- Línies del document + traça destacada en ambre -->
+  <rect x="24" y="38" width="38" height="9" rx="4.5" fill="#FFFFFF" opacity="0.92"/>
+  <rect x="24" y="56" width="54" height="10" rx="5" fill="#FBBF24"/>
+  <rect x="24" y="75" width="32" height="9" rx="4.5" fill="#FFFFFF" opacity="0.82"/>
+  <!-- Lupa nítida inspeccionant la traça -->
+  <line x1="97" y1="97" x2="117" y2="117" stroke="#0F172A" stroke-width="14" stroke-linecap="round"/>
+  <line x1="97" y1="97" x2="117" y2="117" stroke="#F59E0B" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="80" cy="80" r="26" fill="url(#lensGrad)" stroke="#0F172A" stroke-width="10"/>
+  <circle cx="80" cy="80" r="24" fill="none" stroke="#FFFFFF" stroke-width="5"/>
+  <!-- Traça ampliada dins la lent -->
+  <rect x="65" y="75" width="30" height="10" rx="5" fill="#F59E0B"/>
+</svg>
