@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     const apps = [
         {
+            name: 'Traces',
+            path: 'https://ja.cat/app-traces',
+            icon: 'Traces/favicon.svg',
+            description: 'Extensió de Chrome per analitzar amb un clic el procés d’elaboració a Google Docs i Classroom: temps actiu, sessions, autors i insercions en bloc.',
+            category: 'Aula i avaluació'
+        },
+        {
             name: 'Subhasta',
             path: 'https://ja.cat/subhasta',
             icon: 'Subhasta/assets/favicon.svg',

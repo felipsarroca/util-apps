@@ -1,0 +1,43 @@
+name: Traces
+description: Comunica un error o proposa una millora per a l'extensió de Chrome Traces.
+title: "[Traces] "
+labels: ["Traces"]
+body:
+  - type: dropdown
+    id: tipus
+    attributes:
+      label: Tipus
+      options:
+        - Error
+        - Suggeriment
+        - Dubte
+    validations:
+      required: true
+  - type: textarea
+    id: descripcio
+    attributes:
+      label: Descripció
+      description: Explica què passa o què t'agradaria millorar.
+      placeholder: Escriu aquí el detall...
+    validations:
+      required: true
+  - type: input
+    id: espai
+    attributes:
+      label: Apartat de l'extensió
+      description: Indica on passa, si ho saps.
+      placeholder: Resum, insercions, mapa del text, sessions i autors, extracció a Google Docs...
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos per reproduir-ho
+      description: Omple-ho només si es tracta d'un error.
+      placeholder: |
+        1. Obro un document a Google Docs...
+        2. Clico la icona de Traces...
+        3. Veig...
+  - type: input
+    id: dispositiu
+    attributes:
+      label: Dispositiu i versió de Chrome
+      placeholder: Portàtil o Chromebook amb Google Chrome...
