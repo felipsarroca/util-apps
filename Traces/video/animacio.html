@@ -1,0 +1,350 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<title>Traces · vídeo promocional</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --ink: #0f172a; --ink2: #475569; --muted: #94a3b8;
+    --blue: #0284c7; --teal: #0d9488; --tealsoft: #ccfbf1; --amber: #d97706; --ambersoft: #fef3c7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  body { font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+  #stage { position: absolute; inset: 0; overflow: hidden;
+    background: radial-gradient(1200px 700px at 50% 40%, #ffffff 0%, var(--bg) 70%, #e9edf5 100%); }
+  .abs { position: absolute; }
+  #head { left: 0; right: 0; top: 70px; text-align: center; font-size: 64px; font-weight: 700; letter-spacing: -1.2px; }
+  #head span { display: inline-block; }
+  #head .a { color: var(--amber); } #head .t { color: var(--teal); }
+
+  /* Pàgines de document */
+  .doc { width: 620px; height: 640px; top: 210px; background: #fff; border-radius: 14px;
+    box-shadow: 0 30px 60px rgba(15,23,42,.13), 0 2px 6px rgba(15,23,42,.06); overflow: hidden; }
+  .doc .bar { height: 56px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; padding: 0 20px; gap: 12px; }
+  .doc .gdoc { width: 22px; height: 28px; border-radius: 3px; background: #4285f4; position: relative; }
+  .doc .gdoc::after { content: ""; position: absolute; left: 5px; right: 5px; top: 9px; height: 10px;
+    background: repeating-linear-gradient(#fff 0 2px, transparent 2px 4px); }
+  .doc .fname { font-size: 18px; color: var(--ink2); flex: 1; }
+  .doc .tbtn { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: #f1f5f9; position: relative; }
+  .doc .tbtn img { width: 26px; height: 26px; }
+  .doc .ripple { position: absolute; inset: -6px; border-radius: 14px; border: 3px solid var(--blue); opacity: 0; }
+  .doc .body { padding: 34px 46px; }
+  .doc h2 { font-size: 30px; font-weight: 700; margin-bottom: 6px; font-family: Georgia, "Times New Roman", serif; }
+  .doc .who { font-size: 16px; color: var(--muted); margin-bottom: 22px; }
+  .doc p { font-family: Georgia, "Times New Roman", serif; font-size: 21px; line-height: 1.62; color: #1e293b; margin-bottom: 14px; }
+  .w { opacity: 1; }
+  .w.hid { opacity: 0; }
+  .w.prog { background: linear-gradient(transparent 62%, var(--tealsoft) 62%); }
+  .blk { border-radius: 4px; }
+  .blk.on { background: var(--ambersoft); box-shadow: 0 0 0 4px var(--ambersoft); }
+  .badge { position: absolute; right: 24px; bottom: 22px; padding: 8px 16px; border-radius: 999px; background: #dcfce7; color: #15803d;
+    font-weight: 700; font-size: 18px; display: flex; gap: 8px; align-items: center; }
+  .clock { position: absolute; left: 46px; bottom: 22px; font-size: 20px; font-weight: 700; color: var(--ink2); display: flex; gap: 10px; align-items: center; }
+  .clock b { font-variant-numeric: tabular-nums; font-size: 26px; }
+
+  /* Gràfic de sota */
+  .chart { width: 620px; height: 150px; top: 870px; }
+  .chart svg { width: 100%; height: 100%; overflow: visible; }
+
+  /* Panells reals */
+  .panel { width: 640px; top: 210px; border-radius: 18px; overflow: hidden; box-shadow: 0 30px 60px rgba(15,23,42,.15); background: #f4f6fb; }
+  .panel img { width: 640px; display: block; }
+  .ring { position: absolute; border: 5px solid; border-radius: 16px; opacity: 0; }
+
+  /* Rajoles */
+  .tiles { left: 0; right: 0; top: 370px; display: flex; justify-content: center; gap: 44px; }
+  .tile { width: 330px; height: 330px; background: #fff; border-radius: 24px; box-shadow: 0 24px 50px rgba(15,23,42,.10);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; }
+  .tile svg { width: 120px; height: 120px; }
+  .tile .lab { font-size: 34px; font-weight: 700; }
+  .tile .sub { font-size: 22px; color: var(--ink2); margin-top: -16px; }
+
+  /* Missatge i tancament */
+  .msg { left: 0; right: 0; text-align: center; }
+  #m1 { top: 330px; font-size: 76px; font-weight: 700; letter-spacing: -1.5px; }
+  #m2 { top: 450px; font-size: 54px; font-weight: 600; color: var(--teal); letter-spacing: -.8px; }
+  #m3 { top: 620px; font-size: 32px; color: var(--ink2); display: flex; justify-content: center; gap: 14px; align-items: center; }
+  #end { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #end img { width: 210px; height: 210px; }
+  #end .name { font-size: 120px; font-weight: 800; letter-spacing: -3px; margin-top: 8px; }
+  #end .tag { font-size: 40px; color: var(--ink2); margin-top: 4px; }
+  #end .pills { display: flex; gap: 18px; margin-top: 46px; }
+  #end .pill { font-size: 26px; padding: 12px 26px; border-radius: 999px; background: #fff; box-shadow: 0 4px 14px rgba(15,23,42,.08); color: var(--ink2); font-weight: 600; }
+  #end .url { margin-top: 34px; font-size: 38px; font-weight: 700; color: var(--blue); }
+
+  #cursor { width: 34px; height: 34px; z-index: 50; }
+  #fade { inset: 0; background: var(--bg); z-index: 90; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="head" class="abs"></div>
+
+  <!-- Document de la Laia -->
+  <div id="docL" class="doc abs" style="left:250px">
+    <div class="bar"><div class="gdoc"></div><div class="fname">El mite de la caverna</div>
+      <div class="tbtn"><img src="recursos/favicon.svg" alt=""><div class="ripple"></div></div></div>
+    <div class="body"><h2>El mite de la caverna</h2><div class="who">Laia P. · 4t B</div><div class="txt"></div></div>
+    <div class="clock"><span>Temps de treball</span><b>0 min</b></div>
+    <div class="badge">✓ Lliurat</div>
+  </div>
+  <!-- Document d'en Pol -->
+  <div id="docR" class="doc abs" style="left:1050px">
+    <div class="bar"><div class="gdoc"></div><div class="fname">El mite de la caverna</div>
+      <div class="tbtn"><img src="recursos/favicon.svg" alt=""><div class="ripple"></div></div></div>
+    <div class="body"><h2>El mite de la caverna</h2><div class="who">Pol C. · 4t B</div><div class="txt"></div></div>
+    <div class="clock"><span>Temps de treball</span><b>0 s</b></div>
+    <div class="badge">✓ Lliurat</div>
+  </div>
+
+  <div id="chL" class="chart abs" style="left:250px"></div>
+  <div id="chR" class="chart abs" style="left:1050px"></div>
+
+  <div id="pL" class="panel abs" style="left:280px"><img src="recursos/panell-laia.png" alt=""></div>
+  <div id="pR" class="panel abs" style="left:1000px"><img src="recursos/panell-pol.png" alt=""></div>
+  <div id="rL" class="ring abs"></div>
+  <div id="rR" class="ring abs"></div>
+
+  <div id="tiles" class="tiles abs">
+    <div class="tile"><svg viewBox="0 0 48 48" fill="none" stroke="#4285f4" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 5h17l9 9v29H12z"/><path d="M29 5v9h9"/><path d="M18 24h14M18 30h14M18 36h9"/></svg><div class="lab">Documents</div><div class="sub">Totes les pestanyes</div></div>
+    <div class="tile"><svg viewBox="0 0 48 48" fill="none" stroke="#f4b400" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><rect x="6" y="10" width="36" height="26" rx="3"/><rect x="13" y="16" width="22" height="14" rx="1.5"/><path d="M24 36v6M17 42h14"/></svg><div class="lab">Presentacions</div><div class="sub">Qui ha fet cada diapositiva</div></div>
+    <div class="tile"><svg viewBox="0 0 48 48" fill="none" stroke="#0f9d58" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><rect x="8" y="6" width="32" height="36" rx="3"/><path d="M8 17h32M8 27h32M20 6v36"/></svg><div class="lab">Fulls de càlcul</div><div class="sub">Cel·les i fórmules</div></div>
+    <div class="tile"><svg viewBox="0 0 48 48" fill="none" stroke="#0f9d58" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"><rect x="5" y="9" width="38" height="28" rx="3"/><circle cx="24" cy="20" r="4"/><path d="M17 31c1.5-3.5 4-5 7-5s5.5 1.5 7 5"/><circle cx="13" cy="22" r="2.6"/><circle cx="35" cy="22" r="2.6"/><path d="M14 42h20"/></svg><div class="lab">Classroom</div><div class="sub">Tota la classe d'un clic</div></div>
+  </div>
+
+  <div id="m1" class="msg abs">No és un detector d'IA.</div>
+  <div id="m2" class="msg abs">És un punt de partida per parlar amb l'alumne.</div>
+  <div id="m3" class="msg abs"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Tot es calcula al teu navegador. No s'envia res.</div>
+
+  <div id="end" class="abs">
+    <img src="recursos/favicon.svg" alt="">
+    <div class="name">Traces</div>
+    <div class="tag">Com s'ha fet un treball, d'un cop d'ull.</div>
+    <div class="pills"><div class="pill">Gratuïta</div><div class="pill">En català</div><div class="pill">Programari lliure</div></div>
+    <div class="url">ja.cat/app-traces</div>
+  </div>
+
+  <svg id="cursor" class="abs" viewBox="0 0 24 24"><path d="M4 2l15 11-6.5 1.2L16 21l-3 1.4-3.4-6.9L5 20z" fill="#0f172a" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
+  <div id="fade" class="abs"></div>
+</div>
+
+<script>
+// ---------- Utilitats ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const out = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const back = (x) => { x = clamp(x); const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const $ = (id) => document.getElementById(id);
+const lerp = (a, b, k) => a + (b - a) * k;
+
+// ---------- Textos ----------
+const TXT_L = [
+  "Plató imagina uns presoners encadenats dins d'una cova. Només veuen les ombres que el foc projecta a la paret i creuen que són la realitat.",
+  "Un dia, un d'ells s'allibera i surt a fora. La llum l'enlluerna, però a poc a poc descobreix el món real.",
+  "Per a Plató, educar-se és aquest camí: deixar les aparences i buscar la veritat, encara que costi."
+];
+const TXT_R = [
+  "En aquest mite, Plató descriu uns homes lligats al fons d'una caverna que confonen les ombres amb les coses reals.",
+  "Quan un presoner surt a l'exterior, comprèn que havia viscut enganyat i torna per alliberar els companys.",
+  "El mite representa el pas de l'opinió al coneixement i el paper de l'educació."
+];
+
+// ---------- Calendari (segons) ----------
+const T = {
+  replay: 7.2, replayEnd: 16.6,
+  pasteR: [13.6, 14.5],          // blocs enganxats d'en Pol
+  sessions: [[7.4, 10.4], [11.0, 13.4], [13.9, 16.2]], // tres sessions de la Laia
+  panels: 17.0, tiles: 24.2, msg: 28.6, end: 32.0, total: 36.5,
+};
+
+// Construeix les paraules
+function build(el, paras, cls) {
+  el.innerHTML = '';
+  const words = [];
+  paras.forEach((p, pi) => {
+    const P = document.createElement('p');
+    if (cls === 'blk') P.className = 'blk';
+    p.split(' ').forEach((w, i) => {
+      const s = document.createElement('span'); s.className = 'w'; s.textContent = w + ' ';
+      P.appendChild(s);
+      words.push({ el: s, para: pi });
+    });
+    el.appendChild(P);
+  });
+  return words;
+}
+const WL = build(document.querySelector('#docL .txt'), TXT_L);
+const WR = build(document.querySelector('#docR .txt'), TXT_R, 'blk');
+const PR = [...document.querySelectorAll('#docR p')];
+
+// Hora d'aparició de cada paraula de la Laia, repartida per sessions
+const perSession = [WL.filter(w => w.para === 0), WL.filter(w => w.para === 1), WL.filter(w => w.para === 2)];
+const tWord = new Map();
+perSession.forEach((ws, si) => { const [a, b] = T.sessions[si]; ws.forEach((w, i) => tWord.set(w.el, a + (b - a) * (i / ws.length))); });
+// Esdeveniments d'àudio (els llegeix el renderitzador)
+window.EVENTS = {
+  keys: [...tWord.values()].sort((a, b) => a - b),
+  dings: [2.1, 2.6], clicks: [5.55, 6.45], thuds: [],
+  whoosh: [T.panels - .25, T.tiles - .25, T.msg - .25, T.end - .3],
+  rings: [18.7, 19.7], pops: [T.tiles + .1, T.tiles + .3, T.tiles + .5, T.tiles + .7],
+  end: T.end + .15, total: T.total,
+};
+// Tres blocs d'en Pol: paràgrafs 1, 2 (junts) i 3
+const tPara = [T.pasteR[0], T.pasteR[1], T.pasteR[1] + .45];
+window.EVENTS.thuds = tPara;
+
+// ---------- Gràfics d'evolució ----------
+function chartSVG(id, color) {
+  $(id).innerHTML = `<svg viewBox="0 0 620 150"><line x1="20" y1="130" x2="600" y2="130" stroke="#cbd5e1" stroke-width="2"/>
+    <path class="area" fill="${color}" opacity=".12"/><path class="line" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle class="dot" r="9" fill="${color}"/><g class="pts"></g></svg>`;
+}
+chartSVG('chL', '#0d9488'); chartSVG('chR', '#d97706');
+function drawChart(id, pts, k, amberIdx = []) {
+  const n = Math.max(1, Math.floor(pts.length * k));
+  const P = pts.slice(0, n);
+  const d = P.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const svg = $(id).querySelector('svg');
+  svg.querySelector('.line').setAttribute('d', d);
+  svg.querySelector('.area').setAttribute('d', d + ` L ${P[P.length - 1][0]} 130 L ${P[0][0]} 130 Z`);
+  const last = P[P.length - 1]; const dot = svg.querySelector('.dot');
+  dot.setAttribute('cx', last[0]); dot.setAttribute('cy', last[1]);
+  svg.querySelector('.pts').innerHTML = amberIdx.filter(i => i < n).map(i => `<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="11" fill="#f59e0b" stroke="#fff" stroke-width="3"/>`).join('');
+}
+// Corba de la Laia: puja amb el temps, aplanada entre sessions
+const N = 200;
+function lauraY(t) { // paraules visibles a l'instant t
+  let c = 0; for (const v of tWord.values()) if (v <= t) c++; return c;
+}
+const ptsL = [], ptsR = [], amberR = [];
+for (let i = 0; i <= N; i++) {
+  const t = lerp(T.replay, T.replayEnd, i / N);
+  const x = lerp(20, 600, i / N);
+  ptsL.push([x, 130 - 110 * lauraY(t) / WL.length]);
+  let r = 0.04 * seg(t, 7.6, 12.5);
+  if (t >= tPara[0]) r += 0.33; if (t >= tPara[1]) r += 0.33; if (t >= tPara[2]) r += 0.30;
+  ptsR.push([x, 130 - 110 * r]);
+}
+tPara.forEach(tp => amberR.push(Math.round((tp - T.replay) / (T.replayEnd - T.replay) * N)));
+
+// ---------- Capçaleres animades ----------
+function headline(t) {
+  const H = $('head');
+  const lines = [
+    [0.9, 4.9, '<span>Dos treballs ben fets.</span>'],
+    [5.0, 7.0, '<span>Un clic a Traces…</span>'],
+    [7.2, 16.9, '<span>…i veus <span class="t">com</span> s\'han fet.</span>'],
+    [17.0, 24.0, '<span><span class="t">Pas a pas</span>, o <span class="a">enganxat</span> d\'un sol cop.</span>'],
+    [24.2, 28.4, '<span>Allà on treballa el teu alumnat.</span>'],
+  ];
+  let html = '', op = 0, y = 0;
+  for (const [a, b, h] of lines) if (t >= a && t < b) { html = h; op = Math.min(out(seg(t, a, a + .5)), 1 - seg(t, b - .35, b)); y = (1 - out(seg(t, a, a + .5))) * 24; }
+  if (H.dataset.h !== html) { H.innerHTML = html; H.dataset.h = html; }
+  H.style.opacity = op; H.style.transform = `translateY(${y}px)`;
+}
+
+// ---------- Render principal ----------
+window.render = function (t) {
+  headline(t);
+  const dL = $('docL'), dR = $('docR');
+
+  // Escena 1-3: documents
+  const docIn = out(seg(t, .3, 1.3));
+  const docOut = ease(seg(t, T.panels - .3, T.panels + .5));
+  [dL, dR].forEach((d, i) => {
+    const k = out(seg(t, .3 + i * .15, 1.3 + i * .15));
+    d.style.opacity = k * (1 - docOut);
+    d.style.transform = `translateY(${(1 - k) * 60 - docOut * 30}px) scale(${1 - docOut * .06})`;
+    const badge = d.querySelector('.badge');
+    const bk = back(seg(t, 2.1 + i * .5, 2.5 + i * .5));
+    const bo = 1 - seg(t, T.replay - .3, T.replay);
+    badge.style.opacity = clamp(bk) * bo; badge.style.transform = `scale(${.6 + .4 * bk})`;
+    const clock = d.querySelector('.clock'); clock.style.opacity = seg(t, T.replay, T.replay + .4);
+    const rip = d.querySelector('.ripple'); const c = window.EVENTS.clicks[i];
+    const rk = seg(t, c, c + .6); rip.style.opacity = rk > 0 && rk < 1 ? 1 - rk : 0; rip.style.transform = `scale(${1 + rk * .5})`;
+    d.querySelector('.tbtn').style.background = t > c && t < T.panels ? '#e0f2fe' : '#f1f5f9';
+  });
+
+  // Text: complet abans del replay; reconstruït durant el replay
+  const replaying = t >= T.replay;
+  WL.forEach(w => {
+    const vis = !replaying || t >= tWord.get(w.el);
+    w.el.classList.toggle('hid', !vis);
+    w.el.classList.toggle('prog', replaying && vis);
+  });
+  WR.forEach(w => w.el.classList.toggle('hid', replaying && t < tPara[w.para]));
+  PR.forEach((p, i) => {
+    const on = replaying && t >= tPara[i];
+    p.classList.toggle('on', on);
+    const k = on ? seg(t, tPara[i], tPara[i] + .25) : 1;
+    p.style.transform = on ? `translateY(${(1 - out(k)) * -18}px) scale(${1 + (1 - out(k)) * .04})` : '';
+  });
+  // Rellotges
+  const kc = seg(t, T.replay, T.replayEnd);
+  dL.querySelector('.clock b').textContent = Math.round(kc * 10) + ' min';
+  dR.querySelector('.clock b').textContent = Math.round(kc * 43) + ' s';
+
+  // Gràfics
+  const chOp = seg(t, T.replay, T.replay + .4) * (1 - docOut);
+  ['chL', 'chR'].forEach(c => { $(c).style.opacity = chOp; $(c).style.transform = `translateY(${(1 - out(seg(t, T.replay, T.replay + .5))) * 20}px)`; });
+  drawChart('chL', ptsL, kc); drawChart('chR', ptsR, kc, amberR);
+
+  // Escena 4: panells reals
+  ['pL', 'pR'].forEach((id, i) => {
+    const k = out(seg(t, T.panels + .1 + i * .15, T.panels + .9 + i * .15));
+    const o = 1 - ease(seg(t, T.tiles - .45, T.tiles));
+    $(id).style.opacity = k * o; $(id).style.transform = `translateY(${(1 - k) * 70}px) scale(${.96 + .04 * k})`;
+  });
+  // Anelles sobre «Escrit pas a pas» (Laia) i «Enganxat» (Pol); 600/960 = 0,625
+  const sc = 640 / 960;
+  [['rL', 'pL', 280, 342, 0, '#0d9488', 18.7], ['rR', 'pR', 1000, 632, 0, '#d97706', 19.7]].forEach(([r, p, left, cx, _, col, tt]) => {
+    const R = $(r); const k = back(seg(t, tt, tt + .45)); const o = 1 - ease(seg(t, T.tiles - .45, T.tiles));
+    R.style.left = (left + cx * sc - 8) + 'px'; R.style.top = (210 + 122 * sc - 8) + 'px';
+    R.style.width = (278 * sc + 16) + 'px'; R.style.height = (112 * sc + 16) + 'px';
+    R.style.borderColor = col; R.style.opacity = clamp(k) * o; R.style.transform = `scale(${1.25 - .25 * k})`;
+  });
+
+  // Escena 5: rajoles
+  const tiles = [...document.querySelectorAll('.tile')];
+  tiles.forEach((el, i) => {
+    const k = back(seg(t, T.tiles + .1 + i * .2, T.tiles + .6 + i * .2));
+    const o = 1 - ease(seg(t, T.msg - .45, T.msg));
+    el.style.opacity = clamp(k) * o; el.style.transform = `translateY(${(1 - k) * 60}px) scale(${.9 + .1 * k})`;
+  });
+
+  // Escena 6: missatge
+  [['m1', T.msg + .1], ['m2', T.msg + 1.1], ['m3', T.msg + 2.0]].forEach(([id, a]) => {
+    const k = out(seg(t, a, a + .6)); const o = 1 - ease(seg(t, T.end - .45, T.end));
+    $(id).style.opacity = k * o; $(id).style.transform = `translateY(${(1 - k) * 26}px)`;
+  });
+
+  // Escena 7: tancament
+  const E = $('end'); const ke = out(seg(t, T.end, T.end + .8));
+  E.style.opacity = ke;
+  E.querySelector('img').style.transform = `scale(${.7 + .3 * back(seg(t, T.end, T.end + .7))}) rotate(${(1 - out(seg(t, T.end, T.end + .9))) * -12}deg)`;
+  [...E.querySelectorAll('.name, .tag, .pills, .url')].forEach((el, i) => {
+    const k = out(seg(t, T.end + .35 + i * .25, T.end + 1.0 + i * .25));
+    el.style.opacity = k; el.style.transform = `translateY(${(1 - k) * 20}px)`;
+  });
+
+  // Cursor
+  const C = $('cursor');
+  const p0 = [960, 1150], p1 = [250 + 620 - 20 - 19 - 4, 210 + 28 + 2], p2 = [1050 + 620 - 20 - 19 - 4, 210 + 28 + 2], p3 = [1500, 1150];
+  let pos = p0;
+  if (t < 5.55) pos = [lerp(p0[0], p1[0], ease(seg(t, 4.6, 5.45))), lerp(p0[1], p1[1], ease(seg(t, 4.6, 5.45)))];
+  else if (t < 6.45) pos = [lerp(p1[0], p2[0], ease(seg(t, 5.75, 6.35))), lerp(p1[1], p2[1], ease(seg(t, 5.75, 6.35)))];
+  else pos = [lerp(p2[0], p3[0], ease(seg(t, 6.8, 7.6))), lerp(p2[1], p3[1], ease(seg(t, 6.8, 7.6)))];
+  const press = [5.55, 6.45].some(c => t > c - .05 && t < c + .12);
+  C.style.left = pos[0] + 'px'; C.style.top = pos[1] + 'px'; C.style.transform = `scale(${press ? .82 : 1})`;
+  C.style.opacity = t > 4.5 && t < 7.7 ? 1 : 0;
+
+  // Fosa d'entrada i de sortida
+  $('fade').style.opacity = Math.max(1 - seg(t, 0, .35), seg(t, T.total - .6, T.total));
+};
+window.render(0);
+</script>
+</body>
+</html>
