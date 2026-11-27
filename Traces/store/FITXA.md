@@ -46,7 +46,7 @@ Programari lliure (AGPLv3). Errors i suggeriments: https://github.com/felipsarro
 
 **Mosaic promocional petit (440 × 280):** `store/mosaic-440x280.png`
 
-**Vídeo promocional** (camp *Promo video*, enllaç de YouTube): `store/traces-promocional.mp4`, penjat a YouTube com a **ocult** (no llistat). Surt el primer del carrusel, abans de les captures.
+**Vídeo promocional** (camp *Promo video*, enllaç de YouTube): `store/traces-promocional.mp4`, penjat a YouTube com a **ocult** (no llistat) el 27-11-2026: **https://youtu.be/ScLl4G9Zstg** (enganxeu aquest enllaç al camp). Surt el primer del carrusel, abans de les captures.
 
 - Títol: `Traces: com s'ha fet un treball de Google Docs, d'un cop d'ull`
 - Descripció: `Extensió de Chrome per al professorat. Mostra com s'ha elaborat un treball de Google Docs, Presentacions o Fulls de càlcul: temps de treball, què s'ha escrit pas a pas i què s'ha enganxat d'un sol cop. Tot es calcula al navegador. No és un detector d'IA: és un punt de partida per parlar amb l'alumne. https://ja.cat/app-traces — Música i so originals.`
