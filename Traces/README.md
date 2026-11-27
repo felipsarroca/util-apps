@@ -1,10 +1,13 @@
 # Traces — Com s'ha elaborat un treball de Google
 
 - **Pàgina web, descàrrega (.zip) i demostració:** <https://ja.cat/app-traces>
+- **Vídeo de presentació (36 s):** <https://youtu.be/ScLl4G9Zstg>
 - **Privadesa i full per a famílies:** <https://felipsarroca.github.io/util-apps/Traces/privadesa.html>
 - **Errors i suggeriments:** [formulari](https://github.com/felipsarroca/util-apps/issues/new?template=traces.yml)
 
 **Traces** és una extensió de Google Chrome en català, gratuïta i de codi obert, per al professorat. Mostra d'un cop d'ull com s'ha elaborat un treball de **Google Docs**, **Presentacions** o **Fulls de càlcul**, dins del mateix fitxer o des de **Google Classroom**. Tot es calcula al navegador: no s'envia res a cap servidor.
+
+[![Vídeo de presentació de Traces (36 s): dos treballs, un escrit pas a pas i un d'enganxat](./captures/video.jpg)](https://youtu.be/ScLl4G9Zstg)
 
 ---
 
@@ -66,6 +69,7 @@ Estructura:
 - `src/core/` intèrprets dels formats interns, reconstrucció del text i mètriques.
 - `src/content/` botó dins dels fitxers (`docsToolbarButton.ts`) i integració amb Classroom (`classroom.ts`).
 - `src/ui/` panell (React).
+- `video/` vídeo de presentació: animació, renderitzador i banda sonora sintetitzada (vegeu `video/README.md`). El resultat és `store/traces-promocional.mp4`.
 
 Si Google canvia el format intern, el segell de fiabilitat passa a vermell i les proves de `tests/` ajuden a localitzar el canvi.
 
