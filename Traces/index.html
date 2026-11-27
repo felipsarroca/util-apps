@@ -221,6 +221,36 @@
         background: #ffffff;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
       }
+      .btn-video { margin-left: auto; align-self: flex-start; flex-shrink: 0; white-space: nowrap; color: var(--brand); border-color: #bae6fd; background: #f0f9ff; }
+      .btn-video:hover { background: #e0f2fe; }
+      #video-dialog {
+        width: min(960px, 92vw);
+        padding: 0;
+        border: 0;
+        border-radius: 14px;
+        background: #0f172a;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+        overflow: visible;
+      }
+      #video-dialog::backdrop { background: rgba(15, 23, 42, 0.72); }
+      .video-box { position: relative; }
+      .video-frame { aspect-ratio: 16 / 9; }
+      .video-frame iframe { width: 100%; height: 100%; border: 0; border-radius: 14px; display: block; }
+      .video-close {
+        position: absolute;
+        top: -14px;
+        right: -14px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 0;
+        background: #ffffff;
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+      }
       .felip-app-footer {
         position: fixed;
         right: 0;
@@ -267,6 +297,10 @@
               <h1>Traces</h1>
               <p class="subtitle">Com s'ha elaborat un treball de Google Docs, Presentacions o Fulls de càlcul</p>
             </div>
+            <button type="button" class="btn-secondary btn-video" id="btn-video">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg>
+              Vídeo · 37 s
+            </button>
           </div>
 
           <p class="lead">
@@ -386,7 +420,27 @@
       </div>
     </footer>
 
+    <dialog id="video-dialog" aria-label="Vídeo de presentació de Traces">
+      <div class="video-box">
+        <button type="button" class="video-close" id="video-close" aria-label="Tanca el vídeo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <div class="video-frame" id="video-frame"></div>
+      </div>
+    </dialog>
+
     <script>
+      const videoDialog = document.getElementById('video-dialog');
+      const videoFrame = document.getElementById('video-frame');
+      document.getElementById('btn-video')?.addEventListener('click', function () {
+        // El reproductor només es carrega quan es demana (sense galetes de seguiment)
+        videoFrame.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/ScLl4G9Zstg?autoplay=1&rel=0" title="Traces: com s\'ha fet un treball, d\'un cop d\'ull" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+        videoDialog.showModal();
+      });
+      const closeVideo = () => { videoDialog.close(); };
+      document.getElementById('video-close')?.addEventListener('click', closeVideo);
+      videoDialog?.addEventListener('click', (e) => { if (e.target === videoDialog) closeVideo(); });
+      videoDialog?.addEventListener('close', () => { videoFrame.innerHTML = ''; });
       document.getElementById('btn-copy-ext')?.addEventListener('click', function () {
         const btn = this;
         navigator.clipboard?.writeText('chrome://extensions').then(() => {
