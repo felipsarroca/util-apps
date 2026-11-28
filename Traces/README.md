@@ -1,6 +1,7 @@
 # Traces — Com s'ha elaborat un treball de Google
 
-- **Pàgina web, descàrrega (.zip) i demostració:** <https://ja.cat/app-traces>
+- **Instal·lació (Chrome Web Store):** [Traces a la botiga](https://chromewebstore.google.com/detail/traces-%E2%80%94-com-sha-elaborat/bhefekpdnechibijoigoomnjlgcbhilb?hl=ca)
+- **Pàgina web i demostració:** <https://ja.cat/app-traces>
 - **Vídeo de presentació (36 s):** <https://youtu.be/ScLl4G9Zstg>
 - **Privadesa i full per a famílies:** <https://felipsarroca.github.io/util-apps/Traces/privadesa.html>
 - **Errors i suggeriments:** [formulari](https://github.com/felipsarroca/util-apps/issues/new?template=traces.yml)
@@ -33,13 +34,12 @@
 
 ## Com instal·lar-la (pas a pas)
 
-1. Descarregueu `Traces-Chrome.zip` des de <https://ja.cat/app-traces> i descomprimiu-lo.
-2. Obriu Chrome i escriviu a la barra d'adreces `chrome://extensions`.
-3. Activeu **Mode de desenvolupador** (a dalt a la dreta).
-4. Premeu **Carrega descomprimida** i trieu la carpeta descomprimida (en aquest repositori, `Traces/extension`).
-5. A la icona de la peça de trencaclosques, fixeu la icona de Traces.
+1. Obriu la fitxa de [Traces a Chrome Web Store](https://chromewebstore.google.com/detail/traces-%E2%80%94-com-sha-elaborat/bhefekpdnechibijoigoomnjlgcbhilb?hl=ca) i premeu **Afegeix a Chrome**.
+2. A la icona de la peça de trencaclosques, fixeu la icona de Traces.
 
-Per evitar el mode de desenvolupador o instal·lar-la a tot el claustre, vegeu [PUBLICACIO.md](./PUBLICACIO.md) (Chrome Web Store no llistada i consola d'administració de Google Workspace).
+Amb un compte de centre, si la botiga diu que està bloquejada, l'administrador del Google Workspace l'ha de permetre (o forçar-ne la instal·lació al claustre) amb l'identificador `bhefekpdnechibijoigoomnjlgcbhilb`: vegeu [PUBLICACIO.md](./PUBLICACIO.md).
+
+Per provar-la des del codi: `chrome://extensions` › **Mode de desenvolupador** › **Carrega descomprimida** › carpeta `Traces/extension`.
 
 ## Com fer-la servir
 
@@ -49,7 +49,7 @@ Per evitar el mode de desenvolupador o instal·lar-la a tot el claustre, vegeu [
 
 ## Com actualitzar-la
 
-Quan hi ha una versió nova, Traces ho avisa amb una fletxa taronja a la icona. Descarregueu de nou el `.zip`, substituïu el contingut de la mateixa carpeta i premeu **↻** a `chrome://extensions`.
+Des de la botiga, Chrome l'actualitza sol. Si la teníeu instal·lada amb el `.zip`, elimineu-la a `chrome://extensions` i instal·leu-la des de la botiga.
 
 > **Criteri pedagògic:** Traces no és un detector d'IA ni prova res per si sol. «Enganxat» vol dir que un fragment va entrar d'un sol cop: pot ser copiat, però també un esborrany propi, un dictat o una traducció. És un punt de partida per parlar amb l'alumne.
 
