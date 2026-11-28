@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'Traces',
             path: 'https://ja.cat/app-traces',
             icon: 'Traces/favicon.svg',
-            description: 'Extensió de Chrome que mostra com s’ha elaborat un treball de Docs, Presentacions o Sheets: temps, dies, text escrit i enganxat. Analitza tota una classe des de Classroom.',
+            description: 'Extensió de Chrome Web Store que mostra com s’ha elaborat un treball de Docs, Presentacions o Sheets: temps, dies, text escrit i enganxat. Analitza tota una classe des de Classroom.',
             category: 'Aula i avaluació'
         },
         {
